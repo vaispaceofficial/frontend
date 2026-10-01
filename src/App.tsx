@@ -26,7 +26,10 @@ import HomeAppliancesPage from "./pages/HomeAppliancesPage";
 import HomeServicesPage from "./pages/HomeServicesPage";
 import PersonalServicesPage from "./pages/PersonalServicesPage";
 import HomeStaffPage from "./pages/HomeStaffPage";
-
+import AMCPage from "./pages/AMCPage";
+import AccessoriesSalesPage from "./pages/AccessoriesSalesPage";
+import RegisterPage from "./pages/RegisterPage";
+import ProfessionalRegisterPage from "./pages/ProfessionalRegisterPage";
 
 /* =========================================================
    HERO IMAGES
@@ -318,9 +321,17 @@ function Navbar() {
               OTHER NAV ITEMS
           ================================================= */}
 
-          <a href="#amc">AMC</a>
+          <Link
+            to="/amc"
+            onClick={() => {
+              setServicesOpen(false);
+              setSelectedCategory(null);
+            }}
+          >
+            AMC
+          </Link>
 
-          <a href="#accessories">Accessories &amp; Sales</a>
+          <Link to="/accessories-sales">Accessories &amp; Sales</Link>
 
           <Link
             to="/contact"
@@ -332,9 +343,9 @@ function Navbar() {
             Contact
           </Link>
 
-          <a className="professional-link" href="#professional">
+          <Link to="/register-professional" className="professional-link">
             Register as Professional
-          </a>
+          </Link>
         </nav>
 
         {/* =================================================
@@ -721,6 +732,17 @@ function App() {
         {/* SERVICES */}
 
         <Route path="/services" element={<ServicesPage />} />
+
+        <Route path="/amc" element={<AMCPage />} />
+
+        <Route path="/accessories-sales" element={<AccessoriesSalesPage />} />
+
+        <Route path="/register" element={<RegisterPage />} />
+
+        <Route
+          path="/register-professional"
+          element={<ProfessionalRegisterPage />}
+        />
 
         {/* CATEGORY PAGES */}
 
