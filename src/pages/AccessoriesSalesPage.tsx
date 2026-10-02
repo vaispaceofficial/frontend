@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import {
   Search,
@@ -10,6 +9,10 @@ import {
   ChevronRight,
 } from "lucide-react";
 import "./AccessoriesSalesPage.css";
+
+/* =========================================================
+   CATEGORIES
+========================================================= */
 
 const categories = [
   {
@@ -43,6 +46,10 @@ const categories = [
     icon: "⚡",
   },
 ];
+
+/* =========================================================
+   PRODUCTS
+========================================================= */
 
 const products = [
   {
@@ -101,14 +108,167 @@ const products = [
   },
 ];
 
+/* =========================================================
+   HERO MINI CAROUSEL DATA
+========================================================= */
+
+const heroCarouselOne = [
+  {
+    title: "AC Service",
+    subtitle: "Cooling & maintenance",
+    image: "/images/accessories/ac-service.avif",
+  },
+  {
+    title: "AC Accessories",
+    subtitle: "Filters & remotes",
+    image: "/images/accessories/ac-accessories.jpg",
+  },
+  {
+    title: "Professional Care",
+    subtitle: "Service at home",
+    image: "/images/accessories/professional-care.webp",
+  },
+  {
+    title: "AC Installation",
+    subtitle: "Expert installation",
+    image: "/images/accessories/ac-installation.jpeg",
+  },
+];
+
+const heroCarouselTwo = [
+  {
+    title: "Refrigerator",
+    subtitle: "Parts & accessories",
+    image: "/images/accessories/refrigerator.avif",
+  },
+  {
+    title: "Washing Machine",
+    subtitle: "Covers & hoses",
+    image: "/images/accessories/washing-machine.jpg",
+  },
+  {
+    title: "Kitchen Appliances",
+    subtitle: "Everyday essentials",
+    image: "/images/accessories/kitchen-appliances.avif",
+  },
+  {
+    title: "Home Appliances",
+    subtitle: "Products & support",
+    image: "/images/accessories/home-appliances.jpg",
+  },
+];
+
+const heroCarouselThree = [
+  {
+    title: "TV Accessories",
+    subtitle: "Remotes & mounts",
+    image: "/images/accessories/tv-accessories.webp",
+  },
+  {
+    title: "Electrical",
+    subtitle: "Cables & essentials",
+    image: "/images/accessories/electrical.jpg",
+  },
+  {
+    title: "Installation",
+    subtitle: "Professional support",
+    image: "/images/accessories/installation.webp",
+  },
+  {
+    title: "Home Support",
+    subtitle: "OneService care",
+    image: "/images/accessories/home-support.jpg",
+  },
+];
+
+/* =========================================================
+   TYPES
+========================================================= */
+
+type HeroCarouselItem = {
+  title: string;
+  subtitle: string;
+  image: string;
+};
+
+/* =========================================================
+   MINI VERTICAL CAROUSEL
+========================================================= */
+
+function MiniVerticalCarousel({
+  items,
+  direction,
+  className = "",
+}: {
+  items: HeroCarouselItem[];
+  direction: "up" | "down";
+  className?: string;
+}) {
+  /*
+   * Duplicate the items so the animation can
+   * continue without an empty gap.
+   */
+  const duplicatedItems = [...items, ...items];
+
+  return (
+    <div className={`hero-mini-carousel ${className}`}>
+      <div
+        className={`hero-mini-track ${
+          direction === "down" ? "move-down" : "move-up"
+        }`}
+      >
+        {duplicatedItems.map((item, index) => (
+          <div
+            className="hero-mini-card"
+            key={`${item.title}-${index}`}
+          >
+            {/* IMAGE */}
+            <div className="hero-mini-image">
+              <img
+                src={item.image}
+                alt={item.title}
+                loading="lazy"
+              />
+            </div>
+
+            {/* CONTENT */}
+            <div className="hero-mini-content">
+              <strong>{item.title}</strong>
+              <span>{item.subtitle}</span>
+            </div>
+
+            {/* ARROW */}
+            <ChevronRight
+              size={15}
+              className="hero-mini-arrow"
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================
+   MAIN PAGE
+========================================================= */
+
 function AccessoriesSalesPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
 
+  /* =======================================================
+     FILTER PRODUCTS
+  ======================================================= */
+
   const filteredProducts = products.filter((product) => {
     const matchesSearch =
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.category.toLowerCase().includes(searchTerm.toLowerCase());
+      product.name
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
+      product.category
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
 
     const matchesCategory =
       selectedCategory === "All" ||
@@ -119,9 +279,17 @@ function AccessoriesSalesPage() {
 
   return (
     <main className="accessories-sales-page">
-      {/* HERO */}
+
+      {/* =====================================================
+          HERO
+      ===================================================== */}
+
       <section className="accessories-hero">
+
+        {/* HERO CONTENT */}
+
         <div className="accessories-hero-content">
+
           <span className="accessories-eyebrow">
             ACCESSORIES &amp; SALES
           </span>
@@ -136,22 +304,31 @@ function AccessoriesSalesPage() {
             essentials for your home — all in one place.
           </p>
 
+          {/* SEARCH */}
+
           <div className="accessories-search">
+
             <Search size={20} />
 
             <input
               type="text"
               placeholder="Search for accessories or products..."
               value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
+              onChange={(event) =>
+                setSearchTerm(event.target.value)
+              }
             />
 
             <button type="button">
               Search
             </button>
+
           </div>
 
+          {/* HERO FEATURES */}
+
           <div className="accessories-hero-features">
+
             <div>
               <ShieldCheck size={18} />
               <span>Reliable products</span>
@@ -166,45 +343,86 @@ function AccessoriesSalesPage() {
               <Wrench size={18} />
               <span>Installation support</span>
             </div>
+
           </div>
+
         </div>
 
-        <div className="accessories-hero-card">
-          <div className="hero-card-circle hero-card-circle-one" />
-          <div className="hero-card-circle hero-card-circle-two" />
+        {/* ===================================================
+            THREE VERTICAL IMAGE CAROUSELS
+        =================================================== */}
 
-          <div className="hero-product-icon">🏠</div>
+        <div className="accessories-hero-carousel">
 
-          <span>ONE SERVICE</span>
+          <div className="hero-carousel-heading">
+            <span>ONE SERVICE</span>
+            <strong>Products + Support</strong>
+          </div>
 
-          <strong>
-            Products +
-            <br />
-            Service Support
-          </strong>
+          <div className="hero-carousel-columns">
 
-          <p>
-            Buy what you need and get professional help when you need it.
-          </p>
+            {/* LEFT — MOVES UP */}
 
-          <div className="hero-card-bottom">
-            <span>Explore products</span>
+            <MiniVerticalCarousel
+              items={heroCarouselOne}
+              direction="up"
+              className="carousel-column-left"
+            />
+
+            {/* CENTER — MOVES DOWN */}
+
+            <MiniVerticalCarousel
+              items={heroCarouselTwo}
+              direction="down"
+              className="carousel-column-center"
+            />
+
+            {/* RIGHT — MOVES UP */}
+
+            <MiniVerticalCarousel
+              items={heroCarouselThree}
+              direction="up"
+              className="carousel-column-right"
+            />
+
+          </div>
+
+          <div className="hero-carousel-footer">
+
+            <span>
+              Explore products &amp; services
+            </span>
+
             <ArrowRight size={18} />
+
           </div>
+
         </div>
+
       </section>
 
-      {/* CATEGORIES */}
-      <section className="accessories-section">
-        <div className="accessories-section-heading">
-          <div>
-            <span className="section-label">SHOP BY CATEGORY</span>
+      {/* =====================================================
+          CATEGORIES
+      ===================================================== */}
 
-            <h2>Find what you need</h2>
+      <section className="accessories-section">
+
+        <div className="accessories-section-heading">
+
+          <div>
+
+            <span className="section-label">
+              SHOP BY CATEGORY
+            </span>
+
+            <h2>
+              Find what you need
+            </h2>
 
             <p>
               Browse accessories and products by category.
             </p>
+
           </div>
 
           <button
@@ -215,53 +433,101 @@ function AccessoriesSalesPage() {
             View all
             <ArrowRight size={17} />
           </button>
+
         </div>
 
+        {/* CATEGORY GRID */}
+
         <div className="category-grid">
+
+          {/* ALL PRODUCTS */}
+
           <button
             type="button"
             className={`category-card ${
-              selectedCategory === "All" ? "active" : ""
+              selectedCategory === "All"
+                ? "active"
+                : ""
             }`}
             onClick={() => setSelectedCategory("All")}
           >
-            <div className="category-icon">✨</div>
+
+            <div className="category-icon">
+              ✨
+            </div>
 
             <div>
-              <h3>All Products</h3>
-              <p>Browse everything</p>
+
+              <h3>
+                All Products
+              </h3>
+
+              <p>
+                Browse everything
+              </p>
+
             </div>
 
             <ChevronRight size={18} />
+
           </button>
 
+          {/* INDIVIDUAL CATEGORIES */}
+
           {categories.map((category) => (
+
             <button
               type="button"
               key={category.title}
               className={`category-card ${
-                selectedCategory === category.title ? "active" : ""
+                selectedCategory === category.title
+                  ? "active"
+                  : ""
               }`}
-              onClick={() => setSelectedCategory(category.title)}
+              onClick={() =>
+                setSelectedCategory(category.title)
+              }
             >
-              <div className="category-icon">{category.icon}</div>
+
+              <div className="category-icon">
+                {category.icon}
+              </div>
 
               <div>
-                <h3>{category.title}</h3>
-                <p>{category.description}</p>
+
+                <h3>
+                  {category.title}
+                </h3>
+
+                <p>
+                  {category.description}
+                </p>
+
               </div>
 
               <ChevronRight size={18} />
+
             </button>
+
           ))}
+
         </div>
+
       </section>
 
-      {/* PRODUCTS */}
+      {/* =====================================================
+          PRODUCTS / POPULAR PICKS
+      ===================================================== */}
+
       <section className="accessories-section products-section">
+
         <div className="accessories-section-heading">
+
           <div>
-            <span className="section-label">FEATURED PRODUCTS</span>
+
+            <span className="section-label">
+              FEATURED PRODUCTS
+            </span>
 
             <h2>
               {selectedCategory === "All"
@@ -272,14 +538,38 @@ function AccessoriesSalesPage() {
             <p>
               Quality products selected for everyday home needs.
             </p>
+
           </div>
+
         </div>
 
         {filteredProducts.length > 0 ? (
+
+          /*
+           * DESKTOP:
+           * 5 PRODUCTS PER ROW
+           *
+           * The CSS controls:
+           * Desktop  → 5 columns
+           * Laptop   → 4 columns
+           * Tablet   → 3 columns
+           * Mobile   → 2 columns
+           * Small    → 1 column
+           */
+
           <div className="products-grid">
+
             {filteredProducts.map((product) => (
-              <article className="product-card" key={product.id}>
+
+              <article
+                className="product-card"
+                key={product.id}
+              >
+
+                {/* PRODUCT IMAGE */}
+
                 <div className="product-image">
+
                   {product.badge && (
                     <span className="product-badge">
                       {product.badge}
@@ -297,33 +587,72 @@ function AccessoriesSalesPage() {
                   >
                     <ShoppingCart size={18} />
                   </button>
+
                 </div>
 
+                {/* PRODUCT INFORMATION */}
+
                 <div className="product-info">
+
                   <span className="product-category">
                     {product.category}
                   </span>
 
-                  <h3>{product.name}</h3>
+                  <h3>
+                    {product.name}
+                  </h3>
+
+                  {/* PRICE */}
 
                   <div className="product-price">
-                    <strong>{product.price}</strong>
-                    <span>{product.oldPrice}</span>
+
+                    <strong>
+                      {product.price}
+                    </strong>
+
+                    <span>
+                      {product.oldPrice}
+                    </span>
+
                   </div>
 
-                  <button type="button" className="product-view-button">
+                  {/* VIEW DETAILS */}
+
+                  <button
+                    type="button"
+                    className="product-view-button"
+                  >
                     View details
                     <ArrowRight size={16} />
                   </button>
+
                 </div>
+
               </article>
+
             ))}
+
           </div>
+
         ) : (
+
+          /* =================================================
+             NO PRODUCTS
+          ================================================= */
+
           <div className="no-products">
-            <div>🔎</div>
-            <h3>No products found</h3>
-            <p>Try another search or category.</p>
+
+            <div>
+              🔎
+            </div>
+
+            <h3>
+              No products found
+            </h3>
+
+            <p>
+              Try another search or category.
+            </p>
 
             <button
               type="button"
@@ -334,14 +663,24 @@ function AccessoriesSalesPage() {
             >
               Clear filters
             </button>
+
           </div>
+
         )}
+
       </section>
 
-      {/* SERVICE + PRODUCT */}
+      {/* =====================================================
+          SERVICE + PRODUCT
+      ===================================================== */}
+
       <section className="service-product-section">
+
         <div className="service-product-content">
-          <span className="section-label">MORE THAN JUST PRODUCTS</span>
+
+          <span className="section-label">
+            MORE THAN JUST PRODUCTS
+          </span>
 
           <h2>
             Need help after
@@ -354,43 +693,95 @@ function AccessoriesSalesPage() {
             we can help with that too.
           </p>
 
-          <button type="button" className="service-product-button">
+          <button
+            type="button"
+            className="service-product-button"
+          >
             Explore our services
             <ArrowRight size={18} />
           </button>
+
         </div>
+
+        {/* SERVICE STEPS */}
 
         <div className="service-product-card">
+
           <div className="service-step">
-            <span>01</span>
+
+            <span>
+              01
+            </span>
+
             <div>
-              <strong>Choose your product</strong>
-              <p>Find the accessory you need.</p>
+
+              <strong>
+                Choose your product
+              </strong>
+
+              <p>
+                Find the accessory you need.
+              </p>
+
             </div>
+
           </div>
 
           <div className="service-step">
-            <span>02</span>
+
+            <span>
+              02
+            </span>
+
             <div>
-              <strong>Get it delivered</strong>
-              <p>Receive it conveniently at home.</p>
+
+              <strong>
+                Get it delivered
+              </strong>
+
+              <p>
+                Receive it conveniently at home.
+              </p>
+
             </div>
+
           </div>
 
           <div className="service-step">
-            <span>03</span>
+
+            <span>
+              03
+            </span>
+
             <div>
-              <strong>Book support</strong>
-              <p>Get professional installation or service.</p>
+
+              <strong>
+                Book support
+              </strong>
+
+              <p>
+                Get professional installation or service.
+              </p>
+
             </div>
+
           </div>
+
         </div>
+
       </section>
 
-      {/* FINAL CTA */}
+      {/* =====================================================
+          FINAL CTA
+      ===================================================== */}
+
       <section className="accessories-final-cta">
+
         <div>
-          <span className="section-label">ONE SERVICE</span>
+
+          <span className="section-label">
+            NEED ONE SERVICE
+          </span>
 
           <h2>
             Your home.
@@ -399,19 +790,24 @@ function AccessoriesSalesPage() {
           </h2>
 
           <p>
-            From products to professional services, OneService
+            From products to professional services, Need One Service
             keeps everything simple.
           </p>
+
         </div>
 
         <button type="button">
+
           Explore services
+
           <ArrowRight size={18} />
+
         </button>
+
       </section>
+
     </main>
   );
 }
 
 export default AccessoriesSalesPage;
-

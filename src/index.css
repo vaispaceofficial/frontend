@@ -1,3 +1,15 @@
+@font-face {
+  font-family: "Neulis Sans";
+  src: url("./assets/fonts/neulis-sans.otf") format("opentype");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* =========================================
+   GLOBAL RESET
+========================================= */
+
 html,
 body,
 #root {
@@ -8,9 +20,32 @@ body,
   padding: 0;
 }
 
+/* =========================================
+   GLOBAL FONT
+========================================= */
+
+html,
+body,
+#root,
+button,
+input,
+textarea,
+select,
+option {
+  font-family: "Neulis Sans", sans-serif;
+}
+
+/* =========================================
+   HTML
+========================================= */
+
 html {
   scroll-behavior: smooth;
 }
+
+/* =========================================
+   BODY
+========================================= */
 
 body {
   min-height: 100vh;

@@ -214,7 +214,7 @@ function ServiceDetailPage() {
           <section id="benefits" className="detail-section">
 
             <span className="detail-section-label">
-              WHY ONE SERVICE
+              WHY NEED ONE SERVICE
             </span>
 
             <h2>Built around your convenience</h2>
@@ -262,7 +262,7 @@ function ServiceDetailPage() {
                 </summary>
 
                 <p>
-                  Yes. ONE SERVICE connects you with a
+                  Yes. NEED ONE SERVICE connects you with a
                   professional who can provide the service
                   at your selected location.
                 </p>

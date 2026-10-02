@@ -14,7 +14,7 @@ function ContactPage() {
 
         <h1>
           We're here to help.
-          <span> Contact ONE SERVICE.</span>
+          <span> Contact NEED ONE SERVICE.</span>
         </h1>
 
         <p>
@@ -40,12 +40,12 @@ function ContactPage() {
 
             <div>
               <span>OUR LOCATION</span>
-              <h2>ONE SERVICE Headquarters</h2>
+              <h2>Headquarters</h2>
             </div>
           </div>
 
           <div className="contact-address">
-            <strong>ONE SERVICE</strong>
+            <strong>NEED ONE SERVICE</strong>
 
             <p>
               Headquarters Address
@@ -62,7 +62,7 @@ function ContactPage() {
             <div className="map-placeholder">
               <MapPin size={26} />
 
-              <strong>ONE SERVICE Headquarters</strong>
+              <strong>NEED ONE SERVICE Headquarters</strong>
 
               <span>Location map</span>
             </div>
@@ -147,7 +147,7 @@ function ContactPage() {
         <div>
           <span>NEED A SERVICE?</span>
 
-          <h2>Let ONE SERVICE take care of it.</h2>
+          <h2>Let NEED ONE SERVICE take care of it.</h2>
         </div>
 
         <Link to="/#services" className="contact-services-button">

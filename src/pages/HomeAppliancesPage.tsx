@@ -107,7 +107,7 @@ function HomeAppliancesPage() {
               Home
             </Link>
 
-            <span className="category-eyebrow">HOME SERVICES</span>
+            <span className="category-eyebrow">NEED ONE SERVICE</span>
 
             <h1>
               Home <span>Appliances</span>

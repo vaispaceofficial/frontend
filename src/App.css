@@ -1,7 +1,14 @@
-@import "@fontsource/inter/400.css";
-@import "@fontsource/inter/500.css";
-@import "@fontsource/inter/600.css";
-@import "@fontsource/inter/700.css";
+/* =========================================
+   NEULIS SANS
+========================================= */
+
+@font-face {
+  font-family: "Neulis Sans";
+  src: url("./assets/fonts/neulis-sans.otf") format("opentype");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
 
 /* =========================================
    ROOT

@@ -31,7 +31,7 @@ function LoginPage() {
 
                 <div className="video-top-row">
                   <span className="video-brand-label">
-                    ONE SERVICE
+                    NEED ONE SERVICE
                   </span>
 
                   <span className="video-status">
@@ -57,12 +57,12 @@ function LoginPage() {
                   <h2>
                     Everything your home needs.
                     <br />
-                    <span>In one service.</span>
+                    <span>In need one service.</span>
                   </h2>
 
                   <p>
                     From everyday essentials to trusted professionals,
-                    ONE SERVICE brings everything your home needs
+                    NEED ONE SERVICE brings everything your home needs
                     together in one simple experience.
                   </p>
 
@@ -120,7 +120,7 @@ function LoginPage() {
                 </div>
 
                 <span className="login-eyebrow">
-                  ONE SERVICE ACCOUNT
+                  NEED ONE SERVICE ACCOUNT
                 </span>
 
                 <h1>
@@ -129,7 +129,7 @@ function LoginPage() {
 
                 <p className="login-description">
                   Login with your mobile number to continue
-                  to ONE SERVICE.
+                  to NEED ONE SERVICE.
                 </p>
 
               </div>
@@ -184,7 +184,7 @@ function LoginPage() {
 
               <div className="login-note">
                 <span>
-                  By continuing, you agree to the ONE SERVICE
+                  By continuing, you agree to the NEED ONE SERVICE
                   terms and privacy policy.
                 </span>
               </div>
@@ -200,7 +200,7 @@ function LoginPage() {
             </Link>
 
             <div className="login-footer">
-              <span>© ONE SERVICE</span>
+              <span>© NEED ONE SERVICE</span>
               <span className="footer-dot" />
               <span>Secure access</span>
             </div>

@@ -36,10 +36,13 @@ import ProfessionalRegisterPage from "./pages/ProfessionalRegisterPage";
 ========================================================= */
 
 const heroImages = [
-  "/images/hero/acrepair.png",
-  "/images/hero/plumber.png",
-  "/images/hero/electrician.png",
-  "/images/hero/washingmachine.png",
+  "/images/hero/AC.webp",
+  "/images/hero/Electrician.webp",
+  "/images/hero/Microwave.webp",
+  "/images/hero/Plumbing.webp",
+  "/images/hero/Refrigerator.webp",
+  "/images/hero/WashingMachine.webp",
+  "/images/hero/Waterpurifier.webp",
 ];
 
 /* =========================================================
@@ -209,7 +212,7 @@ function Navbar() {
         <Link className="logo" to="/">
           <img
             src="/images/logo.png"
-            alt="ONE SERVICE logo"
+            alt="NEED ONE SERVICE logo"
             className="logo-image"
           />
         </Link>
@@ -439,7 +442,7 @@ function HomePage() {
               <img
                 key={image}
                 src={image}
-                alt="ONE SERVICE home service"
+                alt="NEED ONE SERVICE home service"
                 className={`hero-bg-image ${
                   index === currentImage ? "active" : ""
                 }`}
@@ -465,7 +468,7 @@ function HomePage() {
               </h1>
 
               <p>
-                From everyday repairs to complete home maintenance, ONE SERVICE
+                From everyday repairs to complete home maintenance, NEED ONE SERVICE
                 connects you with trusted professionals for reliable, convenient
                 and hassle-free home services.
               </p>

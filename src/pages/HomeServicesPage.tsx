@@ -118,7 +118,7 @@ function HomeServicesPage() {
             </Link>
 
             <span className="category-eyebrow">
-              HOME SERVICES
+              NEED ONE SERVICE
             </span>
 
             <h1>

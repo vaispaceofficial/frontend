@@ -122,7 +122,7 @@ function HomeStaffPage() {
             </Link>
 
             <span className="category-eyebrow">
-              HOME STAFF
+              NEED ONE SERVICE
             </span>
 
             <h1>
