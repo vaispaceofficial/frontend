@@ -603,7 +603,7 @@ function HomePage() {
             <article className="service-card">
               <div className="service-image">
                 <img
-                  src="/images/services/homeappliances.png"
+                  src="/images/services/homeappliances.webp"
                   alt="Home appliances"
                 />
               </div>
@@ -636,7 +636,7 @@ function HomePage() {
 
             <article className="service-card">
               <div className="service-image">
-                <img src="/images/services/repairs.png" alt="Home services" />
+                <img src="/images/services/HomeServices.webp" alt="Home services" />
               </div>
 
               <div className="service-card-content">
@@ -663,7 +663,7 @@ function HomePage() {
             <article className="service-card">
               <div className="service-image">
                 <img
-                  src="/images/services/beauty.png"
+                  src="/images/services/PersonalServices.webp"
                   alt="Personal services"
                 />
               </div>
@@ -693,7 +693,7 @@ function HomePage() {
 
             <article className="service-card">
               <div className="service-image">
-                <img src="/images/services/personal.png" alt="Home staff" />
+                <img src="/images/services/homestaff.webp" alt="Home staff" />
               </div>
 
               <div className="service-card-content">
