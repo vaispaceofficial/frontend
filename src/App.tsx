@@ -30,6 +30,8 @@ import AMCPage from "./pages/AMCPage";
 import AccessoriesSalesPage from "./pages/AccessoriesSalesPage";
 import RegisterPage from "./pages/RegisterPage";
 import ProfessionalRegisterPage from "./pages/ProfessionalRegisterPage";
+import AccessoriesProductsPage from "./pages/AccessoriesProductsPage";
+import ProductDetailsPage from "./pages/ProductDetailsPage";
 
 /* =========================================================
    HERO IMAGES
@@ -468,9 +470,9 @@ function HomePage() {
               </h1>
 
               <p>
-                From everyday repairs to complete home maintenance, NEED ONE SERVICE
-                connects you with trusted professionals for reliable, convenient
-                and hassle-free home services.
+                From everyday repairs to complete home maintenance, NEED ONE
+                SERVICE connects you with trusted professionals for reliable,
+                convenient and hassle-free home services.
               </p>
 
               <div className="hero-buttons">
@@ -739,6 +741,21 @@ function App() {
         <Route path="/amc" element={<AMCPage />} />
 
         <Route path="/accessories-sales" element={<AccessoriesSalesPage />} />
+
+        <Route
+          path="/accessories-sales/products"
+          element={<AccessoriesProductsPage />}
+        />
+
+        <Route
+          path="/accessories-sales/products/:productId"
+          element={<ProductDetailsPage />}
+        />
+
+        <Route
+          path="/accessories/:categorySlug"
+          element={<AccessoriesProductsPage />}
+        />
 
         <Route path="/register" element={<RegisterPage />} />
 
