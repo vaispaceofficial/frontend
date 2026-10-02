@@ -349,7 +349,7 @@ function Navbar() {
           </Link>
 
           <Link to="/register-professional" className="professional-link">
-            Register as Professional
+            Join as a Partner
           </Link>
         </nav>
 
