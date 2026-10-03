@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
+
 import {
   Search,
   ShoppingCart,
@@ -9,141 +10,12 @@ import {
   ArrowRight,
 } from "lucide-react";
 
+import {
+  accessoryCategories,
+  accessoryProducts,
+} from "../data/accessoriesProducts";
+
 import "./AccessoriesProductsPage.css";
-
-const categories = [
-  {
-    name: "All Products",
-    slug: "all",
-  },
-  {
-    name: "AC Accessories",
-    slug: "ac-accessories",
-  },
-  {
-    name: "Washing Machine Accessories",
-    slug: "washing-machine-accessories",
-  },
-  {
-    name: "Refrigerator Accessories",
-    slug: "refrigerator-accessories",
-  },
-  {
-    name: "TV Accessories",
-    slug: "tv-accessories",
-  },
-  {
-    name: "Kitchen Appliances",
-    slug: "kitchen-appliances",
-  },
-  {
-    name: "Electrical Accessories",
-    slug: "electrical-accessories",
-  },
-  {
-    name: "Other Accessories",
-    slug: "other-accessories",
-  },
-];
-
-const products = [
-  {
-    id: 1,
-    name: "Universal AC Remote",
-    category: "AC Accessories",
-    categorySlug: "ac-accessories",
-    price: 499,
-    oldPrice: 699,
-    image: "📱",
-    rating: 4.4,
-    reviews: 128,
-    badge: "Popular",
-  },
-  {
-    id: 2,
-    name: "AC Dust Filter",
-    category: "AC Accessories",
-    categorySlug: "ac-accessories",
-    price: 349,
-    oldPrice: 499,
-    image: "❄️",
-    rating: 4.2,
-    reviews: 84,
-    badge: "New",
-  },
-  {
-    id: 3,
-    name: "Washing Machine Cover",
-    category: "Washing Machine Accessories",
-    categorySlug: "washing-machine-accessories",
-    price: 599,
-    oldPrice: 799,
-    image: "🫧",
-    rating: 4.5,
-    reviews: 96,
-    badge: "Popular",
-  },
-  {
-    id: 4,
-    name: "Universal TV Remote",
-    category: "TV Accessories",
-    categorySlug: "tv-accessories",
-    price: 299,
-    oldPrice: 399,
-    image: "📺",
-    rating: 4.1,
-    reviews: 62,
-    badge: "",
-  },
-  {
-    id: 5,
-    name: "Refrigerator Mat",
-    category: "Refrigerator Accessories",
-    categorySlug: "refrigerator-accessories",
-    price: 399,
-    oldPrice: 549,
-    image: "🧊",
-    rating: 4.3,
-    reviews: 71,
-    badge: "New",
-  },
-  {
-    id: 6,
-    name: "HDMI Cable",
-    category: "Electrical Accessories",
-    categorySlug: "electrical-accessories",
-    price: 449,
-    oldPrice: 599,
-    image: "🔌",
-    rating: 4.6,
-    reviews: 143,
-    badge: "",
-  },
-  {
-    id: 7,
-    name: "AC Installation Stand",
-    category: "AC Accessories",
-    categorySlug: "ac-accessories",
-    price: 899,
-    oldPrice: 1199,
-    image: "🛠️",
-    rating: 4.5,
-    reviews: 54,
-    badge: "Popular",
-  },
-  {
-    id: 8,
-    name: "Washing Machine Inlet Hose",
-    category: "Washing Machine Accessories",
-    categorySlug: "washing-machine-accessories",
-    price: 299,
-    oldPrice: 449,
-    image: "〰️",
-    rating: 4.2,
-    reviews: 39,
-    badge: "",
-  },
-];
 
 function AccessoriesProductsPage() {
   const { categorySlug } = useParams();
@@ -156,28 +28,37 @@ function AccessoriesProductsPage() {
   const [sort, setSort] = useState("featured");
   const [showFilters, setShowFilters] = useState(false);
 
-  const activeCategory =
-    categorySlug || "all";
+  /*
+   * ============================================================
+   * ACTIVE CATEGORY
+   * ============================================================
+   */
+
+  const activeCategory = categorySlug || "all";
 
   const activeCategoryName =
-    categories.find(
+    accessoryCategories.find(
       (category) => category.slug === activeCategory,
     )?.name || "All Products";
 
+  /*
+   * ============================================================
+   * FILTER + SORT PRODUCTS
+   * ============================================================
+   */
+
   const filteredProducts = useMemo(() => {
-    let result = products.filter((product) => {
+    let result = accessoryProducts.filter((product) => {
       const matchesCategory =
         activeCategory === "all" ||
         product.categorySlug === activeCategory;
 
+      const normalizedSearch = search.trim().toLowerCase();
+
       const matchesSearch =
-        !search.trim() ||
-        product.name
-          .toLowerCase()
-          .includes(search.toLowerCase()) ||
-        product.category
-          .toLowerCase()
-          .includes(search.toLowerCase());
+        !normalizedSearch ||
+        product.name.toLowerCase().includes(normalizedSearch) ||
+        product.category.toLowerCase().includes(normalizedSearch);
 
       return matchesCategory && matchesSearch;
     });
@@ -203,30 +84,46 @@ function AccessoriesProductsPage() {
     return result;
   }, [activeCategory, search, sort]);
 
+  /*
+   * ============================================================
+   * PRODUCT DETAILS URL
+   * ============================================================
+   *
+   * IMPORTANT:
+   * App.tsx uses:
+   *
+   * /accessories-sales/products/:productId
+   *
+   * So every product link must use the same structure.
+   */
+
+  const getProductUrl = (productId: number) =>
+    `/accessories-sales/products/${productId}`;
+
+  /*
+   * ============================================================
+   * RENDER
+   * ============================================================
+   */
+
   return (
     <main className="accessories-products-page">
 
-      {/* =====================================================
+      {/* ========================================================
           TOP SEARCH AREA
-      ===================================================== */}
+      ======================================================== */}
 
       <section className="products-page-top">
 
         <div className="products-page-heading">
+          <span>ACCESSORIES &amp; SALES</span>
 
-          <span>
-            ACCESSORIES &amp; SALES
-          </span>
-
-          <h1>
-            {activeCategoryName}
-          </h1>
+          <h1>{activeCategoryName}</h1>
 
           <p>
-            Explore products, accessories and everyday essentials
-            from OneService.
+            Explore products, accessories and everyday
+            essentials from OneService.
           </p>
-
         </div>
 
         <div className="products-page-search">
@@ -255,15 +152,15 @@ function AccessoriesProductsPage() {
 
       </section>
 
-      {/* =====================================================
+      {/* ========================================================
           SHOPPING CONTENT
-      ===================================================== */}
+      ======================================================== */}
 
       <section className="products-marketplace">
 
-        {/* ===================================================
+        {/* ======================================================
             SIDEBAR
-        =================================================== */}
+        ====================================================== */}
 
         <aside
           className={`products-sidebar ${
@@ -277,7 +174,7 @@ function AccessoriesProductsPage() {
 
           <div className="sidebar-categories">
 
-            {categories.map((category) => (
+            {accessoryCategories.map((category) => (
 
               <Link
                 key={category.slug}
@@ -287,6 +184,7 @@ function AccessoriesProductsPage() {
                     ? "active"
                     : ""
                 }
+                onClick={() => setShowFilters(false)}
               >
                 {category.name}
               </Link>
@@ -297,29 +195,29 @@ function AccessoriesProductsPage() {
 
           <div className="sidebar-divider" />
 
+          {/* DELIVERY */}
+
           <div className="sidebar-filter-section">
 
-            <strong>
-              Delivery
-            </strong>
+            <strong>Delivery</strong>
 
             <label>
               <input type="checkbox" />
-              Fast delivery
+              <span>Fast delivery</span>
             </label>
 
             <label>
               <input type="checkbox" />
-              Installation available
+              <span>Installation available</span>
             </label>
 
           </div>
 
+          {/* CUSTOMER RATING */}
+
           <div className="sidebar-filter-section">
 
-            <strong>
-              Customer rating
-            </strong>
+            <strong>Customer rating</strong>
 
             {[4, 3, 2].map((rating) => (
 
@@ -328,8 +226,14 @@ function AccessoriesProductsPage() {
                 <input type="checkbox" />
 
                 <span className="rating-option">
-                  <Star size={13} fill="currentColor" />
+
+                  <Star
+                    size={13}
+                    fill="currentColor"
+                  />
+
                   {rating}&amp; above
+
                 </span>
 
               </label>
@@ -340,11 +244,13 @@ function AccessoriesProductsPage() {
 
         </aside>
 
-        {/* ===================================================
+        {/* ======================================================
             PRODUCTS AREA
-        =================================================== */}
+        ====================================================== */}
 
         <div className="products-results">
+
+          {/* TOOLBAR */}
 
           <div className="products-results-toolbar">
 
@@ -365,17 +271,13 @@ function AccessoriesProductsPage() {
                 {filteredProducts.length}
               </strong>
 
-              <span>
-                products
-              </span>
+              <span>products</span>
 
             </div>
 
             <div className="sort-control">
 
-              <span>
-                Sort by
-              </span>
+              <span>Sort by</span>
 
               <div className="sort-select">
 
@@ -410,144 +312,189 @@ function AccessoriesProductsPage() {
 
           </div>
 
-          {/* PRODUCT GRID */}
+          {/* ====================================================
+              PRODUCT GRID
+          ==================================================== */}
 
           {filteredProducts.length > 0 ? (
 
             <div className="marketplace-product-grid">
 
-              {filteredProducts.map((product) => (
+              {filteredProducts.map((product) => {
 
-                <article
-                  className="marketplace-product-card"
-                  key={product.id}
-                >
+                const discount = Math.round(
+                  ((product.oldPrice - product.price) /
+                    product.oldPrice) *
+                    100,
+                );
 
-                  <Link
-                    to={`/product/${product.id}`}
-                    className="marketplace-product-image"
+                const productUrl =
+                  getProductUrl(product.id);
+
+                return (
+                  <article
+                    className="marketplace-product-card"
+                    key={product.id}
                   >
 
-                    {product.badge && (
-                      <span className="marketplace-badge">
-                        {product.badge}
-                      </span>
-                    )}
-
-                    <div>
-                      {product.image}
-                    </div>
-
-                  </Link>
-
-                  <div className="marketplace-product-content">
-
-                    <span className="marketplace-category">
-                      {product.category}
-                    </span>
+                    {/* PRODUCT IMAGE */}
 
                     <Link
-                      to={`/product/${product.id}`}
+                      to={productUrl}
+                      className="marketplace-product-image"
                     >
-                      <h2>
-                        {product.name}
-                      </h2>
+
+                      {product.badge && (
+                        <span className="marketplace-badge">
+                          {product.badge}
+                        </span>
+                      )}
+
+                      <div>
+                        {product.image}
+                      </div>
+
                     </Link>
 
-                    {/* RATING */}
+                    {/* PRODUCT CONTENT */}
 
-                    <div className="product-rating">
+                    <div className="marketplace-product-content">
 
-                      <span>
-                        {product.rating}
+                      <span className="marketplace-category">
+                        {product.category}
                       </span>
 
-                      <Star
-                        size={13}
-                        fill="currentColor"
-                      />
+                      {/* PRODUCT TITLE */}
 
-                      <span>
-                        ({product.reviews})
-                      </span>
+                      <Link to={productUrl}>
 
-                    </div>
+                        <h2>
+                          {product.name}
+                        </h2>
 
-                    {/* PRICE */}
-
-                    <div className="marketplace-price">
-
-                      <strong>
-                        ₹{product.price.toLocaleString("en-IN")}
-                      </strong>
-
-                      <span>
-                        ₹{product.oldPrice.toLocaleString("en-IN")}
-                      </span>
-
-                      <em>
-                        {Math.round(
-                          ((product.oldPrice - product.price) /
-                            product.oldPrice) *
-                            100,
-                        )}
-                        % off
-                      </em>
-
-                    </div>
-
-                    <p className="delivery-text">
-                      FREE delivery available
-                    </p>
-
-                    <div className="marketplace-actions">
-
-                      <button
-                        type="button"
-                        className="add-cart-button"
-                      >
-                        <ShoppingCart size={16} />
-                        Add to cart
-                      </button>
-
-                      <Link
-                        to={`/product/${product.id}`}
-                        className="details-button"
-                      >
-                        <ArrowRight size={16} />
                       </Link>
 
+                      {/* RATING */}
+
+                      <div className="product-rating">
+
+                        <span>
+                          {product.rating.toFixed(1)}
+                        </span>
+
+                        <Star
+                          size={13}
+                          fill="currentColor"
+                        />
+
+                        <span>
+                          ({product.reviews})
+                        </span>
+
+                      </div>
+
+                      {/* PRICE */}
+
+                      <div className="marketplace-price">
+
+                        <strong>
+                          ₹
+                          {product.price.toLocaleString(
+                            "en-IN",
+                          )}
+                        </strong>
+
+                        <span>
+                          ₹
+                          {product.oldPrice.toLocaleString(
+                            "en-IN",
+                          )}
+                        </span>
+
+                        <em>
+                          {discount}% off
+                        </em>
+
+                      </div>
+
+                      {/* DELIVERY */}
+
+                      <p className="delivery-text">
+                        FREE delivery available
+                      </p>
+
+                      {/* ACTIONS */}
+
+                      <div className="marketplace-actions">
+
+                        <button
+                          type="button"
+                          className="add-cart-button"
+                          onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+
+                            console.log(
+                              "Add to cart:",
+                              product,
+                            );
+                          }}
+                        >
+                          <ShoppingCart size={16} />
+                          Add to cart
+                        </button>
+
+                        <Link
+                          to={productUrl}
+                          className="details-button"
+                          aria-label={`View ${product.name}`}
+                        >
+                          <ArrowRight size={16} />
+                        </Link>
+
+                      </div>
+
                     </div>
 
-                  </div>
-
-                </article>
-
-              ))}
+                  </article>
+                );
+              })}
 
             </div>
 
           ) : (
 
-            <div className="products-empty">
+            /* ==================================================
+               EMPTY STATE
+            ================================================== */
 
-              <div>
-                🔎
-              </div>
+<div className="products-empty">
 
-              <h2>
-                No products found
-              </h2>
+  <div className="products-empty-icon">
+    ✨
+  </div>
 
-              <p>
-                Try another search or browse a different category.
-              </p>
+  <span className="coming-soon-label">
+    COMING SOON
+  </span>
 
-              <Link to="/accessories/all">
-                View all products
-              </Link>
+  <h2>
+    More Products Are Yet to Come!!
+  </h2>
 
-            </div>
+  <p>
+    We're working on adding more products to this
+    category. Please check back soon.
+  </p>
+
+  <Link
+    to="/accessories/all"
+    className="coming-soon-button"
+  >
+    Browse Available Products
+  </Link>
+
+</div>
 
           )}
 

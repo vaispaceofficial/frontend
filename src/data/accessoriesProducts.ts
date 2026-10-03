@@ -1,351 +1,594 @@
-export type AccessoryProduct = {
+export interface AccessoryCategory {
+  name: string;
+  slug: string;
+}
+
+export interface AccessoryProduct {
   id: number;
   name: string;
   category: string;
   categorySlug: string;
+
   price: number;
   oldPrice: number;
+
+  image: string;
+  images: string[];
+
   rating: number;
   reviews: number;
-  badge?: string;
-  image: string;
-  description: string;
-  inStock: boolean;
-  topPick?: boolean;
-};
 
-export const accessoryCategories = [
+  badge: string;
+
+  description: string;
+
+  highlights: string[];
+
+  specifications: {
+    label: string;
+    value: string;
+  }[];
+
+  inStock: boolean;
+}
+
+export const accessoryCategories: AccessoryCategory[] = [
   {
-    title: "AC Accessories",
+    name: "All Products",
+    slug: "all",
+  },
+  {
+    name: "AC Accessories",
     slug: "ac-accessories",
-    description: "Filters, remotes, stands and more",
-    icon: "❄️",
   },
   {
-    title: "Washing Machine Accessories",
+    name: "Washing Machine Accessories",
     slug: "washing-machine-accessories",
-    description: "Hoses, covers and useful accessories",
-    icon: "🫧",
   },
   {
-    title: "Refrigerator Accessories",
+    name: "Refrigerator Accessories",
     slug: "refrigerator-accessories",
-    description: "Parts and useful refrigerator accessories",
-    icon: "🧊",
   },
   {
-    title: "TV Accessories",
+    name: "TV Accessories",
     slug: "tv-accessories",
-    description: "Remotes, mounts and cables",
-    icon: "📺",
   },
   {
-    title: "Kitchen Appliances",
+    name: "Kitchen Appliances",
     slug: "kitchen-appliances",
-    description: "Useful appliances for your kitchen",
-    icon: "🍳",
   },
   {
-    title: "Electrical Accessories",
+    name: "Electrical Accessories",
     slug: "electrical-accessories",
-    description: "Cables, switches and essentials",
-    icon: "⚡",
   },
   {
-    title: "Other Accessories",
+    name: "Other Accessories",
     slug: "other-accessories",
-    description: "Useful products for everyday needs",
-    icon: "✨",
   },
 ];
 
 export const accessoryProducts: AccessoryProduct[] = [
   {
     id: 1,
+
     name: "Universal AC Remote",
+
     category: "AC Accessories",
+
     categorySlug: "ac-accessories",
+
     price: 499,
+
     oldPrice: 699,
-    rating: 4.5,
-    reviews: 124,
+
+    image: "📱",
+
+    images: [
+      "📱",
+      "❄️",
+      "🔘",
+      "📡",
+      "🛠️",
+    ],
+
+    rating: 4.4,
+
+    reviews: 128,
+
     badge: "Popular",
-    image: "/images/products/universal-ac-remote.jpg",
+
     description:
-      "Universal remote compatible with a wide range of air conditioner models.",
+      "A reliable universal AC remote designed for convenient everyday control. The remote features a clean button layout, easy-to-read controls and broad compatibility with supported air conditioner models.",
+
+    highlights: [
+      "Universal compatibility with supported AC models",
+      "Easy-to-use button layout",
+      "Clear and responsive controls",
+      "Compact and lightweight design",
+      "Suitable for everyday home use",
+      "Simple replacement for a lost or damaged remote",
+    ],
+
+    specifications: [
+      {
+        label: "Product Type",
+        value: "Universal AC Remote",
+      },
+      {
+        label: "Compatibility",
+        value: "Compatible AC models",
+      },
+      {
+        label: "Control Type",
+        value: "Infrared Remote",
+      },
+      {
+        label: "Usage",
+        value: "Home / Office",
+      },
+      {
+        label: "Battery",
+        value: "Requires compatible batteries",
+      },
+      {
+        label: "Colour",
+        value: "White",
+      },
+    ],
+
     inStock: true,
-    topPick: true,
   },
 
   {
     id: 2,
+
     name: "AC Dust Filter",
+
     category: "AC Accessories",
+
     categorySlug: "ac-accessories",
+
     price: 349,
+
     oldPrice: 499,
-    rating: 4.4,
-    reviews: 89,
+
+    image: "❄️",
+
+    images: [
+      "❄️",
+      "🌬️",
+      "🧹",
+      "✨",
+      "🛠️",
+    ],
+
+    rating: 4.2,
+
+    reviews: 84,
+
     badge: "New",
-    image: "/images/products/ac-dust-filter.jpg",
+
     description:
-      "Replacement dust filter designed to help keep your AC airflow clean.",
+      "Replacement AC dust filter designed to help maintain cleaner airflow and support regular air conditioner maintenance.",
+
+    highlights: [
+      "Designed for regular AC maintenance",
+      "Helps reduce dust accumulation",
+      "Easy to clean and maintain",
+      "Lightweight replacement design",
+      "Suitable for regular replacement",
+      "Helps maintain cleaner airflow",
+    ],
+
+    specifications: [
+      {
+        label: "Product Type",
+        value: "AC Dust Filter",
+      },
+      {
+        label: "Material",
+        value: "Filter Mesh",
+      },
+      {
+        label: "Usage",
+        value: "Air Conditioner",
+      },
+      {
+        label: "Maintenance",
+        value: "Washable / Cleanable",
+      },
+      {
+        label: "Installation",
+        value: "Easy replacement",
+      },
+    ],
+
     inStock: true,
-    topPick: true,
   },
 
   {
     id: 3,
-    name: "Universal AC Stand",
-    category: "AC Accessories",
-    categorySlug: "ac-accessories",
-    price: 899,
-    oldPrice: 1199,
-    rating: 4.6,
-    reviews: 76,
+
+    name: "Washing Machine Cover",
+
+    category: "Washing Machine Accessories",
+
+    categorySlug: "washing-machine-accessories",
+
+    price: 599,
+
+    oldPrice: 799,
+
+    image: "🫧",
+
+    images: [
+      "🫧",
+      "🧺",
+      "💧",
+      "🏠",
+      "✨",
+    ],
+
+    rating: 4.5,
+
+    reviews: 96,
+
     badge: "Popular",
-    image: "/images/products/ac-stand.jpg",
+
     description:
-      "Strong and durable stand suitable for common split AC outdoor units.",
+      "Protective washing machine cover designed to help protect your appliance from dust, moisture and everyday environmental exposure.",
+
+    highlights: [
+      "Helps protect against dust",
+      "Helps protect the appliance surface",
+      "Easy to put on and remove",
+      "Suitable for everyday household use",
+      "Lightweight and convenient",
+      "Easy to maintain",
+    ],
+
+    specifications: [
+      {
+        label: "Product Type",
+        value: "Washing Machine Cover",
+      },
+      {
+        label: "Material",
+        value: "Protective Fabric",
+      },
+      {
+        label: "Usage",
+        value: "Washing Machine",
+      },
+      {
+        label: "Design",
+        value: "Full Cover",
+      },
+      {
+        label: "Maintenance",
+        value: "Easy Clean",
+      },
+    ],
+
     inStock: true,
-    topPick: true,
   },
 
   {
     id: 4,
-    name: "AC Copper Pipe Insulation",
-    category: "AC Accessories",
-    categorySlug: "ac-accessories",
-    price: 749,
-    oldPrice: 999,
-    rating: 4.3,
-    reviews: 42,
-    image: "/images/products/ac-pipe.jpg",
+
+    name: "Universal TV Remote",
+
+    category: "TV Accessories",
+
+    categorySlug: "tv-accessories",
+
+    price: 299,
+
+    oldPrice: 399,
+
+    image: "📺",
+
+    images: [
+      "📺",
+      "🔘",
+      "🎛️",
+      "📡",
+      "🛠️",
+    ],
+
+    rating: 4.1,
+
+    reviews: 62,
+
+    badge: "",
+
     description:
-      "Insulated copper pipe accessory suitable for AC installation work.",
+      "Universal replacement TV remote designed for convenient everyday television control with an easy-to-use button arrangement.",
+
+    highlights: [
+      "Universal replacement remote",
+      "Simple button layout",
+      "Easy everyday operation",
+      "Compact design",
+      "Suitable as a replacement remote",
+      "Easy to handle",
+    ],
+
+    specifications: [
+      {
+        label: "Product Type",
+        value: "Universal TV Remote",
+      },
+      {
+        label: "Control Type",
+        value: "Infrared",
+      },
+      {
+        label: "Usage",
+        value: "Television",
+      },
+      {
+        label: "Design",
+        value: "Compact",
+      },
+      {
+        label: "Battery",
+        value: "Requires compatible batteries",
+      },
+    ],
+
     inStock: true,
   },
 
   {
     id: 5,
-    name: "Washing Machine Cover",
-    category: "Washing Machine Accessories",
-    categorySlug: "washing-machine-accessories",
-    price: 599,
-    oldPrice: 799,
-    rating: 4.5,
-    reviews: 156,
-    badge: "Popular",
-    image: "/images/products/washing-machine-cover.jpg",
+
+    name: "Refrigerator Mat",
+
+    category: "Refrigerator Accessories",
+
+    categorySlug: "refrigerator-accessories",
+
+    price: 399,
+
+    oldPrice: 549,
+
+    image: "🧊",
+
+    images: [
+      "🧊",
+      "🥶",
+      "✨",
+      "🏠",
+      "🧽",
+    ],
+
+    rating: 4.3,
+
+    reviews: 71,
+
+    badge: "New",
+
     description:
-      "Protective washing machine cover designed for everyday home use.",
+      "Easy-to-clean refrigerator mat designed to help keep refrigerator shelves protected, clean and organized.",
+
+    highlights: [
+      "Helps protect refrigerator shelves",
+      "Easy to clean",
+      "Helps organize shelf space",
+      "Lightweight design",
+      "Suitable for everyday use",
+      "Simple to install and remove",
+    ],
+
+    specifications: [
+      {
+        label: "Product Type",
+        value: "Refrigerator Mat",
+      },
+      {
+        label: "Material",
+        value: "Protective Mat",
+      },
+      {
+        label: "Usage",
+        value: "Refrigerator Shelf",
+      },
+      {
+        label: "Maintenance",
+        value: "Easy Clean",
+      },
+    ],
+
     inStock: true,
-    topPick: true,
   },
 
   {
     id: 6,
-    name: "Washing Machine Inlet Hose",
-    category: "Washing Machine Accessories",
-    categorySlug: "washing-machine-accessories",
-    price: 399,
-    oldPrice: 549,
-    rating: 4.4,
-    reviews: 68,
-    image: "/images/products/washing-machine-hose.jpg",
+
+    name: "HDMI Cable",
+
+    category: "Electrical Accessories",
+
+    categorySlug: "electrical-accessories",
+
+    price: 449,
+
+    oldPrice: 599,
+
+    image: "🔌",
+
+    images: [
+      "🔌",
+      "📺",
+      "💻",
+      "🎮",
+      "🔗",
+    ],
+
+    rating: 4.6,
+
+    reviews: 143,
+
+    badge: "",
+
     description:
-      "Durable inlet hose for compatible washing machine connections.",
+      "High-quality HDMI cable suitable for connecting compatible televisions, monitors, laptops, streaming devices and other equipment.",
+
+    highlights: [
+      "Suitable for compatible HDMI devices",
+      "Useful for TV and monitor connections",
+      "Flexible cable design",
+      "Suitable for home entertainment setups",
+      "Easy plug-and-use connection",
+      "Designed for everyday use",
+    ],
+
+    specifications: [
+      {
+        label: "Product Type",
+        value: "HDMI Cable",
+      },
+      {
+        label: "Connector",
+        value: "HDMI",
+      },
+      {
+        label: "Usage",
+        value: "TV / Monitor / Laptop",
+      },
+      {
+        label: "Cable Type",
+        value: "Digital HDMI",
+      },
+    ],
+
     inStock: true,
   },
 
   {
     id: 7,
-    name: "Washing Machine Drain Hose",
-    category: "Washing Machine Accessories",
-    categorySlug: "washing-machine-accessories",
-    price: 449,
-    oldPrice: 599,
-    rating: 4.3,
-    reviews: 51,
-    image: "/images/products/washing-machine-drain-hose.jpg",
+
+    name: "AC Installation Stand",
+
+    category: "AC Accessories",
+
+    categorySlug: "ac-accessories",
+
+    price: 899,
+
+    oldPrice: 1199,
+
+    image: "🛠️",
+
+    images: [
+      "🛠️",
+      "❄️",
+      "🏠",
+      "🔩",
+      "📐",
+    ],
+
+    rating: 4.5,
+
+    reviews: 54,
+
+    badge: "Popular",
+
     description:
-      "Flexible drain hose suitable for common washing machine models.",
+      "Strong and durable AC installation stand designed to provide stable support for compatible outdoor AC units.",
+
+    highlights: [
+      "Designed for AC outdoor unit support",
+      "Strong support structure",
+      "Suitable for compatible installations",
+      "Designed for stability",
+      "Useful for residential installation",
+      "Professional installation recommended",
+    ],
+
+    specifications: [
+      {
+        label: "Product Type",
+        value: "AC Installation Stand",
+      },
+      {
+        label: "Usage",
+        value: "Outdoor AC Unit",
+      },
+      {
+        label: "Material",
+        value: "Metal",
+      },
+      {
+        label: "Installation",
+        value: "Professional installation recommended",
+      },
+    ],
+
     inStock: true,
   },
 
   {
     id: 8,
-    name: "Refrigerator Storage Mat",
-    category: "Refrigerator Accessories",
-    categorySlug: "refrigerator-accessories",
-    price: 399,
-    oldPrice: 549,
-    rating: 4.5,
-    reviews: 91,
-    badge: "New",
-    image: "/images/products/refrigerator-mat.jpg",
-    description:
-      "Easy-clean refrigerator shelf mat designed for everyday protection.",
-    inStock: true,
-    topPick: true,
-  },
 
-  {
-    id: 9,
-    name: "Refrigerator Handle Cover",
-    category: "Refrigerator Accessories",
-    categorySlug: "refrigerator-accessories",
+    name: "Washing Machine Inlet Hose",
+
+    category: "Washing Machine Accessories",
+
+    categorySlug: "washing-machine-accessories",
+
     price: 299,
+
     oldPrice: 449,
+
+    image: "〰️",
+
+    images: [
+      "〰️",
+      "💧",
+      "🧺",
+      "🔩",
+      "🛠️",
+    ],
+
     rating: 4.2,
-    reviews: 37,
-    image: "/images/products/refrigerator-handle-cover.jpg",
-    description:
-      "Protective handle cover for added comfort and cleanliness.",
-    inStock: true,
-  },
 
-  {
-    id: 10,
-    name: "Universal TV Remote",
-    category: "TV Accessories",
-    categorySlug: "tv-accessories",
-    price: 299,
-    oldPrice: 399,
-    rating: 4.4,
-    reviews: 203,
-    badge: "Popular",
-    image: "/images/products/universal-tv-remote.jpg",
-    description:
-      "Universal replacement remote compatible with many television models.",
-    inStock: true,
-    topPick: true,
-  },
+    reviews: 39,
 
-  {
-    id: 11,
-    name: "HDMI Cable 2 Metre",
-    category: "TV Accessories",
-    categorySlug: "tv-accessories",
-    price: 449,
-    oldPrice: 599,
-    rating: 4.6,
-    reviews: 187,
-    image: "/images/products/hdmi-cable.jpg",
-    description:
-      "High-speed HDMI cable for TVs, streaming devices and compatible equipment.",
-    inStock: true,
-    topPick: true,
-  },
+    badge: "",
 
-  {
-    id: 12,
-    name: "Universal TV Wall Mount",
-    category: "TV Accessories",
-    categorySlug: "tv-accessories",
-    price: 899,
-    oldPrice: 1299,
-    rating: 4.5,
-    reviews: 94,
-    image: "/images/products/tv-wall-mount.jpg",
     description:
-      "Universal wall mount designed for compatible television sizes.",
-    inStock: true,
-  },
+      "Replacement washing machine inlet hose designed for reliable water connection and convenient appliance installation.",
 
-  {
-    id: 13,
-    name: "Electric Kettle",
-    category: "Kitchen Appliances",
-    categorySlug: "kitchen-appliances",
-    price: 999,
-    oldPrice: 1499,
-    rating: 4.5,
-    reviews: 118,
-    badge: "Popular",
-    image: "/images/products/electric-kettle.jpg",
-    description:
-      "Compact electric kettle suitable for everyday kitchen use.",
-    inStock: true,
-    topPick: true,
-  },
+    highlights: [
+      "Replacement inlet hose",
+      "Suitable for compatible washing machines",
+      "Designed for water connection",
+      "Flexible construction",
+      "Easy to replace",
+      "Suitable for home appliance maintenance",
+    ],
 
-  {
-    id: 14,
-    name: "Mixer Grinder",
-    category: "Kitchen Appliances",
-    categorySlug: "kitchen-appliances",
-    price: 2499,
-    oldPrice: 3299,
-    rating: 4.4,
-    reviews: 87,
-    image: "/images/products/mixer-grinder.jpg",
-    description:
-      "Multi-purpose mixer grinder for everyday kitchen preparation.",
-    inStock: true,
-  },
+    specifications: [
+      {
+        label: "Product Type",
+        value: "Washing Machine Inlet Hose",
+      },
+      {
+        label: "Usage",
+        value: "Washing Machine",
+      },
+      {
+        label: "Connection",
+        value: "Compatible Water Inlet",
+      },
+      {
+        label: "Installation",
+        value: "Easy replacement",
+      },
+    ],
 
-  {
-    id: 15,
-    name: "Extension Board",
-    category: "Electrical Accessories",
-    categorySlug: "electrical-accessories",
-    price: 699,
-    oldPrice: 899,
-    rating: 4.5,
-    reviews: 142,
-    badge: "Popular",
-    image: "/images/products/extension-board.jpg",
-    description:
-      "Multi-socket extension board for everyday home electrical use.",
-    inStock: true,
-    topPick: true,
-  },
-
-  {
-    id: 16,
-    name: "USB Charging Cable",
-    category: "Electrical Accessories",
-    categorySlug: "electrical-accessories",
-    price: 249,
-    oldPrice: 399,
-    rating: 4.3,
-    reviews: 214,
-    image: "/images/products/usb-cable.jpg",
-    description:
-      "Durable charging cable for compatible devices.",
-    inStock: true,
-  },
-
-  {
-    id: 17,
-    name: "LED Night Lamp",
-    category: "Other Accessories",
-    categorySlug: "other-accessories",
-    price: 349,
-    oldPrice: 499,
-    rating: 4.4,
-    reviews: 73,
-    badge: "New",
-    image: "/images/products/led-night-lamp.jpg",
-    description:
-      "Compact LED night lamp for bedrooms, hallways and everyday use.",
-    inStock: true,
-    topPick: true,
-  },
-
-  {
-    id: 18,
-    name: "Universal Appliance Cleaning Kit",
-    category: "Other Accessories",
-    categorySlug: "other-accessories",
-    price: 599,
-    oldPrice: 799,
-    rating: 4.2,
-    reviews: 46,
-    image: "/images/products/appliance-cleaning-kit.jpg",
-    description:
-      "Cleaning accessories for maintaining common household appliances.",
     inStock: true,
   },
 ];
