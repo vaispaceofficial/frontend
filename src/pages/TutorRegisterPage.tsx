@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { ChangeEvent, FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   ArrowRight,
   Check,
@@ -152,7 +152,6 @@ const initialForm: TutorFormData = {
 const inputClass = "tutor-input";
 
 export default function TutorRegisterPage() {
-  const navigate = useNavigate();
 
   const [formData, setFormData] = useState<TutorFormData>(initialForm);
   const [showPassword, setShowPassword] = useState(false);
