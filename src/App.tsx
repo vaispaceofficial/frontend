@@ -30,6 +30,10 @@ import AMCPage from "./pages/AMCPage";
 import AccessoriesSalesPage from "./pages/AccessoriesSalesPage";
 import RegisterPage from "./pages/RegisterPage";
 import ProfessionalRegisterPage from "./pages/ProfessionalRegisterPage";
+import PartnerRegisterPage from "./pages/PartnerRegisterPage";
+import VendorRegisterPage from "./pages/VendorRegisterPage";
+import StudentRegisterPage from "./pages/StudentRegisterPage";
+import TutorRegisterPage from "./pages/TutorRegisterPage";
 import AccessoriesProductsPage from "./pages/AccessoriesProductsPage";
 import ProductDetailsPage from "./pages/ProductDetailsPage";
 
@@ -157,20 +161,30 @@ function Navbar() {
   const [servicesOpen, setServicesOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
 
+  const [networkOpen, setNetworkOpen] = useState(false);
+
   const servicesRef = useRef<HTMLDivElement>(null);
+  const networkRef = useRef<HTMLDivElement>(null);
 
   /* =================================================
-     CLOSE DROPDOWN WHEN CLICKING OUTSIDE
+     CLOSE DROPDOWNS WHEN CLICKING OUTSIDE
   ================================================= */
 
   useEffect(() => {
     const handleOutsideClick = (event: MouseEvent) => {
-      if (
-        servicesRef.current &&
-        !servicesRef.current.contains(event.target as Node)
-      ) {
+      const target = event.target as Node;
+
+      /* CLOSE SERVICES */
+
+      if (servicesRef.current && !servicesRef.current.contains(target)) {
         setServicesOpen(false);
         setSelectedCategory(null);
+      }
+
+      /* CLOSE NETWORK */
+
+      if (networkRef.current && !networkRef.current.contains(target)) {
+        setNetworkOpen(false);
       }
     };
 
@@ -181,27 +195,69 @@ function Navbar() {
     };
   }, []);
 
+  /* =================================================
+     SELECTED SERVICE CATEGORY
+  ================================================= */
+
   const selectedCategoryData =
     selectedCategory !== null ? serviceCategories[selectedCategory] : null;
 
   /* =================================================
-     TOGGLE SERVICES DROPDOWN
+     TOGGLE SERVICES
   ================================================= */
 
   const toggleServices = () => {
-    setServicesOpen((current) => !current);
+    setServicesOpen((current) => {
+      const nextState = !current;
 
+      /* If Services is opening, close Network */
+      if (nextState) {
+        setNetworkOpen(false);
+      }
+
+      return nextState;
+    });
+
+    /* If Services is closing, clear category */
     if (servicesOpen) {
       setSelectedCategory(null);
     }
   };
 
   /* =================================================
-     SELECT CATEGORY
+     SELECT SERVICE CATEGORY
   ================================================= */
 
   const selectCategory = (index: number) => {
     setSelectedCategory((current) => (current === index ? null : index));
+  };
+
+  /* =================================================
+     TOGGLE NETWORK
+  ================================================= */
+
+  const toggleNetwork = () => {
+    setNetworkOpen((current) => {
+      const nextState = !current;
+
+      /* If Network is opening, close Services */
+      if (nextState) {
+        setServicesOpen(false);
+        setSelectedCategory(null);
+      }
+
+      return nextState;
+    });
+  };
+
+  /* =================================================
+     CLOSE ALL DROPDOWNS
+  ================================================= */
+
+  const closeDropdowns = () => {
+    setServicesOpen(false);
+    setSelectedCategory(null);
+    setNetworkOpen(false);
   };
 
   return (
@@ -211,7 +267,7 @@ function Navbar() {
             LOGO
         ================================================= */}
 
-        <Link className="logo" to="/">
+        <Link className="logo" to="/" onClick={closeDropdowns}>
           <img
             src="/images/logo.png"
             alt="NEED ONE SERVICE logo"
@@ -224,7 +280,9 @@ function Navbar() {
         ================================================= */}
 
         <nav className="nav-links">
-          {/* SERVICES */}
+          {/* =================================================
+              SERVICES
+          ================================================= */}
 
           <div className="services-nav-wrapper" ref={servicesRef}>
             <button
@@ -293,10 +351,7 @@ function Navbar() {
                               key={service.slug}
                               to={`/services/${service.slug}`}
                               className="service-submenu-item"
-                              onClick={() => {
-                                setServicesOpen(false);
-                                setSelectedCategory(null);
-                              }}
+                              onClick={closeDropdowns}
                             >
                               <span>{service.name}</span>
 
@@ -323,34 +378,160 @@ function Navbar() {
           </div>
 
           {/* =================================================
-              OTHER NAV ITEMS
+              AMC
           ================================================= */}
 
-          <Link
-            to="/amc"
-            onClick={() => {
-              setServicesOpen(false);
-              setSelectedCategory(null);
-            }}
-          >
+          <Link to="/amc" onClick={closeDropdowns}>
             AMC
           </Link>
 
-          <Link to="/accessories-sales">Accessories &amp; Sales</Link>
+          {/* =================================================
+              ACCESSORIES & SALES
+          ================================================= */}
 
-          <Link
-            to="/contact"
-            onClick={() => {
-              setServicesOpen(false);
-              setSelectedCategory(null);
-            }}
-          >
+          <Link to="/accessories-sales" onClick={closeDropdowns}>
+            Accessories &amp; Sales
+          </Link>
+
+          {/* =================================================
+              CONTACT
+          ================================================= */}
+
+          <Link to="/contact" onClick={closeDropdowns}>
             Contact
           </Link>
 
-          <Link to="/register-professional" className="professional-link">
-            Join as a Partner
-          </Link>
+          {/* =================================================
+              JOIN OUR NETWORK
+          ================================================= */}
+
+          <div className="network-nav-wrapper" ref={networkRef}>
+            {/* NETWORK BUTTON */}
+
+            <button
+              type="button"
+              className={`network-nav-button ${networkOpen ? "active" : ""}`}
+              onClick={toggleNetwork}
+            >
+              <span>Join Our Network</span>
+
+              <ChevronDown size={14} className={networkOpen ? "open" : ""} />
+            </button>
+
+            {/* =================================================
+                NETWORK DROPDOWN
+
+                IMPORTANT:
+                This is rendered ONLY when networkOpen === true.
+                Therefore it cannot open through hover.
+            ================================================= */}
+
+            {networkOpen && (
+              <div className="network-dropdown">
+                {/* HEADER */}
+
+                <div className="network-dropdown-header">
+                  <span>JOIN OUR NETWORK</span>
+
+                  <strong>Choose how you want to grow with us</strong>
+                </div>
+
+                {/* OPTIONS */}
+
+                <div className="network-dropdown-items">
+                  {/* TECHNICIAN */}
+
+                  <Link
+                    to="/register-professional"
+                    className="network-dropdown-item"
+                    onClick={() => setNetworkOpen(false)}
+                  >
+                    <div className="network-item-icon">🔧</div>
+
+                    <div className="network-item-content">
+                      <strong>Join as a Technician</strong>
+
+                      <span>Provide professional home services</span>
+                    </div>
+
+                    <ArrowRight size={15} />
+                  </Link>
+
+                  {/* SERVICE PARTNER */}
+
+                  <Link
+                    to="/register-partner"
+                    className="network-dropdown-item"
+                    onClick={() => setNetworkOpen(false)}
+                  >
+                    <div className="network-item-icon">🤝</div>
+
+                    <div className="network-item-content">
+                      <strong>Join as a Service Partner</strong>
+
+                      <span>Grow your service business with us</span>
+                    </div>
+
+                    <ArrowRight size={15} />
+                  </Link>
+
+                  {/* VENDOR */}
+
+                  <Link
+                    to="/register-vendor"
+                    className="network-dropdown-item"
+                    onClick={() => setNetworkOpen(false)}
+                  >
+                    <div className="network-item-icon">🏪</div>
+
+                    <div className="network-item-content">
+                      <strong>Join as a Vendor</strong>
+
+                      <span>Sell products and accessories</span>
+                    </div>
+
+                    <ArrowRight size={15} />
+                  </Link>
+
+                  {/* STUDENT */}
+
+                  <Link
+                    to="/register-student"
+                    className="network-dropdown-item"
+                    onClick={() => setNetworkOpen(false)}
+                  >
+                    <div className="network-item-icon">🎓</div>
+
+                    <div className="network-item-content">
+                      <strong>Join as a Student</strong>
+
+                      <span>Learn, train and build your skills</span>
+                    </div>
+
+                    <ArrowRight size={15} />
+                  </Link>
+
+                  {/* TUTOR */}
+
+                  <Link
+                    to="/register-tutor"
+                    className="network-dropdown-item"
+                    onClick={() => setNetworkOpen(false)}
+                  >
+                    <div className="network-item-icon">📚</div>
+
+                    <div className="network-item-content">
+                      <strong>Join as a Tutor</strong>
+
+                      <span>Share your knowledge and teach others</span>
+                    </div>
+
+                    <ArrowRight size={15} />
+                  </Link>
+                </div>
+              </div>
+            )}
+          </div>
         </nav>
 
         {/* =================================================
@@ -362,7 +543,7 @@ function Navbar() {
             <Search size={20} />
           </button>
 
-          <Link to="/login" className="login-button">
+          <Link to="/login" className="login-button" onClick={closeDropdowns}>
             <UserRound size={18} />
 
             <span>Login</span>
@@ -412,7 +593,7 @@ function HomePage() {
   }, []);
 
   /* =================================================
-     PREVIOUS
+     PREVIOUS IMAGE
   ================================================= */
 
   const previousImage = () => {
@@ -422,7 +603,7 @@ function HomePage() {
   };
 
   /* =================================================
-     NEXT
+     NEXT IMAGE
   ================================================= */
 
   const nextImage = () => {
@@ -530,6 +711,7 @@ function HomePage() {
 
             <div>
               <strong>Verified</strong>
+
               <span>Professionals</span>
             </div>
           </div>
@@ -539,6 +721,7 @@ function HomePage() {
 
             <div>
               <strong>Transparent</strong>
+
               <span>Pricing</span>
             </div>
           </div>
@@ -548,6 +731,7 @@ function HomePage() {
 
             <div>
               <strong>Managed</strong>
+
               <span>Service</span>
             </div>
           </div>
@@ -557,6 +741,7 @@ function HomePage() {
 
             <div>
               <strong>Warranty</strong>
+
               <span>Support</span>
             </div>
           </div>
@@ -566,6 +751,7 @@ function HomePage() {
 
             <div>
               <strong>Easy</strong>
+
               <span>Payments</span>
             </div>
           </div>
@@ -596,9 +782,7 @@ function HomePage() {
           ================================================= */}
 
           <div className="service-cards">
-            {/* =================================================
-                HOME APPLIANCES
-            ================================================= */}
+            {/* HOME APPLIANCES */}
 
             <article className="service-card">
               <div className="service-image">
@@ -630,13 +814,14 @@ function HomePage() {
               </div>
             </article>
 
-            {/* =================================================
-                HOME SERVICES
-            ================================================= */}
+            {/* HOME SERVICES */}
 
             <article className="service-card">
               <div className="service-image">
-                <img src="/images/services/HomeServices.webp" alt="Home services" />
+                <img
+                  src="/images/services/HomeServices.webp"
+                  alt="Home services"
+                />
               </div>
 
               <div className="service-card-content">
@@ -656,9 +841,7 @@ function HomePage() {
               </div>
             </article>
 
-            {/* =================================================
-                PERSONAL SERVICES
-            ================================================= */}
+            {/* PERSONAL SERVICES */}
 
             <article className="service-card">
               <div className="service-image">
@@ -687,9 +870,7 @@ function HomePage() {
               </div>
             </article>
 
-            {/* =================================================
-                HOME STAFF
-            ================================================= */}
+            {/* HOME STAFF */}
 
             <article className="service-card">
               <div className="service-image">
@@ -738,7 +919,11 @@ function App() {
 
         <Route path="/services" element={<ServicesPage />} />
 
+        {/* AMC */}
+
         <Route path="/amc" element={<AMCPage />} />
+
+        {/* ACCESSORIES */}
 
         <Route path="/accessories-sales" element={<AccessoriesSalesPage />} />
 
@@ -757,6 +942,8 @@ function App() {
           element={<AccessoriesProductsPage />}
         />
 
+        {/* REGISTRATION */}
+
         <Route path="/register" element={<RegisterPage />} />
 
         <Route
@@ -764,7 +951,15 @@ function App() {
           element={<ProfessionalRegisterPage />}
         />
 
-        {/* CATEGORY PAGES */}
+        <Route path="/register-partner" element={<PartnerRegisterPage />} />
+
+        <Route path="/register-vendor" element={<VendorRegisterPage />} />
+
+        <Route path="/register-student" element={<StudentRegisterPage />} />
+
+        <Route path="/register-tutor" element={<TutorRegisterPage />} />
+
+        {/* SERVICE CATEGORY PAGES */}
 
         <Route
           path="/services/home-appliances"

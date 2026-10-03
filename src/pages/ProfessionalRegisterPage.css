@@ -1,301 +1,481 @@
 /* =========================================================
-   PROFESSIONAL REGISTER PAGE
+   ONE SERVICE
+   PROFESSIONAL / TECHNICIAN REGISTRATION
 ========================================================= */
 
 .professional-register-page {
-  min-height: calc(100dvh - 72px);
-  background: #f6f8fb;
+  width: 100%;
+  min-height: 100vh;
+
+  background: #f5f8fc;
   color: #172033;
-  padding: 42px 24px 56px;
-}
 
-.professional-register-container {
-  width: min(1080px, 100%);
-  margin: 0 auto;
-}
+  font-family: "Neulis Sans", sans-serif;
 
+  overflow-x: hidden;
+}
 
 /* =========================================================
    HEADER
 ========================================================= */
 
 .professional-register-header {
+  width: 100%;
+  background: #ffffff;
+  border-bottom: 1px solid #e5ebf1;
+}
+
+.professional-register-header-inner {
+  width: min(1180px, calc(100% - 48px));
+  margin: 0 auto;
+
+  min-height: 190px;
+
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 58px;
+
+  gap: 40px;
 }
 
-.professional-register-logo {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
+.professional-eyebrow {
+  display: inline-block;
 
-  color: #172033;
-  text-decoration: none;
+  margin-bottom: 12px;
 
-  font-size: 20px;
-  font-weight: 700;
-  letter-spacing: -0.4px;
+  color: #3b82f6;
+
+  font-size: 10px;
+  font-weight: 800;
+
+  letter-spacing: 1.8px;
+  text-transform: uppercase;
 }
 
-.professional-register-logo-mark {
-  width: 34px;
-  height: 34px;
+.professional-register-header h1 {
+  margin: 0;
 
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  color: #102b4e;
 
-  border-radius: 9px;
-
-  background: #2563eb;
-  color: #ffffff;
-
-  font-size: 18px;
-  font-weight: 700;
+  font-size: clamp(28px, 4vw, 42px);
+  line-height: 1.12;
+  font-weight: 600;
+  letter-spacing: -1.2px;
 }
 
-.professional-header-login {
+.professional-register-header p {
+  max-width: 640px;
+
+  margin: 13px 0 0;
+
+  color: #718096;
+
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.professional-login-link {
+  flex-shrink: 0;
+
   display: flex;
   align-items: center;
   gap: 8px;
 
-  font-size: 14px;
-  color: #64748b;
+  color: #7a8797;
+
+  font-size: 12px;
 }
 
-.professional-header-login a {
+.professional-login-link a {
   color: #2563eb;
+  font-weight: 700;
+
   text-decoration: none;
-  font-weight: 600;
 }
 
-.professional-header-login a:hover {
+.professional-login-link a:hover {
   text-decoration: underline;
 }
 
-
 /* =========================================================
-   INTRO
+   CONTENT
 ========================================================= */
 
-.professional-register-intro {
-  max-width: 700px;
-  margin: 0 auto 34px;
-  text-align: center;
+.professional-register-content {
+  width: min(1060px, calc(100% - 48px));
+
+  margin: 0 auto;
+
+  padding: 42px 0 80px;
 }
-
-.professional-register-eyebrow {
-  display: inline-block;
-
-  margin-bottom: 14px;
-
-  color: #2563eb;
-
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 1.7px;
-}
-
-.professional-register-intro h1 {
-  margin: 0;
-
-  color: #172033;
-
-  font-size: clamp(30px, 4vw, 42px);
-  line-height: 1.12;
-  letter-spacing: -1.5px;
-  font-weight: 700;
-}
-
-.professional-register-intro p {
-  max-width: 570px;
-
-  margin: 15px auto 0;
-
-  color: #64748b;
-
-  font-size: 15px;
-  line-height: 1.7;
-}
-
 
 /* =========================================================
    PROGRESS
 ========================================================= */
 
 .professional-progress {
-  width: min(640px, 100%);
-  margin: 0 auto 34px;
+  width: 100%;
 
   display: flex;
   align-items: center;
-  justify-content: center;
+
+  margin-bottom: 32px;
 }
 
-.professional-progress-step {
+.professional-progress-item {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 10px;
 
-  color: #94a3b8;
-
-  font-size: 13px;
-  font-weight: 600;
-
-  white-space: nowrap;
+  flex-shrink: 0;
 }
 
-.professional-progress-step span {
-  width: 28px;
-  height: 28px;
+.professional-progress-item > span {
+  width: 34px;
+  height: 34px;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  border: 1px solid #dbe2ea;
+  border: 1px solid #d8e0e8;
   border-radius: 50%;
 
   background: #ffffff;
 
-  font-size: 11px;
+  color: #98a5b5;
+
+  font-size: 10px;
+  font-weight: 800;
 }
 
-.professional-progress-step.active {
-  color: #2563eb;
-}
-
-.professional-progress-step.active span {
+.professional-progress-item.active > span {
   border-color: #2563eb;
   background: #2563eb;
   color: #ffffff;
 }
 
+.professional-progress-item strong {
+  display: block;
+
+  color: #344d68;
+
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.professional-progress-item small {
+  display: block;
+
+  margin-top: 2px;
+
+  color: #9aa7b6;
+
+  font-size: 9px;
+}
+
 .professional-progress-line {
-  width: 70px;
   height: 1px;
 
-  margin: 0 14px;
+  flex: 1;
 
-  background: #dbe2ea;
+  min-width: 20px;
+
+  margin: 0 13px;
+
+  background: #dce4ec;
 }
 
+.professional-progress-line.active {
+  background: #9ec5ff;
+}
 
 /* =========================================================
-   FORM CARD
+   FORM
 ========================================================= */
-
-.professional-register-card {
-  background: #ffffff;
-
-  border: 1px solid #e4e9f0;
-  border-radius: 18px;
-
-  box-shadow:
-    0 12px 35px rgba(15, 23, 42, 0.05);
-
-  overflow: hidden;
-}
 
 .professional-register-form {
-  padding: 42px 48px 46px;
+  width: 100%;
 }
 
-
-/* =========================================================
-   FORM SECTION
-========================================================= */
-
 .professional-form-section {
-  width: 100%;
+  margin-bottom: 22px;
+
+  padding: 32px;
+
+  background: #ffffff;
+
+  border: 1px solid #e2e9f0;
+  border-radius: 14px;
+
+  box-shadow: 0 7px 24px rgba(16, 43, 78, 0.045);
 }
 
 .professional-section-heading {
   display: flex;
   align-items: flex-start;
-  gap: 15px;
+  gap: 16px;
 
   margin-bottom: 28px;
+
+  padding-bottom: 20px;
+
+  border-bottom: 1px solid #edf1f5;
 }
 
 .professional-section-number {
-  width: 34px;
-  height: 34px;
-
-  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  border-radius: 8px;
+  border-radius: 9px;
 
   background: #eff6ff;
+
   color: #2563eb;
 
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.professional-section-heading span {
+  display: block;
+
+  margin-bottom: 5px;
+
+  color: #3b82f6;
+
+  font-size: 9px;
+  font-weight: 800;
+
+  letter-spacing: 1.4px;
 }
 
 .professional-section-heading h2 {
-  margin: 0 0 5px;
+  margin: 0;
 
-  color: #172033;
+  color: #102b4e;
 
-  font-size: 18px;
-  font-weight: 700;
-  letter-spacing: -0.3px;
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 1.3;
 }
 
 .professional-section-heading p {
-  margin: 0;
+  margin: 6px 0 0;
 
-  color: #94a3b8;
+  color: #7b8797;
 
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: 11px;
+  line-height: 1.6;
 }
 
-
 /* =========================================================
-   FIELDS
+   GRID
 ========================================================= */
 
-.professional-fields-grid {
+.professional-form-grid {
   display: grid;
+
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 22px 20px;
+
+  gap: 20px 18px;
 }
 
 .professional-field {
   min-width: 0;
+
+  display: flex;
+  flex-direction: column;
 }
 
-.professional-field.full {
+.professional-field.full-width {
   grid-column: 1 / -1;
 }
 
 .professional-field label {
-  display: block;
-
   margin-bottom: 8px;
 
-  color: #334155;
+  color: #344d68;
 
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 700;
 }
 
-.professional-input,
-.professional-textarea {
+.professional-field input,
+.professional-field select,
+.professional-field textarea {
   width: 100%;
 
   box-sizing: border-box;
 
-  border: 1px solid #dce3eb;
-  border-radius: 9px;
+  border: 1px solid #dce4ec;
+  border-radius: 8px;
+
+  background: #ffffff;
+
+  color: #172033;
+
+  font-family: inherit;
+  font-size: 12px;
+
+  outline: none;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+}
+
+.professional-field input,
+.professional-field select {
+  height: 44px;
+
+  padding: 0 13px;
+}
+
+.professional-field textarea {
+  min-height: 105px;
+
+  padding: 12px 13px;
+
+  resize: vertical;
+
+  line-height: 1.6;
+}
+
+.professional-field input::placeholder,
+.professional-field textarea::placeholder {
+  color: #a3afbd;
+}
+
+.professional-field input:focus,
+.professional-field select:focus,
+.professional-field textarea:focus {
+  border-color: #7db2ff;
+
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.09);
+}
+
+.professional-field-help {
+  margin-top: 7px;
+
+  color: #8b98a8;
+
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+/* =========================================================
+   ICON INPUT
+========================================================= */
+
+.professional-input-icon {
+  position: relative;
+
+  width: 100%;
+}
+
+.professional-input-icon > svg {
+  position: absolute;
+
+  left: 13px;
+  top: 50%;
+
+  transform: translateY(-50%);
+
+  color: #8b9aab;
+
+  pointer-events: none;
+}
+
+.professional-input-icon input {
+  padding-left: 39px;
+}
+
+/* =========================================================
+   PHONE
+========================================================= */
+
+.professional-phone-input {
+  height: 44px;
+
+  display: flex;
+  align-items: center;
+
+  border: 1px solid #dce4ec;
+  border-radius: 8px;
+
+  background: #ffffff;
+
+  overflow: hidden;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.professional-phone-input:focus-within {
+  border-color: #7db2ff;
+
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.09);
+}
+
+.professional-phone-input > span {
+  height: 100%;
+
+  display: flex;
+  align-items: center;
+
+  padding: 0 12px;
+
+  border-right: 1px solid #e2e8ef;
+
+  background: #f8fafc;
+
+  color: #5d6c7e;
+
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.professional-phone-input input {
+  height: 100%;
+
+  border: none;
+
+  box-shadow: none;
+
+  outline: none;
+
+  padding: 0 12px;
+
+  flex: 1;
+}
+
+.professional-phone-input input:focus {
+  border: none;
+  box-shadow: none;
+}
+
+/* =========================================================
+   PASSWORD
+========================================================= */
+
+.professional-password-input {
+  height: 44px;
+
+  display: flex;
+  align-items: center;
+
+  padding-left: 13px;
+
+  border: 1px solid #dce4ec;
+  border-radius: 8px;
 
   background: #ffffff;
 
@@ -304,471 +484,1002 @@
     box-shadow 0.2s ease;
 }
 
-.professional-input {
-  min-height: 48px;
+.professional-password-input:focus-within {
+  border-color: #7db2ff;
 
-  display: flex;
-  align-items: center;
-
-  padding: 0 14px;
-
-  color: #94a3b8;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.09);
 }
 
-.professional-input:focus-within,
-.professional-textarea:focus-within {
-  border-color: #2563eb;
-
-  box-shadow:
-    0 0 0 3px rgba(37, 99, 235, 0.08);
-}
-
-.professional-input input,
-.professional-input select {
-  width: 100%;
-
-  min-width: 0;
-
-  border: 0;
-  outline: 0;
-
-  background: transparent;
-
-  color: #172033;
-
-  font-family: inherit;
-  font-size: 14px;
-}
-
-.professional-input input {
-  height: 46px;
-  padding: 0 0 0 11px;
-}
-
-.professional-input select {
-  height: 46px;
-  padding-left: 11px;
-
-  cursor: pointer;
-}
-
-.professional-input input::placeholder,
-.professional-textarea textarea::placeholder {
-  color: #a8b2c0;
-}
-
-.professional-country-code {
-  margin-left: 10px;
-
-  color: #475569;
-
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.professional-country-divider {
-  width: 1px;
-  height: 20px;
-
-  margin: 0 10px;
-
-  background: #dce3eb;
-}
-
-.professional-input input[type="tel"] {
-  padding-left: 0;
-}
-
-
-/* =========================================================
-   TEXTAREA
-========================================================= */
-
-.professional-textarea {
-  padding: 12px 14px;
-}
-
-.professional-textarea textarea {
-  width: 100%;
-
-  border: 0;
-  outline: 0;
-
-  resize: vertical;
-
-  background: transparent;
-
-  color: #172033;
-
-  font-family: inherit;
-  font-size: 14px;
-  line-height: 1.6;
-}
-
-
-/* =========================================================
-   PASSWORD
-========================================================= */
-
-.professional-password-toggle {
-  width: 30px;
-  height: 30px;
-
+.professional-password-input > svg {
   flex-shrink: 0;
+
+  color: #8b9aab;
+}
+
+.professional-password-input input {
+  height: 100%;
+
+  flex: 1;
+
+  padding: 0 10px;
+
+  border: none;
+
+  outline: none;
+
+  box-shadow: none;
+}
+
+.professional-password-input input:focus {
+  border: none;
+  box-shadow: none;
+}
+
+.professional-password-input button {
+  width: 42px;
+  height: 100%;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  border: 0;
+  border: none;
+
   background: transparent;
 
-  color: #94a3b8;
+  color: #8a98a8;
 
   cursor: pointer;
 }
 
-.professional-password-toggle:hover {
+.professional-password-input button:hover {
   color: #2563eb;
 }
 
-
 /* =========================================================
-   DIVIDER
+   SKILLS
 ========================================================= */
 
-.professional-section-divider {
-  width: 100%;
-  height: 1px;
+.professional-checkbox-grid {
+  display: grid;
 
-  margin: 38px 0;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 
-  background: #edf0f4;
+  gap: 9px;
 }
 
+.professional-skill-option {
+  min-height: 44px;
+
+  display: flex !important;
+  align-items: center;
+
+  gap: 9px;
+
+  margin: 0 !important;
+  padding: 9px 11px;
+
+  border: 1px solid #dfe6ee;
+  border-radius: 8px;
+
+  background: #ffffff;
+
+  cursor: pointer;
+
+  color: #5a6a7b !important;
+
+  font-size: 10px !important;
+  font-weight: 500 !important;
+
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.professional-skill-option:hover {
+  border-color: #b9d4f8;
+  background: #f8fbff;
+}
+
+.professional-skill-option.selected {
+  border-color: #8bbaff;
+  background: #f2f7ff;
+
+  color: #2563eb !important;
+}
+
+.professional-skill-option input {
+  display: none;
+}
+
+.professional-custom-check {
+  width: 17px;
+  height: 17px;
+  min-width: 17px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid #cbd6e2;
+  border-radius: 4px;
+
+  background: #ffffff;
+
+  color: #ffffff;
+
+  box-sizing: border-box;
+}
+
+.professional-skill-option.selected .professional-custom-check,
+.professional-consent-box label input:checked + .professional-custom-check {
+  border-color: #2563eb;
+
+  background: #2563eb;
+}
+
+/* =========================================================
+   UPLOAD
+========================================================= */
+
+.professional-upload-box {
+  min-height: 74px;
+
+  display: flex !important;
+  align-items: center;
+
+  gap: 13px;
+
+  margin: 0 !important;
+  padding: 13px 15px;
+
+  border: 1px dashed #cbd8e5;
+  border-radius: 9px;
+
+  background: #fafcff;
+
+  cursor: pointer;
+
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.professional-upload-box:hover {
+  border-color: #7fb3f4;
+  background: #f5f9ff;
+}
+
+.professional-upload-box > svg {
+  width: 20px;
+  height: 20px;
+
+  flex-shrink: 0;
+
+  color: #3b82f6;
+}
+
+.professional-upload-box > div {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 4px;
+}
+
+.professional-upload-box strong {
+  color: #344d68;
+
+  font-size: 11px;
+  font-weight: 700;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.professional-upload-box span {
+  color: #929ead;
+
+  font-size: 9px;
+  font-weight: 400;
+}
+
+.professional-upload-box input,
+.professional-mini-upload input {
+  display: none;
+}
+
+.professional-mini-upload {
+  min-height: 45px;
+
+  display: flex !important;
+  align-items: center;
+
+  gap: 9px;
+
+  margin: 0 !important;
+  padding: 0 12px;
+
+  border: 1px dashed #cbd8e5;
+  border-radius: 8px;
+
+  background: #fafcff;
+
+  cursor: pointer;
+}
+
+.professional-mini-upload svg {
+  color: #3b82f6;
+}
+
+.professional-mini-upload span {
+  min-width: 0;
+
+  color: #68788a;
+
+  font-size: 10px;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* =========================================================
+   DOCUMENT NOTE
+========================================================= */
+
+.professional-document-note {
+  display: flex;
+  align-items: flex-start;
+
+  gap: 12px;
+
+  margin-top: 22px;
+  padding: 14px 15px;
+
+  border-radius: 9px;
+
+  background: #f3f7fc;
+}
+
+.professional-document-note > svg {
+  flex-shrink: 0;
+
+  margin-top: 2px;
+
+  color: #3b82f6;
+}
+
+.professional-document-note strong {
+  display: block;
+
+  color: #344d68;
+
+  font-size: 10px;
+}
+
+.professional-document-note p {
+  margin: 4px 0 0;
+
+  color: #7f8c9c;
+
+  font-size: 9px;
+  line-height: 1.6;
+}
+
+/* =========================================================
+   RADIO CARDS
+========================================================= */
+
+.professional-radio-grid {
+  display: grid;
+
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+
+  gap: 10px;
+}
+
+.professional-radio-card {
+  min-height: 74px;
+
+  display: flex !important;
+  align-items: flex-start;
+
+  gap: 10px;
+
+  margin: 0 !important;
+  padding: 13px;
+
+  border: 1px solid #dfe6ee;
+  border-radius: 9px;
+
+  background: #ffffff;
+
+  cursor: pointer;
+
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.professional-radio-card:hover {
+  border-color: #b8d3f7;
+}
+
+.professional-radio-card.selected {
+  border-color: #82b6fa;
+  background: #f3f8ff;
+}
+
+.professional-radio-card input {
+  width: 15px !important;
+  height: 15px !important;
+
+  margin: 2px 0 0;
+
+  accent-color: #2563eb;
+}
+
+.professional-radio-card div {
+  display: flex;
+  flex-direction: column;
+
+  gap: 4px;
+}
+
+.professional-radio-card strong {
+  color: #344d68;
+
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.professional-radio-card span {
+  color: #8793a2;
+
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+/* =========================================================
+   DAYS
+========================================================= */
+
+.professional-days-grid {
+  display: grid;
+
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+
+  gap: 8px;
+}
+
+.professional-day-option {
+  height: 44px;
+
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+
+  margin: 0 !important;
+
+  border: 1px solid #dfe6ee;
+  border-radius: 8px;
+
+  background: #ffffff;
+
+  color: #69788a;
+
+  cursor: pointer;
+
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.professional-day-option input {
+  display: none;
+}
+
+.professional-day-option span {
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.professional-day-option:hover {
+  border-color: #b7d3f7;
+}
+
+.professional-day-option.selected {
+  border-color: #2563eb;
+  background: #eff6ff;
+
+  color: #2563eb;
+}
 
 /* =========================================================
    ERROR
 ========================================================= */
 
-.professional-error {
-  margin: 24px 48px 0;
-  padding: 12px 14px;
+.professional-form-error {
+  display: flex;
+  align-items: flex-start;
 
-  border: 1px solid #fecaca;
-  border-radius: 8px;
+  gap: 10px;
 
-  background: #fef2f2;
-  color: #b91c1c;
+  margin-bottom: 20px;
+  padding: 14px 16px;
 
-  font-size: 13px;
+  border: 1px solid #f2caca;
+  border-radius: 9px;
+
+  background: #fff6f6;
+
+  color: #b42318;
+
+  font-size: 11px;
   line-height: 1.5;
 }
 
+.professional-form-error strong {
+  font-weight: 700;
+}
+
+.professional-form-error span {
+  color: #b42318;
+}
 
 /* =========================================================
-   TERMS
+   SUBMIT
 ========================================================= */
 
-.professional-terms {
+.professional-submit-section {
+  padding: 25px 28px;
+
+  border: 1px solid #dfe7ef;
+  border-radius: 14px;
+
+  background: #ffffff;
+
+  box-shadow: 0 7px 24px rgba(16, 43, 78, 0.045);
+}
+
+.professional-consent-box {
+  display: flex;
+  flex-direction: column;
+
+  gap: 13px;
+
+  padding-bottom: 22px;
+
+  border-bottom: 1px solid #edf1f5;
+}
+
+.professional-consent-box label {
   display: flex;
   align-items: flex-start;
+
   gap: 10px;
 
-  margin-top: 34px;
+  margin: 0;
 
-  color: #64748b;
+  color: #68788a;
 
-  font-size: 13px;
+  font-size: 10px;
   line-height: 1.6;
 
   cursor: pointer;
 }
 
-.professional-checkbox {
-  position: relative;
+.professional-consent-box label input {
+  display: none;
+}
 
-  width: 18px;
-  height: 18px;
-
-  flex-shrink: 0;
-
+.professional-consent-box label .professional-custom-check {
   margin-top: 1px;
 }
 
-.professional-checkbox input {
-  position: absolute;
-
-  width: 1px;
-  height: 1px;
-
-  opacity: 0;
-}
-
-.professional-checkbox-mark {
-  width: 18px;
-  height: 18px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  box-sizing: border-box;
-
-  border: 1px solid #cbd5e1;
-  border-radius: 4px;
-
-  background: #ffffff;
-
-  color: transparent;
-
-  transition:
-    background 0.2s ease,
-    border-color 0.2s ease;
-}
-
-.professional-checkbox input:checked + .professional-checkbox-mark {
-  border-color: #2563eb;
-  background: #2563eb;
-  color: #ffffff;
-}
-
-.professional-terms a {
+.professional-consent-box a {
   color: #2563eb;
-  text-decoration: none;
+
   font-weight: 600;
+
+  text-decoration: none;
 }
 
-.professional-terms a:hover {
+.professional-consent-box a:hover {
   text-decoration: underline;
 }
 
-
-/* =========================================================
-   ACTIONS
-========================================================= */
-
-.professional-form-actions {
+.professional-submit-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 24px;
 
-  margin-top: 30px;
-  padding-top: 28px;
+  gap: 25px;
 
-  border-top: 1px solid #edf0f4;
+  padding-top: 22px;
 }
 
-.professional-submit {
-  min-height: 48px;
+.professional-submit-note {
+  display: flex;
+  align-items: center;
+
+  gap: 8px;
+
+  color: #8a97a7;
+
+  font-size: 9px;
+}
+
+.professional-submit-note svg {
+  flex-shrink: 0;
+
+  color: #3b82f6;
+}
+
+.professional-submit-button,
+.professional-primary-button {
+  min-height: 46px;
 
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
 
-  padding: 0 22px;
+  gap: 9px;
 
-  border: 0;
-  border-radius: 9px;
+  padding: 0 21px;
+
+  border: none;
+  border-radius: 8px;
 
   background: #2563eb;
+
   color: #ffffff;
 
   font-family: inherit;
-  font-size: 14px;
+
+  font-size: 11px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.16);
+
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.professional-submit-button:hover:not(:disabled),
+.professional-primary-button:hover {
+  background: #1d4ed8;
+
+  transform: translateY(-1px);
+
+  box-shadow: 0 10px 22px rgba(37, 99, 235, 0.2);
+}
+
+.professional-submit-button:disabled {
+  opacity: 0.65;
+
+  cursor: not-allowed;
+}
+
+/* =========================================================
+   SPINNER
+========================================================= */
+
+.professional-spinner {
+  width: 15px;
+  height: 15px;
+
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+
+  border-radius: 50%;
+
+  animation: professionalSpin 0.7s linear infinite;
+}
+
+@keyframes professionalSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* =========================================================
+   SUCCESS PAGE
+========================================================= */
+
+.professional-success-page {
+  width: 100%;
+  min-height: calc(100vh - 82px);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 50px 24px;
+
+  box-sizing: border-box;
+}
+
+.professional-success-card {
+  width: min(620px, 100%);
+
+  padding: 50px 45px;
+
+  background: #ffffff;
+
+  border: 1px solid #e1e8ef;
+  border-radius: 16px;
+
+  text-align: center;
+
+  box-shadow: 0 20px 55px rgba(16, 43, 78, 0.08);
+}
+
+.professional-success-icon {
+  width: 68px;
+  height: 68px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  margin: 0 auto 22px;
+
+  border-radius: 50%;
+
+  background: #effaf3;
+
+  color: #219653;
+}
+
+.professional-success-card .professional-eyebrow {
+  margin-bottom: 10px;
+}
+
+.professional-success-card h1 {
+  margin: 0;
+
+  color: #102b4e;
+
+  font-size: 28px;
+  line-height: 1.25;
   font-weight: 600;
+}
+
+.professional-success-card > p {
+  margin: 14px auto 0;
+
+  max-width: 500px;
+
+  color: #778597;
+
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.professional-success-details {
+  display: grid;
+
+  grid-template-columns: repeat(3, 1fr);
+
+  gap: 10px;
+
+  margin-top: 28px;
+}
+
+.professional-success-details div {
+  padding: 14px 10px;
+
+  border-radius: 8px;
+
+  background: #f7f9fc;
+}
+
+.professional-success-details span {
+  display: block;
+
+  margin-bottom: 5px;
+
+  color: #8b98a8;
+
+  font-size: 8px;
+
+  text-transform: uppercase;
+  letter-spacing: 0.7px;
+}
+
+.professional-success-details strong {
+  display: block;
+
+  color: #344d68;
+
+  font-size: 10px;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.professional-success-actions {
+  display: flex;
+  justify-content: center;
+
+  gap: 10px;
+
+  margin-top: 30px;
+}
+
+.professional-secondary-button {
+  min-height: 46px;
+
+  padding: 0 20px;
+
+  border: 1px solid #d7e0e9;
+  border-radius: 8px;
+
+  background: #ffffff;
+
+  color: #344d68;
+
+  font-family: inherit;
+
+  font-size: 11px;
+  font-weight: 700;
 
   cursor: pointer;
 
   transition:
-    background 0.2s ease,
-    transform 0.2s ease;
+    border-color 0.2s ease,
+    background 0.2s ease;
 }
 
-.professional-submit:hover {
-  background: #1d4ed8;
-  transform: translateY(-1px);
+.professional-secondary-button:hover {
+  border-color: #a9bfd7;
+
+  background: #f8fafc;
 }
-
-.professional-submit:active {
-  transform: translateY(0);
-}
-
-.professional-form-actions p {
-  max-width: 350px;
-
-  margin: 0;
-
-  color: #94a3b8;
-
-  font-size: 12px;
-  line-height: 1.5;
-}
-
 
 /* =========================================================
    FOOTER
 ========================================================= */
 
 .professional-register-footer {
+  width: min(1060px, calc(100% - 48px));
+
+  margin: 0 auto;
+
+  padding: 22px 0 30px;
+
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 18px;
+  justify-content: space-between;
 
-  margin-top: 28px;
+  border-top: 1px solid #e2e8ef;
 
-  color: #94a3b8;
+  color: #9aa6b5;
 
-  font-size: 12px;
+  font-size: 9px;
 }
-
-.professional-register-footer span + span::before {
-  content: "";
-
-  display: inline-block;
-
-  width: 3px;
-  height: 3px;
-
-  margin-right: 18px;
-
-  vertical-align: middle;
-
-  border-radius: 50%;
-
-  background: #cbd5e1;
-}
-
 
 /* =========================================================
-   RESPONSIVE
+   TABLET
 ========================================================= */
 
-@media (max-width: 760px) {
-  .professional-register-page {
-    padding: 28px 16px 40px;
+@media (max-width: 900px) {
+  .professional-register-header-inner {
+    width: min(100% - 36px, 760px);
+
+    min-height: 170px;
+
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+
+    gap: 15px;
   }
 
-  .professional-register-header {
-    margin-bottom: 42px;
-  }
+  .professional-register-content {
+    width: min(100% - 36px, 760px);
 
-  .professional-header-login span {
-    display: none;
-  }
-
-  .professional-register-intro {
-    margin-bottom: 28px;
-  }
-
-  .professional-register-intro h1 {
-    font-size: 30px;
-  }
-
-  .professional-register-intro p {
-    font-size: 14px;
+    padding-top: 30px;
   }
 
   .professional-progress {
-    justify-content: space-between;
+    overflow-x: auto;
+
+    padding-bottom: 7px;
   }
 
   .professional-progress-line {
-    flex: 1;
-    width: auto;
-    margin: 0 8px;
+    min-width: 25px;
   }
 
-  .professional-progress-step p {
-    display: none;
+  .professional-checkbox-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .professional-register-form {
-    padding: 30px 22px 34px;
-  }
-
-  .professional-fields-grid {
+  .professional-radio-grid {
     grid-template-columns: 1fr;
   }
 
-  .professional-field.full {
-    grid-column: auto;
+  .professional-days-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
-  .professional-section-divider {
-    margin: 32px 0;
-  }
-
-  .professional-error {
-    margin: 20px 22px 0;
-  }
-
-  .professional-form-actions {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .professional-submit {
-    width: 100%;
-  }
-
-  .professional-form-actions p {
-    max-width: none;
-    text-align: center;
+  .professional-register-footer {
+    width: min(100% - 36px, 760px);
   }
 }
 
+/* =========================================================
+   MOBILE
+========================================================= */
 
-@media (max-width: 480px) {
-  .professional-register-page {
-    padding-left: 12px;
-    padding-right: 12px;
+@media (max-width: 650px) {
+  .professional-register-header-inner {
+    width: calc(100% - 28px);
+
+    padding: 28px 0;
   }
 
-  .professional-register-logo {
-    font-size: 18px;
+  .professional-register-header h1 {
+    font-size: 28px;
   }
 
-  .professional-register-logo-mark {
+  .professional-register-header p {
+    font-size: 12px;
+  }
+
+  .professional-login-link {
+    font-size: 11px;
+  }
+
+  .professional-register-content {
+    width: calc(100% - 28px);
+
+    padding: 25px 0 55px;
+  }
+
+  .professional-progress-item div {
+    display: none;
+  }
+
+  .professional-progress-item > span {
     width: 31px;
     height: 31px;
   }
 
-  .professional-register-intro h1 {
-    font-size: 27px;
+  .professional-progress-line {
+    margin: 0 8px;
   }
 
-  .professional-progress-step span {
-    width: 26px;
-    height: 26px;
-  }
+  .professional-form-section {
+    padding: 22px 17px;
 
-  .professional-register-form {
-    padding: 26px 17px 30px;
+    border-radius: 11px;
   }
 
   .professional-section-heading {
     gap: 11px;
+
+    margin-bottom: 22px;
+  }
+
+  .professional-section-number {
+    width: 33px;
+    height: 33px;
+    min-width: 33px;
+
+    border-radius: 8px;
   }
 
   .professional-section-heading h2 {
     font-size: 17px;
   }
 
-  .professional-error {
-    margin-left: 17px;
-    margin-right: 17px;
+  .professional-section-heading p {
+    font-size: 10px;
+  }
+
+  .professional-form-grid {
+    grid-template-columns: 1fr;
+
+    gap: 17px;
+  }
+
+  .professional-field.full-width {
+    grid-column: auto;
+  }
+
+  .professional-checkbox-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .professional-days-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .professional-submit-section {
+    padding: 20px 17px;
+  }
+
+  .professional-submit-footer {
+    flex-direction: column;
+    align-items: stretch;
+
+    gap: 17px;
+  }
+
+  .professional-submit-note {
+    align-items: flex-start;
+  }
+
+  .professional-submit-button {
+    width: 100%;
   }
 
   .professional-register-footer {
-    flex-direction: column;
-    gap: 6px;
+    width: calc(100% - 28px);
+
+    font-size: 8px;
   }
 
-  .professional-register-footer span + span::before {
-    display: none;
+  .professional-success-card {
+    padding: 35px 22px;
+  }
+
+  .professional-success-card h1 {
+    font-size: 24px;
+  }
+
+  .professional-success-details {
+    grid-template-columns: 1fr;
+  }
+
+  .professional-success-actions {
+    flex-direction: column;
+  }
+
+  .professional-primary-button,
+  .professional-secondary-button {
+    width: 100%;
+  }
+}
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media (max-width: 420px) {
+  .professional-register-header h1 {
+    font-size: 25px;
+  }
+
+  .professional-form-section {
+    padding: 19px 14px;
+  }
+
+  .professional-days-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .professional-day-option {
+    height: 40px;
+  }
+
+  .professional-upload-box {
+    padding: 11px;
+  }
+
+  .professional-submit-section {
+    padding: 17px 14px;
   }
 }

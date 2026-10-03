@@ -1,0 +1,854 @@
+/* =========================================================
+   ONE SERVICE — STUDENT REGISTRATION
+========================================================= */
+
+.student-register-page {
+  width: 100%;
+  min-height: 100vh;
+  background: #f6f9fc;
+  color: #172033;
+  font-family: "Neulis Sans", sans-serif;
+}
+
+/* =========================================================
+   HERO
+========================================================= */
+
+.student-register-hero {
+  width: 100%;
+  background:
+    radial-gradient(
+      circle at 85% 20%,
+      rgba(59, 130, 246, 0.12),
+      transparent 30%
+    ),
+    linear-gradient(135deg, #eef6ff 0%, #ffffff 65%);
+  border-bottom: 1px solid #e4ebf2;
+}
+
+.student-register-hero-inner {
+  width: min(1180px, calc(100% - 80px));
+  min-height: 270px;
+  margin: 0 auto;
+  padding: 55px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 40px;
+}
+
+.student-eyebrow {
+  display: inline-block;
+  margin-bottom: 13px;
+  color: #3b82f6;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.7px;
+}
+
+.student-register-hero h1 {
+  margin: 0;
+  color: #102b4e;
+  font-size: clamp(32px, 4vw, 50px);
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: -1.5px;
+}
+
+.student-register-hero h1 span {
+  color: #2563eb;
+}
+
+.student-register-hero p {
+  max-width: 650px;
+  margin: 18px 0 0;
+  color: #66768a;
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.student-hero-badge {
+  min-width: 285px;
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 17px 20px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid #dfe8f1;
+  border-radius: 12px;
+  box-shadow: 0 15px 40px rgba(16, 43, 78, 0.07);
+}
+
+.student-hero-badge-icon {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: #eff6ff;
+  color: #2563eb;
+  border-radius: 10px;
+}
+
+.student-hero-badge strong,
+.student-hero-badge span {
+  display: block;
+}
+
+.student-hero-badge strong {
+  margin-bottom: 4px;
+  color: #172033;
+  font-size: 13px;
+}
+
+.student-hero-badge span {
+  color: #7b8898;
+  font-size: 10px;
+}
+
+/* =========================================================
+   CONTENT
+========================================================= */
+
+.student-register-content {
+  width: 100%;
+  padding: 55px 0 80px;
+}
+
+.student-register-container {
+  width: min(1080px, calc(100% - 80px));
+  margin: 0 auto;
+}
+
+.student-register-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 30px;
+  margin-bottom: 30px;
+}
+
+.student-section-label {
+  display: block;
+  margin-bottom: 8px;
+  color: #3b82f6;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+}
+
+.student-register-top h2 {
+  margin: 0;
+  color: #102b4e;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.student-register-top p {
+  margin: 8px 0 0;
+  color: #7a8797;
+  font-size: 12px;
+}
+
+.student-login-note {
+  color: #7a8797;
+  font-size: 11px;
+}
+
+.student-login-note a {
+  color: #2563eb;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.student-login-note a:hover {
+  text-decoration: underline;
+}
+
+/* =========================================================
+   PROGRESS
+========================================================= */
+
+.student-progress {
+  display: flex;
+  align-items: center;
+  margin-bottom: 30px;
+  padding: 17px 20px;
+  background: #ffffff;
+  border: 1px solid #e2e9f0;
+  border-radius: 10px;
+}
+
+.student-progress-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.student-progress-item span {
+  width: 27px;
+  height: 27px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.student-progress-item strong {
+  color: #2563eb;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.student-progress-line {
+  height: 1px;
+  flex: 1;
+  min-width: 18px;
+  margin: 0 12px;
+  background: #dfe6ee;
+}
+
+/* =========================================================
+   FORM
+========================================================= */
+
+.student-register-form {
+  background: #ffffff;
+  border: 1px solid #e1e8ef;
+  border-radius: 14px;
+  box-shadow: 0 18px 50px rgba(16, 43, 78, 0.06);
+  overflow: hidden;
+}
+
+.student-form-error {
+  margin: 20px 24px 0;
+  padding: 12px 15px;
+  background: #fff5f5;
+  border: 1px solid #ffd8d8;
+  border-radius: 8px;
+  color: #c0392b;
+  font-size: 11px;
+}
+
+.student-form-section {
+  padding: 34px;
+  border-bottom: 1px solid #e8edf2;
+}
+
+.student-form-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 26px;
+}
+
+.student-form-number {
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: #eff6ff;
+  border: 1px solid #dceaff;
+  border-radius: 9px;
+  color: #2563eb;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.student-form-heading h3 {
+  margin: 1px 0 5px;
+  color: #172033;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.student-form-heading p {
+  margin: 0;
+  color: #8491a0;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.student-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.student-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.student-field-full {
+  grid-column: 1 / -1;
+}
+
+.student-field > span,
+.student-file-upload > span {
+  color: #344d68;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.student-field input,
+.student-field select,
+.student-field textarea {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 13px;
+  background: #ffffff;
+  border: 1px solid #dce4ec;
+  border-radius: 7px;
+  outline: none;
+  color: #172033;
+  font-family: inherit;
+  font-size: 12px;
+  box-sizing: border-box;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.student-field textarea {
+  min-height: 100px;
+  padding: 12px 13px;
+  resize: vertical;
+}
+
+.student-field input:focus,
+.student-field select:focus,
+.student-field textarea:focus {
+  border-color: #7fb0f5;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.07);
+}
+
+.student-field input::placeholder,
+.student-field textarea::placeholder {
+  color: #a5afba;
+}
+
+/* =========================================================
+   INPUT WRAPS
+========================================================= */
+
+.student-input-wrap {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 13px;
+  border: 1px solid #dce4ec;
+  border-radius: 7px;
+  box-sizing: border-box;
+}
+
+.student-input-wrap:focus-within {
+  border-color: #7fb0f5;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.07);
+}
+
+.student-input-wrap svg {
+  flex-shrink: 0;
+  color: #8da0b3;
+}
+
+.student-input-wrap input,
+.student-input-wrap textarea {
+  min-height: auto;
+  padding: 0;
+  border: none;
+  box-shadow: none;
+}
+
+.student-input-wrap input:focus,
+.student-input-wrap textarea:focus {
+  border: none;
+  box-shadow: none;
+}
+
+.student-country-code {
+  padding-right: 8px;
+  border-right: 1px solid #e2e7ed;
+  color: #66768a;
+  font-size: 11px;
+}
+
+.student-textarea-wrap {
+  align-items: flex-start;
+  padding-top: 13px;
+  padding-bottom: 13px;
+}
+
+.student-textarea-wrap textarea {
+  width: 100%;
+}
+
+/* =========================================================
+   CHIPS
+========================================================= */
+
+.student-chip-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.student-chip {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 12px;
+  background: #ffffff;
+  border: 1px solid #dce4ec;
+  border-radius: 7px;
+  color: #64758a;
+  font-family: inherit;
+  font-size: 10px;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.student-chip:hover {
+  border-color: #a9c8f4;
+  color: #2563eb;
+}
+
+.student-chip.selected {
+  background: #eff6ff;
+  border-color: #7fb0f5;
+  color: #2563eb;
+  font-weight: 700;
+}
+
+/* =========================================================
+   FILE UPLOAD
+========================================================= */
+
+.student-file-upload {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.student-file-upload input {
+  display: none;
+}
+
+.student-file-box {
+  min-height: 75px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: #fbfcfe;
+  border: 1px dashed #cbd7e4;
+  border-radius: 8px;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.student-file-upload:hover .student-file-box {
+  background: #f5f9ff;
+  border-color: #7fb0f5;
+}
+
+.student-file-box > svg {
+  color: #2563eb;
+  flex-shrink: 0;
+}
+
+.student-file-box strong,
+.student-file-box small {
+  display: block;
+}
+
+.student-file-box strong {
+  max-width: 260px;
+  overflow: hidden;
+  color: #344d68;
+  font-size: 10px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.student-file-box small {
+  margin-top: 4px;
+  color: #909daa;
+  font-size: 9px;
+}
+
+/* =========================================================
+   PASSWORD
+========================================================= */
+
+.student-password-button {
+  margin-left: auto;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: #8491a0;
+  cursor: pointer;
+}
+
+.student-password-button:hover {
+  color: #2563eb;
+}
+
+/* =========================================================
+   CONSENT
+========================================================= */
+
+.student-consent-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 26px 34px;
+  background: #fbfcfe;
+  border-bottom: 1px solid #e8edf2;
+}
+
+.student-check-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: #66768a;
+  font-size: 10px;
+  line-height: 1.6;
+  cursor: pointer;
+}
+
+.student-check-row input {
+  width: 15px;
+  height: 15px;
+  margin-top: 1px;
+  flex-shrink: 0;
+  accent-color: #2563eb;
+}
+
+.student-check-row a {
+  color: #2563eb;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.student-check-row a:hover {
+  text-decoration: underline;
+}
+
+/* =========================================================
+   SUBMIT
+========================================================= */
+
+.student-submit-area {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 25px;
+  padding: 24px 34px;
+}
+
+.student-submit-note {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #8995a3;
+  font-size: 10px;
+}
+
+.student-submit-note svg {
+  color: #2563eb;
+}
+
+.student-submit-button,
+.student-primary-button {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 0 20px;
+  background: #2563eb;
+  border: none;
+  border-radius: 7px;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+.student-submit-button:hover:not(:disabled),
+.student-primary-button:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+.student-submit-button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* =========================================================
+   SUCCESS
+========================================================= */
+
+.student-success-section {
+  min-height: calc(100vh - 82px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(59, 130, 246, 0.1),
+      transparent 40%
+    ),
+    #f6f9fc;
+}
+
+.student-success-card {
+  width: min(580px, 100%);
+  padding: 50px 45px;
+  text-align: center;
+  background: #ffffff;
+  border: 1px solid #e1e8ef;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(16, 43, 78, 0.08);
+}
+
+.student-success-icon {
+  width: 70px;
+  height: 70px;
+  margin: 0 auto 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #eff6ff;
+  border: 1px solid #d7e8ff;
+  border-radius: 50%;
+  color: #2563eb;
+}
+
+.student-success-card h1 {
+  margin: 0;
+  color: #102b4e;
+  font-size: 28px;
+  line-height: 1.25;
+}
+
+.student-success-card > p {
+  margin: 15px auto 28px;
+  color: #718093;
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+.student-success-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin-bottom: 30px;
+  border: 1px solid #e5ebf1;
+  border-radius: 9px;
+  overflow: hidden;
+}
+
+.student-success-summary div {
+  padding: 14px 10px;
+  border-right: 1px solid #e5ebf1;
+}
+
+.student-success-summary div:last-child {
+  border-right: none;
+}
+
+.student-success-summary span,
+.student-success-summary strong {
+  display: block;
+}
+
+.student-success-summary span {
+  margin-bottom: 5px;
+  color: #8a96a5;
+  font-size: 9px;
+}
+
+.student-success-summary strong {
+  color: #344d68;
+  font-size: 10px;
+  word-break: break-word;
+}
+
+.student-success-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.student-secondary-button {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 19px;
+  border: 1px solid #dce4ec;
+  border-radius: 7px;
+  color: #53677d;
+  background: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 900px) {
+  .student-register-hero-inner,
+  .student-register-container {
+    width: min(100% - 40px, 700px);
+  }
+
+  .student-register-hero-inner {
+    min-height: auto;
+    padding: 45px 0;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .student-hero-badge {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .student-progress {
+    overflow-x: auto;
+  }
+}
+
+@media (max-width: 650px) {
+  .student-register-hero-inner,
+  .student-register-container {
+    width: calc(100% - 28px);
+  }
+
+  .student-register-hero-inner {
+    padding: 35px 0;
+  }
+
+  .student-register-hero h1 {
+    font-size: 32px;
+  }
+
+  .student-register-content {
+    padding: 35px 0 50px;
+  }
+
+  .student-register-top {
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 22px;
+  }
+
+  .student-register-top h2 {
+    font-size: 24px;
+  }
+
+  .student-form-section {
+    padding: 25px 18px;
+  }
+
+  .student-form-grid {
+    grid-template-columns: 1fr;
+    gap: 17px;
+  }
+
+  .student-field-full {
+    grid-column: auto;
+  }
+
+  .student-form-heading {
+    margin-bottom: 21px;
+  }
+
+  .student-form-heading h3 {
+    font-size: 15px;
+  }
+
+  .student-progress {
+    padding: 14px;
+  }
+
+  .student-progress-item strong {
+    display: none;
+  }
+
+  .student-progress-line {
+    margin: 0 7px;
+  }
+
+  .student-consent-section {
+    padding: 22px 18px;
+  }
+
+  .student-submit-area {
+    padding: 22px 18px;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .student-submit-button {
+    width: 100%;
+  }
+
+  .student-success-card {
+    padding: 35px 20px;
+  }
+
+  .student-success-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .student-success-summary div {
+    border-right: none;
+    border-bottom: 1px solid #e5ebf1;
+  }
+
+  .student-success-summary div:last-child {
+    border-bottom: none;
+  }
+
+  .student-success-actions {
+    flex-direction: column;
+  }
+
+  .student-secondary-button,
+  .student-primary-button {
+    width: 100%;
+  }
+}

@@ -1687,4 +1687,347 @@ a {
   }
 
 }
+/* =========================================================
+   JOIN OUR NETWORK
+   CLICK-BASED DROPDOWN
+========================================================= */
 
+.network-nav-wrapper {
+  position: relative;
+  height: 100%;
+
+  display: flex;
+  align-items: center;
+}
+
+
+/* =========================================================
+   NETWORK BUTTON
+========================================================= */
+
+.network-nav-button {
+  height: 100%;
+
+  display: inline-flex;
+  align-items: center;
+
+  gap: 6px;
+
+  padding: 0;
+
+  border: none;
+  outline: none;
+
+  background: transparent;
+
+  color: #344d68;
+
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+
+  cursor: pointer;
+
+  transition: color 0.2s ease;
+}
+
+.network-nav-button:hover,
+.network-nav-button.active {
+  color: #2563eb;
+}
+
+
+/* =========================================================
+   CHEVRON
+========================================================= */
+
+.network-nav-button svg {
+  display: block;
+
+  transition: transform 0.2s ease;
+}
+
+.network-nav-button svg.open {
+  transform: rotate(180deg);
+}
+
+
+/* =========================================================
+   DROPDOWN
+========================================================= */
+
+.network-dropdown {
+  position: absolute;
+
+  top: calc(100% + 14px);
+  right: 0;
+
+  width: 360px;
+
+  padding: 0;
+
+  background: #ffffff;
+
+  border: 1px solid #e3e9f0;
+  border-radius: 12px;
+
+  box-shadow:
+    0 18px 45px rgba(16, 43, 78, 0.12),
+    0 4px 12px rgba(16, 43, 78, 0.05);
+
+  overflow: hidden;
+
+  z-index: 9999;
+
+  /*
+     The dropdown is rendered by React only when
+     networkOpen === true.
+
+     Therefore there is NO hover display rule here.
+  */
+
+  animation: networkDropdownIn 0.18s ease;
+}
+
+
+/* =========================================================
+   DROPDOWN ANIMATION
+========================================================= */
+
+@keyframes networkDropdownIn {
+  from {
+    opacity: 0;
+    transform: translateY(-7px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.network-dropdown-header {
+  padding: 20px 20px 16px;
+
+  background: linear-gradient(
+    90deg,
+    #f2f8fc,
+    #ffffff
+  );
+
+  border-bottom: 1px solid #e8edf3;
+}
+
+.network-dropdown-header span {
+  display: block;
+
+  margin-bottom: 6px;
+
+  color: #3b82f6;
+
+  font-size: 10px;
+  font-weight: 800;
+
+  letter-spacing: 1.5px;
+}
+
+.network-dropdown-header strong {
+  display: block;
+
+  color: #2563eb;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  line-height: 1.4;
+}
+
+
+/* =========================================================
+   ITEMS CONTAINER
+========================================================= */
+
+.network-dropdown-items {
+  padding: 8px;
+}
+
+
+/* =========================================================
+   INDIVIDUAL ITEM
+========================================================= */
+
+.network-dropdown-item {
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+
+  gap: 12px;
+
+  padding: 12px;
+
+  border-radius: 8px;
+
+  color: #172033;
+
+  text-decoration: none;
+
+  transition:
+    background 0.2s ease,
+    transform 0.2s ease;
+}
+
+.network-dropdown-item:hover {
+  background: #f3f7ff;
+
+  transform: translateX(2px);
+}
+
+
+/* =========================================================
+   ITEM ICON
+========================================================= */
+
+.network-item-icon {
+  width: 38px;
+  height: 38px;
+
+  min-width: 38px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 9px;
+
+  background: #eff6ff;
+
+  font-size: 18px;
+
+  line-height: 1;
+}
+
+
+/* =========================================================
+   ITEM TEXT
+========================================================= */
+
+.network-item-content {
+  flex: 1;
+
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 3px;
+}
+
+.network-item-content strong {
+  display: block;
+
+  color: #172033;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  line-height: 1.35;
+}
+
+.network-item-content span {
+  display: block;
+
+  color: #7a8797;
+
+  font-size: 10px;
+
+  line-height: 1.4;
+}
+
+
+/* =========================================================
+   ITEM ARROW
+========================================================= */
+
+.network-dropdown-item > svg {
+  flex-shrink: 0;
+
+  color: #9aa7b6;
+
+  transition:
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.network-dropdown-item:hover > svg {
+  color: #2563eb;
+
+  transform: translateX(2px);
+}
+
+
+/* =========================================================
+   MOBILE / TABLET
+========================================================= */
+
+@media (max-width: 900px) {
+  .network-dropdown {
+    position: fixed;
+
+    top: 70px;
+
+    left: 15px;
+    right: 15px;
+
+    width: auto;
+    max-width: none;
+
+    max-height: calc(100vh - 85px);
+
+    overflow-y: auto;
+
+    border-radius: 12px;
+  }
+}
+
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media (max-width: 650px) {
+  .network-dropdown {
+    top: 68px;
+
+    left: 10px;
+    right: 10px;
+
+    max-height: calc(100vh - 80px);
+  }
+
+  .network-dropdown-header {
+    padding: 17px 16px 14px;
+  }
+
+  .network-dropdown-items {
+    padding: 7px;
+  }
+
+  .network-dropdown-item {
+    padding: 11px;
+  }
+
+  .network-item-icon {
+    width: 36px;
+    height: 36px;
+
+    min-width: 36px;
+
+    font-size: 17px;
+  }
+}
