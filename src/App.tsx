@@ -45,6 +45,7 @@ import TutorRegisterPage from "./pages/TutorRegisterPage";
 
 import AccessoriesProductsPage from "./pages/AccessoriesProductsPage";
 import ProductDetailsPage from "./pages/ProductDetailsPage";
+import Footer from "./components/Footer";
 
 /* =========================================================
    ADMIN
@@ -1011,37 +1012,38 @@ function AppContent() {
     ADMIN LOGIN
 ================================================= */}
 
-<Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin/login" element={<AdminLogin />} />
 
-{/* =================================================
+        {/* =================================================
     PROTECTED ADMIN AREA
 ================================================= */}
 
-<Route element={<AdminProtectedRoute />}>
-  <Route path="/admin" element={<AdminLayout />}>
-    {/* /admin */}
-    <Route index element={<AdminDashboard />} />
+        <Route element={<AdminProtectedRoute />}>
+          <Route path="/admin" element={<AdminLayout />}>
+            {/* /admin */}
+            <Route index element={<AdminDashboard />} />
 
-    {/* /admin/book-services */}
-    <Route path="book-services" element={<BookServicesPage />} />
+            {/* /admin/book-services */}
+            <Route path="book-services" element={<BookServicesPage />} />
 
-    {/* /admin/products */}
-    <Route path="products" element={<ProductsPage />} />
+            {/* /admin/products */}
+            <Route path="products" element={<ProductsPage />} />
 
-    {/* /admin/businesses */}
-    <Route path="businesses" element={<BusinessesPage />} />
+            {/* /admin/businesses */}
+            <Route path="businesses" element={<BusinessesPage />} />
 
-    {/* /admin/subscriptions */}
-    <Route path="subscriptions" element={<SubscriptionsPage />} />
+            {/* /admin/subscriptions */}
+            <Route path="subscriptions" element={<SubscriptionsPage />} />
 
-    {/* /admin/compliance */}
-    <Route path="compliance" element={<CompliancePage />} />
+            {/* /admin/compliance */}
+            <Route path="compliance" element={<CompliancePage />} />
 
-    {/* /admin/settings */}
-    <Route path="settings" element={<SettingsPage />} />
-  </Route>
-</Route>
+            {/* /admin/settings */}
+            <Route path="settings" element={<SettingsPage />} />
+          </Route>
+        </Route>
       </Routes>
+      {!isAdminRoute && <Footer />}
     </>
   );
 }
