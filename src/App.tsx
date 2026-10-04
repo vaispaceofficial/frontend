@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+
 import {
   Search,
   UserRound,
@@ -18,24 +19,48 @@ import {
 
 import "./App.css";
 
+/* =========================================================
+   PUBLIC PAGES
+========================================================= */
+
 import ServicesPage from "./pages/ServicesPage";
 import ServiceDetailPage from "./pages/ServiceDetailPage";
 import ContactPage from "./pages/ContactPage";
 import LoginPage from "./pages/LoginPage";
+
 import HomeAppliancesPage from "./pages/HomeAppliancesPage";
 import HomeServicesPage from "./pages/HomeServicesPage";
 import PersonalServicesPage from "./pages/PersonalServicesPage";
 import HomeStaffPage from "./pages/HomeStaffPage";
+
 import AMCPage from "./pages/AMCPage";
 import AccessoriesSalesPage from "./pages/AccessoriesSalesPage";
+
 import RegisterPage from "./pages/RegisterPage";
 import ProfessionalRegisterPage from "./pages/ProfessionalRegisterPage";
 import PartnerRegisterPage from "./pages/PartnerRegisterPage";
 import VendorRegisterPage from "./pages/VendorRegisterPage";
 import StudentRegisterPage from "./pages/StudentRegisterPage";
 import TutorRegisterPage from "./pages/TutorRegisterPage";
+
 import AccessoriesProductsPage from "./pages/AccessoriesProductsPage";
 import ProductDetailsPage from "./pages/ProductDetailsPage";
+
+/* =========================================================
+   ADMIN
+========================================================= */
+
+import AdminLayout from "./admin/components/AdminLayout";
+import AdminProtectedRoute from "./admin/components/AdminProtectedRoute";
+
+import AdminDashboard from "./admin/pages/AdminDashboard";
+import BookServicesPage from "./admin/pages/BookServices";
+import ProductsPage from "./admin/pages/Products";
+import BusinessesPage from "./admin/pages/Businesses";
+import SubscriptionsPage from "./admin/pages/Subscriptions";
+import CompliancePage from "./admin/pages/Compliance";
+import SettingsPage from "./admin/pages/Settings";
+import AdminLogin from "./admin/pages/AdminLogin";
 
 /* =========================================================
    HERO IMAGES
@@ -58,6 +83,7 @@ const heroImages = [
 const serviceCategories = [
   {
     name: "Home Appliances",
+
     services: [
       {
         name: "AC",
@@ -88,6 +114,7 @@ const serviceCategories = [
 
   {
     name: "Home Services",
+
     services: [
       {
         name: "Electrician",
@@ -110,6 +137,7 @@ const serviceCategories = [
 
   {
     name: "Personal Services",
+
     services: [
       {
         name: "Makeup",
@@ -128,6 +156,7 @@ const serviceCategories = [
 
   {
     name: "Home Staff",
+
     services: [
       {
         name: "Maid",
@@ -159,29 +188,27 @@ const serviceCategories = [
 
 function Navbar() {
   const [servicesOpen, setServicesOpen] = useState(false);
+
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
 
   const [networkOpen, setNetworkOpen] = useState(false);
 
   const servicesRef = useRef<HTMLDivElement>(null);
+
   const networkRef = useRef<HTMLDivElement>(null);
 
-  /* =================================================
+  /* =======================================================
      CLOSE DROPDOWNS WHEN CLICKING OUTSIDE
-  ================================================= */
+  ======================================================= */
 
   useEffect(() => {
     const handleOutsideClick = (event: MouseEvent) => {
       const target = event.target as Node;
 
-      /* CLOSE SERVICES */
-
       if (servicesRef.current && !servicesRef.current.contains(target)) {
         setServicesOpen(false);
         setSelectedCategory(null);
       }
-
-      /* CLOSE NETWORK */
 
       if (networkRef.current && !networkRef.current.contains(target)) {
         setNetworkOpen(false);
@@ -195,22 +222,21 @@ function Navbar() {
     };
   }, []);
 
-  /* =================================================
+  /* =======================================================
      SELECTED SERVICE CATEGORY
-  ================================================= */
+  ======================================================= */
 
   const selectedCategoryData =
     selectedCategory !== null ? serviceCategories[selectedCategory] : null;
 
-  /* =================================================
-     TOGGLE SERVICES
-  ================================================= */
+  /* =======================================================
+     SERVICES TOGGLE
+  ======================================================= */
 
   const toggleServices = () => {
     setServicesOpen((current) => {
       const nextState = !current;
 
-      /* If Services is opening, close Network */
       if (nextState) {
         setNetworkOpen(false);
       }
@@ -218,29 +244,27 @@ function Navbar() {
       return nextState;
     });
 
-    /* If Services is closing, clear category */
     if (servicesOpen) {
       setSelectedCategory(null);
     }
   };
 
-  /* =================================================
+  /* =======================================================
      SELECT SERVICE CATEGORY
-  ================================================= */
+  ======================================================= */
 
   const selectCategory = (index: number) => {
     setSelectedCategory((current) => (current === index ? null : index));
   };
 
-  /* =================================================
-     TOGGLE NETWORK
-  ================================================= */
+  /* =======================================================
+     NETWORK TOGGLE
+  ======================================================= */
 
   const toggleNetwork = () => {
     setNetworkOpen((current) => {
       const nextState = !current;
 
-      /* If Network is opening, close Services */
       if (nextState) {
         setServicesOpen(false);
         setSelectedCategory(null);
@@ -250,9 +274,9 @@ function Navbar() {
     });
   };
 
-  /* =================================================
-     CLOSE ALL DROPDOWNS
-  ================================================= */
+  /* =======================================================
+     CLOSE DROPDOWNS
+  ======================================================= */
 
   const closeDropdowns = () => {
     setServicesOpen(false);
@@ -298,21 +322,13 @@ function Navbar() {
               />
             </button>
 
-            {/* =================================================
-                SERVICES DROPDOWN
-            ================================================= */}
-
             {servicesOpen && (
               <div className="services-dropdown">
-                {/* HEADER */}
-
                 <div className="services-dropdown-header">
                   <span>OUR SERVICES</span>
 
                   <strong>Choose a service category</strong>
                 </div>
-
-                {/* CONTENT */}
 
                 <div className="services-dropdown-content">
                   {/* CATEGORY COLUMN */}
@@ -386,7 +402,7 @@ function Navbar() {
           </Link>
 
           {/* =================================================
-              ACCESSORIES & SALES
+              ACCESSORIES
           ================================================= */}
 
           <Link to="/accessories-sales" onClick={closeDropdowns}>
@@ -406,8 +422,6 @@ function Navbar() {
           ================================================= */}
 
           <div className="network-nav-wrapper" ref={networkRef}>
-            {/* NETWORK BUTTON */}
-
             <button
               type="button"
               className={`network-nav-button ${networkOpen ? "active" : ""}`}
@@ -418,25 +432,13 @@ function Navbar() {
               <ChevronDown size={14} className={networkOpen ? "open" : ""} />
             </button>
 
-            {/* =================================================
-                NETWORK DROPDOWN
-
-                IMPORTANT:
-                This is rendered ONLY when networkOpen === true.
-                Therefore it cannot open through hover.
-            ================================================= */}
-
             {networkOpen && (
               <div className="network-dropdown">
-                {/* HEADER */}
-
                 <div className="network-dropdown-header">
                   <span>JOIN OUR NETWORK</span>
 
                   <strong>Choose how you want to grow with us</strong>
                 </div>
-
-                {/* OPTIONS */}
 
                 <div className="network-dropdown-items">
                   {/* TECHNICIAN */}
@@ -563,9 +565,9 @@ function HomePage() {
 
   const location = useLocation();
 
-  /* =================================================
+  /* =======================================================
      SCROLL TO SERVICES SECTION
-  ================================================= */
+  ======================================================= */
 
   useEffect(() => {
     if (location.hash === "#services") {
@@ -578,9 +580,9 @@ function HomePage() {
     }
   }, [location]);
 
-  /* =================================================
+  /* =======================================================
      AUTO CAROUSEL
-  ================================================= */
+  ======================================================= */
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -592,9 +594,9 @@ function HomePage() {
     };
   }, []);
 
-  /* =================================================
+  /* =======================================================
      PREVIOUS IMAGE
-  ================================================= */
+  ======================================================= */
 
   const previousImage = () => {
     setCurrentImage(
@@ -602,9 +604,9 @@ function HomePage() {
     );
   };
 
-  /* =================================================
+  /* =======================================================
      NEXT IMAGE
-  ================================================= */
+  ======================================================= */
 
   const nextImage = () => {
     setCurrentImage((current) => (current + 1) % heroImages.length);
@@ -618,8 +620,6 @@ function HomePage() {
         ================================================= */}
 
         <section className="hero">
-          {/* BACKGROUND */}
-
           <div className="hero-background">
             {heroImages.map((image, index) => (
               <img
@@ -634,8 +634,6 @@ function HomePage() {
 
             <div className="hero-overlay" />
           </div>
-
-          {/* HERO CONTENT */}
 
           <div className="hero-content">
             <div className="hero-copy">
@@ -670,9 +668,7 @@ function HomePage() {
             </div>
           </div>
 
-          {/* =================================================
-              CAROUSEL CONTROLS
-          ================================================= */}
+          {/* CAROUSEL CONTROLS */}
 
           <div className="carousel-controls">
             <button
@@ -711,7 +707,6 @@ function HomePage() {
 
             <div>
               <strong>Verified</strong>
-
               <span>Professionals</span>
             </div>
           </div>
@@ -721,7 +716,6 @@ function HomePage() {
 
             <div>
               <strong>Transparent</strong>
-
               <span>Pricing</span>
             </div>
           </div>
@@ -731,7 +725,6 @@ function HomePage() {
 
             <div>
               <strong>Managed</strong>
-
               <span>Service</span>
             </div>
           </div>
@@ -741,7 +734,6 @@ function HomePage() {
 
             <div>
               <strong>Warranty</strong>
-
               <span>Support</span>
             </div>
           </div>
@@ -751,7 +743,6 @@ function HomePage() {
 
             <div>
               <strong>Easy</strong>
-
               <span>Payments</span>
             </div>
           </div>
@@ -777,9 +768,7 @@ function HomePage() {
             </p>
           </div>
 
-          {/* =================================================
-              SERVICE CARDS
-          ================================================= */}
+          {/* SERVICE CARDS */}
 
           <div className="service-cards">
             {/* HOME APPLIANCES */}
@@ -902,28 +891,49 @@ function HomePage() {
 }
 
 /* =========================================================
-   APP ROUTING
+   APP CONTENT
 ========================================================= */
 
-function App() {
+function AppContent() {
+  const location = useLocation();
+
+  /*
+   * Admin pages use their own complete layout.
+   * Therefore the public navbar is hidden there.
+   */
+
+  const isAdminRoute = location.pathname.startsWith("/admin");
+
   return (
-    <BrowserRouter>
-      <Navbar />
+    <>
+      {/* =================================================
+          PUBLIC NAVBAR
+      ================================================= */}
+
+      {!isAdminRoute && <Navbar />}
 
       <Routes>
-        {/* HOME */}
+        {/* =================================================
+            HOME
+        ================================================= */}
 
         <Route path="/" element={<HomePage />} />
 
-        {/* SERVICES */}
+        {/* =================================================
+            SERVICES
+        ================================================= */}
 
         <Route path="/services" element={<ServicesPage />} />
 
-        {/* AMC */}
+        {/* =================================================
+            AMC
+        ================================================= */}
 
         <Route path="/amc" element={<AMCPage />} />
 
-        {/* ACCESSORIES */}
+        {/* =================================================
+            ACCESSORIES
+        ================================================= */}
 
         <Route path="/accessories-sales" element={<AccessoriesSalesPage />} />
 
@@ -942,7 +952,9 @@ function App() {
           element={<AccessoriesProductsPage />}
         />
 
-        {/* REGISTRATION */}
+        {/* =================================================
+            REGISTRATION
+        ================================================= */}
 
         <Route path="/register" element={<RegisterPage />} />
 
@@ -959,7 +971,9 @@ function App() {
 
         <Route path="/register-tutor" element={<TutorRegisterPage />} />
 
-        {/* SERVICE CATEGORY PAGES */}
+        {/* =================================================
+            SERVICE CATEGORY PAGES
+        ================================================= */}
 
         <Route
           path="/services/home-appliances"
@@ -975,18 +989,71 @@ function App() {
 
         <Route path="/services/home-staff" element={<HomeStaffPage />} />
 
-        {/* SERVICE DETAIL */}
+        {/* =================================================
+            SERVICE DETAIL
+        ================================================= */}
 
         <Route path="/services/:serviceId" element={<ServiceDetailPage />} />
 
-        {/* CONTACT */}
+        {/* =================================================
+            CONTACT
+        ================================================= */}
 
         <Route path="/contact" element={<ContactPage />} />
 
-        {/* LOGIN */}
+        {/* =================================================
+            LOGIN
+        ================================================= */}
 
         <Route path="/login" element={<LoginPage />} />
+
+        {/* =================================================
+    ADMIN LOGIN
+================================================= */}
+
+<Route path="/admin/login" element={<AdminLogin />} />
+
+{/* =================================================
+    PROTECTED ADMIN AREA
+================================================= */}
+
+<Route element={<AdminProtectedRoute />}>
+  <Route path="/admin" element={<AdminLayout />}>
+    {/* /admin */}
+    <Route index element={<AdminDashboard />} />
+
+    {/* /admin/book-services */}
+    <Route path="book-services" element={<BookServicesPage />} />
+
+    {/* /admin/products */}
+    <Route path="products" element={<ProductsPage />} />
+
+    {/* /admin/businesses */}
+    <Route path="businesses" element={<BusinessesPage />} />
+
+    {/* /admin/subscriptions */}
+    <Route path="subscriptions" element={<SubscriptionsPage />} />
+
+    {/* /admin/compliance */}
+    <Route path="compliance" element={<CompliancePage />} />
+
+    {/* /admin/settings */}
+    <Route path="settings" element={<SettingsPage />} />
+  </Route>
+</Route>
       </Routes>
+    </>
+  );
+}
+
+/* =========================================================
+   APP
+========================================================= */
+
+function App() {
+  return (
+    <BrowserRouter>
+      <AppContent />
     </BrowserRouter>
   );
 }

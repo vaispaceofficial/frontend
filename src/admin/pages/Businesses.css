@@ -1,0 +1,933 @@
+/* =========================================================
+   BUSINESSES / CONTRACTORS
+   Corporate Directory — Admin
+========================================================= */
+
+.businesses-admin-page {
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+
+  color: #172033;
+}
+
+/* =========================================================
+   PAGE HEADER
+========================================================= */
+
+.businesses-page-header {
+  margin-bottom: 23px;
+}
+
+.businesses-eyebrow {
+  margin-bottom: 8px;
+
+  color: #64748b;
+
+  font-size: 11px;
+  font-weight: 700;
+
+  letter-spacing: 0.08em;
+}
+
+.businesses-page-header h1 {
+  margin: 0;
+
+  color: #102b4e;
+
+  font-size: 25px;
+  font-weight: 750;
+
+  line-height: 1.2;
+
+  letter-spacing: -0.02em;
+}
+
+.businesses-page-header p {
+  margin: 8px 0 0;
+
+  color: #64748b;
+
+  font-size: 13px;
+
+  line-height: 1.5;
+}
+
+/* =========================================================
+   DIRECTORY CARD
+========================================================= */
+
+.businesses-directory-card {
+  width: 100%;
+
+  overflow: hidden;
+
+  border: 1px solid #dfe6ef;
+  border-radius: 15px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 3px 10px rgba(16, 43, 78, 0.035);
+}
+
+/* =========================================================
+   FILTER BAR
+========================================================= */
+
+.businesses-filter-bar {
+  min-height: 73px;
+
+  padding: 13px 17px;
+
+  display: grid;
+
+  grid-template-columns:
+    minmax(250px, 1fr)
+    190px auto;
+
+  align-items: center;
+
+  gap: 9px;
+
+  border-bottom: 1px solid #e5ebf2;
+
+  background: #ffffff;
+}
+
+.businesses-search {
+  height: 42px;
+
+  padding: 0 13px;
+
+  display: flex;
+  align-items: center;
+
+  gap: 8px;
+
+  border: 1px solid #d5deea;
+  border-radius: 9px;
+
+  background: #ffffff;
+
+  color: #94a3b8;
+}
+
+.businesses-search:focus-within {
+  border-color: #8eb2ed;
+
+  box-shadow:
+    0 0 0 3px rgba(37, 99, 235, 0.08);
+}
+
+.businesses-search input {
+  width: 100%;
+  min-width: 0;
+
+  border: 0;
+  outline: 0;
+
+  background: transparent;
+
+  color: #334155;
+
+  font-family: inherit;
+
+  font-size: 11px;
+}
+
+.businesses-search input::placeholder {
+  color: #a0acbb;
+}
+
+.businesses-search > button {
+  width: 25px;
+  height: 25px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 0;
+  border-radius: 6px;
+
+  background: #f1f5f9;
+
+  color: #64748b;
+
+  cursor: pointer;
+}
+
+/* =========================================================
+   TYPE SELECT
+========================================================= */
+
+.businesses-type-select {
+  position: relative;
+
+  height: 42px;
+}
+
+.businesses-type-select select {
+  width: 100%;
+  height: 100%;
+
+  padding: 0 34px 0 13px;
+
+  appearance: none;
+
+  border: 1px solid #d5deea;
+  border-radius: 9px;
+
+  outline: 0;
+
+  background: #ffffff;
+
+  color: #536176;
+
+  font-family: inherit;
+
+  font-size: 11px;
+
+  cursor: pointer;
+}
+
+.businesses-type-select select:focus {
+  border-color: #8eb2ed;
+
+  box-shadow:
+    0 0 0 3px rgba(37, 99, 235, 0.08);
+}
+
+.businesses-type-select svg {
+  position: absolute;
+
+  top: 50%;
+  right: 10px;
+
+  transform: translateY(-50%);
+
+  color: #64748b;
+
+  pointer-events: none;
+}
+
+/* =========================================================
+   CLEAR BUTTON
+========================================================= */
+
+.businesses-clear-button {
+  height: 32px;
+
+  padding: 0 10px;
+
+  border: 1px solid #dce4ed;
+  border-radius: 7px;
+
+  background: #ffffff;
+
+  color: #64748b;
+
+  font-family: inherit;
+
+  font-size: 10px;
+  font-weight: 650;
+
+  cursor: pointer;
+}
+
+/* =========================================================
+   TABLE
+========================================================= */
+
+.businesses-table-wrapper {
+  width: 100%;
+
+  overflow-x: auto;
+}
+
+.businesses-table {
+  width: 100%;
+  min-width: 1180px;
+
+  border-collapse: collapse;
+}
+
+.businesses-table thead {
+  background: #f8faff;
+}
+
+.businesses-table th {
+  height: 46px;
+
+  padding: 0 18px;
+
+  text-align: left;
+  vertical-align: middle;
+
+  border-bottom: 1px solid #e4eaf1;
+
+  color: #64748b;
+
+  font-size: 9.5px;
+  font-weight: 750;
+
+  letter-spacing: 0.06em;
+
+  white-space: nowrap;
+}
+
+.businesses-table td {
+  min-height: 112px;
+
+  padding: 14px 18px;
+
+  vertical-align: middle;
+
+  border-bottom: 1px solid #e8edf3;
+
+  color: #40516a;
+
+  font-size: 12px;
+}
+
+.businesses-table tbody tr {
+  transition: background 0.15s ease;
+}
+
+.businesses-table tbody tr:hover {
+  background: #fbfdff;
+}
+
+.businesses-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+/* =========================================================
+   BUSINESS NAME
+========================================================= */
+
+.business-name-cell {
+  min-width: 150px;
+}
+
+.business-name-cell strong {
+  display: block;
+
+  margin-bottom: 4px;
+
+  color: #172033;
+
+  font-size: 12px;
+  font-weight: 750;
+
+  line-height: 1.35;
+}
+
+.business-name-cell span {
+  display: block;
+
+  color: #9aa6b6;
+
+  font-size: 9px;
+}
+
+/* =========================================================
+   TYPE
+========================================================= */
+
+.business-type {
+  display: block;
+
+  max-width: 150px;
+
+  color: #435570;
+
+  font-size: 11px;
+
+  line-height: 1.45;
+}
+
+/* =========================================================
+   PROJECTS
+========================================================= */
+
+.business-projects {
+  display: block;
+
+  max-width: 150px;
+
+  color: #52647d;
+
+  font-size: 11px;
+
+  line-height: 1.45;
+}
+
+/* =========================================================
+   CONTACT
+========================================================= */
+
+.business-contact {
+  display: block;
+
+  max-width: 125px;
+
+  color: #53657c;
+
+  font-size: 11px;
+
+  line-height: 1.45;
+}
+
+/* =========================================================
+   PAYMENT STATUS
+========================================================= */
+
+.business-payment-status {
+  min-width: 50px;
+
+  padding: 7px 10px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 4px;
+
+  border-radius: 20px;
+
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.business-payment-status.paid {
+  background: #e5f6ec;
+
+  color: #087443;
+}
+
+.business-payment-status.pending {
+  background: #fff3d7;
+
+  color: #a66b00;
+}
+
+/* =========================================================
+   ACTIONS
+========================================================= */
+
+.business-actions {
+  min-width: 275px;
+
+  display: flex;
+  flex-wrap: wrap;
+
+  align-items: center;
+
+  gap: 5px;
+}
+
+.business-actions button {
+  height: 41px;
+
+  padding: 0 13px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 6px;
+
+  border-radius: 9px;
+
+  font-family: inherit;
+
+  font-size: 10.5px;
+  font-weight: 650;
+
+  cursor: pointer;
+
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.15s ease;
+}
+
+/* PRIMARY */
+
+.business-primary-action {
+  border: 1px solid #2563eb;
+
+  background: #2563eb;
+
+  color: #ffffff;
+}
+
+.business-primary-action:hover {
+  background: #1d56c7;
+
+  transform: translateY(-1px);
+}
+
+/* SECONDARY */
+
+.business-secondary-action {
+  border: 1px solid #d6e0eb;
+
+  background: #ffffff;
+
+  color: #19365b;
+}
+
+.business-secondary-action:hover {
+  border-color: #a9bdd7;
+
+  background: #f8fbff;
+
+  transform: translateY(-1px);
+}
+
+.business-secondary-action.subscription {
+  flex-basis: auto;
+}
+
+/* =========================================================
+   EMPTY STATE
+========================================================= */
+
+.businesses-empty-state {
+  min-height: 230px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  gap: 7px;
+
+  color: #94a3b8;
+}
+
+.businesses-empty-state strong {
+  color: #475569;
+
+  font-size: 13px;
+}
+
+.businesses-empty-state span {
+  font-size: 10px;
+}
+
+.businesses-empty-state button {
+  margin-top: 5px;
+
+  border: 0;
+
+  background: transparent;
+
+  color: #2563eb;
+
+  font-family: inherit;
+
+  font-size: 10px;
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+/* =========================================================
+   TABLE FOOTER
+========================================================= */
+
+.businesses-table-footer {
+  min-height: 59px;
+
+  padding: 0 18px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  border-top: 1px solid #e7ecf2;
+
+  background: #ffffff;
+}
+
+.businesses-table-footer > span {
+  color: #8a96a5;
+
+  font-size: 10px;
+}
+
+.businesses-table-footer > span strong {
+  color: #536174;
+}
+
+/* =========================================================
+   PAGINATION
+========================================================= */
+
+.businesses-pagination {
+  display: flex;
+  align-items: center;
+
+  gap: 4px;
+}
+
+.businesses-pagination button {
+  min-width: 29px;
+  height: 29px;
+
+  padding: 0 7px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid #dce3eb;
+  border-radius: 7px;
+
+  background: #ffffff;
+
+  color: #667487;
+
+  font-family: inherit;
+
+  font-size: 10px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+.businesses-pagination button:hover:not(:disabled) {
+  border-color: #a9c1e5;
+
+  color: #2563eb;
+}
+
+.businesses-pagination button.active {
+  border-color: #2563eb;
+
+  background: #2563eb;
+
+  color: #ffffff;
+}
+
+.businesses-pagination button:disabled {
+  opacity: 0.45;
+
+  cursor: not-allowed;
+}
+
+/* =========================================================
+   MODAL
+========================================================= */
+
+.business-modal-backdrop {
+  position: fixed;
+  z-index: 1000;
+
+  inset: 0;
+
+  padding: 20px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(15, 35, 60, 0.28);
+
+  backdrop-filter: blur(3px);
+}
+
+.business-modal {
+  width: min(500px, 100%);
+
+  overflow: hidden;
+
+  border: 1px solid #e0e6ee;
+  border-radius: 15px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 24px 70px rgba(16, 43, 78, 0.18);
+}
+
+/* =========================================================
+   MODAL HEADER
+========================================================= */
+
+.business-modal-header {
+  padding: 19px;
+
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+
+  border-bottom: 1px solid #e7ecf2;
+}
+
+.business-modal-header span {
+  display: block;
+
+  margin-bottom: 5px;
+
+  color: #2563eb;
+
+  font-size: 9px;
+  font-weight: 800;
+
+  letter-spacing: 0.1em;
+}
+
+.business-modal-header h2 {
+  margin: 0 0 4px;
+
+  color: #172033;
+
+  font-size: 18px;
+}
+
+.business-modal-header small {
+  color: #8b98a9;
+
+  font-size: 10px;
+}
+
+.business-modal-header > button {
+  width: 31px;
+  height: 31px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 0;
+  border-radius: 7px;
+
+  background: #f5f7fa;
+
+  color: #64748b;
+
+  cursor: pointer;
+}
+
+/* =========================================================
+   MODAL CONTENT
+========================================================= */
+
+.business-modal-content {
+  padding: 24px 19px 8px;
+
+  text-align: center;
+}
+
+.business-modal-icon {
+  width: 46px;
+  height: 46px;
+
+  margin: 0 auto 13px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: #eaf2ff;
+
+  color: #2563eb;
+}
+
+.business-modal-icon.success {
+  background: #e6f7ed;
+
+  color: #087443;
+}
+
+.business-modal-content h3 {
+  margin: 0;
+
+  color: #172033;
+
+  font-size: 16px;
+}
+
+.business-modal-content > p {
+  margin: 8px auto 17px;
+
+  max-width: 390px;
+
+  color: #6c7b8e;
+
+  font-size: 11px;
+
+  line-height: 1.6;
+}
+
+.business-modal-info {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, 1fr);
+
+  gap: 9px;
+
+  text-align: left;
+}
+
+.business-modal-info > div {
+  padding: 12px;
+
+  border: 1px solid #e5eaf0;
+  border-radius: 9px;
+
+  background: #fafbfd;
+}
+
+.business-modal-info span {
+  display: block;
+
+  margin-bottom: 5px;
+
+  color: #8a96a6;
+
+  font-size: 8px;
+  font-weight: 800;
+
+  letter-spacing: 0.07em;
+}
+
+.business-modal-info strong {
+  color: #46566c;
+
+  font-size: 10px;
+}
+
+/* =========================================================
+   PORTFOLIO PLACEHOLDER
+========================================================= */
+
+.business-portfolio-placeholder {
+  padding: 16px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  border: 1px dashed #cbd8e7;
+  border-radius: 9px;
+
+  background: #f8fbff;
+
+  color: #53709a;
+
+  font-size: 10px;
+}
+
+/* =========================================================
+   MODAL FOOTER
+========================================================= */
+
+.business-modal-footer {
+  padding: 18px;
+
+  display: flex;
+  justify-content: flex-end;
+
+  gap: 8px;
+}
+
+.business-modal-footer button {
+  height: 38px;
+
+  padding: 0 14px;
+
+  border-radius: 8px;
+
+  font-family: inherit;
+
+  font-size: 10px;
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+.business-modal-cancel {
+  border: 1px solid #dce3eb;
+
+  background: #ffffff;
+
+  color: #526176;
+}
+
+.business-modal-confirm {
+  border: 1px solid #2563eb;
+
+  background: #2563eb;
+
+  color: #ffffff;
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 1100px) {
+  .businesses-table {
+    min-width: 1050px;
+  }
+
+  .businesses-table th,
+  .businesses-table td {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+}
+
+@media (max-width: 800px) {
+  .businesses-filter-bar {
+    grid-template-columns: 1fr 170px;
+  }
+
+  .businesses-clear-button {
+    grid-column: 1 / -1;
+
+    width: fit-content;
+  }
+}
+
+@media (max-width: 600px) {
+  .businesses-page-header h1 {
+    font-size: 22px;
+  }
+
+  .businesses-page-header p {
+    font-size: 11px;
+  }
+
+  .businesses-filter-bar {
+    grid-template-columns: 1fr;
+  }
+
+  .businesses-table-footer {
+    min-height: auto;
+
+    padding-top: 13px;
+    padding-bottom: 13px;
+
+    align-items: flex-start;
+
+    flex-direction: column;
+
+    gap: 10px;
+  }
+
+  .business-modal-info {
+    grid-template-columns: 1fr;
+  }
+}

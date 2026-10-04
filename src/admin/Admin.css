@@ -1,0 +1,260 @@
+/* =========================================================
+   NEED ONE SERVICE — ADMIN GLOBAL SHELL
+   Premium Admin Dashboard
+   Brand: Blue + Navy + White
+========================================================= */
+
+/* =========================================================
+   GLOBAL RESET
+========================================================= */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: #f5f7fc;
+  color: #172033;
+
+  font-family: "Neulis Sans", sans-serif;
+
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+/* =========================================================
+   ADMIN ROOT LAYOUT
+========================================================= */
+
+.admin-layout {
+  width: 100%;
+  height: 100vh;
+  min-height: 100vh;
+
+  display: flex;
+
+  overflow: hidden;
+
+  background: #f5f7fc;
+  color: #172033;
+}
+
+/* =========================================================
+   MAIN ADMIN AREA
+========================================================= */
+
+.admin-main {
+  flex: 1 1 auto;
+
+  width: calc(100% - 308px);
+  min-width: 0;
+  height: 100vh;
+  min-height: 100vh;
+
+  display: flex;
+  flex-direction: column;
+
+  overflow: hidden;
+
+  background: #f5f7fc;
+}
+
+/* =========================================================
+   ADMIN CONTENT AREA
+========================================================= */
+
+.admin-content {
+  flex: 1 1 auto;
+
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+
+  padding: 32px 34px 40px;
+
+  overflow-x: hidden;
+  overflow-y: auto;
+
+  background: #f5f7fc;
+
+  scroll-behavior: smooth;
+}
+
+/* =========================================================
+   CONTENT SCROLLBAR
+========================================================= */
+
+.admin-content {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.admin-content::-webkit-scrollbar {
+  width: 7px;
+}
+
+.admin-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.admin-content::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+}
+
+.admin-content::-webkit-scrollbar-thumb:hover {
+  background: #aebdce;
+}
+
+/* =========================================================
+   REMOVE UNEXPECTED MARGINS
+========================================================= */
+
+.admin-content > * {
+  margin-top: 0;
+}
+
+.admin-content h1,
+.admin-content h2,
+.admin-content h3,
+.admin-content h4,
+.admin-content p {
+  margin-top: 0;
+}
+
+/* =========================================================
+   GLOBAL BUTTONS
+========================================================= */
+
+.admin-layout button {
+  font-family: inherit;
+}
+
+.admin-layout button:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, 0.18);
+  outline-offset: 2px;
+}
+
+/* =========================================================
+   GLOBAL INPUTS
+========================================================= */
+
+.admin-layout input,
+.admin-layout select,
+.admin-layout textarea {
+  font-family: inherit;
+}
+
+.admin-layout input:focus,
+.admin-layout select:focus,
+.admin-layout textarea:focus {
+  outline: none;
+}
+
+/* =========================================================
+   LINKS
+========================================================= */
+
+.admin-layout a {
+  color: inherit;
+}
+
+/* =========================================================
+   SELECTION
+========================================================= */
+
+.admin-layout ::selection {
+  background: #dbeafe;
+  color: #102b4e;
+}
+
+/* =========================================================
+   DESKTOP CONTENT WIDTH
+========================================================= */
+
+@media (min-width: 1400px) {
+  .admin-content {
+    padding-left: 34px;
+    padding-right: 34px;
+  }
+}
+
+/* =========================================================
+   LAPTOP
+========================================================= */
+
+@media (max-width: 1200px) {
+  .admin-content {
+    padding: 28px 26px 36px;
+  }
+}
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 1000px) {
+  .admin-main {
+    width: calc(100% - 250px);
+  }
+
+  .admin-content {
+    padding: 26px 22px 32px;
+  }
+}
+
+/* =========================================================
+   SMALL TABLET
+========================================================= */
+
+@media (max-width: 760px) {
+  .admin-main {
+    width: calc(100% - 72px);
+  }
+
+  .admin-content {
+    padding: 22px 18px 30px;
+  }
+}
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 520px) {
+  .admin-main {
+    width: calc(100% - 72px);
+  }
+
+  .admin-content {
+    padding: 18px 14px 26px;
+  }
+}
+
+/* =========================================================
+   VERY SMALL MOBILE
+========================================================= */
+
+@media (max-width: 380px) {
+  .admin-content {
+    padding: 16px 12px 24px;
+  }
+}
