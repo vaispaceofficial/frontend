@@ -9,13 +9,16 @@ import {
   ChevronDown,
 } from "lucide-react";
 
+
 import {
   BrowserRouter,
   Routes,
   Route,
   Link,
+  Navigate,
   useLocation,
 } from "react-router-dom";
+
 
 import "./App.css";
 
@@ -35,6 +38,7 @@ import HomeStaffPage from "./pages/HomeStaffPage";
 
 import AMCPage from "./pages/AMCPage";
 import AccessoriesSalesPage from "./pages/AccessoriesSalesPage";
+import CityListingsPage from "./pages/CityListingsPage";
 
 import RegisterPage from "./pages/RegisterPage";
 import ProfessionalRegisterPage from "./pages/ProfessionalRegisterPage";
@@ -394,20 +398,21 @@ function Navbar() {
             )}
           </div>
 
-          {/* =================================================
-              AMC
-          ================================================= */}
-
-          <Link to="/amc" onClick={closeDropdowns}>
-            AMC
-          </Link>
 
           {/* =================================================
               ACCESSORIES
           ================================================= */}
 
           <Link to="/accessories-sales" onClick={closeDropdowns}>
-            Accessories &amp; Sales
+            MarketPlace
+          </Link>
+
+          {/* =================================================
+              AMC
+          ================================================= */}
+
+          <Link to="/city-listings" onClick={closeDropdowns}>
+            City Listings
           </Link>
 
           {/* =================================================
@@ -932,26 +937,51 @@ function AppContent() {
 
         <Route path="/amc" element={<AMCPage />} />
 
-        {/* =================================================
-            ACCESSORIES
-        ================================================= */}
+<Route
+  path="/city-listings"
+  element={<CityListingsPage />}
+/>
 
-        <Route path="/accessories-sales" element={<AccessoriesSalesPage />} />
+{/* =================================================
+    ACCESSORIES & MARKETPLACE
+================================================= */}
 
-        <Route
-          path="/accessories-sales/products"
-          element={<AccessoriesProductsPage />}
-        />
+<Route
+  path="/accessories-sales"
+  element={<AccessoriesSalesPage />}
+/>
 
-        <Route
-          path="/accessories-sales/products/:productId"
-          element={<ProductDetailsPage />}
-        />
+<Route
+  path="/accessories"
+  element={<Navigate to="/accessories/all" replace />}
+/>
 
-        <Route
-          path="/accessories/:categorySlug"
-          element={<AccessoriesProductsPage />}
-        />
+<Route
+  path="/accessories/all"
+  element={<AccessoriesProductsPage />}
+/>
+
+<Route
+  path="/accessories/:categorySlug/:subcategorySlug"
+  element={<AccessoriesProductsPage />}
+/>
+
+<Route
+  path="/accessories/:categorySlug"
+  element={<AccessoriesProductsPage />}
+/>
+
+<Route
+  path="/accessories-sales/products"
+  element={<AccessoriesProductsPage />}
+/>
+
+<Route
+  path="/accessories-sales/products/:productId"
+  element={<ProductDetailsPage />}
+/>
+
+
 
         {/* =================================================
             REGISTRATION

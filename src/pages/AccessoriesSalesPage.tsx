@@ -18,46 +18,34 @@ import "./AccessoriesSalesPage.css";
 
 const categories = [
   {
-    title: "AC Accessories",
-    description: "Filters, remotes, stands and more",
-    icon: "❄️",
-    slug: "ac-accessories",
+    title: "Home Appliances",
+    description: "Products, Spare Parts and Accessories.",
+    icon: "🏠",
+    slug: "home-appliances",
   },
   {
-    title: "Washing Machine Accessories",
-    description: "Hoses, covers and useful accessories",
-    icon: "🫧",
-    slug: "washing-machine-accessories",
+    title: "Electronics, Mobile & Computer Accessories",
+    description: "Mobiles, computers, audio and security.",
+    icon: "📱",
+    slug: "electronics-mobile-computer-accessories",
   },
   {
-    title: "Refrigerator Accessories",
-    description: "Parts and useful accessories",
-    icon: "🧊",
-    slug: "refrigerator-accessories",
+    title: "Fashion, Clothing & Apparel",
+    description: "Clothing, footwear, bags and accessories.",
+    icon: "👕",
+    slug: "fashion-clothing-apparel",
   },
   {
-    title: "TV Accessories",
-    description: "Remotes, mounts and cables",
-    icon: "📺",
-    slug: "tv-accessories",
+    title: "Furniture, Home Decor & Lighting",
+    description: "Furniture, lighting and home decor.",
+    icon: "🛋️",
+    slug: "furniture-home-decor-lighting",
   },
   {
-    title: "Kitchen Appliances",
-    description: "Useful appliances for your kitchen",
-    icon: "🍳",
-    slug: "kitchen-appliances",
-  },
-  {
-    title: "Electrical Accessories",
-    description: "Cables, switches and essentials",
-    icon: "⚡",
-    slug: "electrical-accessories",
-  },
-  {
-    title: "Other Accessories",
-    description: "Useful products for everyday needs",
-    icon: "✨",
-    slug: "other-accessories",
+    title: "Sports, Fitness & Outdoor Goods",
+    description: "Fitness equipment and sports essentials.",
+    icon: "🏸",
+    slug: "sports-fitness-outdoor-goods",
   },
 ];
 
@@ -69,56 +57,65 @@ const products = [
   {
     id: 1,
     name: "Universal AC Remote",
-    category: "AC Accessories",
+    category: "Home Appliances",
     price: "₹499",
     oldPrice: "₹699",
-    image: "📱",
+    image: "❄️",
     badge: "Popular",
   },
   {
     id: 2,
-    name: "AC Dust Filter",
-    category: "AC Accessories",
+    name: "RO Water Purifier Filter",
+    category: "Home Appliances",
     price: "₹349",
     oldPrice: "₹499",
-    image: "❄️",
-    badge: "New",
+    image: "💧",
+    badge: "Popular",
   },
   {
     id: 3,
-    name: "Washing Machine Cover",
-    category: "Washing Machine Accessories",
-    price: "₹599",
-    oldPrice: "₹799",
-    image: "🫧",
+    name: "USB-C Charging Cable",
+    category: "Electronics, Mobile & Computer Accessories",
+    price: "₹299",
+    oldPrice: "₹399",
+    image: "🔌",
     badge: "Popular",
   },
   {
     id: 4,
-    name: "Universal TV Remote",
-    category: "TV Accessories",
-    price: "₹299",
-    oldPrice: "₹399",
-    image: "📺",
-    badge: "",
+    name: "Wireless Earbuds",
+    category: "Electronics, Mobile & Computer Accessories",
+    price: "₹999",
+    oldPrice: "₹1,299",
+    image: "🎧",
+    badge: "New",
   },
   {
     id: 5,
-    name: "Refrigerator Mat",
-    category: "Refrigerator Accessories",
-    price: "₹399",
-    oldPrice: "₹549",
-    image: "🧊",
+    name: "Everyday Casual T-Shirt",
+    category: "Fashion, Clothing & Apparel",
+    price: "₹499",
+    oldPrice: "₹699",
+    image: "👕",
     badge: "New",
   },
   {
     id: 6,
-    name: "HDMI Cable",
-    category: "Electrical Accessories",
-    price: "₹449",
-    oldPrice: "₹599",
-    image: "🔌",
+    name: "Decorative Table Lamp",
+    category: "Furniture, Home Decor & Lighting",
+    price: "₹799",
+    oldPrice: "₹999",
+    image: "💡",
     badge: "",
+  },
+  {
+    id: 7,
+    name: "Resistance Bands Set",
+    category: "Sports, Fitness & Outdoor Goods",
+    price: "₹399",
+    oldPrice: "₹599",
+    image: "💪",
+    badge: "Popular",
   },
 ];
 
@@ -128,70 +125,70 @@ const products = [
 
 const heroCarouselOne = [
   {
-    title: "AC Service",
-    subtitle: "Cooling & maintenance",
-    image: "/images/accessories/ac-service.avif",
+    title: "Home Appliances",
+    subtitle: "Products, spare parts & accessories",
+    image: "/images/accessories/home-appliances.jpg",
   },
   {
-    title: "AC Accessories",
-    subtitle: "Filters & remotes",
-    image: "/images/accessories/ac-accessories.jpg",
+    title: "Washing Machines",
+    subtitle: "Machines, hoses & spare parts",
+    image: "/images/accessories/washing-machine.jpg",
   },
   {
-    title: "Professional Care",
-    subtitle: "Service at home",
-    image: "/images/accessories/professional-care.webp",
+    title: "Refrigerators & ACs",
+    subtitle: "Parts, filters & accessories",
+    image: "/images/accessories/refrigerator.avif",
   },
   {
-    title: "AC Installation",
-    subtitle: "Expert installation",
-    image: "/images/accessories/ac-installation.jpeg",
+    title: "RO Water Purifiers",
+    subtitle: "Filters, membranes & fittings",
+    image: "/images/accessories/kitchen-appliances.avif",
   },
 ];
 
 const heroCarouselTwo = [
   {
-    title: "Refrigerator",
-    subtitle: "Parts & accessories",
-    image: "/images/accessories/refrigerator.avif",
+    title: "Mobiles & Tablets",
+    subtitle: "Screens, cases & chargers",
+    image: "/images/accessories/electrical.jpg",
   },
   {
-    title: "Washing Machine",
-    subtitle: "Covers & hoses",
-    image: "/images/accessories/washing-machine.jpg",
+    title: "Computers & Laptops",
+    subtitle: "RAM, SSDs & essentials",
+    image: "/images/accessories/home-support.jpg",
   },
   {
-    title: "Kitchen Appliances",
-    subtitle: "Everyday essentials",
-    image: "/images/accessories/kitchen-appliances.avif",
+    title: "Audio & Entertainment",
+    subtitle: "Headphones, speakers & cables",
+    image: "/images/accessories/tv-accessories.webp",
   },
   {
-    title: "Home Appliances",
-    subtitle: "Products & support",
-    image: "/images/accessories/home-appliances.jpg",
+    title: "CCTV & Security",
+    subtitle: "Cameras, storage & accessories",
+    image: "/images/accessories/installation.webp",
   },
 ];
 
 const heroCarouselThree = [
   {
-    title: "TV Accessories",
-    subtitle: "Remotes & mounts",
-    image: "/images/accessories/tv-accessories.webp",
+    title: "Fashion & Apparel",
+    subtitle: "Everyday and ethnic wear",
+    image: "/images/accessories/professional-care.webp",
   },
   {
-    title: "Electrical",
-    subtitle: "Cables & essentials",
-    image: "/images/accessories/electrical.jpg",
+    title: "Furniture & Decor",
+    subtitle: "Furniture, lighting & textiles",
+    image: "/images/accessories/home-appliances.jpg",
   },
   {
-    title: "Installation",
-    subtitle: "Professional support",
-    image: "/images/accessories/installation.webp",
+    title: "Sports & Fitness",
+    subtitle: "Gym gear & sports equipment",
+    image: "/images/accessories/ac-accessories.jpg",
   },
   {
-    title: "Home Support",
-    subtitle: "OneService care",
-    image: "/images/accessories/home-support.jpg",
+    title: "Products for Every Need",
+    subtitle: "Explore all five categories",
+    image: "/images/accessories/ac-service.avif",
   },
 ];
 
@@ -277,17 +274,14 @@ function AccessoriesSalesPage() {
 
   return (
     <main className="accessories-sales-page">
-
       {/* =====================================================
           HERO
       ===================================================== */}
 
       <section className="accessories-hero">
-
         <div className="accessories-hero-content">
-
           <span className="accessories-eyebrow">
-            ACCESSORIES &amp; SALES
+            MARKETPLACE
           </span>
 
           <h1>
@@ -296,19 +290,19 @@ function AccessoriesSalesPage() {
           </h1>
 
           <p>
-            Find reliable accessories, useful products and everyday
-            essentials for your home — all in one place.
+            Shop appliances and spare parts, electronics, fashion,
+            furniture, home decor, lighting, sports and fitness
+            essentials — all in one place.
           </p>
 
           {/* SEARCH */}
 
           <div className="accessories-search">
-
             <Search size={20} />
 
             <input
               type="text"
-              placeholder="Search for accessories or products..."
+              placeholder="Search appliances, electronics, fashion, furniture, sports..."
               value={searchTerm}
               onChange={(event) =>
                 setSearchTerm(event.target.value)
@@ -320,19 +314,14 @@ function AccessoriesSalesPage() {
               }}
             />
 
-            <button
-              type="button"
-              onClick={handleSearch}
-            >
+            <button type="button" onClick={handleSearch}>
               Search
             </button>
-
           </div>
 
           {/* FEATURES */}
 
           <div className="accessories-hero-features">
-
             <div>
               <ShieldCheck size={18} />
               <span>Reliable products</span>
@@ -347,24 +336,18 @@ function AccessoriesSalesPage() {
               <Wrench size={18} />
               <span>Installation support</span>
             </div>
-
           </div>
-
         </div>
 
-        {/* ===================================================
-            THREE VERTICAL CAROUSELS
-        =================================================== */}
+        {/* THREE VERTICAL CAROUSELS */}
 
         <div className="accessories-hero-carousel">
-
           <div className="hero-carousel-heading">
             <span>ONE SERVICE</span>
             <strong>Products + Support</strong>
           </div>
 
           <div className="hero-carousel-columns">
-
             <MiniVerticalCarousel
               items={heroCarouselOne}
               direction="up"
@@ -382,22 +365,16 @@ function AccessoriesSalesPage() {
               direction="up"
               className="carousel-column-right"
             />
-
           </div>
 
           <Link
             to="/accessories/all"
             className="hero-carousel-footer"
           >
-            <span>
-              Explore products &amp; services
-            </span>
-
+            <span>Explore products &amp; services</span>
             <ArrowRight size={18} />
           </Link>
-
         </div>
-
       </section>
 
       {/* =====================================================
@@ -405,23 +382,18 @@ function AccessoriesSalesPage() {
       ===================================================== */}
 
       <section className="accessories-section">
-
         <div className="accessories-section-heading">
-
           <div>
-
             <span className="section-label">
               SHOP BY CATEGORY
             </span>
 
-            <h2>
-              Find what you need
-            </h2>
+            <h2>Find what you need</h2>
 
             <p>
-              Browse accessories and products by category.
+              Explore five product categories, from appliance
+              spare parts to fashion, home decor and sports equipment.
             </p>
-
           </div>
 
           <Link
@@ -431,70 +403,44 @@ function AccessoriesSalesPage() {
             View all
             <ArrowRight size={17} />
           </Link>
-
         </div>
 
         {/* CATEGORY GRID */}
 
         <div className="category-grid">
-
-          {/* ALL PRODUCTS */}
-
           <Link
             to="/accessories/all"
             className="category-card"
           >
-
-            <div className="category-icon">
-              ✨
-            </div>
+            <div className="category-icon">✨</div>
 
             <div>
               <h3>All Products</h3>
-
-              <p>
-                Browse everything
-              </p>
+              <p>Browse everything</p>
             </div>
 
             <ChevronRight size={18} />
-
           </Link>
 
-          {/* INDIVIDUAL CATEGORIES */}
-
           {categories.map((category) => (
-
             <Link
               to={`/accessories/${category.slug}`}
               className="category-card"
               key={category.slug}
             >
-
               <div className="category-icon">
                 {category.icon}
               </div>
 
               <div>
-
-                <h3>
-                  {category.title}
-                </h3>
-
-                <p>
-                  {category.description}
-                </p>
-
+                <h3>{category.title}</h3>
+                <p>{category.description}</p>
               </div>
 
               <ChevronRight size={18} />
-
             </Link>
-
           ))}
-
         </div>
-
       </section>
 
       {/* =====================================================
@@ -502,23 +448,18 @@ function AccessoriesSalesPage() {
       ===================================================== */}
 
       <section className="accessories-section products-section">
-
         <div className="accessories-section-heading">
-
           <div>
-
             <span className="section-label">
               TOP PICKS
             </span>
 
-            <h2>
-              Popular picks for your home
-            </h2>
+            <h2>Popular picks across our categories</h2>
 
             <p>
-              Quality products selected for everyday home needs.
+              Explore useful products and everyday essentials
+              across the OneService marketplace.
             </p>
-
           </div>
 
           <Link
@@ -528,23 +469,18 @@ function AccessoriesSalesPage() {
             View all products
             <ArrowRight size={17} />
           </Link>
-
         </div>
 
         <div className="products-grid">
-
           {products.map((product) => (
-
             <article
               className="product-card"
               key={product.id}
             >
-
               <Link
                 to={`/product/${product.id}`}
                 className="product-image"
               >
-
                 {product.badge && (
                   <span className="product-badge">
                     {product.badge}
@@ -566,29 +502,18 @@ function AccessoriesSalesPage() {
                 >
                   <ShoppingCart size={18} />
                 </button>
-
               </Link>
 
               <div className="product-info">
-
                 <span className="product-category">
                   {product.category}
                 </span>
 
-                <h3>
-                  {product.name}
-                </h3>
+                <h3>{product.name}</h3>
 
                 <div className="product-price">
-
-                  <strong>
-                    {product.price}
-                  </strong>
-
-                  <span>
-                    {product.oldPrice}
-                  </span>
-
+                  <strong>{product.price}</strong>
+                  <span>{product.oldPrice}</span>
                 </div>
 
                 <Link
@@ -598,25 +523,19 @@ function AccessoriesSalesPage() {
                   View details
                   <ArrowRight size={16} />
                 </Link>
-
               </div>
-
             </article>
-
           ))}
-
         </div>
-
       </section>
 
       {/* =====================================================
           SERVICE + PRODUCT
+          Uses the same background class as the former CTA
       ===================================================== */}
 
-      <section className="service-product-section">
-
+      <section className="service-product-section accessories-final-cta">
         <div className="service-product-content">
-
           <span className="section-label">
             MORE THAN JUST PRODUCTS
           </span>
@@ -639,11 +558,9 @@ function AccessoriesSalesPage() {
             Explore our services
             <ArrowRight size={18} />
           </Link>
-
         </div>
 
         <div className="service-product-card">
-
           <div className="service-step">
             <span>01</span>
 
@@ -670,46 +587,8 @@ function AccessoriesSalesPage() {
               <p>Get professional installation or service.</p>
             </div>
           </div>
-
         </div>
-
       </section>
-
-      {/* =====================================================
-          FINAL CTA
-      ===================================================== */}
-
-      <section className="accessories-final-cta">
-
-        <div>
-
-          <span className="section-label">
-            NEED ONE SERVICE
-          </span>
-
-          <h2>
-            Your home.
-            <br />
-            Taken care of.
-          </h2>
-
-          <p>
-            From products to professional services, Need One Service
-            keeps everything simple.
-          </p>
-
-        </div>
-
-        <Link
-          to="/services"
-          className="service-product-button"
-        >
-          Explore services
-          <ArrowRight size={18} />
-        </Link>
-
-      </section>
-
     </main>
   );
 }
