@@ -1168,12 +1168,13 @@ border-color: #1d4ed8;
 
 
 /* =========================================
-   ONESERVICE — SUBTLE PROCESS ANIMATION
+   ONESERVICE — SYNCHRONIZED PROCESS ANIMATION
 ========================================= */
 
 .process-grid {
   --process-blue: #2563eb;
   --process-light-blue: #eaf5fc;
+  --process-duration: 12s;
 
   position: relative;
   display: grid;
@@ -1184,7 +1185,7 @@ border-color: #1d4ed8;
   isolation: isolate;
 }
 
-/* Static connecting line */
+/* Background connecting line */
 .process-grid::before {
   content: "";
   position: absolute;
@@ -1197,7 +1198,7 @@ border-color: #1d4ed8;
   z-index: -1;
 }
 
-/* Blue progress travels left to right: 01 → 06 */
+/* Progress line — matches the circle sequence */
 .process-grid::after {
   content: "";
   position: absolute;
@@ -1206,13 +1207,9 @@ border-color: #1d4ed8;
   width: 0;
   height: 2px;
   border-radius: 50px;
-  background: linear-gradient(
-    90deg,
-    #bfdbfe,
-    #14498a
-  );
+  background: #2563eb;
   z-index: -1;
-  animation: processLineForward 6s linear infinite;
+  animation: processLineForward var(--process-duration) linear infinite;
 }
 
 .process-step {
@@ -1225,33 +1222,39 @@ border-color: #1d4ed8;
   text-align: center;
 }
 
-/* Original number circle appearance */
+/* Process circles */
 .process-number {
+  position: relative;
   width: 48px;
   height: 48px;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-sizing: border-box;
 
-  border: 2px solid transparent;
+  border: 2px solid #dbeafe;
   border-radius: 50%;
-  background: var(--process-light-blue);
-  color: var(--process-blue);
+  background: #eaf5fc;
+  color: #2563eb;
 
   font-size: 13px;
   font-weight: 600;
 
-  animation: processCircleForward 6s linear infinite;
-  animation-delay: calc(var(--step-index) * 1s);
+  animation:
+    processCircleForward var(--process-duration) linear infinite;
+  animation-delay: calc(var(--step-index) * 2s);
 }
 
-/* Keep the number itself unchanged */
+/* Keep step numbers visible */
 .process-number span {
   display: block;
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
 }
 
-/* Original label styling */
+/* Step labels */
 .process-step-label {
   display: block;
   color: #40536b;
@@ -1259,65 +1262,62 @@ border-color: #1d4ed8;
   font-weight: 500;
   line-height: 1.5;
 
-  animation: processLabelForward 6s linear infinite;
-  animation-delay: calc(var(--step-index) * 1s);
+  animation:
+    processLabelForward var(--process-duration) linear infinite;
+  animation-delay: calc(var(--step-index) * 2s);
 }
 
-/* Progress grows from the first step to the last */
+/* The line advances at the same pace as the circles */
 @keyframes processLineForward {
   0% {
     width: 0;
-    opacity: 0.6;
   }
 
-  85% {
+  83.33% {
     width: 83.34%;
-    opacity: 1;
   }
 
   100% {
     width: 83.34%;
-    opacity: 0.6;
   }
 }
 
-/* Subtle highlight; the number stays the same */
+/* Each circle highlights as the line reaches its step */
+
+/* Only one process circle highlights at a time */
 @keyframes processCircleForward {
-  0%,
-  16% {
-    background: #d8ebfa;
-    color: #2563eb;
-    border-color: #bfdbfe;
-    box-shadow: 0 0 0 3px rgb(37 99 235 / 7%);
-    transform: translateY(-2px);
+  0%, 15% {
+    background: #2563eb;
+    color: #ffffff;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 4px rgb(37 99 235 / 12%);
+    transform: scale(1.06);
   }
 
-  17%,
-  100% {
+  16.67%, 100% {
     background: #eaf5fc;
     color: #2563eb;
-    border-color: transparent;
+    border-color: #dbeafe;
     box-shadow: none;
-    transform: translateY(0);
+    transform: scale(1);
   }
 }
 
-/* Label gets a gentle blue emphasis */
+/* Highlight only the matching step label */
 @keyframes processLabelForward {
-  0%,
-  16% {
+  0%, 15% {
     color: #2563eb;
-    font-weight: 600;
+    font-weight: 700;
   }
 
-  17%,
-  100% {
+  16.67%, 100% {
     color: #40536b;
     font-weight: 500;
   }
 }
 
-/* Responsive layout */
+
+/* Tablet: three columns, so hide the single-row line */
 @media (max-width: 768px) {
   .process-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1328,8 +1328,14 @@ border-color: #1d4ed8;
   .process-grid::after {
     display: none;
   }
+
+  .process-number,
+  .process-step-label {
+    animation: none;
+  }
 }
 
+/* Mobile */
 @media (max-width: 420px) {
   .process-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1341,7 +1347,7 @@ border-color: #1d4ed8;
   }
 }
 
-/* Accessibility: reduce motion when requested */
+/* Accessibility */
 @media (prefers-reduced-motion: reduce) {
   .process-grid::after,
   .process-number,
@@ -1349,7 +1355,6 @@ border-color: #1d4ed8;
     animation: none !important;
   }
 }
-
 
 /* =========================================================
    ONE SERVICE — CHOOSE YOUR PROFESSIONAL
@@ -1885,4 +1890,279 @@ border-color: #1d4ed8;
   opacity: 0.5;
   cursor: not-allowed;
   pointer-events: none;
+}
+
+/* =========================================
+   ONESERVICE — DYNAMIC PROFESSIONAL DETAILS
+   Compact styles without duplicate overrides
+========================================= */
+
+.professional-card {
+  min-width: 0;
+  padding: 16px;
+  overflow: hidden;
+}
+
+/* Professional profile image */
+.professional-avatar-photo {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  overflow: hidden;
+}
+
+.professional-avatar-photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+}
+
+/* Professional name and details */
+.professional-profile-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.professional-profile-info > strong {
+  display: block;
+  color: #172033;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.professional-profile-info > span {
+  display: block;
+  margin-top: 3px;
+  color: #64748b;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+/* Response-time section */
+.professional-response-time {
+  margin-top: 12px;
+  padding: 10px;
+  background: #eff6ff;
+  border: 1px solid #dbeafe;
+  border-radius: 9px;
+}
+
+.professional-extra-heading {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #2563eb;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.professional-response-time > span {
+  display: block;
+  margin-top: 5px;
+  color: #172033;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.professional-response-time > small {
+  display: block;
+  margin-top: 3px;
+  color: #64748b;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+/* Customer reviews section */
+.professional-customer-reviews {
+  margin-top: 12px;
+  padding-top: 11px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.professional-customer-review {
+  margin-top: 8px;
+  padding: 9px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.professional-review-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.professional-review-header > strong {
+  color: #172033;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.professional-review-rating {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 3px;
+  color: #d97706;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.professional-customer-review p {
+  margin: 5px 0 0;
+  color: #475569;
+  font-size: 11px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+/* Overall review summary */
+.professional-review-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  margin-top: 9px;
+  color: #64748b;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.professional-review-summary > svg {
+  flex-shrink: 0;
+  color: #f59e0b;
+}
+
+.professional-review-summary > strong {
+  color: #172033;
+  font-size: 11px;
+}
+
+/* Smaller screens */
+@media (max-width: 900px) {
+  .professional-card {
+    padding: 14px;
+  }
+}
+
+/* =========================================
+   SELECTED PROFESSIONAL — POSITION UPDATE
+========================================= */
+
+.professional-card {
+  min-width: 0;
+  scroll-margin-top: 90px;
+  transition:
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.professional-card.professional-card-selected {
+  transform: translateY(-12px);
+}
+
+/* Prevent layout issues on smaller screens */
+@media (max-width: 900px) {
+  .professional-card.professional-card-selected {
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .professional-card {
+    transition: none;
+  }
+}
+
+/* =========================================
+   PROFESSIONAL CAROUSEL — NEXT ROW BUTTON
+========================================= */
+
+.professional-carousel-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 16px;
+  width: 100%;
+}
+
+.professional-next-row {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 34px;
+  height: 34px;
+  padding: 0;
+
+  color: #2563eb;
+  background: #eff6ff;
+
+  border: 1px solid #bfdbfe;
+  border-radius: 50%;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.professional-next-row:hover {
+  color: #ffffff;
+  background: #2563eb;
+  border-color: #2563eb;
+
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+  transform: translateY(2px);
+}
+
+.professional-next-row:active {
+  transform: scale(0.94);
+}
+
+.professional-next-row:focus-visible {
+  outline: 3px solid rgba(59, 130, 246, 0.35);
+  outline-offset: 3px;
+}
+
+/* Animate the professional cards when the row changes */
+
+.professional-grid-animated {
+  animation: professionalRowsEnter 250ms ease-out;
+}
+
+@keyframes professionalRowsEnter {
+  from {
+    opacity: 0.65;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Respect reduced-motion preferences */
+
+@media (prefers-reduced-motion: reduce) {
+  .professional-grid-animated {
+    animation: none;
+  }
+
+  .professional-next-row {
+    transition: none;
+  }
 }

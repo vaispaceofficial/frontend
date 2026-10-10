@@ -1,5 +1,7 @@
+
 import { ArrowRight, Search } from "lucide-react";
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { services } from "../data/serviceMenu";
 import "./ServicesPage.css";
 
@@ -9,6 +11,7 @@ const categories = [
   "Home Services",
   "Personal Services",
   "Home Staff",
+  "EduTech & Home Tutors",
 ];
 
 function ServicesPage() {
@@ -78,6 +81,7 @@ function ServicesPage() {
           {categories.map((category) => (
             <button
               key={category}
+              type="button"
               className={
                 activeCategory === category ? "active" : ""
               }
@@ -90,9 +94,9 @@ function ServicesPage() {
 
         <div className="services-grid">
           {filteredServices.map((service) => (
-            <a
+            <Link
               key={service.id}
-              href={`/services/${service.id}`}
+              to={`/services/${service.id}`}
               className="service-list-card"
             >
               <div className="service-list-image">
@@ -120,9 +124,18 @@ function ServicesPage() {
                   </span>
                 </div>
               </div>
-            </a>
+            </Link>
           ))}
         </div>
+
+        {filteredServices.length === 0 && (
+          <div className="services-empty-state">
+            <h3>No services found</h3>
+            <p>
+              Try another search term or select a different category.
+            </p>
+          </div>
+        )}
       </section>
     </main>
   );

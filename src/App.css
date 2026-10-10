@@ -1,6 +1,13 @@
-/* =========================================
-   NEULIS SANS
-========================================= */
+
+/* =========================================================
+   ONESERVICE — GLOBAL STYLES
+   Font: Neulis Sans
+   Theme: White + Blue
+========================================================= */
+
+/* =========================================================
+   FONT
+========================================================= */
 
 @font-face {
   font-family: "Neulis Sans";
@@ -10,13 +17,12 @@
   font-display: swap;
 }
 
-/* =========================================
-   ROOT
-========================================= */
+/* =========================================================
+   ROOT & RESET
+========================================================= */
 
 :root {
-  font-family: "Inter", sans-serif;
-
+  font-family: "Neulis Sans", sans-serif;
   color: #2563eb;
   background: #ffffff;
 
@@ -24,11 +30,23 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
 
-/* =========================================
-   RESET
-========================================= */
+  --primary: #2563eb;
+  --primary-light: #3b82f6;
+  --primary-dark: #1d4ed8;
+
+  --text-primary: #172033;
+  --text-secondary: #5f7285;
+
+  --border: #e2ebf2;
+  --surface: #ffffff;
+  --surface-soft: #f8fbfd;
+
+  --shadow-sm: 0 6px 20px rgba(37, 99, 235, 0.07);
+  --shadow-md: 0 14px 35px rgba(37, 99, 235, 0.12);
+
+  --navbar-height: 82px;
+}
 
 * {
   box-sizing: border-box;
@@ -40,17 +58,23 @@ html {
   width: 100%;
   min-width: 320px;
   scroll-behavior: smooth;
+  scroll-padding-top: var(--navbar-height);
 }
 
 body {
   width: 100%;
   min-width: 320px;
   min-height: 100vh;
+
   background: #ffffff;
+  color: var(--text-primary);
+  font-family: "Neulis Sans", sans-serif;
 }
 
 button,
-a {
+input,
+textarea,
+select {
   font: inherit;
 }
 
@@ -64,168 +88,112 @@ a {
   text-decoration: none;
 }
 
-/* =========================================
+img {
+  max-width: 100%;
+}
+
+button:focus-visible,
+a:focus-visible {
+  outline: 3px solid rgba(59, 130, 246, 0.5);
+  outline-offset: 4px;
+}
+
+/* =========================================================
    APP
-========================================= */
+========================================================= */
 
 .app {
   width: 100%;
   min-height: 100vh;
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
-/* =========================================
+/* =========================================================
    NAVBAR
-========================================= */
+========================================================= */
 
 .navbar {
+  position: relative;
+  z-index: 100;
+
   width: 100%;
-  height: 82px;
+  height: var(--navbar-height);
 
   background: rgba(255, 255, 255, 0.98);
-
   border-bottom: 1px solid #e5ebf1;
-
-  position: relative;
-  z-index: 20;
 }
 
 .nav-container {
-  width: 100%;
-  height: 100%;
-
-  padding: 0 42px;
-
   display: flex;
   align-items: center;
   justify-content: space-between;
 
+  width: 100%;
+  height: 100%;
+  padding: 0 42px;
   gap: 30px;
 }
 
-/* =========================================
-   LOGO
-========================================= */
+/* LOGO */
+
 .logo {
   display: flex;
   align-items: center;
-  text-decoration: none;
-}
-.logo-image {
-  width: 200px;
-  height: 70px;
-  display: block;
-}
-
-
-/* 
-.logo {
-  display: flex;
-  align-items: center;
-
-  gap: 10px;
-
   flex-shrink: 0;
 }
 
-.logo-mark {
-  width: 40px;
-  height: 44px;
-
-  border-radius: 10px;
-
-  background: #2563eb;
-
-  color: #ffffff;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  font-size: 25px;
-  font-weight: 700;
-
-  transform: skew(-7deg);
-
-  box-shadow: 0 5px 15px rgba(37, 99, 235, 0.12);
+.logo-image {
+  display: block;
+  width: 200px;
+  height: 70px;
+  object-fit: contain;
 }
 
-.logo-text {
-  color: #2563eb;
-
-  font-size: 18px;
-
-  letter-spacing: 1px;
-
-  white-space: nowrap;
-}
-
-.logo-text strong {
-  font-weight: 700;
-} */
-
-/* =========================================
-   NAV LINKS
-========================================= */
+/* NAVIGATION LINKS */
 
 .nav-links {
   display: flex;
   align-items: center;
   justify-content: center;
-
-  gap: 29px;
-
   flex: 1;
+  gap: 29px;
 }
 
-.nav-links a {
+.nav-links > a {
   color: #344d68;
-
   font-size: 13px;
   font-weight: 500;
-
   white-space: nowrap;
 
-  transition:
-    color 0.2s ease,
-    transform 0.2s ease;
+  transition: color 0.2s ease;
 }
 
-.nav-links a:hover {
-  color: #3b82f6;
+.nav-links > a:hover {
+  color: var(--primary-light);
 }
 
-.nav-links .professional-link {
-  color: #2563eb;
-  font-weight: 600;
-}
-
-/* =========================================
-   NAV ACTIONS
-========================================= */
+/* NAV ACTIONS */
 
 .nav-actions {
   display: flex;
   align-items: center;
-
-  gap: 14px;
-
   flex-shrink: 0;
+  gap: 14px;
 }
 
 .search-button {
-  width: 44px;
-  height: 44px;
-
-  border-radius: 50%;
-
-  background: #f1f6fa;
-
-  color: #2563eb;
-
   display: flex;
   align-items: center;
   justify-content: center;
+
+  width: 44px;
+  height: 44px;
+
+  flex-shrink: 0;
+  border-radius: 50%;
+
+  background: #f1f6fa;
+  color: var(--primary);
 
   transition:
     background 0.2s ease,
@@ -238,24 +206,21 @@ a {
 }
 
 .login-button {
-  height: 44px;
-
-  padding: 0 19px;
-
-  border-radius: 8px;
-
-  background: #2563eb;
-
-  color: #ffffff;
-
   display: flex;
   align-items: center;
   justify-content: center;
-
   gap: 8px;
+
+  min-height: 44px;
+  padding: 0 19px;
+
+  border-radius: 8px;
+  background: var(--primary);
+  color: #ffffff;
 
   font-size: 13px;
   font-weight: 600;
+  white-space: nowrap;
 
   transition:
     background 0.2s ease,
@@ -263,48 +228,43 @@ a {
 }
 
 .login-button:hover {
-  background: #3b82f6;
+  background: var(--primary-light);
   transform: translateY(-1px);
 }
 
-/* =========================================
-   HERO
-========================================= */
+/* =========================================================
+   HERO SECTION
+========================================================= */
 
 .hero {
   position: relative;
-
-  width: 100%;
-  height: calc(100vh - 82px);
-  min-height: 0;
-
-  overflow: hidden;
+  isolation: isolate;
 
   display: flex;
   align-items: center;
 
-  isolation: isolate;
+  width: 100%;
+  height: calc(100vh - var(--navbar-height));
+  min-height: 560px;
+  max-height: 900px;
+
+  overflow: hidden;
 }
 
-/* =========================================
-   HERO BACKGROUND
-========================================= */
+/* HERO BACKGROUND */
+
 .hero-background {
   position: absolute;
-
+  z-index: -2;
   inset: 0;
 
   width: 100%;
   height: 100%;
-
-  z-index: -2;
-
   overflow: hidden;
 }
 
 .hero-bg-image {
   position: absolute;
-
   inset: 0;
 
   width: 100%;
@@ -314,50 +274,43 @@ a {
   object-position: center;
 
   opacity: 0;
-
-  transform: scale(1);
+  transform: scale(1.02);
 
   transition:
     opacity 0.9s ease,
-    transform 0.8s ease;
+    transform 5s ease;
 }
 
 .hero-bg-image.active {
   opacity: 1;
-
   transform: scale(1);
 }
 
-/* =========================================
-   HERO OVERLAY
-========================================= */
+/* Preserve the light hero treatment */
+
 .hero-overlay {
   position: absolute;
   inset: 0;
 
-  background:
-    linear-gradient(
-      90deg,
-      rgba(247, 251, 253, 0.72) 0%,
-      rgba(247, 251, 253, 0.48) 28%,
-      rgba(247, 251, 253, 0.22) 52%,
-      rgba(247, 251, 253, 0.08) 75%,
-      rgba(247, 251, 253, 0.02) 100%
-    );
+  background: linear-gradient(
+    90deg,
+    rgba(247, 251, 253, 0.72) 0%,
+    rgba(247, 251, 253, 0.48) 28%,
+    rgba(247, 251, 253, 0.22) 52%,
+    rgba(247, 251, 253, 0.08) 75%,
+    rgba(247, 251, 253, 0.02) 100%
+  );
 }
 
-/* =========================================
-   HERO CONTENT
-========================================= */
+/* HERO CONTENT */
 
 .hero-content {
-  width: 100%;
-  min-height: 0;
-
-  padding: 80px 42px;
-
   display: flex;
   align-items: center;
+
+  width: 100%;
+  min-height: 0;
+  padding: 80px 42px;
 }
 
 .hero-copy {
@@ -365,97 +318,75 @@ a {
   max-width: 670px;
 }
 
-/* =========================================
-   EYEBROW
-========================================= */
+/* EYEBROW */
 
 .eyebrow {
   display: flex;
   align-items: center;
-
   gap: 9px;
 
-  color: #3b82f6;
+  margin-bottom: 20px;
 
+  color: var(--primary-light);
   font-size: 11px;
   font-weight: 700;
-
   letter-spacing: 2px;
-
-  margin-bottom: 20px;
 }
 
-.eyebrow span {
+.eyebrow > span {
+  display: block;
   width: 30px;
   height: 2px;
-
   background: #f28c28;
-
-  display: block;
 }
 
-/* =========================================
-   HERO HEADING
-========================================= */
+/* HEADING */
 
 .hero h1 {
-  color: #2563eb;
-
-  font-size: clamp(52px, 6vw, 82px);
-
-  line-height: 1.02;
-
-  letter-spacing: -4px;
-
-  font-weight: 700;
-
   margin-bottom: 28px;
+
+  color: var(--primary);
+  font-size: clamp(52px, 6vw, 82px);
+  font-weight: 700;
+  line-height: 1.02;
+  letter-spacing: -4px;
 }
 
 .hero h1 span {
-  color: #3b82f6;
+  color: var(--primary-light);
 }
 
-/* =========================================
-   HERO DESCRIPTION
-========================================= */
+/* DESCRIPTION */
 
 .hero-copy > p {
   max-width: 590px;
+  margin-bottom: 35px;
 
   color: #4f657b;
-
   font-size: 16px;
-
   line-height: 1.8;
-
-  margin-bottom: 35px;
 }
 
-/* =========================================
-   HERO BUTTONS
-========================================= */
+/* HERO BUTTONS */
 
 .hero-buttons {
   display: flex;
   align-items: center;
-
   gap: 13px;
 }
 
 .primary-button,
-.secondary-button {
-  min-height: 52px;
+.secondary-button,
+.contact-services-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
 
+  min-height: 52px;
   padding: 0 23px;
 
   border-radius: 8px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  gap: 9px;
 
   font-size: 13px;
   font-weight: 600;
@@ -467,76 +398,59 @@ a {
 }
 
 .primary-button {
-  background: #2563eb;
-
+  background: var(--primary);
   color: #ffffff;
-
-  box-shadow:
-    0 8px 20px rgba(37, 99, 235, 0.18);
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.18);
 }
 
 .primary-button:hover {
-  background: #2563eb;
-
+  background: var(--primary-light);
   transform: translateY(-2px);
 }
 
-.secondary-button {
-  background: rgba(255, 255, 255, 0.86);
-
-  color: #2563eb;
-
+.secondary-button,
+.contact-services-button {
   border: 1px solid rgba(37, 99, 235, 0.25);
-
+  background: rgba(255, 255, 255, 0.86);
+  color: var(--primary);
   backdrop-filter: blur(8px);
 }
 
-.secondary-button:hover {
+.secondary-button:hover,
+.contact-services-button:hover {
+  border-color: var(--primary-light);
   background: #ffffff;
-
-  color: #3b82f6;
-
-  border-color: #3b82f6;
-
+  color: var(--primary-light);
   transform: translateY(-2px);
 }
 
-/* =========================================
-   CAROUSEL CONTROLS
-========================================= */
+/* HERO CAROUSEL CONTROLS */
 
 .carousel-controls {
   position: absolute;
-
+  z-index: 5;
   right: 42px;
   bottom: 30px;
 
   display: flex;
   align-items: center;
-
   gap: 15px;
-
-  z-index: 5;
 }
 
 .carousel-controls > button {
-  width: 42px;
-  height: 42px;
-
-  border-radius: 50%;
-
-  background: rgba(255, 255, 255, 0.9);
-
-  color: #2563eb;
-
   display: flex;
   align-items: center;
   justify-content: center;
 
-  backdrop-filter: blur(8px);
+  width: 42px;
+  height: 42px;
 
-  box-shadow:
-    0 6px 20px rgba(37, 99, 235, 0.1);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--primary);
+
+  backdrop-filter: blur(8px);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.1);
 
   transition:
     background 0.2s ease,
@@ -545,25 +459,21 @@ a {
 
 .carousel-controls > button:hover {
   background: #ffffff;
-
   transform: translateY(-2px);
 }
 
 .carousel-dots {
   display: flex;
   align-items: center;
-
   gap: 7px;
 }
 
 .carousel-dots button {
   width: 7px;
   height: 7px;
-
   padding: 0;
 
   border-radius: 20px;
-
   background: rgba(37, 99, 235, 0.35);
 
   transition:
@@ -573,27 +483,24 @@ a {
 
 .carousel-dots button.active {
   width: 25px;
-
-  background: #2563eb;
+  background: var(--primary);
 }
 
-/* =========================================
+/* =========================================================
    SERVICE BENEFITS
-========================================= */
+========================================================= */
 
 .service-benefits {
-  width: 100%;
-  min-height: 115px;
-
   display: flex;
   align-items: center;
   justify-content: space-evenly;
 
+  width: 100%;
+  min-height: 115px;
+  padding: 14px 0;
+
   background: #ffffff;
-
   border-bottom: 1px solid #e3ebf3;
-
-  box-sizing: border-box;
 }
 
 .benefit-item {
@@ -601,55 +508,41 @@ a {
 
   display: flex;
   align-items: center;
-
   gap: 16px;
 
   min-width: 190px;
-  padding: 0 38px;
+  padding: 0 30px;
 }
 
 .benefit-item:not(:last-child)::after {
-  content: "";
-
   position: absolute;
-
-  right: 0;
   top: 50%;
+  right: 0;
 
   width: 1px;
   height: 52px;
 
-  transform: translateY(-50%);
-
   background: #dce6ef;
+  content: "";
+  transform: translateY(-50%);
 }
 
-/* =========================================
-   BENEFIT ICON
-========================================= */
+/* BENEFIT ICON */
 
 .benefit-icon {
-  width: 50px;
-  height: 50px;
-
-  flex-shrink: 0;
-
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 
-  border-radius: 50%;
-
-  background:
-    linear-gradient(
-      135deg,
-      #eaf6ff 0%,
-      #d5ebff 100%
-    );
-
-  color: #2563eb;
+  width: 50px;
+  height: 50px;
 
   border: 1px solid #bdddf7;
+  border-radius: 50%;
+
+  background: linear-gradient(135deg, #eaf6ff 0%, #d5ebff 100%);
+  color: var(--primary);
 
   box-shadow:
     0 6px 18px rgba(37, 99, 235, 0.16),
@@ -660,1090 +553,509 @@ a {
 
   transition:
     transform 0.25s ease,
-    box-shadow 0.25s ease,
-    background 0.25s ease;
+    box-shadow 0.25s ease;
 }
 
 .benefit-item:hover .benefit-icon {
   transform: translateY(-2px) scale(1.05);
-
-  background:
-    linear-gradient(
-      135deg,
-      #dff1ff 0%,
-      #c7e5ff 100%
-    );
-
   box-shadow:
     0 9px 24px rgba(37, 99, 235, 0.22),
     inset 0 0 0 4px rgba(255, 255, 255, 0.8);
 }
 
-/* =========================================
-   BENEFIT TEXT
-========================================= */
+/* BENEFIT TEXT */
 
 .benefit-item strong,
 .benefit-item span {
   display: block;
+  white-space: nowrap;
 }
 
 .benefit-item strong {
-  color: #2563eb;
-
+  color: var(--primary);
   font-size: 15px;
   font-weight: 700;
-
   line-height: 1.35;
-
-  white-space: nowrap;
 }
 
 .benefit-item span {
   margin-top: 3px;
-
-  color: #5f7285;
-
+  color: var(--text-secondary);
   font-size: 14px;
   font-weight: 500;
-
   line-height: 1.4;
-
-  white-space: nowrap;
 }
 
-/* =========================================
+/* =========================================================
    SERVICES SECTION
-========================================= */
+   Original background retained
+========================================================= */
 
 .services-section {
   width: 100%;
+  padding: 85px 42px 70px;
 
-  padding: 85px 42px 95px;
-
-  background:
-    linear-gradient(
-      180deg,
-      #f8fbfd 0%,
-      #ffffff 100%
-    );
+  background: linear-gradient(180deg, #f8fbfd 0%, #ffffff 100%);
 }
 
-
-/* =========================================
-   SERVICES HEADING
-========================================= */
+/* SECTION HEADING */
 
 .services-heading {
   max-width: 760px;
-
-  margin: 0 auto 48px;
-
+  margin: 0 auto 44px;
   text-align: center;
 }
 
 .services-eyebrow {
   display: inline-block;
-
   margin-bottom: 13px;
 
-  color: #3b82f6;
-
+  color: var(--primary-light);
   font-size: 11px;
   font-weight: 700;
-
   letter-spacing: 2px;
 }
 
 .services-heading h2 {
-  color: #2563eb;
-
-  font-size: clamp(36px, 4vw, 54px);
-
-  line-height: 1.08;
-
-  letter-spacing: -2px;
-
-  font-weight: 700;
-
   margin-bottom: 17px;
+
+  color: var(--primary);
+  font-size: clamp(36px, 4vw, 54px);
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: -2px;
 }
 
 .services-heading h2 span {
-  color: #3b82f6;
+  color: var(--primary-light);
 }
 
 .services-heading p {
   max-width: 620px;
-
   margin: 0 auto;
 
   color: #60758a;
-
   font-size: 15px;
-
   line-height: 1.75;
 }
 
-
-/* =========================================
-   SERVICE CARDS
-========================================= */
-
-.service-cards {
-  width: 100%;
-  max-width: 1380px;
-
-  margin: 0 auto;
-
-  display: grid;
-
-  grid-template-columns: repeat(4, 1fr);
-
-  gap: 22px;
-}
-
-
-/* =========================================
-   SERVICE CARD
-========================================= */
-
-.service-card {
-  overflow: hidden;
-
-  background: #ffffff;
-
-  border: 1px solid #e2ebf2;
-
-  border-radius: 12px;
-
-  box-shadow:
-    0 8px 25px rgba(37, 99, 235, 0.06);
-
-  transition:
-    transform 0.3s ease,
-    box-shadow 0.3s ease,
-    border-color 0.3s ease;
-}
-
-.service-card:hover {
-  transform: translateY(-6px);
-
-  border-color: #c9ddea;
-
-  box-shadow:
-    0 16px 35px rgba(37, 99, 235, 0.12);
-}
-
-
-/* =========================================
-   SERVICE IMAGE
-========================================= */
-
-.service-image {
-  width: 100%;
-  height: 155px;
-
-  overflow: hidden;
-
-  background: #edf4f8;
-}
-
-.service-image img {
-  width: 100%;
-  height: 100%;
-
-  display: block;
-
-  object-fit: cover;
-
-  transition: transform 0.5s ease;
-}
-
-.service-card:hover .service-image img {
-  transform: scale(1.05);
-}
-
-
-/* =========================================
-   SERVICE CONTENT
-========================================= */
-
-.service-card-content {
-  padding: 20px 20px 21px;
-}
-
-.service-card-content h3 {
-  color: #2563eb;
-
-  font-size: 17px;
-
-  font-weight: 700;
-
-  margin-bottom: 12px;
-}
-
-.service-card-content ul {
-  margin: 0;
-  padding-left: 17px;
-
-  min-height: 126px;
-}
-
-.service-card-content li {
-  color: #65798c;
-
-  font-size: 13px;
-
-  line-height: 1.7;
-}
-
-.service-card-content li::marker {
-  color: #3b82f6;
-}
-
-
-/* =========================================
-   EXPLORE BUTTON
-========================================= */
-
-.service-explore {
-  display: inline-flex;
-
-  align-items: center;
-
-  gap: 6px;
-
-  padding: 0;
-
-  margin-top: 14px;
-
-  background: transparent;
-
-  color: #2563eb;
-
-  font-size: 12px;
-
-  font-weight: 700;
-
-  transition:
-    color 0.2s ease,
-    gap 0.2s ease;
-}
-
-.service-explore:hover {
-  color: #3b82f6;
-
-  gap: 9px;
-}
-
-/* =========================================
-   TABLET
-========================================= */
-
-@media (max-width: 1100px) {
-  .nav-container {
-    padding-left: 28px;
-    padding-right: 28px;
-  }
-
-  .nav-links {
-    gap: 16px;
-  }
-
-  .nav-links a {
-    font-size: 12px;
-  }
-
-  .hero-content {
-    padding-left: 28px;
-    padding-right: 28px;
-  }
-
-  .intro-section {
-    padding-left: 28px;
-    padding-right: 28px;
-  }
-
-  .carousel-controls {
-    right: 28px;
-  }
-}
-
-/* =========================================
-   TABLET / SMALL LAPTOP
-========================================= */
-
-@media (max-width: 900px) {
-  .hero {
-    height: calc(100vh - 82px);
-    min-height: 0;
-  }
-
-  .hero-content {
-    min-height: 0;
-    padding: 60px 28px;
-  }
-
-  .hero-copy {
-    max-width: 680px;
-  }
-
-  .hero-overlay {
-    background:
-      linear-gradient(
-        90deg,
-        rgba(247, 251, 253, 0.72) 0%,
-        rgba(247, 251, 253, 0.48) 45%,
-        rgba(247, 251, 253, 0.20) 75%,
-        rgba(247, 251, 253, 0.08) 100%
-      );
-  }
-
-  .service-highlights {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* =========================================
-   MOBILE
-========================================= */
-
-@media (max-width: 600px) {
-  .navbar {
-    height: 70px;
-  }
-
-  .nav-container {
-    padding: 0 18px;
-  }
-
-  .logo-text {
-    font-size: 14px;
-  }
-
-  .logo-mark {
-    width: 34px;
-    height: 37px;
-
-    font-size: 21px;
-  }
-
-  .login-button {
-    padding: 0 12px;
-  }
-
-  .login-button span {
-    display: none;
-  }
-
-  .hero {
-    height: calc(100vh - 70px);
-    min-height: 0;
-  }
-
-  .hero-content {
-    min-height: 0;
-
-    padding: 50px 20px 100px;
-
-    align-items: center;
-  }
-
-  .hero-overlay {
-    background:
-      linear-gradient(
-        90deg,
-        rgba(247, 251, 253, 0.72) 0%,
-        rgba(247, 251, 253, 0.48) 45%,
-        rgba(247, 251, 253, 0.20) 75%,
-        rgba(247, 251, 253, 0.08) 100%
-      );
-  }
-
-  .eyebrow {
-    font-size: 10px;
-
-    letter-spacing: 1.6px;
-  }
-
-  .hero h1 {
-    font-size: 45px;
-
-    letter-spacing: -2.5px;
-
-    margin-bottom: 23px;
-  }
-
-  .hero-copy > p {
-    font-size: 14px;
-
-    line-height: 1.75;
-
-    margin-bottom: 30px;
-  }
-
-  .hero-buttons {
-    flex-direction: column;
-
-    align-items: stretch;
-
-    max-width: 330px;
-  }
-
-  .primary-button,
-  .secondary-button {
-    width: 100%;
-  }
-
-  .carousel-controls {
-    right: 20px;
-
-    bottom: 20px;
-  }
-
-  .carousel-controls > button {
-    width: 36px;
-    height: 36px;
-  }
-
-  .intro-section {
-    padding: 75px 20px;
-  }
-
-  .section-heading h2 {
-    font-size: 38px;
-  }
-
-  .service-highlights {
-    margin-top: 45px;
-  }
-
-  .highlight-card {
-    min-height: auto;
-  }
-}
-
-/* =========================================
-   VERY SMALL MOBILE
-========================================= */
-
-@media (max-width: 380px) {
-  .logo-text {
-    font-size: 13px;
-  }
-
-  .logo-mark {
-    width: 32px;
-    height: 35px;
-
-    font-size: 20px;
-  }
-
-  .search-button {
-    width: 40px;
-    height: 40px;
-  }
-
-  .hero h1 {
-    font-size: 40px;
-  }
-
-  .hero-content {
-    padding-left: 18px;
-    padding-right: 18px;
-  }
-}
-
-@media (max-width: 768px) {
-  .service-benefits {
-    min-height: auto;
-
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-
-    padding: 18px 10px;
-    gap: 18px 5px;
-  }
-
-  .benefit-item {
-    min-width: 0;
-    padding: 0 10px;
-  }
-
-  .benefit-item:nth-child(2)::after,
-  .benefit-item:nth-child(4)::after {
-    display: none;
-  }
-
-  .benefit-item:nth-child(5) {
-    grid-column: 1 / -1;
-    justify-content: center;
-  }
-
-  .benefit-item:nth-child(5)::after {
-    display: none;
-  }
-}
-
-@media (max-width: 1100px) {
-  .services-section {
-    padding-left: 28px;
-    padding-right: 28px;
-  }
-
-  .service-cards {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 600px) {
-  .services-section {
-    padding: 65px 20px 75px;
-  }
-
-  .services-heading {
-    margin-bottom: 35px;
-  }
-
-  .services-heading h2 {
-    font-size: 36px;
-
-    letter-spacing: -1.5px;
-  }
-
-  .services-heading p {
-    font-size: 14px;
-  }
-
-  .service-cards {
-    grid-template-columns: 1fr;
-
-    gap: 18px;
-  }
-
-  .service-image {
-    height: 175px;
-  }
-}
-
 /* =========================================================
-   SERVICES NAV DROPDOWN
+   BLUE GLASSMORPHISM SERVICE CARDS
 ========================================================= */
 
-.services-nav-wrapper {
+/*
+  These styles replace the old .service-cards grid.
+  Keep the services-section background above unchanged.
+*/
+
+.glass-services-marquee {
   position: relative;
-
-  height: 100%;
-
-  display: flex;
-  align-items: center;
-}
-
-.services-nav-button {
-  height: 100%;
-
-  display: flex;
-  align-items: center;
-
-  gap: 5px;
-
-  padding: 0;
-
-  border: none;
-
-  background: transparent;
-
-  color: #2563eb;
-
-  font-family: inherit;
-
-  font-size: 13px;
-  font-weight: 600;
-
-  cursor: pointer;
-
-  transition: color 0.2s ease;
-}
-
-.services-nav-button:hover,
-.services-nav-button.active {
-  color: #2563eb;
-}
-
-.services-chevron {
-  transition: transform 0.2s ease;
-}
-
-.services-chevron.open {
-  transform: rotate(180deg);
-}
-
-
-/* =========================================================
-   DROPDOWN
-========================================================= */
-
-.services-dropdown {
-  position: absolute;
-
-  top: calc(100% + 14px);
-
-  left: 50%;
-
-  transform: translateX(-50%);
-
-  width: 680px;
-
-  background: #ffffff;
-
-  border: 1px solid #dce7ef;
-
-  border-radius: 13px;
-
+  width: 100%;
+  max-width: 1500px;
+  margin: 0 auto;
   overflow: hidden;
 
-  box-shadow:
-    0 18px 50px rgba(37, 99, 235, 0.16);
-
-  z-index: 9999;
-
-  animation: servicesDropdownIn 0.18s ease;
+  /* Soft edge fade, without changing the section background */
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    #000 3%,
+    #000 97%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    #000 3%,
+    #000 97%,
+    transparent 100%
+  );
 }
 
-@keyframes servicesDropdownIn {
+.glass-services-track {
+  display: flex;
+  width: max-content;
+  align-items: stretch;
 
+  animation: glass-services-move-right 48s linear infinite;
+  will-change: transform;
+}
+
+/* Each repeated group has equal spacing so the loop is seamless. */
+
+.glass-services-group {
+  display: flex;
+  align-items: stretch;
+  flex-shrink: 0;
+  gap: 22px;
+  padding: 10px 11px 25px;
+}
+
+/* Pause while the pointer is over the cards or a card has keyboard focus. */
+
+.glass-services-marquee:hover .glass-services-track,
+.glass-services-marquee:focus-within .glass-services-track {
+  animation-play-state: paused;
+}
+
+/* LEFT-TO-RIGHT MOVEMENT */
+
+@keyframes glass-services-move-right {
   from {
-    opacity: 0;
-
-    transform:
-      translateX(-50%)
-      translateY(-7px);
+    transform: translateX(-50%);
   }
 
   to {
-    opacity: 1;
-
-    transform:
-      translateX(-50%)
-      translateY(0);
+    transform: translateX(0);
   }
-
 }
 
+/* INDIVIDUAL CARD */
 
-/* =========================================================
-   HEADER
-========================================================= */
-
-.services-dropdown-header {
-  padding: 17px 21px;
-
-  background:
-    linear-gradient(
-      90deg,
-      #f2f8fc,
-      #ffffff
-    );
-
-  border-bottom: 1px solid #e5edf3;
-}
-
-.services-dropdown-header span {
-  display: block;
-
-  margin-bottom: 4px;
-
-  color: #3b82f6;
-
-  font-size: 9px;
-  font-weight: 800;
-
-  letter-spacing: 1.5px;
-}
-
-.services-dropdown-header strong {
-  color: #2563eb;
-
-  font-size: 14px;
-}
-
-
-/* =========================================================
-   TWO COLUMNS
-========================================================= */
-
-.services-dropdown-content {
-  display: grid;
-
-  grid-template-columns: 235px 1fr;
-
-  min-height: 300px;
-}
-
-
-/* =========================================================
-   CATEGORY COLUMN
-========================================================= */
-
-.service-category-list {
-  padding: 12px;
-
-  background: #f7fafc;
-
-  border-right: 1px solid #e1eaf0;
-}
-
-.service-category-item {
-  width: 100%;
-
-  min-height: 52px;
-
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  padding: 0 14px;
-
-  margin-bottom: 5px;
-
-  border: 1px solid transparent;
-
-  border-radius: 8px;
-
-  background: transparent;
-
-  color: #4f6679;
-
-  font-family: inherit;
-
-  font-size: 12px;
-  font-weight: 600;
-
-  text-align: left;
-
-  cursor: pointer;
-
-  transition:
-    background 0.2s ease,
-    border-color 0.2s ease,
-    color 0.2s ease;
-}
-
-.service-category-item:hover {
-  background: #ffffff;
-
-  color: #2563eb;
-
-  border-color: #dbe7ef;
-}
-
-.service-category-item.active {
-  background: #ffffff;
-
-  color: #2563eb;
-
-  border-color: #c7deec;
-
-  box-shadow:
-    0 3px 10px rgba(37, 99, 235, 0.05);
-}
-
-.category-arrow {
-  color: #94a5b3;
-
-  font-size: 16px;
-
-  transition:
-    transform 0.2s ease,
-    color 0.2s ease;
-}
-
-.service-category-item:hover .category-arrow,
-.service-category-item.active .category-arrow {
-  color: #2563eb;
-
-  transform: translateX(3px);
-}
-
-
-/* =========================================================
-   SUB SERVICES
-========================================================= */
-
-.service-submenu {
-  padding: 22px 24px;
-
-  background: #ffffff;
-}
-
-.submenu-heading {
-  padding-bottom: 13px;
-
-  margin-bottom: 10px;
-
-  border-bottom: 1px solid #e7eef3;
-}
-
-.submenu-heading span {
-  display: block;
-
-  margin-bottom: 4px;
-
-  color: #2563eb;
-
-  font-size: 16px;
-  font-weight: 700;
-}
-
-.submenu-heading small {
-  color: #7a8d9e;
-
-  font-size: 11px;
-}
-
-
-/* =========================================================
-   SUB SERVICE ITEMS
-========================================================= */
-
-.submenu-items {
-  display: grid;
-
-  grid-template-columns: repeat(2, 1fr);
-
-  gap: 8px;
-}
-
-.service-submenu-item {
-  min-height: 44px;
-
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  padding: 0 13px;
-
-  border: 1px solid #e0e9ef;
-
-  border-radius: 7px;
-
-  background: #ffffff;
-
-  color: #50677a;
-
-  font-size: 12px;
-  font-weight: 600;
-
-  text-decoration: none;
-
-  transition:
-    color 0.2s ease,
-    background 0.2s ease,
-    border-color 0.2s ease,
-    transform 0.2s ease;
-}
-
-.service-submenu-item:hover {
-  color: #2563eb;
-
-  background: #f3f9fc;
-
-  border-color: #bcd9e8;
-
-  transform: translateX(2px);
-}
-
-.service-submenu-item svg {
-  color: #93a5b3;
-
-  transition:
-    transform 0.2s ease,
-    color 0.2s ease;
-}
-
-.service-submenu-item:hover svg {
-  color: #2563eb;
-
-  transform: translateX(3px);
-}
-
-
-/* =========================================================
-   EMPTY STATE
-========================================================= */
-
-.submenu-empty {
-  min-height: 250px;
+.glass-service-card {
+  position: relative;
 
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
 
-  align-items: center;
-  justify-content: center;
+  width: 310px;
+  min-height: 430px;
 
-  text-align: center;
+  overflow: hidden;
+  isolation: isolate;
+
+  border: 1px solid rgba(147, 197, 253, 0.72);
+  border-radius: 22px;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.96) 0%,
+      rgba(239, 246, 255, 0.93) 45%,
+      rgba(219, 234, 254, 0.88) 100%
+    );
+
+  box-shadow:
+    0 12px 28px rgba(37, 99, 235, 0.09),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+
+  transition:
+    transform 0.35s ease,
+    border-color 0.35s ease,
+    box-shadow 0.35s ease;
 }
 
-.submenu-empty-icon {
-  width: 44px;
-  height: 44px;
+.glass-service-card:hover {
+  z-index: 2;
+  transform: translateY(-7px);
+
+  border-color: rgba(59, 130, 246, 0.9);
+
+  box-shadow:
+    0 22px 42px rgba(37, 99, 235, 0.17),
+    inset 0 1px 0 rgba(255, 255, 255, 1);
+}
+
+/* CARD IMAGE */
+
+.glass-service-image {
+  position: relative;
+  flex-shrink: 0;
+
+  width: 100%;
+  height: 178px;
+  overflow: hidden;
+
+  background: linear-gradient(135deg, #dbeafe, #eff6ff);
+}
+
+.glass-service-image img {
+  display: block;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+  object-position: center;
+
+  transition: transform 0.55s ease;
+}
+
+.glass-service-card:hover .glass-service-image img {
+  transform: scale(1.07);
+}
+
+/* Image shade blends the photo into the blue glass body. */
+
+.glass-service-image-shade {
+  position: absolute;
+  inset: 0;
+
+  pointer-events: none;
+
+  background: linear-gradient(
+    180deg,
+    rgba(30, 64, 175, 0.02) 40%,
+    rgba(37, 99, 235, 0.18) 100%
+  );
+}
+
+/* CARD NUMBER */
+
+.glass-service-number {
+  position: absolute;
+  top: 13px;
+  left: 13px;
 
   display: flex;
   align-items: center;
   justify-content: center;
 
-  margin-bottom: 12px;
+  min-width: 39px;
+  height: 31px;
+  padding: 0 9px;
 
-  border-radius: 11px;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 9px;
 
-  background: #eaf5fa;
-
-  color: #2563eb;
-
-  font-size: 19px;
-  font-weight: 800;
-}
-
-.submenu-empty strong {
-  margin-bottom: 6px;
-
-  color: #2563eb;
-
-  font-size: 13px;
-}
-
-.submenu-empty span {
-  max-width: 220px;
-
-  color: #7c8e9d;
+  background: rgba(255, 255, 255, 0.78);
+  color: var(--primary);
 
   font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
 
-  line-height: 1.6;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
+/* CARD BODY */
+
+.glass-service-content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+
+  padding: 21px 20px 20px;
+}
+
+.glass-service-content h3 {
+  margin-bottom: 9px;
+
+  color: #1748a0;
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.35px;
+}
+
+.glass-service-description {
+  min-height: 48px;
+  margin-bottom: 17px;
+
+  color: #526b8a;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.7;
+}
+
+/* SERVICE TAGS */
+
+.glass-service-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 7px;
+
+  margin-bottom: 19px;
+}
+
+.glass-service-tags > span {
+  display: inline-flex;
+  align-items: center;
+
+  min-height: 27px;
+  padding: 5px 9px;
+
+  border: 1px solid rgba(147, 197, 253, 0.72);
+  border-radius: 7px;
+
+  background: rgba(255, 255, 255, 0.66);
+  color: #315a91;
+
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+/* EXPLORE LINK */
+
+.glass-service-explore {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  width: 100%;
+  margin-top: auto;
+  padding-top: 13px;
+
+  border-top: 1px solid rgba(147, 197, 253, 0.55);
+
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.glass-service-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  width: 33px;
+  height: 33px;
+
+  border: 1px solid rgba(147, 197, 253, 0.8);
+  border-radius: 50%;
+
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--primary);
+
+  transition:
+    background 0.25s ease,
+    color 0.25s ease,
+    transform 0.25s ease;
+}
+
+.glass-service-card:hover .glass-service-arrow {
+  transform: translateX(3px);
+  background: var(--primary);
+  color: #ffffff;
+}
+
+/* VIEW ALL SERVICES */
+
+.service-cards-top,
+.service-cards-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 100%;
+  margin-top: 25px;
+}
+
+.view-all-services-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+
+  min-height: 44px;
+  padding: 8px 0;
+
+  background: transparent;
+  color: var(--primary);
+
+  font-size: 14px;
+  font-weight: 700;
+
+  transition: color 0.25s ease;
+}
+
+.view-all-services-button:hover {
+  color: var(--primary-dark);
+}
+
+.view-all-services-button svg {
+  transition: transform 0.25s ease;
+}
+
+.view-all-services-button:hover svg {
+  transform: translateX(4px);
+}
 
 /* =========================================================
-   MOBILE
+   LEGACY SECTION SUPPORT
+   Retained for existing markup elsewhere in the app
 ========================================================= */
 
-@media (max-width: 900px) {
-
-  .services-dropdown {
-    position: fixed;
-
-    top: 70px;
-
-    left: 15px;
-    right: 15px;
-
-    width: auto;
-
-    transform: none;
-
-    max-height: calc(100vh - 85px);
-
-    overflow-y: auto;
-  }
-
-  @keyframes servicesDropdownIn {
-
-    from {
-      opacity: 0;
-
-      transform: translateY(-7px);
-    }
-
-    to {
-      opacity: 1;
-
-      transform: translateY(0);
-    }
-
-  }
-
+.intro-section {
+  padding: 80px 42px;
 }
 
-
-@media (max-width: 650px) {
-
-  .services-dropdown-content {
-    grid-template-columns: 1fr;
-  }
-
-  .service-category-list {
-    border-right: none;
-
-    border-bottom: 1px solid #e1eaf0;
-  }
-
-  .service-category-item {
-    min-height: 45px;
-  }
-
-  .submenu-items {
-    grid-template-columns: 1fr;
-  }
-
+.section-heading h2 {
+  color: var(--primary);
+  font-size: clamp(32px, 4vw, 44px);
 }
+
+.service-highlights {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.highlight-card {
+  min-height: 180px;
+  padding: 24px;
+
+  border: 1px solid var(--border);
+  border-radius: 14px;
+
+  background: #ffffff;
+  box-shadow: var(--shadow-sm);
+}
+
 /* =========================================================
-   JOIN OUR NETWORK
-   CLICK-BASED DROPDOWN
+   JOIN OUR NETWORK DROPDOWN
 ========================================================= */
 
 .network-nav-wrapper {
   position: relative;
-  height: 100%;
 
   display: flex;
   align-items: center;
+
+  height: 100%;
 }
 
-
-/* =========================================================
-   NETWORK BUTTON
-========================================================= */
+/* BUTTON */
 
 .network-nav-button {
-  height: 100%;
-
   display: inline-flex;
   align-items: center;
-
   gap: 6px;
 
+  height: 100%;
   padding: 0;
 
   border: none;
   outline: none;
 
   background: transparent;
-
   color: #344d68;
 
   font-family: inherit;
   font-size: 13px;
   font-weight: 500;
-
-  cursor: pointer;
+  white-space: nowrap;
 
   transition: color 0.2s ease;
 }
 
 .network-nav-button:hover,
 .network-nav-button.active {
-  color: #2563eb;
+  color: var(--primary);
 }
-
-
-/* =========================================================
-   CHEVRON
-========================================================= */
 
 .network-nav-button svg {
   display: block;
-
   transition: transform 0.2s ease;
 }
 
@@ -1751,50 +1063,32 @@ a {
   transform: rotate(180deg);
 }
 
-
-/* =========================================================
-   DROPDOWN
-========================================================= */
+/* DROPDOWN PANEL */
 
 .network-dropdown {
   position: absolute;
-
   top: calc(100% + 14px);
   right: 0;
+  z-index: 9999;
 
   width: 360px;
-
   padding: 0;
 
-  background: #ffffff;
+  overflow: hidden;
 
   border: 1px solid #e3e9f0;
   border-radius: 12px;
+
+  background: #ffffff;
 
   box-shadow:
     0 18px 45px rgba(16, 43, 78, 0.12),
     0 4px 12px rgba(16, 43, 78, 0.05);
 
-  overflow: hidden;
-
-  z-index: 9999;
-
-  /*
-     The dropdown is rendered by React only when
-     networkOpen === true.
-
-     Therefore there is NO hover display rule here.
-  */
-
-  animation: networkDropdownIn 0.18s ease;
+  animation: network-dropdown-in 0.18s ease;
 }
 
-
-/* =========================================================
-   DROPDOWN ANIMATION
-========================================================= */
-
-@keyframes networkDropdownIn {
+@keyframes network-dropdown-in {
   from {
     opacity: 0;
     transform: translateY(-7px);
@@ -1806,76 +1100,52 @@ a {
   }
 }
 
-
-/* =========================================================
-   HEADER
-========================================================= */
+/* DROPDOWN HEADER */
 
 .network-dropdown-header {
   padding: 20px 20px 16px;
 
-  background: linear-gradient(
-    90deg,
-    #f2f8fc,
-    #ffffff
-  );
-
   border-bottom: 1px solid #e8edf3;
+
+  background: linear-gradient(90deg, #f2f8fc, #ffffff);
 }
 
 .network-dropdown-header span {
   display: block;
-
   margin-bottom: 6px;
 
-  color: #3b82f6;
-
+  color: var(--primary-light);
   font-size: 10px;
   font-weight: 800;
-
   letter-spacing: 1.5px;
 }
 
 .network-dropdown-header strong {
   display: block;
 
-  color: #2563eb;
-
+  color: var(--primary);
   font-size: 14px;
   font-weight: 600;
-
   line-height: 1.4;
 }
 
-
-/* =========================================================
-   ITEMS CONTAINER
-========================================================= */
+/* DROPDOWN ITEMS */
 
 .network-dropdown-items {
   padding: 8px;
 }
 
-
-/* =========================================================
-   INDIVIDUAL ITEM
-========================================================= */
-
 .network-dropdown-item {
-  width: 100%;
-
   display: flex;
   align-items: center;
-
   gap: 12px;
 
+  width: 100%;
   padding: 12px;
 
   border-radius: 8px;
 
-  color: #172033;
-
-  text-decoration: none;
+  color: var(--text-primary);
 
   transition:
     background 0.2s ease,
@@ -1884,58 +1154,44 @@ a {
 
 .network-dropdown-item:hover {
   background: #f3f7ff;
-
   transform: translateX(2px);
 }
 
-
-/* =========================================================
-   ITEM ICON
-========================================================= */
+/* ITEM ICON */
 
 .network-item-icon {
-  width: 38px;
-  height: 38px;
-
-  min-width: 38px;
-
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+
+  width: 38px;
+  height: 38px;
 
   border-radius: 9px;
 
   background: #eff6ff;
-
   font-size: 18px;
-
   line-height: 1;
 }
 
-
-/* =========================================================
-   ITEM TEXT
-========================================================= */
+/* ITEM TEXT */
 
 .network-item-content {
+  display: flex;
   flex: 1;
+  flex-direction: column;
+  gap: 3px;
 
   min-width: 0;
-
-  display: flex;
-  flex-direction: column;
-
-  gap: 3px;
 }
 
 .network-item-content strong {
   display: block;
 
-  color: #172033;
-
+  color: var(--text-primary);
   font-size: 12px;
   font-weight: 700;
-
   line-height: 1.35;
 }
 
@@ -1943,16 +1199,11 @@ a {
   display: block;
 
   color: #7a8797;
-
   font-size: 10px;
-
   line-height: 1.4;
 }
 
-
-/* =========================================================
-   ITEM ARROW
-========================================================= */
+/* ITEM ARROW */
 
 .network-dropdown-item > svg {
   flex-shrink: 0;
@@ -1965,49 +1216,367 @@ a {
 }
 
 .network-dropdown-item:hover > svg {
-  color: #2563eb;
-
+  color: var(--primary);
   transform: translateX(2px);
 }
 
-
 /* =========================================================
-   MOBILE / TABLET
+   TABLET / SMALL LAPTOP
 ========================================================= */
 
-@media (max-width: 900px) {
-  .network-dropdown {
-    position: fixed;
+@media (max-width: 1100px) {
+  .nav-container {
+    padding-right: 28px;
+    padding-left: 28px;
+    gap: 20px;
+  }
 
-    top: 70px;
+  .logo-image {
+    width: 175px;
+    height: 64px;
+  }
 
-    left: 15px;
-    right: 15px;
+  .nav-links {
+    gap: 16px;
+  }
 
-    width: auto;
-    max-width: none;
+  .nav-links > a,
+  .network-nav-button {
+    font-size: 12px;
+  }
 
-    max-height: calc(100vh - 85px);
+  .hero-content {
+    padding-right: 28px;
+    padding-left: 28px;
+  }
 
-    overflow-y: auto;
+  .carousel-controls {
+    right: 28px;
+  }
 
-    border-radius: 12px;
+  .services-section {
+    padding-right: 28px;
+    padding-left: 28px;
+  }
+
+  .benefit-item {
+    min-width: 0;
+    padding-right: 18px;
+    padding-left: 18px;
   }
 }
 
-
 /* =========================================================
-   SMALL MOBILE
+   TABLET
 ========================================================= */
 
-@media (max-width: 650px) {
+@media (max-width: 900px) {
+  .navbar {
+    z-index: 100;
+  }
+
+  .nav-container {
+    gap: 15px;
+  }
+
+  .nav-links {
+    gap: 13px;
+  }
+
+  .logo-image {
+    width: 150px;
+    height: 58px;
+  }
+
+  .hero {
+    min-height: 520px;
+  }
+
+  .hero-content {
+    padding: 60px 28px;
+  }
+
+  .hero-copy {
+    max-width: 620px;
+  }
+
+  .hero-overlay {
+    background: linear-gradient(
+      90deg,
+      rgba(247, 251, 253, 0.76) 0%,
+      rgba(247, 251, 253, 0.56) 45%,
+      rgba(247, 251, 253, 0.24) 75%,
+      rgba(247, 251, 253, 0.08) 100%
+    );
+  }
+
+  .service-benefits {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px 5px;
+
+    padding: 22px 14px;
+  }
+
+  .benefit-item {
+    justify-content: center;
+    padding: 0 10px;
+  }
+
+  .benefit-item::after {
+    display: none;
+  }
+
+  .glass-service-card {
+    width: 290px;
+  }
+
   .network-dropdown {
-    top: 68px;
+    position: fixed;
+    top: 90px;
+    right: 15px;
+    left: auto;
 
-    left: 10px;
+    width: min(360px, calc(100vw - 30px));
+    max-height: calc(100vh - 110px);
+
+    overflow-y: auto;
+  }
+}
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 600px) {
+  :root {
+    --navbar-height: 70px;
+  }
+
+  .nav-container {
+    padding: 0 16px;
+    gap: 12px;
+  }
+
+  .logo-image {
+    width: 135px;
+    height: 54px;
+  }
+
+  .nav-links {
+    gap: 10px;
+  }
+
+  .nav-links > a,
+  .network-nav-button {
+    font-size: 11px;
+  }
+
+  .nav-actions {
+    gap: 8px;
+  }
+
+  .search-button {
+    width: 38px;
+    height: 38px;
+  }
+
+  .login-button {
+    min-height: 38px;
+    padding: 0 12px;
+  }
+
+  .login-button span {
+    display: none;
+  }
+
+  /* HERO */
+
+  .hero {
+    height: calc(100svh - var(--navbar-height));
+    min-height: 520px;
+  }
+
+  .hero-content {
+    align-items: center;
+    padding: 48px 20px 100px;
+  }
+
+  .hero-overlay {
+    background: linear-gradient(
+      90deg,
+      rgba(247, 251, 253, 0.82) 0%,
+      rgba(247, 251, 253, 0.66) 55%,
+      rgba(247, 251, 253, 0.35) 100%
+    );
+  }
+
+  .eyebrow {
+    margin-bottom: 16px;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+  }
+
+  .hero h1 {
+    margin-bottom: 22px;
+    font-size: clamp(40px, 10vw, 48px);
+    letter-spacing: -2.5px;
+  }
+
+  .hero-copy > p {
+    margin-bottom: 26px;
+    font-size: 14px;
+    line-height: 1.75;
+  }
+
+  .hero-buttons {
+    align-items: stretch;
+    flex-direction: column;
+    max-width: 330px;
+  }
+
+  .primary-button,
+  .secondary-button,
+  .contact-services-button {
+    width: 100%;
+  }
+
+  .carousel-controls {
+    right: 18px;
+    bottom: 18px;
+    gap: 10px;
+  }
+
+  .carousel-controls > button {
+    width: 36px;
+    height: 36px;
+  }
+
+  /* BENEFITS */
+
+  .service-benefits {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px 5px;
+    padding: 20px 10px;
+  }
+
+  .benefit-item {
+    justify-content: flex-start;
+    gap: 10px;
+    padding: 0 8px;
+  }
+
+  .benefit-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 18px;
+  }
+
+  .benefit-item strong {
+    font-size: 12px;
+  }
+
+  .benefit-item span {
+    font-size: 11px;
+  }
+
+  .benefit-item:nth-child(5) {
+    grid-column: 1 / -1;
+    justify-content: center;
+  }
+
+  /* SERVICES */
+
+  .services-section {
+    padding: 62px 0 58px;
+  }
+
+  .services-heading {
+    margin-right: 20px;
+    margin-bottom: 28px;
+    margin-left: 20px;
+  }
+
+  .services-eyebrow {
+    font-size: 10px;
+  }
+
+  .services-heading h2 {
+    font-size: clamp(32px, 8vw, 39px);
+    letter-spacing: -1.5px;
+  }
+
+  .services-heading p {
+    font-size: 13px;
+    line-height: 1.75;
+  }
+
+  .glass-services-marquee {
+    -webkit-mask-image: linear-gradient(
+      90deg,
+      transparent 0%,
+      #000 2%,
+      #000 98%,
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      90deg,
+      transparent 0%,
+      #000 2%,
+      #000 98%,
+      transparent 100%
+    );
+  }
+
+  .glass-services-group {
+    gap: 14px;
+    padding: 10px 8px 22px;
+  }
+
+  .glass-service-card {
+    width: min(78vw, 290px);
+    min-height: 410px;
+    border-radius: 19px;
+  }
+
+  .glass-service-image {
+    height: 165px;
+  }
+
+  .glass-service-content {
+    padding: 18px 17px;
+  }
+
+  .glass-service-content h3 {
+    font-size: 18px;
+  }
+
+  .glass-service-description {
+    font-size: 12px;
+  }
+
+  .glass-service-tags > span {
+    font-size: 10px;
+  }
+
+  .service-cards-top,
+  .service-cards-bottom {
+    margin-top: 18px;
+  }
+
+  .view-all-services-button {
+    font-size: 13px;
+  }
+
+  /* NETWORK DROPDOWN */
+
+  .network-dropdown {
+    top: calc(var(--navbar-height) + 8px);
     right: 10px;
+    left: auto;
 
-    max-height: calc(100vh - 80px);
+    width: min(360px, calc(100vw - 20px));
+    max-height: calc(100svh - var(--navbar-height) - 20px);
   }
 
   .network-dropdown-header {
@@ -2025,9 +1594,94 @@ a {
   .network-item-icon {
     width: 36px;
     height: 36px;
-
     min-width: 36px;
-
     font-size: 17px;
+  }
+
+  /* LEGACY SECTION SUPPORT */
+
+  .intro-section {
+    padding: 60px 20px;
+  }
+
+  .section-heading h2 {
+    font-size: 34px;
+  }
+
+  .service-highlights {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+/* =========================================================
+   VERY SMALL MOBILE
+========================================================= */
+
+@media (max-width: 380px) {
+  .nav-container {
+    padding: 0 10px;
+    gap: 8px;
+  }
+
+  .logo-image {
+    width: 110px;
+    height: 48px;
+  }
+
+  .nav-links {
+    gap: 8px;
+  }
+
+  .nav-links > a,
+  .network-nav-button {
+    font-size: 10px;
+  }
+
+  .search-button {
+    width: 34px;
+    height: 34px;
+  }
+
+  .login-button {
+    min-height: 34px;
+    padding: 0 9px;
+  }
+
+  .hero h1 {
+    font-size: 39px;
+  }
+
+  .hero-content {
+    padding-right: 18px;
+    padding-left: 18px;
+  }
+
+  .glass-service-card {
+    width: 260px;
+  }
+}
+
+/* =========================================================
+   REDUCED MOTION ACCESSIBILITY
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .glass-services-track {
+    animation: none;
+    transform: none;
   }
 }

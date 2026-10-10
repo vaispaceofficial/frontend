@@ -4,6 +4,7 @@ import type { FormEvent, CSSProperties } from "react";
 import {
   ArrowRight,
   CheckCircle2,
+  ChevronDown,
   ChevronRight,
   Clock3,
   MapPin,
@@ -30,6 +31,21 @@ function ServiceDetailPage() {
       reviews: 128,
       area: "MVP Colony, Vizag",
       experience: "8+ years",
+      responseTime: "Within 15 minutes",
+      customerReviews: [
+        {
+          name: "Anil Kumar",
+          rating: 5,
+          comment:
+            "Excellent service! Arrived on time and explained the repair clearly.",
+        },
+        {
+          name: "Priya Sharma",
+          rating: 5,
+          comment:
+            "Very professional and responsive. The work was completed perfectly.",
+        },
+      ],
     },
     {
       id: 2,
@@ -39,6 +55,21 @@ function ServiceDetailPage() {
       reviews: 96,
       area: "Madhurawada, Vizag",
       experience: "6+ years",
+      responseTime: "Within 30 minutes",
+      customerReviews: [
+        {
+          name: "Kiran Kumar",
+          rating: 5,
+          comment:
+            "Good experience. He responded quickly and did a neat job.",
+        },
+        {
+          name: "Sneha Reddy",
+          rating: 4,
+          comment:
+            "Professional service and friendly communication.",
+        },
+      ],
     },
     {
       id: 3,
@@ -48,10 +79,161 @@ function ServiceDetailPage() {
       reviews: 84,
       area: "Gajuwaka, Vizag",
       experience: "5+ years",
+      responseTime: "Within 45 minutes",
+      customerReviews: [
+        {
+          name: "Vamsi Krishna",
+          rating: 5,
+          comment:
+            "Helpful technician who explained everything before starting.",
+        },
+        {
+          name: "Divya",
+          rating: 4,
+          comment:
+            "Good service and a smooth overall experience.",
+        },
+      ],
     },
+
+    {
+      id: 4,
+      name: "Arjun Rao",
+      rating: 4.9,
+      reviews: 112,
+      area: "Seethammadhara, Vizag",
+      experience: "7+ years",
+      responseTime: "Within 20 minutes",
+      image: "/images/professionals/image1.avif",
+      customerReviews: [
+        {
+          name: "Praveen",
+          rating: 5,
+          comment: "Very professional and completed the work neatly.",
+        },
+        {
+          name: "Divya",
+          rating: 5,
+          comment: "Good service and arrived on time.",
+        },
+      ],
+    },
+    {
+      id: 5,
+      name: "Kiran Kumar",
+      rating: 4.8,
+      reviews: 105,
+      area: "MVP Colony, Vizag",
+      experience: "6+ years",
+      responseTime: "Within 25 minutes",
+      image: "/images/professionals/image1.avif",
+      customerReviews: [
+        {
+          name: "Sandeep",
+          rating: 5,
+          comment: "Excellent service and friendly professional.",
+        },
+        {
+          name: "Lakshmi",
+          rating: 4,
+          comment: "Work was completed properly.",
+        },
+      ],
+    },
+    {
+      id: 6,
+      name: "Vamsi Krishna",
+      rating: 4.7,
+      reviews: 89,
+      area: "Gajuwaka, Vizag",
+      experience: "5+ years",
+      responseTime: "Within 30 minutes",
+      image: "/images/professionals/image1.avif",
+      customerReviews: [
+        {
+          name: "Ramesh",
+          rating: 5,
+          comment: "Quick response and reliable service.",
+        },
+        {
+          name: "Anitha",
+          rating: 4,
+          comment: "Good experience overall.",
+        },
+      ],
+    },
+    {
+      id: 7,
+      name: "Prasad Varma",
+      rating: 4.9,
+      reviews: 134,
+      area: "Madhurawada, Vizag",
+      experience: "9+ years",
+      responseTime: "Within 15 minutes",
+      image: "/images/professionals/image1.avif",
+      customerReviews: [
+        {
+          name: "Harish",
+          rating: 5,
+          comment: "Experienced professional with excellent service.",
+        },
+        {
+          name: "Meena",
+          rating: 5,
+          comment: "Very satisfied with the quality of work.",
+        },
+      ],
+    },
+    {
+      id: 8,
+      name: "Manoj Reddy",
+      rating: 4.8,
+      reviews: 76,
+      area: "Rushikonda, Vizag",
+      experience: "4+ years",
+      responseTime: "Within 35 minutes",
+      image: "/images/professionals/image1.avif",
+      customerReviews: [
+        {
+          name: "Karthik",
+          rating: 5,
+          comment: "Helpful and professional service.",
+        },
+        {
+          name: "Swathi",
+          rating: 4,
+          comment: "Arrived on time and did a good job.",
+        },
+      ],
+    },
+    {
+      id: 9,
+      name: "Naveen Kumar",
+      rating: 4.6,
+      reviews: 68,
+      area: "Madhurawada, Vizag",
+      experience: "5+ years",
+      responseTime: "Within 40 minutes",
+      image: "/images/professionals/image1.avif",
+      customerReviews: [
+        {
+          name: "Rohit",
+          rating: 5,
+          comment: "Good communication and efficient work.",
+        },
+        {
+          name: "Pooja",
+          rating: 4,
+          comment: "Satisfied with the service provided.",
+        },
+      ],
+    },
+
   ];
 
-  const service = services.find((item) => item.id === serviceId);
+  const service = services.find(
+    (item) => item.id === serviceId || item.legacyIds?.includes(serviceId ?? ""),
+  );
 
   // Selection state
   const [selectedIssue, setSelectedIssue] = useState<string | null>(null);
@@ -76,6 +258,44 @@ function ServiceDetailPage() {
   const [selectedProfessional, setSelectedProfessional] = useState<
     number | null
   >(null);
+
+
+  const [professionalRowStart, setProfessionalRowStart] = useState(0);
+
+  // Divide professionals into rows of three
+  const professionalRows = Array.from(
+    { length: Math.ceil(professionals.length / 3) },
+    (_, index) => professionals.slice(index * 3, index * 3 + 3),
+  );
+
+  // Show two rows (up to six professionals) at a time
+  const visibleProfessionalRows =
+    professionalRows.length > 0
+      ? Array.from(
+        { length: Math.min(2, professionalRows.length) },
+        (_, index) =>
+          professionalRows[
+          (professionalRowStart + index) % professionalRows.length
+          ],
+      )
+      : [];
+
+  const visibleProfessionals = visibleProfessionalRows.flat();
+
+  // Advance by one row and loop back at the end
+  const showNextProfessionalRow = () => {
+    if (professionalRows.length <= 1) return;
+
+    setProfessionalRowStart(
+      (current) => (current + 1) % professionalRows.length,
+    );
+  };
+
+
+  const activeProfessional =
+    professionals.find(
+      (professional) => professional.id === selectedProfessional,
+    ) ?? professionals[0];
 
   const closeBookingPopup = () => {
     setShowBookingPopup(false);
@@ -163,11 +383,13 @@ function ServiceDetailPage() {
           Overview
         </a>
 
+        <a href="#process">Process</a>
+
         <a href="#issues">Common Issues</a>
 
         <a href="#types">Service Types</a>
 
-        <a href="#process">Process</a>
+        <a href="#professionals">Professionals</a>
 
         <a href="#benefits">Benefits</a>
 
@@ -197,12 +419,40 @@ function ServiceDetailPage() {
             </p>
           </section>
 
+          {/* SERVICE PROCESS */}
+
+          <section id="process" className="detail-section">
+            <span className="detail-section-label">OUR SERVICE PROCESS</span>
+
+            <h2>Simple from booking to completion</h2>
+
+            <div className="process-grid">
+              {service.process.map((step, index) => (
+                <div
+                  className="process-step"
+                  key={step}
+                  style={{ "--step-index": index } as CSSProperties}
+                >
+                  <div className="process-number">
+                    <span>{String(index + 1).padStart(2, "0")}</span>
+                  </div>
+
+                  <span className="process-step-label">{step}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+
           {/* COMMON ISSUES */}
 
           <section id="issues" className="detail-section">
             <span className="detail-section-label">COMMON ISSUES</span>
 
             <h2>What can we help with?</h2>
+
+            <p className="issues-helper-text">
+              Choose one of the issues below to continue.
+            </p>
 
             <div className="issues-grid">
               {service.commonIssues.map((issue) => {
@@ -240,9 +490,8 @@ function ServiceDetailPage() {
                   <button
                     type="button"
                     key={type}
-                    className={`service-type-card ${
-                      isSelected ? "selected" : ""
-                    }`}
+                    className={`service-type-card ${isSelected ? "selected" : ""
+                      }`}
                     aria-pressed={isSelected}
                     onClick={() => setSelectedType(isSelected ? null : type)}
                   >
@@ -271,17 +520,19 @@ function ServiceDetailPage() {
               service area.
             </p>
 
-            <div className="professional-selection-grid">
-              {professionals.map((professional) => {
+            <div
+              key={professionalRowStart}
+              className="professional-selection-grid professional-grid-animated"
+            >
+              {visibleProfessionals.map((professional) => {
                 const isSelected = selectedProfessional === professional.id;
 
                 return (
                   <button
                     type="button"
                     key={professional.id}
-                    className={`professional-selection-card ${
-                      isSelected ? "selected" : ""
-                    }`}
+                    className={`professional-selection-card ${isSelected ? "selected" : ""
+                      }`}
                     onClick={() =>
                       setSelectedProfessional(
                         isSelected ? null : professional.id,
@@ -343,31 +594,21 @@ function ServiceDetailPage() {
                 );
               })}
             </div>
-          </section>
-
-          {/* SERVICE PROCESS */}
-
-          <section id="process" className="detail-section">
-            <span className="detail-section-label">OUR SERVICE PROCESS</span>
-
-            <h2>Simple from booking to completion</h2>
-
-            <div className="process-grid">
-              {service.process.map((step, index) => (
-                <div
-                  className="process-step"
-                  key={step}
-                  style={{ "--step-index": index } as CSSProperties}
+            {professionals.length > 3 && (
+              <div className="professional-carousel-controls">
+                <button
+                  type="button"
+                  className="professional-next-row"
+                  aria-label="Show next professionals"
+                  onClick={showNextProfessionalRow}
                 >
-                  <div className="process-number">
-                    <span>{String(index + 1).padStart(2, "0")}</span>
-                  </div>
-
-                  <span className="process-step-label">{step}</span>
-                </div>
-              ))}
-            </div>
+                  <ChevronDown size={16} />
+                </button>
+              </div>
+            )}
           </section>
+
+
 
           {/* BENEFITS */}
 
@@ -495,39 +736,105 @@ function ServiceDetailPage() {
             </button>
           </div>
 
-          {/* TOP PROFESSIONAL CARD */}
+          {/* SELECTED PROFESSIONAL DETAILS */}
 
-          <div className="professional-card">
+          <div
+            className={`professional-card ${selectedProfessional !== null ? "professional-card-selected" : ""
+              }`}
+          >
             <div className="professional-card-heading">
               <Star size={19} fill="currentColor" />
-
-              <strong>Top Professional</strong>
+              <strong>
+                {selectedProfessional !== null
+                  ? "Selected Professional"
+                  : "Top Professional"}
+              </strong>
             </div>
 
+            {/* Selected professional profile */}
             <div className="professional-profile">
-              <div className="professional-avatar">RK</div>
+              <div className="professional-avatar professional-avatar-photo">
+                <img
+                  src={activeProfessional.image}
+                  alt={activeProfessional.name}
+                />
+              </div>
 
-              <div>
-                <strong>Rajesh Kumar</strong>
+              <div className="professional-profile-info">
+                <strong>{activeProfessional.name}</strong>
 
                 <span>{service.shortName} Specialist</span>
 
                 <div className="professional-rating">
                   <Star size={13} fill="currentColor" />
-                  <strong>4.9</strong>
-                  <span>(128 reviews)</span>
+                  <strong>{activeProfessional.rating}</strong>
+                  <span>({activeProfessional.reviews} reviews)</span>
                 </div>
               </div>
             </div>
 
+            {/* Verification */}
             <div className="verified-row">
               <CheckCircle2 size={14} />
-              Top Rated Professional
+              Verified Professional
             </div>
 
+            {/* Experience */}
             <div className="experience-row">
               <Clock3 size={14} />
-              8+ Years Experience
+              {activeProfessional.experience} Experience
+            </div>
+
+            {/* Service area */}
+            <div className="experience-row">
+              <MapPin size={14} />
+              {activeProfessional.area}
+            </div>
+
+            {/* Response time — sidebar only */}
+            <div className="professional-response-time">
+              <div className="professional-extra-heading">
+                <Clock3 size={16} />
+                <strong>Average Response Time</strong>
+              </div>
+
+              <span>{activeProfessional.responseTime}</span>
+
+              <small>
+                Typical time taken to respond to a service request.
+              </small>
+            </div>
+
+            {/* Customer reviews — sidebar only */}
+            <div className="professional-customer-reviews">
+              <div className="professional-extra-heading">
+                <Star size={16} fill="currentColor" />
+                <strong>Customer Reviews</strong>
+              </div>
+
+              {activeProfessional.customerReviews.map((review, index) => (
+                <div
+                  className="professional-customer-review"
+                  key={`${activeProfessional.id}-${index}`}
+                >
+                  <div className="professional-review-header">
+                    <strong>{review.name}</strong>
+
+                    <span className="professional-review-rating">
+                      <Star size={12} fill="currentColor" />
+                      {review.rating.toFixed(1)}
+                    </span>
+                  </div>
+
+                  <p>{review.comment}</p>
+                </div>
+              ))}
+
+              <div className="professional-review-summary">
+                <Star size={14} fill="currentColor" />
+                <strong>{activeProfessional.rating}/5</strong>
+                <span>Overall rating from {activeProfessional.reviews} reviews</span>
+              </div>
             </div>
           </div>
 
@@ -602,9 +909,9 @@ function ServiceDetailPage() {
                       <strong>
                         {selectedProfessional !== null
                           ? (professionals.find(
-                              (professional) =>
-                                professional.id === selectedProfessional,
-                            )?.name ?? "Assigned by OneService")
+                            (professional) =>
+                              professional.id === selectedProfessional,
+                          )?.name ?? "Assigned by OneService")
                           : "Assigned by OneService"}
                       </strong>
                     </div>

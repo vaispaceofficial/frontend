@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from "react";
 
 import {
@@ -33,6 +34,8 @@ import HomeAppliancesPage from "./pages/HomeAppliancesPage";
 import HomeServicesPage from "./pages/HomeServicesPage";
 import PersonalServicesPage from "./pages/PersonalServicesPage";
 import HomeStaffPage from "./pages/HomeStaffPage";
+import EduTechPage from "./pages/EduTechPage";
+import ProfessionalServicesPage from "./pages/ProfessionalServicesPage";
 
 import AMCPage from "./pages/AMCPage";
 import AccessoriesSalesPage from "./pages/AccessoriesSalesPage";
@@ -48,6 +51,7 @@ import TutorRegisterPage from "./pages/TutorRegisterPage";
 import CartPage from "./pages/CartPage";
 import AccessoriesProductsPage from "./pages/AccessoriesProductsPage";
 import ProductDetailsPage from "./pages/ProductDetailsPage";
+
 import Footer from "./components/Footer";
 
 /* =========================================================
@@ -81,108 +85,92 @@ const heroImages = [
 ];
 
 /* =========================================================
-   SERVICE MENU
+   HOME SERVICE CARD DATA
 ========================================================= */
 
-const serviceCategories = [
+const homeServiceCards = [
   {
-    name: "Home Appliances",
-
+    title: "Home Appliances",
+    description:
+      "Repair, maintenance and installation for your everyday appliances.",
+    image: "/images/services/homeappliances.webp",
+    alt: "Home appliance repair services",
+    path: "/services/home-appliances",
     services: [
-      {
-        name: "AC",
-        slug: "ac-repair",
-      },
-      {
-        name: "TV",
-        slug: "tv-repair",
-      },
-      {
-        name: "Refrigerator",
-        slug: "refrigerator-repair",
-      },
-      {
-        name: "Washing Machine",
-        slug: "washing-machine-repair",
-      },
-      {
-        name: "Microwave",
-        slug: "microwave-repair",
-      },
-      {
-        name: "Water Purifier",
-        slug: "water-purifier-service",
-      },
+      "AC",
+      "TV",
+      "Refrigerator",
+      "Washing Machine",
+      "Microwave",
+      "Water Purifier",
     ],
   },
-
   {
-    name: "Home Services",
-
+    title: "Home Services",
+    description:
+      "Reliable help for electrical, plumbing, carpentry and cleaning needs.",
+    image: "/images/services/HomeServices.webp",
+    alt: "Home maintenance and repair services",
+    path: "/services/home-services",
+    services: ["Electrician", "Plumber", "Carpenter", "Cleaning"],
+  },
+  {
+    title: "Personal Services",
+    description:
+      "Professional personal care and beauty services at your convenience.",
+    image: "/images/services/PersonalServices.webp",
+    alt: "Personal care and beauty services",
+    path: "/services/personal-services",
+    services: ["Makeup", "Hair Styling", "Beautician"],
+  },
+  {
+    title: "Home Staff",
+    description:
+      "Everyday assistance for a more comfortable and well-managed home.",
+    image: "/images/services/homestaff.webp",
+    alt: "Home staff and household assistance",
+    path: "/services/home-staff",
     services: [
-      {
-        name: "Electrician",
-        slug: "electrician",
-      },
-      {
-        name: "Plumber",
-        slug: "plumber",
-      },
-      {
-        name: "Carpenter",
-        slug: "carpenter",
-      },
-      {
-        name: "Cleaning",
-        slug: "cleaning",
-      },
+      "Maid",
+      "Cooking",
+      "Cleaning",
+      "Babysitting",
+      "Elder Assistance",
     ],
   },
-
   {
-    name: "Personal Services",
-
+    title: "EduTech & Home Tutors",
+    description:
+      "Find tutors and trainers for academic learning and skill development.",
+    image: "/images/services/edutech.webp",
+    alt: "Education, tuition and home tutoring services",
+    path: "/services/edutech",
     services: [
-      {
-        name: "Makeup",
-        slug: "makeup",
-      },
-      {
-        name: "Hair Styling",
-        slug: "hair-styling",
-      },
-      {
-        name: "Beautician",
-        slug: "beautician",
-      },
+      "School Tuition",
+      "Competitive Exam Coaching",
+      "Higher Education Tutors",
+      "Language & Skill Classes",
     ],
+    fallbackImage: "/images/services/homestaff.webp",
   },
-
   {
-    name: "Home Staff",
-
+    title: "Professional Services",
+    description:
+      "Connect with specialists for professional advice, support and expertise.",
+    image: "/images/professionalservices/legal-financial.webp",
+    alt: "Professional consultation and specialist services",
+    path: "/services/professional-services",
     services: [
-      {
-        name: "Maid",
-        slug: "maid",
-      },
-      {
-        name: "Cooking",
-        slug: "cooking",
-      },
-      {
-        name: "Cleaning",
-        slug: "home-cleaning",
-      },
-      {
-        name: "Babysitting",
-        slug: "babysitting",
-      },
-      {
-        name: "Elder Assistance",
-        slug: "elder-assistance",
-      },
+      "Legal, Tax & Financial",
+      "Healthcare & Medical",
+      "Religious, Vedic & Astrology",
+      "Arts, Hobbies & Trainers",
+      "Freelancers, Tech & Academic",
+      "Event Artists & Performers",
+      "Personal Helpers & Support",
+      "Artisans & Local Craftsmen",
     ],
+    fallbackImage: "/images/services/repairs.png",
   },
 ];
 
@@ -191,28 +179,15 @@ const serviceCategories = [
 ========================================================= */
 
 function Navbar() {
-  const [servicesOpen, setServicesOpen] = useState(false);
-
-  const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
-
   const [networkOpen, setNetworkOpen] = useState(false);
-
-  const servicesRef = useRef<HTMLDivElement>(null);
 
   const networkRef = useRef<HTMLDivElement>(null);
 
-  /* =======================================================
-     CLOSE DROPDOWNS WHEN CLICKING OUTSIDE
-  ======================================================= */
+  /* CLOSE NETWORK DROPDOWN WHEN CLICKING OUTSIDE */
 
   useEffect(() => {
     const handleOutsideClick = (event: MouseEvent) => {
       const target = event.target as Node;
-
-      if (servicesRef.current && !servicesRef.current.contains(target)) {
-        setServicesOpen(false);
-        setSelectedCategory(null);
-      }
 
       if (networkRef.current && !networkRef.current.contains(target)) {
         setNetworkOpen(false);
@@ -226,74 +201,18 @@ function Navbar() {
     };
   }, []);
 
-  /* =======================================================
-     SELECTED SERVICE CATEGORY
-  ======================================================= */
-
-  const selectedCategoryData =
-    selectedCategory !== null ? serviceCategories[selectedCategory] : null;
-
-  /* =======================================================
-     SERVICES TOGGLE
-  ======================================================= */
-
-  const toggleServices = () => {
-    setServicesOpen((current) => {
-      const nextState = !current;
-
-      if (nextState) {
-        setNetworkOpen(false);
-      }
-
-      return nextState;
-    });
-
-    if (servicesOpen) {
-      setSelectedCategory(null);
-    }
+  const closeDropdowns = () => {
+    setNetworkOpen(false);
   };
-
-  /* =======================================================
-     SELECT SERVICE CATEGORY
-  ======================================================= */
-
-  const selectCategory = (index: number) => {
-    setSelectedCategory((current) => (current === index ? null : index));
-  };
-
-  /* =======================================================
-     NETWORK TOGGLE
-  ======================================================= */
 
   const toggleNetwork = () => {
-    setNetworkOpen((current) => {
-      const nextState = !current;
-
-      if (nextState) {
-        setServicesOpen(false);
-        setSelectedCategory(null);
-      }
-
-      return nextState;
-    });
-  };
-
-  /* =======================================================
-     CLOSE DROPDOWNS
-  ======================================================= */
-
-  const closeDropdowns = () => {
-    setServicesOpen(false);
-    setSelectedCategory(null);
-    setNetworkOpen(false);
+    setNetworkOpen((current) => !current);
   };
 
   return (
     <header className="navbar">
       <div className="nav-container">
-        {/* =================================================
-            LOGO
-        ================================================= */}
+        {/* LOGO */}
 
         <Link className="logo" to="/" onClick={closeDropdowns}>
           <img
@@ -303,137 +222,43 @@ function Navbar() {
           />
         </Link>
 
-        {/* =================================================
-            NAVIGATION
-        ================================================= */}
+        {/* NAVIGATION */}
 
         <nav className="nav-links">
-          {/* =================================================
-              SERVICES
-          ================================================= */}
-
-          <div className="services-nav-wrapper" ref={servicesRef}>
-            <button
-              type="button"
-              className={`services-nav-button ${servicesOpen ? "active" : ""}`}
-              onClick={toggleServices}
-            >
-              <span>Services</span>
-
-              <ChevronDown
-                size={14}
-                className={`services-chevron ${servicesOpen ? "open" : ""}`}
-              />
-            </button>
-
-            {servicesOpen && (
-              <div className="services-dropdown">
-                <div className="services-dropdown-header">
-                  <span>OUR SERVICES</span>
-
-                  <strong>Choose a service category</strong>
-                </div>
-
-                <div className="services-dropdown-content">
-                  {/* CATEGORY COLUMN */}
-
-                  <div className="service-category-list">
-                    {serviceCategories.map((category, index) => (
-                      <button
-                        key={category.name}
-                        type="button"
-                        className={`service-category-item ${
-                          selectedCategory === index ? "active" : ""
-                        }`}
-                        onClick={() => selectCategory(index)}
-                      >
-                        <span>{category.name}</span>
-
-                        <span className="category-arrow">→</span>
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* SUB-SERVICE COLUMN */}
-
-                  <div className="service-submenu">
-                    {selectedCategoryData ? (
-                      <>
-                        <div className="submenu-heading">
-                          <span>{selectedCategoryData.name}</span>
-
-                          <small>Select a service</small>
-                        </div>
-
-                        <div className="submenu-items">
-                          {selectedCategoryData.services.map((service) => (
-                            <Link
-                              key={service.slug}
-                              to={`/services/${service.slug}`}
-                              className="service-submenu-item"
-                              onClick={closeDropdowns}
-                            >
-                              <span>{service.name}</span>
-
-                              <ArrowRight size={14} />
-                            </Link>
-                          ))}
-                        </div>
-                      </>
-                    ) : (
-                      <div className="submenu-empty">
-                        <div className="submenu-empty-icon">1</div>
-
-                        <strong>Select a category</strong>
-
-                        <span>
-                          Choose a category to view its available services.
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* =================================================
-              ACCESSORIES
-          ================================================= */}
+          <Link to="/services" onClick={closeDropdowns}>
+            Services
+          </Link>
 
           <Link to="/accessories-sales" onClick={closeDropdowns}>
             MarketPlace
           </Link>
 
-          {/* =================================================
-              AMC
-          ================================================= */}
-
           <Link to="/city-listings" onClick={closeDropdowns}>
             City Listings
           </Link>
-
-          {/* =================================================
-              CONTACT
-          ================================================= */}
 
           <Link to="/contact" onClick={closeDropdowns}>
             Contact
           </Link>
 
-          {/* =================================================
-              JOIN OUR NETWORK
-          ================================================= */}
+          {/* JOIN OUR NETWORK */}
 
           <div className="network-nav-wrapper" ref={networkRef}>
             <button
               type="button"
-              className={`network-nav-button ${networkOpen ? "active" : ""}`}
+              className={`network-nav-button ${
+                networkOpen ? "active" : ""
+              }`}
               onClick={toggleNetwork}
+              aria-expanded={networkOpen}
+              aria-haspopup="true"
             >
               <span>Join Our Network</span>
 
-              <ChevronDown size={14} className={networkOpen ? "open" : ""} />
+              <ChevronDown
+                size={14}
+                className={networkOpen ? "open" : ""}
+              />
             </button>
 
             {networkOpen && (
@@ -445,90 +270,75 @@ function Navbar() {
                 </div>
 
                 <div className="network-dropdown-items">
-                  {/* TECHNICIAN */}
-
                   <Link
                     to="/register-professional"
                     className="network-dropdown-item"
-                    onClick={() => setNetworkOpen(false)}
+                    onClick={closeDropdowns}
                   >
                     <div className="network-item-icon">🔧</div>
 
                     <div className="network-item-content">
                       <strong>Join as a Technician</strong>
-
                       <span>Provide professional home services</span>
                     </div>
 
                     <ArrowRight size={15} />
                   </Link>
 
-                  {/* SERVICE PARTNER */}
-
                   <Link
                     to="/register-partner"
                     className="network-dropdown-item"
-                    onClick={() => setNetworkOpen(false)}
+                    onClick={closeDropdowns}
                   >
                     <div className="network-item-icon">🤝</div>
 
                     <div className="network-item-content">
                       <strong>Join as a Service Partner</strong>
-
                       <span>Grow your service business with us</span>
                     </div>
 
                     <ArrowRight size={15} />
                   </Link>
 
-                  {/* VENDOR */}
-
                   <Link
                     to="/register-vendor"
                     className="network-dropdown-item"
-                    onClick={() => setNetworkOpen(false)}
+                    onClick={closeDropdowns}
                   >
                     <div className="network-item-icon">🏪</div>
 
                     <div className="network-item-content">
                       <strong>Join as a Vendor</strong>
-
                       <span>Sell products and accessories</span>
                     </div>
 
                     <ArrowRight size={15} />
                   </Link>
 
-                  {/* STUDENT */}
-
                   <Link
                     to="/register-student"
                     className="network-dropdown-item"
-                    onClick={() => setNetworkOpen(false)}
+                    onClick={closeDropdowns}
                   >
                     <div className="network-item-icon">🎓</div>
 
                     <div className="network-item-content">
                       <strong>Join as a Student</strong>
-
                       <span>Learn, train and build your skills</span>
                     </div>
 
                     <ArrowRight size={15} />
                   </Link>
 
-                  {/* TUTOR */}
-
                   <Link
                     to="/register-tutor"
                     className="network-dropdown-item"
-                    onClick={() => setNetworkOpen(false)}
+                    onClick={closeDropdowns}
                   >
                     <div className="network-item-icon">📚</div>
 
                     <div className="network-item-content">
                       <strong>Join as a Tutor</strong>
-
                       <span>Share your knowledge and teach others</span>
                     </div>
 
@@ -540,9 +350,7 @@ function Navbar() {
           </div>
         </nav>
 
-        {/* =================================================
-            NAV ACTIONS
-        ================================================= */}
+        {/* NAV ACTIONS */}
 
         <div className="nav-actions">
           <Link
@@ -554,9 +362,12 @@ function Navbar() {
             <Search size={20} />
           </Link>
 
-          <Link to="/login" className="login-button" onClick={closeDropdowns}>
+          <Link
+            to="/login"
+            className="login-button"
+            onClick={closeDropdowns}
+          >
             <UserRound size={18} />
-
             <span>Login</span>
           </Link>
         </div>
@@ -574,48 +385,38 @@ function HomePage() {
 
   const location = useLocation();
 
-  /* =======================================================
-     SCROLL TO SERVICES SECTION
-  ======================================================= */
+  /* SCROLL TO SERVICES SECTION */
 
   useEffect(() => {
     if (location.hash === "#services") {
-      setTimeout(() => {
+      const timer = window.setTimeout(() => {
         document.getElementById("services")?.scrollIntoView({
           behavior: "smooth",
           block: "start",
         });
       }, 100);
+
+      return () => window.clearTimeout(timer);
     }
   }, [location]);
 
-  /* =======================================================
-     AUTO CAROUSEL
-  ======================================================= */
+  /* HERO AUTO CAROUSEL */
 
   useEffect(() => {
-    const timer = setInterval(() => {
+    const timer = window.setInterval(() => {
       setCurrentImage((current) => (current + 1) % heroImages.length);
     }, 5000);
 
     return () => {
-      clearInterval(timer);
+      window.clearInterval(timer);
     };
   }, []);
-
-  /* =======================================================
-     PREVIOUS IMAGE
-  ======================================================= */
 
   const previousImage = () => {
     setCurrentImage(
       (current) => (current - 1 + heroImages.length) % heroImages.length,
     );
   };
-
-  /* =======================================================
-     NEXT IMAGE
-  ======================================================= */
 
   const nextImage = () => {
     setCurrentImage((current) => (current + 1) % heroImages.length);
@@ -624,9 +425,7 @@ function HomePage() {
   return (
     <div className="app">
       <main>
-        {/* =================================================
-            HERO
-        ================================================= */}
+        {/* HERO */}
 
         <section className="hero">
           <div className="hero-background">
@@ -677,7 +476,7 @@ function HomePage() {
             </div>
           </div>
 
-          {/* CAROUSEL CONTROLS */}
+          {/* HERO CAROUSEL CONTROLS */}
 
           <div className="carousel-controls">
             <button
@@ -700,20 +499,21 @@ function HomePage() {
               ))}
             </div>
 
-            <button type="button" onClick={nextImage} aria-label="Next image">
+            <button
+              type="button"
+              onClick={nextImage}
+              aria-label="Next image"
+            >
               <ChevronRight size={20} />
             </button>
           </div>
         </section>
 
-        {/* =================================================
-            BENEFITS
-        ================================================= */}
+        {/* BENEFITS */}
 
         <section className="service-benefits">
           <div className="benefit-item">
             <div className="benefit-icon">✓</div>
-
             <div>
               <strong>Verified</strong>
               <span>Professionals</span>
@@ -722,7 +522,6 @@ function HomePage() {
 
           <div className="benefit-item">
             <div className="benefit-icon">₹</div>
-
             <div>
               <strong>Transparent</strong>
               <span>Pricing</span>
@@ -731,7 +530,6 @@ function HomePage() {
 
           <div className="benefit-item">
             <div className="benefit-icon">◉</div>
-
             <div>
               <strong>Managed</strong>
               <span>Service</span>
@@ -740,7 +538,6 @@ function HomePage() {
 
           <div className="benefit-item">
             <div className="benefit-icon">♡</div>
-
             <div>
               <strong>Warranty</strong>
               <span>Support</span>
@@ -749,7 +546,6 @@ function HomePage() {
 
           <div className="benefit-item">
             <div className="benefit-icon">▣</div>
-
             <div>
               <strong>Easy</strong>
               <span>Payments</span>
@@ -758,7 +554,8 @@ function HomePage() {
         </section>
 
         {/* =================================================
-            SERVICES
+            SERVICES — BLUE GLASSMORPHISM CARDS
+            Existing section background is preserved.
         ================================================= */}
 
         <section className="services-section" id="services">
@@ -777,121 +574,92 @@ function HomePage() {
             </p>
           </div>
 
-          {/* SERVICE CARDS */}
+          {/* MOVING CARD TRACK */}
 
-          <div className="service-cards">
-            {/* HOME APPLIANCES */}
-
-            <article className="service-card">
-              <div className="service-image">
-                <img
-                  src="/images/services/homeappliances.webp"
-                  alt="Home appliances"
-                />
-              </div>
-
-              <div className="service-card-content">
-                <h3>Home Appliances</h3>
-
-                <ul>
-                  <li>AC</li>
-                  <li>TV</li>
-                  <li>Refrigerator</li>
-                  <li>Washing Machine</li>
-                  <li>Microwave</li>
-                  <li>Water Purifier</li>
-                </ul>
-
-                <Link
-                  to="/services/home-appliances"
-                  className="service-explore"
+          <div
+            className="glass-services-marquee"
+            aria-label="Explore OneService categories"
+          >
+            <div className="glass-services-track">
+              {[0, 1].map((copy) => (
+                <div
+                  className="glass-services-group"
+                  key={copy}
+                  aria-hidden={copy === 1 ? "true" : undefined}
                 >
-                  Explore
-                  <ArrowRight size={15} />
-                </Link>
-              </div>
-            </article>
+                  {homeServiceCards.map((service) => (
+                    <Link
+                      key={`${copy}-${service.path}`}
+                      to={service.path}
+                      className="glass-service-card"
+                      tabIndex={copy === 1 ? -1 : undefined}
+                    >
+                      <div className="glass-service-image">
+                        <img
+                          src={service.image}
+                          alt={copy === 1 ? "" : service.alt}
+                          loading="lazy"
+                          onError={(event) => {
+                            if (
+                              service.fallbackImage &&
+                              event.currentTarget.src !==
+                                new URL(
+                                  service.fallbackImage,
+                                  window.location.origin,
+                                ).href
+                            ) {
+                              event.currentTarget.src =
+                                service.fallbackImage;
+                            }
+                          }}
+                        />
 
-            {/* HOME SERVICES */}
+                        <span className="glass-service-image-shade" />
+                        <span className="glass-service-number">
+                          {String(
+                            homeServiceCards.indexOf(service) + 1,
+                          ).padStart(2, "0")}
+                        </span>
+                      </div>
 
-            <article className="service-card">
-              <div className="service-image">
-                <img
-                  src="/images/services/HomeServices.webp"
-                  alt="Home services"
-                />
-              </div>
+                      <div className="glass-service-content">
+                        <h3>{service.title}</h3>
 
-              <div className="service-card-content">
-                <h3>Home Services</h3>
+                        <p className="glass-service-description">
+                          {service.description}
+                        </p>
 
-                <ul>
-                  <li>Electrician</li>
-                  <li>Plumber</li>
-                  <li>Carpenter</li>
-                  <li>Cleaning</li>
-                </ul>
+                        <div className="glass-service-tags">
+                          {service.services.slice(0, 3).map((item) => (
+                            <span key={item}>{item}</span>
+                          ))}
 
-                <Link to="/services/home-services" className="service-explore">
-                  Explore
-                  <ArrowRight size={15} />
-                </Link>
-              </div>
-            </article>
+                          {service.services.length > 3 && (
+                            <span>+{service.services.length - 3} more</span>
+                          )}
+                        </div>
 
-            {/* PERSONAL SERVICES */}
+                        <span className="glass-service-explore">
+                          Explore services
+                          <span className="glass-service-arrow">
+                            <ArrowRight size={17} />
+                          </span>
+                        </span>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
 
-            <article className="service-card">
-              <div className="service-image">
-                <img
-                  src="/images/services/PersonalServices.webp"
-                  alt="Personal services"
-                />
-              </div>
+          {/* VIEW ALL SERVICES */}
 
-              <div className="service-card-content">
-                <h3>Personal Services</h3>
-
-                <ul>
-                  <li>Makeup</li>
-                  <li>Hair Styling</li>
-                  <li>Beautician</li>
-                </ul>
-
-                <Link
-                  to="/services/personal-services"
-                  className="service-explore"
-                >
-                  Explore
-                  <ArrowRight size={15} />
-                </Link>
-              </div>
-            </article>
-
-            {/* HOME STAFF */}
-
-            <article className="service-card">
-              <div className="service-image">
-                <img src="/images/services/homestaff.webp" alt="Home staff" />
-              </div>
-
-              <div className="service-card-content">
-                <h3>Home Staff</h3>
-
-                <ul>
-                  <li>Maid</li>
-                  <li>Cooking</li>
-                  <li>Cleaning</li>
-                  <li>Babysitting</li>
-                  <li>Elder Assistance</li>
-                </ul>
-
-                <Link to="/services/home-staff" className="service-explore">
-                  Explore
-                  <ArrowRight size={15} />
-                </Link>
-              </div>
-            </article>
+          <div className="service-cards-top">
+            <Link to="/services" className="view-all-services-button">
+              View All Services
+              <ArrowRight size={17} />
+            </Link>
           </div>
         </section>
       </main>
@@ -908,52 +676,46 @@ function AppContent() {
 
   /*
    * Admin pages use their own complete layout.
-   * Therefore the public navbar is hidden there.
+   * The public navbar and footer are hidden on admin routes.
    */
 
   const isAdminRoute = location.pathname.startsWith("/admin");
 
   return (
     <>
-      {/* =================================================
-          PUBLIC NAVBAR
-      ================================================= */}
-
       {!isAdminRoute && <Navbar />}
 
       <Routes>
-        {/* =================================================
-            HOME
-        ================================================= */}
+        {/* HOME */}
 
         <Route path="/" element={<HomePage />} />
 
-        {/* =================================================
-            SERVICES
-        ================================================= */}
+        {/* SERVICES */}
 
         <Route path="/services" element={<ServicesPage />} />
 
-        {/* =================================================
-            AMC
-        ================================================= */}
+        {/* AMC */}
 
         <Route path="/amc" element={<AMCPage />} />
 
         <Route path="/city-listings" element={<CityListingsPage />} />
 
-        {/* =================================================
-    ACCESSORIES & MARKETPLACE
-================================================= */}
+        {/* ACCESSORIES & MARKETPLACE */}
 
-        <Route path="/accessories-sales" element={<AccessoriesSalesPage />} />
+        <Route
+          path="/accessories-sales"
+          element={<AccessoriesSalesPage />}
+        />
 
         <Route
           path="/accessories"
           element={<Navigate to="/accessories/all" replace />}
         />
 
-        <Route path="/accessories/all" element={<AccessoriesProductsPage />} />
+        <Route
+          path="/accessories/all"
+          element={<AccessoriesProductsPage />}
+        />
 
         <Route
           path="/accessories/:categorySlug/:subcategorySlug"
@@ -975,15 +737,11 @@ function AppContent() {
           element={<ProductDetailsPage />}
         />
 
-        {/* =================================================
-    SHOPPING CART
-================================================= */}
+        {/* SHOPPING CART */}
 
         <Route path="/cart" element={<CartPage />} />
 
-        {/* =================================================
-            REGISTRATION
-        ================================================= */}
+        {/* REGISTRATION */}
 
         <Route path="/register" element={<RegisterPage />} />
 
@@ -992,7 +750,10 @@ function AppContent() {
           element={<ProfessionalRegisterPage />}
         />
 
-        <Route path="/register-partner" element={<PartnerRegisterPage />} />
+        <Route
+          path="/register-partner"
+          element={<PartnerRegisterPage />}
+        />
 
         <Route path="/register-vendor" element={<VendorRegisterPage />} />
 
@@ -1000,16 +761,17 @@ function AppContent() {
 
         <Route path="/register-tutor" element={<TutorRegisterPage />} />
 
-        {/* =================================================
-            SERVICE CATEGORY PAGES
-        ================================================= */}
+        {/* SERVICE CATEGORY PAGES */}
 
         <Route
           path="/services/home-appliances"
           element={<HomeAppliancesPage />}
         />
 
-        <Route path="/services/home-services" element={<HomeServicesPage />} />
+        <Route
+          path="/services/home-services"
+          element={<HomeServicesPage />}
+        />
 
         <Route
           path="/services/personal-services"
@@ -1018,59 +780,53 @@ function AppContent() {
 
         <Route path="/services/home-staff" element={<HomeStaffPage />} />
 
-        {/* =================================================
-            SERVICE DETAIL
-        ================================================= */}
+        <Route path="/services/edutech" element={<EduTechPage />} />
 
-        <Route path="/services/:serviceId" element={<ServiceDetailPage />} />
+        <Route
+          path="/services/professional-services"
+          element={<ProfessionalServicesPage />}
+        />
 
-        {/* =================================================
-            CONTACT
-        ================================================= */}
+        {/* SERVICE DETAIL */}
+
+        <Route
+          path="/services/:serviceId"
+          element={<ServiceDetailPage />}
+        />
+
+        {/* CONTACT */}
 
         <Route path="/contact" element={<ContactPage />} />
 
-        {/* =================================================
-            LOGIN
-        ================================================= */}
+        {/* LOGIN */}
 
         <Route path="/login" element={<LoginPage />} />
 
-        {/* =================================================
-    ADMIN LOGIN
-================================================= */}
+        {/* ADMIN LOGIN */}
 
         <Route path="/admin/login" element={<AdminLogin />} />
 
-        {/* =================================================
-    PROTECTED ADMIN AREA
-================================================= */}
+        {/* PROTECTED ADMIN AREA */}
 
         <Route element={<AdminProtectedRoute />}>
           <Route path="/admin" element={<AdminLayout />}>
-            {/* /admin */}
             <Route index element={<AdminDashboard />} />
 
-            {/* /admin/book-services */}
             <Route path="book-services" element={<BookServicesPage />} />
 
-            {/* /admin/products */}
             <Route path="products" element={<ProductsPage />} />
 
-            {/* /admin/businesses */}
             <Route path="businesses" element={<BusinessesPage />} />
 
-            {/* /admin/subscriptions */}
             <Route path="subscriptions" element={<SubscriptionsPage />} />
 
-            {/* /admin/compliance */}
             <Route path="compliance" element={<CompliancePage />} />
 
-            {/* /admin/settings */}
             <Route path="settings" element={<SettingsPage />} />
           </Route>
         </Route>
       </Routes>
+
       {!isAdminRoute && <Footer />}
     </>
   );
