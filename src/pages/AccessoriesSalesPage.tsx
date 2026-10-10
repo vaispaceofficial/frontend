@@ -1,5 +1,6 @@
+
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Search,
   ShoppingCart,
@@ -11,6 +12,8 @@ import {
 } from "lucide-react";
 
 import "./AccessoriesSalesPage.css";
+import CartShortcut from "../components/CartShortcut";
+import { addToCart } from "../data/cart";
 
 /* =========================================================
    CATEGORIES
@@ -50,7 +53,7 @@ const categories = [
 ];
 
 /* =========================================================
-   PRODUCTS
+   FEATURED PRODUCTS
 ========================================================= */
 
 const products = [
@@ -120,7 +123,7 @@ const products = [
 ];
 
 /* =========================================================
-   HERO MINI CAROUSEL DATA
+   HERO CAROUSEL DATA
 ========================================================= */
 
 const heroCarouselOne = [
@@ -259,21 +262,42 @@ function MiniVerticalCarousel({
 
 function AccessoriesSalesPage() {
   const [searchTerm, setSearchTerm] = useState("");
+  const navigate = useNavigate();
+
+  /* =======================================================
+     SEARCH
+  ======================================================= */
 
   const handleSearch = () => {
     const query = searchTerm.trim();
 
     if (!query) {
+      navigate("/accessories/all");
       return;
     }
 
-    window.location.href = `/accessories/all?search=${encodeURIComponent(
-      query,
-    )}`;
+    navigate(
+      `/accessories/all?search=${encodeURIComponent(query)}`
+    );
   };
+
+  /* =======================================================
+     ADD TO CART
+  ======================================================= */
+
+  const handleAddToCart = (product: (typeof products)[number]) => {
+    addToCart(product);
+    navigate("/cart");
+  };
+
+  /* =======================================================
+     RENDER
+  ======================================================= */
 
   return (
     <main className="accessories-sales-page">
+      <CartShortcut />
+
       {/* =====================================================
           HERO
       ===================================================== */}
@@ -297,7 +321,13 @@ function AccessoriesSalesPage() {
 
           {/* SEARCH */}
 
-          <div className="accessories-search">
+          <form
+            className="accessories-search"
+            onSubmit={(event) => {
+              event.preventDefault();
+              handleSearch();
+            }}
+          >
             <Search size={20} />
 
             <input
@@ -307,17 +337,13 @@ function AccessoriesSalesPage() {
               onChange={(event) =>
                 setSearchTerm(event.target.value)
               }
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  handleSearch();
-                }
-              }}
+              aria-label="Search marketplace products"
             />
 
-            <button type="button" onClick={handleSearch}>
+            <button type="submit">
               Search
             </button>
-          </div>
+          </form>
 
           {/* FEATURES */}
 
@@ -458,7 +484,7 @@ function AccessoriesSalesPage() {
 
             <p>
               Explore useful products and everyday essentials
-              across the OneService marketplace.
+              across the NeedOneService marketplace.
             </p>
           </div>
 
@@ -477,9 +503,12 @@ function AccessoriesSalesPage() {
               className="product-card"
               key={product.id}
             >
+              {/* PRODUCT IMAGE */}
+
               <Link
-                to={`/product/${product.id}`}
+                to={`/accessories-sales/products/${product.id}`}
                 className="product-image"
+                aria-label={`View ${product.name}`}
               >
                 {product.badge && (
                   <span className="product-badge">
@@ -490,19 +519,20 @@ function AccessoriesSalesPage() {
                 <div className="product-placeholder">
                   {product.image}
                 </div>
-
-                <button
-                  type="button"
-                  className="product-cart-button"
-                  aria-label={`Add ${product.name} to cart`}
-                  onClick={(event) => {
-                    event.preventDefault();
-                    event.stopPropagation();
-                  }}
-                >
-                  <ShoppingCart size={18} />
-                </button>
               </Link>
+
+              {/* PRODUCT CART BUTTON */}
+
+              <button
+                type="button"
+                className="product-cart-button"
+                aria-label={`Add ${product.name} to cart`}
+                onClick={() => handleAddToCart(product)}
+              >
+                <ShoppingCart size={18} />
+              </button>
+
+              {/* PRODUCT INFORMATION */}
 
               <div className="product-info">
                 <span className="product-category">
@@ -517,7 +547,7 @@ function AccessoriesSalesPage() {
                 </div>
 
                 <Link
-                  to={`/product/${product.id}`}
+                  to={`/accessories-sales/products/${product.id}`}
                   className="product-view-button"
                 >
                   View details
@@ -531,7 +561,6 @@ function AccessoriesSalesPage() {
 
       {/* =====================================================
           SERVICE + PRODUCT
-          Uses the same background class as the former CTA
       ===================================================== */}
 
       <section className="service-product-section accessories-final-cta">
@@ -546,7 +575,7 @@ function AccessoriesSalesPage() {
           </h2>
 
           <p>
-            OneService connects products with professional service.
+            NeedOneService connects products with professional service.
             If your product needs installation, maintenance or support,
             we can help with that too.
           </p>
@@ -594,3 +623,4 @@ function AccessoriesSalesPage() {
 }
 
 export default AccessoriesSalesPage;
+

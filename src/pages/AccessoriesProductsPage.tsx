@@ -1,6 +1,12 @@
 
-import { useMemo, useState } from "react";
-import { Link, useLocation, useParams } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import {
+  Link,
+  useLocation,
+  useNavigate,
+  useParams,
+} from "react-router-dom";
+
 import {
   Search,
   ShoppingCart,
@@ -19,6 +25,9 @@ import {
 
 import type { AccessoryProduct } from "../data/accessoriesProducts";
 
+import CartShortcut from "../components/CartShortcut";
+import { addToCart } from "../data/cart";
+
 import "./AccessoriesProductsPage.css";
 
 function AccessoriesProductsPage() {
@@ -28,17 +37,29 @@ function AccessoriesProductsPage() {
   }>();
 
   const location = useLocation();
+  const navigate = useNavigate();
+
   const queryParams = new URLSearchParams(location.search);
 
   const [search, setSearch] = useState(
     queryParams.get("search") || "",
   );
+
   const [sort, setSort] = useState("featured");
   const [showFilters, setShowFilters] = useState(false);
   const [fastDelivery, setFastDelivery] = useState(false);
   const [installationAvailable, setInstallationAvailable] =
     useState(false);
   const [minimumRating, setMinimumRating] = useState(0);
+
+  // Keep the search field synchronized with the URL.
+  useEffect(() => {
+    const urlSearch = new URLSearchParams(
+      location.search,
+    ).get("search") || "";
+
+    setSearch(urlSearch);
+  }, [location.search]);
 
   const activeCategory = categorySlug || "all";
 
@@ -55,11 +76,14 @@ function AccessoriesProductsPage() {
       ? "All Products"
       : activeCategoryData?.name || "Products";
 
+  // Keep this URL consistent with the product-detail route in App.tsx.
   const getProductUrl = (productId: number) =>
     `/accessories-sales/products/${productId}`;
 
   const categoryUrl = (slug: string) =>
-    slug === "all" ? "/accessories/all" : `/accessories/${slug}`;
+    slug === "all"
+      ? "/accessories/all"
+      : `/accessories/${slug}`;
 
   const subcategoryUrl = (
     category: string,
@@ -109,15 +133,21 @@ function AccessoriesProductsPage() {
 
     switch (sort) {
       case "price-low":
-        result = [...result].sort((a, b) => a.price - b.price);
+        result = [...result].sort(
+          (a, b) => a.price - b.price,
+        );
         break;
 
       case "price-high":
-        result = [...result].sort((a, b) => b.price - a.price);
+        result = [...result].sort(
+          (a, b) => b.price - a.price,
+        );
         break;
 
       case "rating":
-        result = [...result].sort((a, b) => b.rating - a.rating);
+        result = [...result].sort(
+          (a, b) => b.rating - a.rating,
+        );
         break;
 
       default:
@@ -135,11 +165,10 @@ function AccessoriesProductsPage() {
     minimumRating,
   ]);
 
-  // Show the first three products in the main grid.
+  // First three products appear in the main product grid.
   const mainProducts = filteredProducts.slice(0, 3);
 
-  // Show every remaining product in the suggestions section.
-  // This ensures no matching products are accidentally hidden.
+  // Remaining matching products appear in Suggested Products.
   const suggestedProducts = filteredProducts.slice(3);
 
   const clearFilters = () => {
@@ -148,6 +177,32 @@ function AccessoriesProductsPage() {
     setInstallationAvailable(false);
     setMinimumRating(0);
     setSort("featured");
+
+    // Remove the search parameter without reloading the page.
+    const params = new URLSearchParams(location.search);
+    params.delete("search");
+
+    const nextSearch = params.toString();
+
+    navigate(
+      {
+        pathname: location.pathname,
+        search: nextSearch ? `?${nextSearch}` : "",
+      },
+      { replace: true },
+    );
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+  };
+
+  const handleAddToCart = (product: AccessoryProduct) => {
+    // Add the selected product to the shared cart.
+    addToCart(product);
+
+    // Open the cart page.
+    navigate("/cart");
   };
 
   const hasActiveFilters =
@@ -158,6 +213,8 @@ function AccessoriesProductsPage() {
 
   return (
     <main className="accessories-products-page">
+      <CartShortcut />
+
       <section className="products-page-top">
         <div className="products-page-heading">
           <span>MARKETPLACE</span>
@@ -180,13 +237,15 @@ function AccessoriesProductsPage() {
             placeholder="Search products, spare parts..."
             aria-label="Search products"
             value={search}
-            onChange={(event) => setSearch(event.target.value)}
+            onChange={(event) =>
+              handleSearchChange(event.target.value)
+            }
           />
 
           {search && (
             <button
               type="button"
-              onClick={() => setSearch("")}
+              onClick={() => handleSearchChange("")}
               aria-label="Clear search"
             >
               Clear
@@ -203,6 +262,7 @@ function AccessoriesProductsPage() {
         >
           <div className="sidebar-heading">
             <strong>Categories</strong>
+
             <Link to="/accessories/all">View all</Link>
           </div>
 
@@ -369,6 +429,7 @@ function AccessoriesProductsPage() {
 
             <div className="results-count">
               <strong>{filteredProducts.length}</strong>
+
               <span>
                 {filteredProducts.length === 1
                   ? "product"
@@ -382,7 +443,9 @@ function AccessoriesProductsPage() {
               <div className="sort-select">
                 <select
                   value={sort}
-                  onChange={(event) => setSort(event.target.value)}
+                  onChange={(event) =>
+                    setSort(event.target.value)
+                  }
                   aria-label="Sort products"
                 >
                   <option value="featured">Featured</option>
@@ -392,7 +455,9 @@ function AccessoriesProductsPage() {
                   <option value="price-high">
                     Price: High to Low
                   </option>
-                  <option value="rating">Customer Rating</option>
+                  <option value="rating">
+                    Customer Rating
+                  </option>
                 </select>
 
                 <ChevronDown size={15} aria-hidden="true" />
@@ -447,11 +512,13 @@ function AccessoriesProductsPage() {
 
                           <div className="product-rating">
                             <span>{product.rating.toFixed(1)}</span>
+
                             <Star
                               size={13}
                               fill="currentColor"
                               aria-hidden="true"
                             />
+
                             <span>({product.reviews})</span>
                           </div>
 
@@ -468,6 +535,7 @@ function AccessoriesProductsPage() {
                                     "en-IN",
                                   )}
                                 </span>
+
                                 <em>{discount}% off</em>
                               </>
                             )}
@@ -483,10 +551,9 @@ function AccessoriesProductsPage() {
                             <button
                               type="button"
                               className="add-cart-button"
-                              onClick={() => {
-                                // Connect this button to your cart state/API.
-                                console.log("Add to cart:", product);
-                              }}
+                              onClick={() =>
+                                handleAddToCart(product)
+                              }
                             >
                               <ShoppingCart size={15} />
                               Add to cart

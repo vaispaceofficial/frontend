@@ -9,7 +9,6 @@ import {
   ChevronDown,
 } from "lucide-react";
 
-
 import {
   BrowserRouter,
   Routes,
@@ -18,7 +17,6 @@ import {
   Navigate,
   useLocation,
 } from "react-router-dom";
-
 
 import "./App.css";
 
@@ -47,6 +45,7 @@ import VendorRegisterPage from "./pages/VendorRegisterPage";
 import StudentRegisterPage from "./pages/StudentRegisterPage";
 import TutorRegisterPage from "./pages/TutorRegisterPage";
 
+import CartPage from "./pages/CartPage";
 import AccessoriesProductsPage from "./pages/AccessoriesProductsPage";
 import ProductDetailsPage from "./pages/ProductDetailsPage";
 import Footer from "./components/Footer";
@@ -398,7 +397,6 @@ function Navbar() {
             )}
           </div>
 
-
           {/* =================================================
               ACCESSORIES
           ================================================= */}
@@ -547,9 +545,14 @@ function Navbar() {
         ================================================= */}
 
         <div className="nav-actions">
-          <button className="search-button" aria-label="Search" type="button">
+          <Link
+            to="/accessories/all"
+            className="search-button"
+            aria-label="Search products"
+            onClick={closeDropdowns}
+          >
             <Search size={20} />
-          </button>
+          </Link>
 
           <Link to="/login" className="login-button" onClick={closeDropdowns}>
             <UserRound size={18} />
@@ -661,10 +664,10 @@ function HomePage() {
               </p>
 
               <div className="hero-buttons">
-                <button className="primary-button" type="button">
+                <Link to="/services" className="primary-button">
                   Book a Service
                   <ArrowRight size={18} />
-                </button>
+                </Link>
 
                 <Link to="/#services" className="contact-services-button">
                   Explore Services
@@ -937,51 +940,46 @@ function AppContent() {
 
         <Route path="/amc" element={<AMCPage />} />
 
-<Route
-  path="/city-listings"
-  element={<CityListingsPage />}
-/>
+        <Route path="/city-listings" element={<CityListingsPage />} />
 
-{/* =================================================
+        {/* =================================================
     ACCESSORIES & MARKETPLACE
 ================================================= */}
 
-<Route
-  path="/accessories-sales"
-  element={<AccessoriesSalesPage />}
-/>
+        <Route path="/accessories-sales" element={<AccessoriesSalesPage />} />
 
-<Route
-  path="/accessories"
-  element={<Navigate to="/accessories/all" replace />}
-/>
+        <Route
+          path="/accessories"
+          element={<Navigate to="/accessories/all" replace />}
+        />
 
-<Route
-  path="/accessories/all"
-  element={<AccessoriesProductsPage />}
-/>
+        <Route path="/accessories/all" element={<AccessoriesProductsPage />} />
 
-<Route
-  path="/accessories/:categorySlug/:subcategorySlug"
-  element={<AccessoriesProductsPage />}
-/>
+        <Route
+          path="/accessories/:categorySlug/:subcategorySlug"
+          element={<AccessoriesProductsPage />}
+        />
 
-<Route
-  path="/accessories/:categorySlug"
-  element={<AccessoriesProductsPage />}
-/>
+        <Route
+          path="/accessories/:categorySlug"
+          element={<AccessoriesProductsPage />}
+        />
 
-<Route
-  path="/accessories-sales/products"
-  element={<AccessoriesProductsPage />}
-/>
+        <Route
+          path="/accessories-sales/products"
+          element={<AccessoriesProductsPage />}
+        />
 
-<Route
-  path="/accessories-sales/products/:productId"
-  element={<ProductDetailsPage />}
-/>
+        <Route
+          path="/accessories-sales/products/:productId"
+          element={<ProductDetailsPage />}
+        />
 
+        {/* =================================================
+    SHOPPING CART
+================================================= */}
 
+        <Route path="/cart" element={<CartPage />} />
 
         {/* =================================================
             REGISTRATION
