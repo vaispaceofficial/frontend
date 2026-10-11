@@ -1685,3 +1685,746 @@ a:focus-visible {
     transform: none;
   }
 }
+
+
+
+/* =========================================================
+   ONESERVICE — COMPACT, STRAIGHT GSAP CARD STACK
+   Theme: White + Blue
+========================================================= */
+
+.services-section {
+  --stack-blue: #2563eb;
+  --stack-blue-light: #3b82f6;
+  --stack-ink: #172033;
+  --stack-muted: #64748b;
+
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  width: 100%;
+  padding: 76px 5%;
+  background:
+    radial-gradient(
+      ellipse at 78% 48%,
+      rgba(59, 130, 246, 0.1),
+      transparent 42%
+    ),
+    #f7faff;
+  color: var(--stack-ink);
+  font-family: "Neulis Sans", sans-serif;
+}
+
+.services-section::before {
+  position: absolute;
+  z-index: -1;
+  top: 5%;
+  right: -130px;
+  width: 430px;
+  height: 430px;
+  border: 1px solid rgba(37, 99, 235, 0.1);
+  border-radius: 50%;
+  content: "";
+  pointer-events: none;
+}
+
+/* =========================================================
+   TWO-COLUMN LAYOUT
+========================================================= */
+
+.services-stack-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr);
+  align-items: center;
+  gap: clamp(32px, 5vw, 76px);
+  width: 100%;
+  max-width: 1440px;
+  min-height: 550px;
+  margin: 0 auto;
+}
+
+.services-stack-copy {
+  position: relative;
+  z-index: 2;
+  max-width: 610px;
+  min-width: 0;
+}
+
+.services-stack-copy .services-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 23px;
+  color: var(--stack-blue);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+}
+
+.services-stack-copy .services-eyebrow::before {
+  width: 28px;
+  height: 3px;
+  border-radius: 10px;
+  background: var(--stack-blue-light);
+  content: "";
+}
+
+.services-stack-copy h2 {
+  margin: 0;
+  color: var(--stack-ink);
+  font-size: clamp(36px, 4.2vw, 62px);
+  font-weight: 650;
+  line-height: 1.12;
+  letter-spacing: -0.055em;
+}
+
+.services-stack-copy h2 span {
+  color: var(--stack-blue);
+}
+
+.services-stack-copy > p {
+  max-width: 540px;
+  margin: 23px 0 29px;
+  color: var(--stack-muted);
+  font-size: 15px;
+  line-height: 1.85;
+}
+
+/* Benefits */
+
+.services-stack-benefits {
+  display: grid;
+  gap: 17px;
+  margin-bottom: 30px;
+}
+
+.services-stack-benefits > div {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.services-stack-benefit-icon {
+  display: grid;
+  flex: 0 0 48px;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  border: 1px solid #cfe0ff;
+  border-radius: 15px;
+  background: #eaf2ff;
+  color: var(--stack-blue);
+}
+
+.services-stack-benefits > div > span:last-child {
+  display: grid;
+  gap: 4px;
+}
+
+.services-stack-benefits strong {
+  color: var(--stack-ink);
+  font-size: 14px;
+  font-weight: 650;
+}
+
+.services-stack-benefits small {
+  color: var(--stack-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* Explore button */
+
+.services-stack-copy .view-all-services-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 50px;
+  padding: 0 23px;
+  border: 1px solid var(--stack-blue);
+  border-radius: 12px;
+  background: var(--stack-blue);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 650;
+  text-decoration: none;
+  transition:
+    background 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.services-stack-copy .view-all-services-button:hover {
+  transform: translateY(-2px);
+  background: #1d4ed8;
+  box-shadow: 0 10px 25px rgba(37, 99, 235, 0.2);
+}
+
+/* =========================================================
+   STACK AREA
+========================================================= */
+
+.service-stack-area {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  min-height: 510px;
+  padding-top: 36px;
+}
+
+.service-stack-heading {
+  position: absolute;
+  z-index: 10;
+  top: 0;
+  right: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #718198;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+}
+
+.service-stack-live-dot {
+  flex: 0 0 9px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 0 5px rgba(34, 197, 94, 0.12);
+}
+
+.service-stack-count {
+  margin-left: auto;
+  color: var(--stack-blue);
+  font-variant-numeric: tabular-nums;
+}
+
+/* =========================================================
+   CARD STACK CONTAINER
+========================================================= */
+
+.service-card-stack {
+  position: relative;
+  isolation: isolate;
+  width: min(100%, 355px);
+  height: 405px;
+  margin: 0 auto;
+  perspective: 1100px;
+  touch-action: manipulation;
+}
+
+/* All cards occupy the same base position. */
+
+.stack-service-card {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  padding: 21px;
+  border: 1px solid rgba(255, 255, 255, 0.88);
+  border-radius: 23px;
+  background: #17243c;
+  color: #fff;
+  text-decoration: none;
+  box-shadow: 0 18px 45px rgba(15, 40, 85, 0.17);
+  transform-origin: center center;
+  will-change: transform, opacity;
+  cursor: pointer;
+}
+
+/* Straight stacking — intentionally no rotation. */
+
+.stack-service-card:nth-child(1) {
+  z-index: 6;
+  transform: translate(0, 0);
+}
+
+.stack-service-card:nth-child(2) {
+  z-index: 5;
+  transform: translate(8px, -9px);
+}
+
+.stack-service-card:nth-child(3) {
+  z-index: 4;
+  transform: translate(16px, -18px);
+}
+
+.stack-service-card:nth-child(4) {
+  z-index: 3;
+  transform: translate(24px, -27px);
+}
+
+.stack-service-card:nth-child(5) {
+  z-index: 2;
+  transform: translate(32px, -36px);
+}
+
+.stack-service-card:nth-child(6) {
+  z-index: 1;
+  transform: translate(40px, -45px);
+}
+
+/* =========================================================
+   CARD BACKGROUND IMAGE
+========================================================= */
+
+.stack-card-image {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #172d4b;
+}
+
+.stack-card-image img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  opacity: 0.68;
+  transform: scale(1.02);
+  transition:
+    opacity 0.4s ease,
+    transform 0.6s ease;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.stack-service-card:hover .stack-card-image img {
+  opacity: 0.78;
+  transform: scale(1.06);
+}
+
+.stack-card-image-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(10, 24, 48, 0.62) 0%,
+      rgba(12, 35, 75, 0.18) 36%,
+      rgba(10, 25, 52, 0.96) 100%
+    ),
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--card-accent) 25%, transparent),
+      transparent 65%
+    );
+}
+
+/* =========================================================
+   CARD TOP LINE
+========================================================= */
+
+.stack-card-topline,
+.stack-card-main,
+.stack-card-bottom {
+  position: relative;
+  z-index: 1;
+}
+
+.stack-card-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.stack-card-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 9px;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+}
+
+.stack-brand-mark {
+  display: grid;
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.13);
+  color: #fff;
+  backdrop-filter: blur(8px);
+}
+
+.stack-card-number {
+  color: var(--card-accent);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+/* =========================================================
+   CARD TITLE AND DESCRIPTION
+========================================================= */
+
+.stack-card-main {
+  margin-top: auto;
+  margin-bottom: 19px;
+}
+
+.stack-card-category {
+  display: inline-block;
+  margin-bottom: 10px;
+  color: var(--card-accent);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+}
+
+.stack-card-main h3 {
+  max-width: 290px;
+  margin: 0;
+  color: #fff;
+  font-size: clamp(24px, 2.5vw, 32px);
+  font-weight: 650;
+  line-height: 1.13;
+  letter-spacing: -0.045em;
+}
+
+.stack-card-main p {
+  max-width: 300px;
+  margin: 11px 0 0;
+  color: rgba(255, 255, 255, 0.83);
+  font-size: 11px;
+  line-height: 1.65;
+}
+
+/* =========================================================
+   CARD BOTTOM
+========================================================= */
+
+.stack-card-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 9px;
+  padding-top: 13px;
+  border-top: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+.stack-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  min-width: 0;
+}
+
+.stack-card-tags span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 27px;
+  padding: 5px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.11);
+  color: #fff;
+  font-size: 9px;
+  line-height: 1.2;
+  backdrop-filter: blur(8px);
+}
+
+.stack-card-arrow {
+  display: grid;
+  flex: 0 0 39px;
+  width: 39px;
+  height: 39px;
+  place-items: center;
+  border-radius: 50%;
+  background: #fff;
+  color: var(--stack-blue);
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.stack-service-card:hover .stack-card-arrow {
+  transform: translateX(3px);
+  background: var(--stack-blue);
+  color: #fff;
+}
+
+/* =========================================================
+   STACK CONTROLS
+========================================================= */
+
+.service-stack-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: min(100%, 395px);
+  margin-top: 17px;
+}
+
+.service-stack-hint {
+  color: #64748b;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.service-stack-next {
+  display: grid;
+  flex: 0 0 43px;
+  width: 43px;
+  height: 43px;
+  place-items: center;
+  border: 1px solid #bfdbfe;
+  border-radius: 50%;
+  background: #fff;
+  color: var(--stack-blue);
+  box-shadow: 0 5px 15px rgba(37, 99, 235, 0.07);
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.service-stack-next:hover:not(:disabled) {
+  transform: translateX(3px);
+  background: var(--stack-blue);
+  color: #fff;
+}
+
+.service-stack-next:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+/* =========================================================
+   RESPONSIVE — TABLET
+========================================================= */
+
+@media (max-width: 1050px) {
+  .services-section {
+    padding: 70px 4%;
+  }
+
+  .services-stack-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr);
+    gap: 30px;
+    min-height: 500px;
+  }
+
+  .services-stack-copy h2 {
+    font-size: clamp(34px, 4vw, 48px);
+  }
+
+  .services-stack-copy > p {
+    font-size: 14px;
+  }
+
+  .service-stack-area {
+    min-height: 460px;
+  }
+
+  .service-card-stack {
+    width: min(100%, 320px);
+    height: 370px;
+  }
+
+  .stack-service-card {
+    padding: 18px;
+    border-radius: 20px;
+  }
+
+  .stack-card-main h3 {
+    font-size: 26px;
+  }
+
+  .service-stack-controls {
+    width: min(100%, 360px);
+  }
+}
+
+/* =========================================================
+   RESPONSIVE — MOBILE
+========================================================= */
+
+@media (max-width: 760px) {
+  .services-section {
+    padding: 58px 22px 54px;
+  }
+
+  .services-stack-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 38px;
+    min-height: 0;
+  }
+
+  .services-stack-copy {
+    max-width: 600px;
+  }
+
+  .services-stack-copy .services-eyebrow {
+    margin-bottom: 18px;
+    font-size: 10px;
+  }
+
+  .services-stack-copy h2 {
+    font-size: clamp(34px, 8vw, 46px);
+  }
+
+  .services-stack-copy > p {
+    margin: 18px 0 24px;
+    font-size: 13px;
+  }
+
+  .services-stack-benefits {
+    gap: 14px;
+    margin-bottom: 25px;
+  }
+
+  .services-stack-benefit-icon {
+    flex-basis: 42px;
+    width: 42px;
+    height: 42px;
+  }
+
+  .service-stack-area {
+    min-height: 445px;
+    padding-top: 31px;
+  }
+
+  .service-stack-heading {
+    font-size: 9px;
+  }
+
+  .service-card-stack {
+    width: min(calc(100% - 38px), 320px);
+    height: 355px;
+  }
+
+  .stack-service-card {
+    padding: 17px;
+    border-radius: 19px;
+  }
+
+  .stack-service-card:nth-child(2) {
+    transform: translate(7px, -7px);
+  }
+
+  .stack-service-card:nth-child(3) {
+    transform: translate(14px, -14px);
+  }
+
+  .stack-service-card:nth-child(4) {
+    transform: translate(21px, -21px);
+  }
+
+  .stack-service-card:nth-child(5) {
+    transform: translate(28px, -28px);
+  }
+
+  .stack-service-card:nth-child(6) {
+    transform: translate(35px, -35px);
+  }
+
+  .stack-card-main {
+    margin-bottom: 15px;
+  }
+
+  .stack-card-main h3 {
+    font-size: 25px;
+  }
+
+  .stack-card-main p {
+    font-size: 10px;
+  }
+
+  .stack-card-bottom {
+    padding-top: 11px;
+  }
+
+  .stack-card-tags span {
+    min-height: 25px;
+    padding: 5px 7px;
+    font-size: 9px;
+  }
+
+  .stack-card-arrow {
+    flex-basis: 35px;
+    width: 35px;
+    height: 35px;
+  }
+
+  .service-stack-controls {
+    width: min(calc(100% - 38px), 320px);
+    margin-top: 15px;
+  }
+}
+
+@media (max-width: 390px) {
+  .services-section {
+    padding-right: 17px;
+    padding-left: 17px;
+  }
+
+  .service-card-stack {
+    width: calc(100% - 34px);
+    height: 335px;
+  }
+
+  .stack-service-card {
+    padding: 15px;
+  }
+
+  .stack-card-main h3 {
+    font-size: 22px;
+  }
+
+  .stack-card-main p {
+    font-size: 10px;
+  }
+
+  .stack-card-brand {
+    font-size: 8px;
+  }
+
+  .stack-card-tags {
+    gap: 4px;
+  }
+
+  .stack-card-tags span {
+    padding-inline: 6px;
+    font-size: 8px;
+  }
+
+  .service-stack-hint {
+    max-width: 180px;
+  }
+}
+
+/* =========================================================
+   ACCESSIBILITY
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .stack-service-card,
+  .stack-card-image img,
+  .stack-card-arrow,
+  .service-stack-next,
+  .services-stack-copy .view-all-services-button {
+    transition: none !important;
+  }
+}

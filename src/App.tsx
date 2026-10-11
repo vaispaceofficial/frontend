@@ -1,5 +1,11 @@
 
-import { useEffect, useRef, useState } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
+import type { CSSProperties } from "react";
 
 import {
   Search,
@@ -8,6 +14,12 @@ import {
   ChevronRight,
   ArrowRight,
   ChevronDown,
+  Wrench,
+  Sparkles,
+  GraduationCap,
+  BriefcaseBusiness,
+  House,
+  ShieldCheck,
 } from "lucide-react";
 
 import {
@@ -19,11 +31,10 @@ import {
   useLocation,
 } from "react-router-dom";
 
-import "./App.css";
+import { gsap } from "gsap";
+import { Flip } from "gsap/Flip";
 
-/* =========================================================
-   PUBLIC PAGES
-========================================================= */
+import "./App.css";
 
 import ServicesPage from "./pages/ServicesPage";
 import ServiceDetailPage from "./pages/ServiceDetailPage";
@@ -52,11 +63,9 @@ import CartPage from "./pages/CartPage";
 import AccessoriesProductsPage from "./pages/AccessoriesProductsPage";
 import ProductDetailsPage from "./pages/ProductDetailsPage";
 
-import Footer from "./components/Footer";
+import ScrollToTop from "./components/ScrollToTop";
 
-/* =========================================================
-   ADMIN
-========================================================= */
+import Footer from "./components/Footer";
 
 import AdminLayout from "./admin/components/AdminLayout";
 import AdminProtectedRoute from "./admin/components/AdminProtectedRoute";
@@ -69,6 +78,12 @@ import SubscriptionsPage from "./admin/pages/Subscriptions";
 import CompliancePage from "./admin/pages/Compliance";
 import SettingsPage from "./admin/pages/Settings";
 import AdminLogin from "./admin/pages/AdminLogin";
+
+/* =========================================================
+   GSAP SETUP
+========================================================= */
+
+gsap.registerPlugin(Flip);
 
 /* =========================================================
    HERO IMAGES
@@ -95,7 +110,9 @@ const homeServiceCards = [
       "Repair, maintenance and installation for your everyday appliances.",
     image: "/images/services/homeappliances.webp",
     alt: "Home appliance repair services",
-    path: "/services/home-appliances",
+    path: "/services?category=Home%20Appliances",
+    icon: Wrench,
+    accent: "#60a5fa",
     services: [
       "AC",
       "TV",
@@ -111,7 +128,9 @@ const homeServiceCards = [
       "Reliable help for electrical, plumbing, carpentry and cleaning needs.",
     image: "/images/services/HomeServices.webp",
     alt: "Home maintenance and repair services",
-    path: "/services/home-services",
+    path: "/services?category=Home%20Services",
+    icon: House,
+    accent: "#38bdf8",
     services: ["Electrician", "Plumber", "Carpenter", "Cleaning"],
   },
   {
@@ -120,7 +139,9 @@ const homeServiceCards = [
       "Professional personal care and beauty services at your convenience.",
     image: "/images/services/PersonalServices.webp",
     alt: "Personal care and beauty services",
-    path: "/services/personal-services",
+    path: "/services?category=Personal%20Services",
+    icon: Sparkles,
+    accent: "#a78bfa",
     services: ["Makeup", "Hair Styling", "Beautician"],
   },
   {
@@ -129,7 +150,9 @@ const homeServiceCards = [
       "Everyday assistance for a more comfortable and well-managed home.",
     image: "/images/services/homestaff.webp",
     alt: "Home staff and household assistance",
-    path: "/services/home-staff",
+    path: "/services?category=Home%20Staff",
+    icon: ShieldCheck,
+    accent: "#34d399",
     services: [
       "Maid",
       "Cooking",
@@ -143,23 +166,28 @@ const homeServiceCards = [
     description:
       "Find tutors and trainers for academic learning and skill development.",
     image: "/images/services/edutech.webp",
-    alt: "Education, tuition and home tutoring services",
-    path: "/services/edutech",
+    alt: "Education and home tutoring services",
+    path: "/services?category=EduTech%20%26%20Home%20Tutors",
+    icon: GraduationCap,
+    accent: "#fbbf24",
+    fallbackImage: "/images/services/homestaff.webp",
     services: [
       "School Tuition",
       "Competitive Exam Coaching",
       "Higher Education Tutors",
       "Language & Skill Classes",
     ],
-    fallbackImage: "/images/services/homestaff.webp",
   },
   {
     title: "Professional Services",
     description:
-      "Connect with specialists for professional advice, support and expertise.",
+      "Connect with specialists for advice, support and expertise.",
     image: "/images/professionalservices/legal-financial.webp",
     alt: "Professional consultation and specialist services",
-    path: "/services/professional-services",
+    path: "/services?category=Professional%20Services",
+    icon: BriefcaseBusiness,
+    accent: "#fb923c",
+    fallbackImage: "/images/services/repairs.png",
     services: [
       "Legal, Tax & Financial",
       "Healthcare & Medical",
@@ -170,7 +198,6 @@ const homeServiceCards = [
       "Personal Helpers & Support",
       "Artisans & Local Craftsmen",
     ],
-    fallbackImage: "/images/services/repairs.png",
   },
 ];
 
@@ -180,16 +207,16 @@ const homeServiceCards = [
 
 function Navbar() {
   const [networkOpen, setNetworkOpen] = useState(false);
-
   const networkRef = useRef<HTMLDivElement>(null);
-
-  /* CLOSE NETWORK DROPDOWN WHEN CLICKING OUTSIDE */
 
   useEffect(() => {
     const handleOutsideClick = (event: MouseEvent) => {
       const target = event.target as Node;
 
-      if (networkRef.current && !networkRef.current.contains(target)) {
+      if (
+        networkRef.current &&
+        !networkRef.current.contains(target)
+      ) {
         setNetworkOpen(false);
       }
     };
@@ -197,24 +224,23 @@ function Navbar() {
     document.addEventListener("mousedown", handleOutsideClick);
 
     return () => {
-      document.removeEventListener("mousedown", handleOutsideClick);
+      document.removeEventListener(
+        "mousedown",
+        handleOutsideClick,
+      );
     };
   }, []);
 
-  const closeDropdowns = () => {
-    setNetworkOpen(false);
-  };
-
-  const toggleNetwork = () => {
-    setNetworkOpen((current) => !current);
-  };
+  const closeDropdowns = () => setNetworkOpen(false);
 
   return (
     <header className="navbar">
       <div className="nav-container">
-        {/* LOGO */}
-
-        <Link className="logo" to="/" onClick={closeDropdowns}>
+        <Link
+          className="logo"
+          to="/"
+          onClick={closeDropdowns}
+        >
           <img
             src="/images/logo.png"
             alt="NEED ONE SERVICE logo"
@@ -222,18 +248,22 @@ function Navbar() {
           />
         </Link>
 
-        {/* NAVIGATION */}
-
         <nav className="nav-links">
           <Link to="/services" onClick={closeDropdowns}>
             Services
           </Link>
 
-          <Link to="/accessories-sales" onClick={closeDropdowns}>
+          <Link
+            to="/accessories-sales"
+            onClick={closeDropdowns}
+          >
             MarketPlace
           </Link>
 
-          <Link to="/city-listings" onClick={closeDropdowns}>
+          <Link
+            to="/city-listings"
+            onClick={closeDropdowns}
+          >
             City Listings
           </Link>
 
@@ -241,15 +271,18 @@ function Navbar() {
             Contact
           </Link>
 
-          {/* JOIN OUR NETWORK */}
-
-          <div className="network-nav-wrapper" ref={networkRef}>
+          <div
+            className="network-nav-wrapper"
+            ref={networkRef}
+          >
             <button
               type="button"
               className={`network-nav-button ${
                 networkOpen ? "active" : ""
               }`}
-              onClick={toggleNetwork}
+              onClick={() =>
+                setNetworkOpen((current) => !current)
+              }
               aria-expanded={networkOpen}
               aria-haspopup="true"
             >
@@ -265,92 +298,72 @@ function Navbar() {
               <div className="network-dropdown">
                 <div className="network-dropdown-header">
                   <span>JOIN OUR NETWORK</span>
-
-                  <strong>Choose how you want to grow with us</strong>
+                  <strong>
+                    Choose how you want to grow with us
+                  </strong>
                 </div>
 
                 <div className="network-dropdown-items">
-                  <Link
-                    to="/register-professional"
-                    className="network-dropdown-item"
-                    onClick={closeDropdowns}
-                  >
-                    <div className="network-item-icon">🔧</div>
+                  {[
+                    {
+                      path: "/register-professional",
+                      icon: "🔧",
+                      title: "Join as a Technician",
+                      description:
+                        "Provide professional home services",
+                    },
+                    {
+                      path: "/register-partner",
+                      icon: "🤝",
+                      title: "Join as a Service Partner",
+                      description:
+                        "Grow your service business with us",
+                    },
+                    {
+                      path: "/register-vendor",
+                      icon: "🏪",
+                      title: "Join as a Vendor",
+                      description:
+                        "Sell products and accessories",
+                    },
+                    {
+                      path: "/register-student",
+                      icon: "🎓",
+                      title: "Join as a Student",
+                      description:
+                        "Learn, train and build your skills",
+                    },
+                    {
+                      path: "/register-tutor",
+                      icon: "📚",
+                      title: "Join as a Tutor",
+                      description:
+                        "Share your knowledge and teach others",
+                    },
+                  ].map((item) => (
+                    <Link
+                      key={item.path}
+                      to={item.path}
+                      className="network-dropdown-item"
+                      onClick={closeDropdowns}
+                    >
+                      <div className="network-item-icon">
+                        {item.icon}
+                      </div>
 
-                    <div className="network-item-content">
-                      <strong>Join as a Technician</strong>
-                      <span>Provide professional home services</span>
-                    </div>
+                      <div className="network-item-content">
+                        <strong>{item.title}</strong>
+                        <span>{item.description}</span>
+                      </div>
 
-                    <ArrowRight size={15} />
-                  </Link>
-
-                  <Link
-                    to="/register-partner"
-                    className="network-dropdown-item"
-                    onClick={closeDropdowns}
-                  >
-                    <div className="network-item-icon">🤝</div>
-
-                    <div className="network-item-content">
-                      <strong>Join as a Service Partner</strong>
-                      <span>Grow your service business with us</span>
-                    </div>
-
-                    <ArrowRight size={15} />
-                  </Link>
-
-                  <Link
-                    to="/register-vendor"
-                    className="network-dropdown-item"
-                    onClick={closeDropdowns}
-                  >
-                    <div className="network-item-icon">🏪</div>
-
-                    <div className="network-item-content">
-                      <strong>Join as a Vendor</strong>
-                      <span>Sell products and accessories</span>
-                    </div>
-
-                    <ArrowRight size={15} />
-                  </Link>
-
-                  <Link
-                    to="/register-student"
-                    className="network-dropdown-item"
-                    onClick={closeDropdowns}
-                  >
-                    <div className="network-item-icon">🎓</div>
-
-                    <div className="network-item-content">
-                      <strong>Join as a Student</strong>
-                      <span>Learn, train and build your skills</span>
-                    </div>
-
-                    <ArrowRight size={15} />
-                  </Link>
-
-                  <Link
-                    to="/register-tutor"
-                    className="network-dropdown-item"
-                    onClick={closeDropdowns}
-                  >
-                    <div className="network-item-icon">📚</div>
-
-                    <div className="network-item-content">
-                      <strong>Join as a Tutor</strong>
-                      <span>Share your knowledge and teach others</span>
-                    </div>
-
-                    <ArrowRight size={15} />
-                  </Link>
+                      <ArrowRight size={15} />
+                    </Link>
+                  ))}
                 </div>
               </div>
             )}
           </div>
         </nav>
-
-        {/* NAV ACTIONS */}
 
         <div className="nav-actions">
           <Link
@@ -377,49 +390,346 @@ function Navbar() {
 }
 
 /* =========================================================
+   GSAP SERVICE CARD STACK
+   - Auto rotates every 4.5 seconds
+   - Pauses on hover
+   - Click navigates to the selected category
+   - Next button advances the stack
+========================================================= */
+
+
+function ServiceCardStack() {
+  const stackRef = useRef<HTMLDivElement>(null);
+  const animatingRef = useRef(false);
+  const hoveredRef = useRef(false);
+
+  const flipStateRef = useRef<
+    ReturnType<typeof Flip.getState> | null
+  >(null);
+
+  const moveCardRef = useRef<(() => void) | null>(null);
+
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [orderedCards, setOrderedCards] =
+    useState(homeServiceCards);
+
+  const [reducedMotion, setReducedMotion] =
+    useState(false);
+
+  const moveCard = () => {
+    const stack = stackRef.current;
+
+    if (!stack || animatingRef.current) return;
+
+    const cards = Array.from(
+      stack.querySelectorAll<HTMLElement>(
+        ".stack-service-card",
+      ),
+    );
+
+    if (cards.length < 2) return;
+
+    animatingRef.current = true;
+    setIsAnimating(true);
+
+    flipStateRef.current = Flip.getState(cards);
+
+    setOrderedCards((current) => [
+      current[current.length - 1],
+      ...current.slice(0, -1),
+    ]);
+  };
+
+  useEffect(() => {
+    moveCardRef.current = moveCard;
+  });
+
+  useLayoutEffect(() => {
+    const state = flipStateRef.current;
+
+    if (!state) return;
+
+    flipStateRef.current = null;
+
+    const animation = Flip.from(state, {
+      duration: reducedMotion ? 0 : 0.7,
+      ease: "power2.inOut",
+      absolute: true,
+
+      onEnter: (elements) =>
+        gsap.fromTo(
+          elements,
+          {
+            x: reducedMotion ? 0 : 80,
+            y: reducedMotion ? 0 : 20,
+            opacity: 0,
+            scale: reducedMotion ? 1 : 0.94,
+          },
+          {
+            x: 0,
+            y: 0,
+            opacity: 1,
+            scale: 1,
+            duration: reducedMotion ? 0 : 0.45,
+            ease: "power3.out",
+          },
+        ),
+
+      onLeave: (elements) =>
+        gsap.to(elements, {
+          x: reducedMotion ? 0 : -80,
+          y: reducedMotion ? 0 : 16,
+          opacity: 0,
+          scale: reducedMotion ? 1 : 0.94,
+          duration: reducedMotion ? 0 : 0.35,
+          ease: "power2.in",
+        }),
+
+      onComplete: () => {
+        animatingRef.current = false;
+        setIsAnimating(false);
+      },
+
+      onInterrupt: () => {
+        animatingRef.current = false;
+        setIsAnimating(false);
+      },
+    });
+
+    return () => {
+      animation.kill();
+    };
+  }, [orderedCards, reducedMotion]);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    );
+
+    const updateMotionPreference = () => {
+      setReducedMotion(mediaQuery.matches);
+    };
+
+    updateMotionPreference();
+
+    mediaQuery.addEventListener(
+      "change",
+      updateMotionPreference,
+    );
+
+    return () => {
+      mediaQuery.removeEventListener(
+        "change",
+        updateMotionPreference,
+      );
+    };
+  }, []);
+
+  useEffect(() => {
+    if (reducedMotion) return;
+
+    const timer = window.setInterval(() => {
+      if (hoveredRef.current || animatingRef.current) {
+        return;
+      }
+
+      moveCardRef.current?.();
+    }, 4500);
+
+    return () => window.clearInterval(timer);
+  }, [reducedMotion]);
+
+  const currentIndex = homeServiceCards.findIndex(
+    (service) => service.title === orderedCards[0]?.title,
+  );
+
+  return (
+    <div
+      className="service-stack-area"
+      onMouseEnter={() => {
+        hoveredRef.current = true;
+      }}
+      onMouseLeave={() => {
+        hoveredRef.current = false;
+      }}
+      onFocusCapture={() => {
+        hoveredRef.current = true;
+      }}
+      onBlurCapture={(event) => {
+        const nextTarget = event.relatedTarget as Node | null;
+
+        if (
+          !nextTarget ||
+          !event.currentTarget.contains(nextTarget)
+        ) {
+          hoveredRef.current = false;
+        }
+      }}
+    >
+      <div className="service-stack-heading">
+        <span className="service-stack-count">
+          {String(Math.max(0, currentIndex + 1)).padStart(2, "0")}
+          {" "}/{" "}
+          {String(homeServiceCards.length).padStart(2, "0")}
+        </span>
+      </div>
+
+      <div
+        className="service-card-stack"
+        ref={stackRef}
+        aria-label="Explore OneService categories"
+      >
+        {orderedCards.map((service, index) => {
+          const Icon = service.icon;
+
+          const originalIndex = homeServiceCards.findIndex(
+            (item) => item.title === service.title,
+          );
+
+          return (
+            <Link
+              to={service.path}
+              className={`stack-service-card stack-card-${index + 1}`}
+              key={service.title}
+              style={
+                {
+                  "--card-accent": service.accent,
+                  "--card-order": index,
+                } as CSSProperties
+              }
+              aria-label={`Explore ${service.title}`}
+            >
+              <div className="stack-card-image">
+                <img
+                  src={service.image}
+                  alt={service.alt}
+                  draggable={false}
+                  onError={(event) => {
+                    const image = event.currentTarget;
+
+                    if (
+                      service.fallbackImage &&
+                      !image.dataset.fallbackUsed
+                    ) {
+                      image.dataset.fallbackUsed = "true";
+                      image.src = service.fallbackImage;
+                    }
+                  }}
+                />
+
+                <div className="stack-card-image-overlay" />
+              </div>
+
+              <div className="stack-card-topline">
+                <span className="stack-card-brand">
+                  <span className="stack-brand-mark">
+                    <Icon size={16} />
+                  </span>
+                  ONE SERVICE
+                </span>
+
+                <span className="stack-card-number">
+                  {String(originalIndex + 1).padStart(2, "0")}
+                </span>
+              </div>
+
+              <div className="stack-card-main">
+                <span className="stack-card-category">
+                  SERVICE CATEGORY
+                </span>
+
+                <h3>{service.title}</h3>
+                <p>{service.description}</p>
+              </div>
+
+              <div className="stack-card-bottom">
+                <div className="stack-card-tags">
+                  {service.services.slice(0, 2).map((item) => (
+                    <span key={item}>{item}</span>
+                  ))}
+
+                  {service.services.length > 2 && (
+                    <span>+{service.services.length - 2}</span>
+                  )}
+                </div>
+
+                <span className="stack-card-arrow">
+                  <ArrowRight size={19} />
+                </span>
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+
+      <div className="service-stack-controls">
+        <span className="service-stack-hint">
+          Hover to pause · Select a card to explore
+        </span>
+
+        <button
+          type="button"
+          className="service-stack-next"
+          onClick={moveCard}
+          disabled={isAnimating}
+          aria-label="Show next service category"
+        >
+          <ArrowRight size={20} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* =========================================================
    HOME PAGE
 ========================================================= */
 
 function HomePage() {
   const [currentImage, setCurrentImage] = useState(0);
-
   const location = useLocation();
 
-  /* SCROLL TO SERVICES SECTION */
-
+  /*
+   * Scroll to the services section when navigating to /#services.
+   */
   useEffect(() => {
-    if (location.hash === "#services") {
-      const timer = window.setTimeout(() => {
-        document.getElementById("services")?.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
-      }, 100);
+    if (location.hash !== "#services") return;
 
-      return () => window.clearTimeout(timer);
-    }
+    const timer = window.setTimeout(() => {
+      document.getElementById("services")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 100);
+
+    return () => window.clearTimeout(timer);
   }, [location]);
 
-  /* HERO AUTO CAROUSEL */
-
+  /*
+   * Hero image autoplay.
+   */
   useEffect(() => {
     const timer = window.setInterval(() => {
-      setCurrentImage((current) => (current + 1) % heroImages.length);
+      setCurrentImage(
+        (current) => (current + 1) % heroImages.length,
+      );
     }, 5000);
 
-    return () => {
-      window.clearInterval(timer);
-    };
+    return () => window.clearInterval(timer);
   }, []);
 
   const previousImage = () => {
     setCurrentImage(
-      (current) => (current - 1 + heroImages.length) % heroImages.length,
+      (current) =>
+        (current - 1 + heroImages.length) %
+        heroImages.length,
     );
   };
 
   const nextImage = () => {
-    setCurrentImage((current) => (current + 1) % heroImages.length);
+    setCurrentImage(
+      (current) => (current + 1) % heroImages.length,
+    );
   };
 
   return (
@@ -457,26 +767,31 @@ function HomePage() {
               </h1>
 
               <p>
-                From everyday repairs to complete home maintenance, NEED ONE
-                SERVICE connects you with trusted professionals for reliable,
+                From everyday repairs to complete home
+                maintenance, NEED ONE SERVICE connects you
+                with trusted professionals for reliable,
                 convenient and hassle-free home services.
               </p>
 
               <div className="hero-buttons">
-                <Link to="/services" className="primary-button">
+                <Link
+                  to="/services"
+                  className="primary-button"
+                >
                   Book a Service
                   <ArrowRight size={18} />
                 </Link>
 
-                <Link to="/#services" className="contact-services-button">
+                <Link
+                  to="/#services"
+                  className="contact-services-button"
+                >
                   Explore Services
                   <ArrowRight size={16} />
                 </Link>
               </div>
             </div>
           </div>
-
-          {/* HERO CAROUSEL CONTROLS */}
 
           <div className="carousel-controls">
             <button
@@ -488,12 +803,14 @@ function HomePage() {
             </button>
 
             <div className="carousel-dots">
-              {heroImages.map((_, index) => (
+              {heroImages.map((image, index) => (
                 <button
-                  key={index}
+                  key={image}
                   type="button"
                   onClick={() => setCurrentImage(index)}
-                  className={index === currentImage ? "active" : ""}
+                  className={
+                    index === currentImage ? "active" : ""
+                  }
                   aria-label={`Go to slide ${index + 1}`}
                 />
               ))}
@@ -553,120 +870,74 @@ function HomePage() {
           </div>
         </section>
 
-        {/* =================================================
-            SERVICES — BLUE GLASSMORPHISM CARDS
-            Existing section background is preserved.
-        ================================================= */}
+        {/* SERVICES — GSAP CARD STACK */}
 
         <section className="services-section" id="services">
-          <div className="services-heading">
-            <span className="services-eyebrow">WHAT WE OFFER</span>
+          <div className="services-stack-layout">
+            <div className="services-stack-copy">
+              <span className="services-eyebrow">
+                WHAT WE OFFER
+              </span>
 
-            <h2>
-              Everything your home needs,
-              <br />
-              <span>in one place.</span>
-            </h2>
+              <h2>
+                Everything your home needs,
+                <br />
+                <span>in one place.</span>
+              </h2>
 
-            <p>
-              From everyday repairs to personal care and home assistance,
-              discover trusted services designed around your needs.
-            </p>
-          </div>
+              <p>
+                From everyday repairs to personal care, home
+                assistance, education and professional
+                expertise — find the right service for every
+                part of your life.
+              </p>
 
-          {/* MOVING CARD TRACK */}
+              <div className="services-stack-benefits">
+                <div>
+                  <span className="services-stack-benefit-icon">
+                    <ShieldCheck size={19} />
+                  </span>
 
-          <div
-            className="glass-services-marquee"
-            aria-label="Explore OneService categories"
-          >
-            <div className="glass-services-track">
-              {[0, 1].map((copy) => (
-                <div
-                  className="glass-services-group"
-                  key={copy}
-                  aria-hidden={copy === 1 ? "true" : undefined}
-                >
-                  {homeServiceCards.map((service) => (
-                    <Link
-                      key={`${copy}-${service.path}`}
-                      to={service.path}
-                      className="glass-service-card"
-                      tabIndex={copy === 1 ? -1 : undefined}
-                    >
-                      <div className="glass-service-image">
-                        <img
-                          src={service.image}
-                          alt={copy === 1 ? "" : service.alt}
-                          loading="lazy"
-                          onError={(event) => {
-                            if (
-                              service.fallbackImage &&
-                              event.currentTarget.src !==
-                                new URL(
-                                  service.fallbackImage,
-                                  window.location.origin,
-                                ).href
-                            ) {
-                              event.currentTarget.src =
-                                service.fallbackImage;
-                            }
-                          }}
-                        />
-
-                        <span className="glass-service-image-shade" />
-                        <span className="glass-service-number">
-                          {String(
-                            homeServiceCards.indexOf(service) + 1,
-                          ).padStart(2, "0")}
-                        </span>
-                      </div>
-
-                      <div className="glass-service-content">
-                        <h3>{service.title}</h3>
-
-                        <p className="glass-service-description">
-                          {service.description}
-                        </p>
-
-                        <div className="glass-service-tags">
-                          {service.services.slice(0, 3).map((item) => (
-                            <span key={item}>{item}</span>
-                          ))}
-
-                          {service.services.length > 3 && (
-                            <span>+{service.services.length - 3} more</span>
-                          )}
-                        </div>
-
-                        <span className="glass-service-explore">
-                          Explore services
-                          <span className="glass-service-arrow">
-                            <ArrowRight size={17} />
-                          </span>
-                        </span>
-                      </div>
-                    </Link>
-                  ))}
+                  <span>
+                    <strong>One trusted platform</strong>
+                    <small>
+                      Services for your everyday needs
+                    </small>
+                  </span>
                 </div>
-              ))}
+
+                <div>
+                  <span className="services-stack-benefit-icon">
+                    <Wrench size={19} />
+                  </span>
+
+                  <span>
+                    <strong>
+                      Multiple service categories
+                    </strong>
+                    <small>
+                      Explore the right help for your needs
+                    </small>
+                  </span>
+                </div>
+              </div>
+
+              <Link
+                to="/services"
+                className="view-all-services-button"
+              >
+                Explore All Services
+                <ArrowRight size={17} />
+              </Link>
             </div>
-          </div>
 
-          {/* VIEW ALL SERVICES */}
-
-          <div className="service-cards-top">
-            <Link to="/services" className="view-all-services-button">
-              View All Services
-              <ArrowRight size={17} />
-            </Link>
+            <ServiceCardStack />
           </div>
         </section>
       </main>
     </div>
   );
 }
-
 /* =========================================================
    APP CONTENT
 ========================================================= */
@@ -674,33 +945,29 @@ function HomePage() {
 function AppContent() {
   const location = useLocation();
 
-  /*
-   * Admin pages use their own complete layout.
-   * The public navbar and footer are hidden on admin routes.
-   */
-
-  const isAdminRoute = location.pathname.startsWith("/admin");
+  const isAdminRoute =
+    location.pathname.startsWith("/admin");
 
   return (
     <>
+      {/* Hide the public navbar on admin pages */}
       {!isAdminRoute && <Navbar />}
 
+      {/* Scroll to the top when the route changes */}
+      <ScrollToTop />
+
+      {/* APPLICATION ROUTES */}
       <Routes>
-        {/* HOME */}
-
         <Route path="/" element={<HomePage />} />
-
-        {/* SERVICES */}
 
         <Route path="/services" element={<ServicesPage />} />
 
-        {/* AMC */}
-
         <Route path="/amc" element={<AMCPage />} />
 
-        <Route path="/city-listings" element={<CityListingsPage />} />
-
-        {/* ACCESSORIES & MARKETPLACE */}
+        <Route
+          path="/city-listings"
+          element={<CityListingsPage />}
+        />
 
         <Route
           path="/accessories-sales"
@@ -709,7 +976,9 @@ function AppContent() {
 
         <Route
           path="/accessories"
-          element={<Navigate to="/accessories/all" replace />}
+          element={
+            <Navigate to="/accessories/all" replace />
+          }
         />
 
         <Route
@@ -737,11 +1006,7 @@ function AppContent() {
           element={<ProductDetailsPage />}
         />
 
-        {/* SHOPPING CART */}
-
         <Route path="/cart" element={<CartPage />} />
-
-        {/* REGISTRATION */}
 
         <Route path="/register" element={<RegisterPage />} />
 
@@ -755,13 +1020,20 @@ function AppContent() {
           element={<PartnerRegisterPage />}
         />
 
-        <Route path="/register-vendor" element={<VendorRegisterPage />} />
+        <Route
+          path="/register-vendor"
+          element={<VendorRegisterPage />}
+        />
 
-        <Route path="/register-student" element={<StudentRegisterPage />} />
+        <Route
+          path="/register-student"
+          element={<StudentRegisterPage />}
+        />
 
-        <Route path="/register-tutor" element={<TutorRegisterPage />} />
-
-        {/* SERVICE CATEGORY PAGES */}
+        <Route
+          path="/register-tutor"
+          element={<TutorRegisterPage />}
+        />
 
         <Route
           path="/services/home-appliances"
@@ -778,55 +1050,77 @@ function AppContent() {
           element={<PersonalServicesPage />}
         />
 
-        <Route path="/services/home-staff" element={<HomeStaffPage />} />
+        <Route
+          path="/services/home-staff"
+          element={<HomeStaffPage />}
+        />
 
-        <Route path="/services/edutech" element={<EduTechPage />} />
+        <Route
+          path="/services/edutech"
+          element={<EduTechPage />}
+        />
 
         <Route
           path="/services/professional-services"
           element={<ProfessionalServicesPage />}
         />
 
-        {/* SERVICE DETAIL */}
-
         <Route
           path="/services/:serviceId"
           element={<ServiceDetailPage />}
         />
 
-        {/* CONTACT */}
-
         <Route path="/contact" element={<ContactPage />} />
-
-        {/* LOGIN */}
 
         <Route path="/login" element={<LoginPage />} />
 
-        {/* ADMIN LOGIN */}
-
-        <Route path="/admin/login" element={<AdminLogin />} />
-
-        {/* PROTECTED ADMIN AREA */}
+        {/* ADMIN */}
+        <Route
+          path="/admin/login"
+          element={<AdminLogin />}
+        />
 
         <Route element={<AdminProtectedRoute />}>
           <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<AdminDashboard />} />
+            <Route
+              index
+              element={<AdminDashboard />}
+            />
 
-            <Route path="book-services" element={<BookServicesPage />} />
+            <Route
+              path="book-services"
+              element={<BookServicesPage />}
+            />
 
-            <Route path="products" element={<ProductsPage />} />
+            <Route
+              path="products"
+              element={<ProductsPage />}
+            />
 
-            <Route path="businesses" element={<BusinessesPage />} />
+            <Route
+              path="businesses"
+              element={<BusinessesPage />}
+            />
 
-            <Route path="subscriptions" element={<SubscriptionsPage />} />
+            <Route
+              path="subscriptions"
+              element={<SubscriptionsPage />}
+            />
 
-            <Route path="compliance" element={<CompliancePage />} />
+            <Route
+              path="compliance"
+              element={<CompliancePage />}
+            />
 
-            <Route path="settings" element={<SettingsPage />} />
+            <Route
+              path="settings"
+              element={<SettingsPage />}
+            />
           </Route>
         </Route>
       </Routes>
 
+      {/* Hide the public footer on admin pages */}
       {!isAdminRoute && <Footer />}
     </>
   );

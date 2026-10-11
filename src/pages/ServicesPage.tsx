@@ -6,8 +6,10 @@ import {
   Zap,
   Sparkles,
 } from "lucide-react";
-import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+
+import { useEffect, useMemo, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+
 import { services } from "../data/serviceMenu";
 import "./ServicesPage.css";
 
@@ -22,15 +24,54 @@ const categories = [
 ];
 
 function ServicesPage() {
-  const [activeCategory, setActiveCategory] = useState("All");
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Read the category passed from the homepage.
+  const categoryFromUrl = searchParams.get("category");
+
+  const getValidCategory = (category: string | null) => {
+    if (
+      category &&
+      categories.includes(category) &&
+      category !== "All"
+    ) {
+      return category;
+    }
+
+    return "All";
+  };
+
+  const [activeCategory, setActiveCategory] = useState(() =>
+    getValidCategory(categoryFromUrl)
+  );
+
   const [search, setSearch] = useState("");
+
+  // Keep the selected category synchronized with the URL.
+  // This also handles browser Back/Forward navigation.
+  useEffect(() => {
+    setActiveCategory(getValidCategory(categoryFromUrl));
+  }, [categoryFromUrl]);
+
+  const handleCategoryChange = (category: string) => {
+    setActiveCategory(category);
+
+    // Update the URL when a category tab is selected.
+    const nextParams = new URLSearchParams(searchParams);
+
+    if (category === "All") {
+      nextParams.delete("category");
+    } else {
+      nextParams.set("category", category);
+    }
+
+    setSearchParams(nextParams, { replace: false });
+  };
 
   const filteredServices = useMemo(() => {
     const searchText = search.trim().toLowerCase();
 
-    // SEARCH MODE:
-    // When the user enters a search term, search every service,
-    // regardless of which category tab is currently selected.
+    // Search across all services, regardless of selected category.
     if (searchText.length > 0) {
       return services.filter((service) => {
         const name = service.name.toLowerCase();
@@ -45,26 +86,19 @@ function ServicesPage() {
       });
     }
 
-    // CATEGORY MODE:
-    // When the search box is empty, filter by the selected category.
-    return services.filter((service) => {
-      return (
+    // Filter services by the selected category.
+    return services.filter(
+      (service) =>
         activeCategory === "All" ||
         service.category === activeCategory
-      );
-    });
+    );
   }, [activeCategory, search]);
-
-  const handleCategoryChange = (category: string) => {
-    setActiveCategory(category);
-  };
 
   return (
     <main className="services-page">
       {/* HERO SECTION */}
       <section className="services-page-hero">
         <div className="services-hero-inner">
-          {/* LEFT: HERO CONTENT */}
           <div className="services-hero-copy">
             <span className="services-page-eyebrow">
               NEED ONE SERVICE
@@ -83,7 +117,7 @@ function ServicesPage() {
             </p>
           </div>
 
-          {/* RIGHT: ANIMATED SEMICIRCLE */}
+          {/* ANIMATED SEMICIRCLE */}
           <div
             className="services-hero-animation"
             role="img"
@@ -91,7 +125,6 @@ function ServicesPage() {
           >
             <div className="service-orbit-glow" />
 
-            {/* SVG AND CARDS SHARE THE SAME 440 × 300 STAGE */}
             <div className="service-orbit-stage">
               <svg
                 className="service-orbit-path"
@@ -115,7 +148,6 @@ function ServicesPage() {
                   </linearGradient>
                 </defs>
 
-                {/* DOTTED SEMICIRCLE */}
                 <path
                   d="M 35 250 C 65 20, 375 20, 405 250"
                   stroke="#dbeafe"
@@ -124,7 +156,6 @@ function ServicesPage() {
                   strokeLinecap="round"
                 />
 
-                {/* ANIMATED DOTTED HIGHLIGHT */}
                 <path
                   className="service-orbit-flow-line"
                   d="M 35 250 C 65 20, 375 20, 405 250"
@@ -134,7 +165,6 @@ function ServicesPage() {
                   strokeLinecap="round"
                 />
 
-                {/* LEFT ENDPOINT */}
                 <circle
                   cx="35"
                   cy="250"
@@ -142,14 +172,9 @@ function ServicesPage() {
                   fill="#dbeafe"
                   opacity="0.7"
                 />
-                <circle
-                  cx="35"
-                  cy="250"
-                  r="5"
-                  fill="#2563eb"
-                />
 
-                {/* RIGHT ENDPOINT */}
+                <circle cx="35" cy="250" r="5" fill="#2563eb" />
+
                 <circle
                   cx="405"
                   cy="250"
@@ -157,6 +182,7 @@ function ServicesPage() {
                   fill="#dbeafe"
                   opacity="0.7"
                 />
+
                 <circle
                   cx="405"
                   cy="250"
@@ -165,7 +191,6 @@ function ServicesPage() {
                 />
               </svg>
 
-              {/* SERVICE CARD 1 */}
               <div className="service-orbit-card service-orbit-card-1">
                 <span className="service-flow-icon">
                   <Wrench size={19} strokeWidth={1.9} />
@@ -182,7 +207,6 @@ function ServicesPage() {
                 />
               </div>
 
-              {/* SERVICE CARD 2 */}
               <div className="service-orbit-card service-orbit-card-2">
                 <span className="service-flow-icon">
                   <Zap size={19} strokeWidth={1.9} />
@@ -199,7 +223,6 @@ function ServicesPage() {
                 />
               </div>
 
-              {/* SERVICE CARD 3 */}
               <div className="service-orbit-card service-orbit-card-3">
                 <span className="service-flow-icon">
                   <Sparkles size={19} strokeWidth={1.9} />
@@ -217,9 +240,9 @@ function ServicesPage() {
               </div>
             </div>
 
-            {/* BOTTOM CAPTION */}
             <div className="service-orbit-caption">
               <span className="service-flow-caption-dot" />
+
               <span>
                 All your home services, in one place
               </span>
@@ -270,20 +293,30 @@ function ServicesPage() {
           ))}
         </div>
 
-        {/* SEARCH RESULTS LABEL */}
+        {/* SELECTED CATEGORY LABEL */}
+        {activeCategory !== "All" && search.trim() === "" && (
+          <p className="services-results-info" aria-live="polite">
+            Showing services in{" "}
+            <strong>{activeCategory}</strong>
+          </p>
+        )}
 
+        {/* SEARCH RESULTS LABEL */}
         {search.trim() !== "" && (
           <p className="services-results-info" aria-live="polite">
             <span className="services-results-count">
               {filteredServices.length}
             </span>
 
-            {filteredServices.length === 1 ? " service found" : " services found"}
+            {filteredServices.length === 1
+              ? " service found"
+              : " services found"}
+
             {" across all categories for "}
+
             <strong>"{search.trim()}"</strong>
           </p>
         )}
-
 
         {/* SERVICE CARDS */}
         <div className="services-grid">
