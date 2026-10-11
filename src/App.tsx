@@ -402,19 +402,16 @@ function ServiceCardStack() {
   const stackRef = useRef<HTMLDivElement>(null);
   const animatingRef = useRef(false);
   const hoveredRef = useRef(false);
+  const reducedMotionRef = useRef(false);
+  const timerRef = useRef<number | null>(null);
 
-  const flipStateRef = useRef<
-    ReturnType<typeof Flip.getState> | null
-  >(null);
+  const flipStateRef = useRef<ReturnType<typeof Flip.getState> | null>(
+    null,
+  );
 
-  const moveCardRef = useRef<(() => void) | null>(null);
-
+  const [orderedCards, setOrderedCards] = useState(homeServiceCards);
   const [isAnimating, setIsAnimating] = useState(false);
-  const [orderedCards, setOrderedCards] =
-    useState(homeServiceCards);
-
-  const [reducedMotion, setReducedMotion] =
-    useState(false);
+  const [reducedMotion, setReducedMotion] = useState(false);
 
   const moveCard = () => {
     const stack = stackRef.current;
@@ -422,9 +419,7 @@ function ServiceCardStack() {
     if (!stack || animatingRef.current) return;
 
     const cards = Array.from(
-      stack.querySelectorAll<HTMLElement>(
-        ".stack-service-card",
-      ),
+      stack.querySelectorAll<HTMLElement>(".stack-service-card"),
     );
 
     if (cards.length < 2) return;
@@ -432,6 +427,7 @@ function ServiceCardStack() {
     animatingRef.current = true;
     setIsAnimating(true);
 
+    // Capture each card's current position before changing its order.
     flipStateRef.current = Flip.getState(cards);
 
     setOrderedCards((current) => [
@@ -441,8 +437,21 @@ function ServiceCardStack() {
   };
 
   useEffect(() => {
-    moveCardRef.current = moveCard;
-  });
+    reducedMotionRef.current = reducedMotion;
+  }, [reducedMotion]);
+
+  useEffect(() => {
+    const media = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    );
+
+    const update = () => setReducedMotion(media.matches);
+
+    update();
+    media.addEventListener("change", update);
+
+    return () => media.removeEventListener("change", update);
+  }, []);
 
   useLayoutEffect(() => {
     const state = flipStateRef.current;
@@ -455,41 +464,11 @@ function ServiceCardStack() {
       duration: reducedMotion ? 0 : 0.7,
       ease: "power2.inOut",
       absolute: true,
-
-      onEnter: (elements) =>
-        gsap.fromTo(
-          elements,
-          {
-            x: reducedMotion ? 0 : 80,
-            y: reducedMotion ? 0 : 20,
-            opacity: 0,
-            scale: reducedMotion ? 1 : 0.94,
-          },
-          {
-            x: 0,
-            y: 0,
-            opacity: 1,
-            scale: 1,
-            duration: reducedMotion ? 0 : 0.45,
-            ease: "power3.out",
-          },
-        ),
-
-      onLeave: (elements) =>
-        gsap.to(elements, {
-          x: reducedMotion ? 0 : -80,
-          y: reducedMotion ? 0 : 16,
-          opacity: 0,
-          scale: reducedMotion ? 1 : 0.94,
-          duration: reducedMotion ? 0 : 0.35,
-          ease: "power2.in",
-        }),
-
+      scale: true,
       onComplete: () => {
         animatingRef.current = false;
         setIsAnimating(false);
       },
-
       onInterrupt: () => {
         animatingRef.current = false;
         setIsAnimating(false);
@@ -502,41 +481,18 @@ function ServiceCardStack() {
   }, [orderedCards, reducedMotion]);
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    );
-
-    const updateMotionPreference = () => {
-      setReducedMotion(mediaQuery.matches);
-    };
-
-    updateMotionPreference();
-
-    mediaQuery.addEventListener(
-      "change",
-      updateMotionPreference,
-    );
-
-    return () => {
-      mediaQuery.removeEventListener(
-        "change",
-        updateMotionPreference,
-      );
-    };
-  }, []);
-
-  useEffect(() => {
     if (reducedMotion) return;
 
-    const timer = window.setInterval(() => {
-      if (hoveredRef.current || animatingRef.current) {
-        return;
-      }
-
-      moveCardRef.current?.();
+    timerRef.current = window.setInterval(() => {
+      if (hoveredRef.current || animatingRef.current) return;
+      moveCard();
     }, 4500);
 
-    return () => window.clearInterval(timer);
+    return () => {
+      if (timerRef.current !== null) {
+        window.clearInterval(timerRef.current);
+      }
+    };
   }, [reducedMotion]);
 
   const currentIndex = homeServiceCards.findIndex(
@@ -556,21 +512,22 @@ function ServiceCardStack() {
         hoveredRef.current = true;
       }}
       onBlurCapture={(event) => {
-        const nextTarget = event.relatedTarget as Node | null;
+        const next = event.relatedTarget as Node | null;
 
-        if (
-          !nextTarget ||
-          !event.currentTarget.contains(nextTarget)
-        ) {
+        if (!next || !event.currentTarget.contains(next)) {
           hoveredRef.current = false;
         }
       }}
     >
       <div className="service-stack-heading">
         <span className="service-stack-count">
-          {String(Math.max(0, currentIndex + 1)).padStart(2, "0")}
-          {" "}/{" "}
+          {String(currentIndex + 1).padStart(2, "0")}
+          {" / "}
           {String(homeServiceCards.length).padStart(2, "0")}
+        </span>
+
+        <span className="service-stack-heading-label">
+          DISCOVER OUR SERVICES
         </span>
       </div>
 
@@ -598,6 +555,7 @@ function ServiceCardStack() {
                 } as CSSProperties
               }
               aria-label={`Explore ${service.title}`}
+              tabIndex={index < 3 ? 0 : -1}
             >
               <div className="stack-card-image">
                 <img
@@ -666,20 +624,11 @@ function ServiceCardStack() {
         <span className="service-stack-hint">
           Hover to pause · Select a card to explore
         </span>
-
-        <button
-          type="button"
-          className="service-stack-next"
-          onClick={moveCard}
-          disabled={isAnimating}
-          aria-label="Show next service category"
-        >
-          <ArrowRight size={20} />
-        </button>
       </div>
     </div>
   );
 }
+
 
 /* =========================================================
    HOME PAGE
