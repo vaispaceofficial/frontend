@@ -1,5 +1,11 @@
 
-import { ArrowRight, Search } from "lucide-react";
+import {
+  ArrowRight,
+  Search,
+  Wrench,
+  Zap,
+  Sparkles,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { services } from "../data/serviceMenu";
@@ -11,6 +17,7 @@ const categories = [
   "Home Services",
   "Personal Services",
   "Home Staff",
+  "Professional Services",
   "EduTech & Home Tutors",
 ];
 
@@ -19,42 +26,209 @@ function ServicesPage() {
   const [search, setSearch] = useState("");
 
   const filteredServices = useMemo(() => {
+    const searchText = search.trim().toLowerCase();
+
+    // SEARCH MODE:
+    // When the user enters a search term, search every service,
+    // regardless of which category tab is currently selected.
+    if (searchText.length > 0) {
+      return services.filter((service) => {
+        const name = service.name.toLowerCase();
+        const category = service.category.toLowerCase();
+        const description = service.description.toLowerCase();
+
+        return (
+          name.includes(searchText) ||
+          category.includes(searchText) ||
+          description.includes(searchText)
+        );
+      });
+    }
+
+    // CATEGORY MODE:
+    // When the search box is empty, filter by the selected category.
     return services.filter((service) => {
-      const matchesCategory =
+      return (
         activeCategory === "All" ||
-        service.category === activeCategory;
-
-      const searchText = search.toLowerCase();
-
-      const matchesSearch =
-        service.name.toLowerCase().includes(searchText) ||
-        service.category.toLowerCase().includes(searchText);
-
-      return matchesCategory && matchesSearch;
+        service.category === activeCategory
+      );
     });
   }, [activeCategory, search]);
 
+  const handleCategoryChange = (category: string) => {
+    setActiveCategory(category);
+  };
+
   return (
     <main className="services-page">
+      {/* HERO SECTION */}
       <section className="services-page-hero">
-        <div>
-          <span className="services-page-eyebrow">
-            NEED ONE SERVICE
-          </span>
+        <div className="services-hero-inner">
+          {/* LEFT: HERO CONTENT */}
+          <div className="services-hero-copy">
+            <span className="services-page-eyebrow">
+              NEED ONE SERVICE
+            </span>
 
-          <h1>
-            Services for every
-            <br />
-            <span>home need.</span>
-          </h1>
+            <h1>
+              Services for every
+              <br />
+              <span>home need.</span>
+            </h1>
 
-          <p>
-            From repairs and maintenance to personal care and home
-            assistance, find the right professional for your needs.
-          </p>
+            <p>
+              From repairs and maintenance to personal care and
+              home assistance, find the right professional for
+              your needs.
+            </p>
+          </div>
+
+          {/* RIGHT: ANIMATED SEMICIRCLE */}
+          <div
+            className="services-hero-animation"
+            role="img"
+            aria-label="Service cards revolving along a dotted semicircle"
+          >
+            <div className="service-orbit-glow" />
+
+            {/* SVG AND CARDS SHARE THE SAME 440 × 300 STAGE */}
+            <div className="service-orbit-stage">
+              <svg
+                className="service-orbit-path"
+                viewBox="0 0 440 300"
+                fill="none"
+                preserveAspectRatio="none"
+                aria-hidden="true"
+              >
+                <defs>
+                  <linearGradient
+                    id="service-orbit-gradient"
+                    x1="35"
+                    y1="250"
+                    x2="405"
+                    y2="250"
+                    gradientUnits="userSpaceOnUse"
+                  >
+                    <stop offset="0%" stopColor="#bfdbfe" />
+                    <stop offset="50%" stopColor="#2563eb" />
+                    <stop offset="100%" stopColor="#bfdbfe" />
+                  </linearGradient>
+                </defs>
+
+                {/* DOTTED SEMICIRCLE */}
+                <path
+                  d="M 35 250 C 65 20, 375 20, 405 250"
+                  stroke="#dbeafe"
+                  strokeWidth="2.5"
+                  strokeDasharray="2 9"
+                  strokeLinecap="round"
+                />
+
+                {/* ANIMATED DOTTED HIGHLIGHT */}
+                <path
+                  className="service-orbit-flow-line"
+                  d="M 35 250 C 65 20, 375 20, 405 250"
+                  stroke="url(#service-orbit-gradient)"
+                  strokeWidth="2.5"
+                  strokeDasharray="3 10"
+                  strokeLinecap="round"
+                />
+
+                {/* LEFT ENDPOINT */}
+                <circle
+                  cx="35"
+                  cy="250"
+                  r="12"
+                  fill="#dbeafe"
+                  opacity="0.7"
+                />
+                <circle
+                  cx="35"
+                  cy="250"
+                  r="5"
+                  fill="#2563eb"
+                />
+
+                {/* RIGHT ENDPOINT */}
+                <circle
+                  cx="405"
+                  cy="250"
+                  r="12"
+                  fill="#dbeafe"
+                  opacity="0.7"
+                />
+                <circle
+                  cx="405"
+                  cy="250"
+                  r="5"
+                  fill="#2563eb"
+                />
+              </svg>
+
+              {/* SERVICE CARD 1 */}
+              <div className="service-orbit-card service-orbit-card-1">
+                <span className="service-flow-icon">
+                  <Wrench size={19} strokeWidth={1.9} />
+                </span>
+
+                <span className="service-flow-name">
+                  Convenience
+                </span>
+
+                <ArrowRight
+                  className="service-flow-arrow"
+                  size={15}
+                  strokeWidth={1.9}
+                />
+              </div>
+
+              {/* SERVICE CARD 2 */}
+              <div className="service-orbit-card service-orbit-card-2">
+                <span className="service-flow-icon">
+                  <Zap size={19} strokeWidth={1.9} />
+                </span>
+
+                <span className="service-flow-name">
+                  Reliability
+                </span>
+
+                <ArrowRight
+                  className="service-flow-arrow"
+                  size={15}
+                  strokeWidth={1.9}
+                />
+              </div>
+
+              {/* SERVICE CARD 3 */}
+              <div className="service-orbit-card service-orbit-card-3">
+                <span className="service-flow-icon">
+                  <Sparkles size={19} strokeWidth={1.9} />
+                </span>
+
+                <span className="service-flow-name">
+                  Seamless
+                </span>
+
+                <ArrowRight
+                  className="service-flow-arrow"
+                  size={15}
+                  strokeWidth={1.9}
+                />
+              </div>
+            </div>
+
+            {/* BOTTOM CAPTION */}
+            <div className="service-orbit-caption">
+              <span className="service-flow-caption-dot" />
+              <span>
+                All your home services, in one place
+              </span>
+            </div>
+          </div>
         </div>
       </section>
 
+      {/* SERVICES BROWSER */}
       <section className="services-browser">
         <div className="services-browser-top">
           <div>
@@ -65,18 +239,21 @@ function ServicesPage() {
             <h2>Find the service you need</h2>
           </div>
 
-          <div className="services-search">
-            <Search size={19} />
+          {/* GLOBAL SERVICE SEARCH */}
+          <label className="services-search">
+            <Search size={19} aria-hidden="true" />
 
             <input
-              type="text"
-              placeholder="Search services..."
+              type="search"
+              placeholder="Search all services..."
+              aria-label="Search all services"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
             />
-          </div>
+          </label>
         </div>
 
+        {/* CATEGORY FILTERS */}
         <div className="category-tabs">
           {categories.map((category) => (
             <button
@@ -85,13 +262,30 @@ function ServicesPage() {
               className={
                 activeCategory === category ? "active" : ""
               }
-              onClick={() => setActiveCategory(category)}
+              aria-pressed={activeCategory === category}
+              onClick={() => handleCategoryChange(category)}
             >
               {category}
             </button>
           ))}
         </div>
 
+        {/* SEARCH RESULTS LABEL */}
+
+        {search.trim() !== "" && (
+          <p className="services-results-info" aria-live="polite">
+            <span className="services-results-count">
+              {filteredServices.length}
+            </span>
+
+            {filteredServices.length === 1 ? " service found" : " services found"}
+            {" across all categories for "}
+            <strong>"{search.trim()}"</strong>
+          </p>
+        )}
+
+
+        {/* SERVICE CARDS */}
         <div className="services-grid">
           {filteredServices.map((service) => (
             <Link
@@ -103,6 +297,7 @@ function ServicesPage() {
                 <img
                   src={service.image}
                   alt={service.name}
+                  loading="lazy"
                 />
               </div>
 
@@ -128,12 +323,25 @@ function ServicesPage() {
           ))}
         </div>
 
+        {/* EMPTY RESULTS STATE */}
         {filteredServices.length === 0 && (
           <div className="services-empty-state">
             <h3>No services found</h3>
+
             <p>
-              Try another search term or select a different category.
+              {search.trim()
+                ? `We couldn't find any services matching "${search.trim()}". Try another search term.`
+                : "There are no services in this category yet. Please explore another category."}
             </p>
+
+            {search.trim() !== "" && (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+              >
+                Clear search
+              </button>
+            )}
           </div>
         )}
       </section>

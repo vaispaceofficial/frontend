@@ -157,7 +157,7 @@ const professionalServices = [
     ],
   },
   {
-    name: "Artisans & Local Craftsmen",
+    name: "Tailors and Alteration Experts",
     slug: "artisans-local-craftsmen",
     description: "Tailors, locksmiths, cobblers, welders and local artisans.",    
     image: "/images/professionalservices/artisans.jpg",

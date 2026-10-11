@@ -520,7 +520,7 @@ export const services: ServiceItem[] = [
 
   createService(
     "legal-tax-financial",
-    "Legal, Tax & Financial",
+    "Lawyers and Accountants",
     professionalServices,
     "Legal & Financial Services",
     "/images/servicedetails/Advocates.webp",
@@ -757,7 +757,7 @@ export const services: ServiceItem[] = [
 
   createService(
     "artisans-local-craftsmen",
-    "Artisans & Local Craftsmen",
+    "Tailors and Alteration experts",
     professionalServices,
     "Artisan & Craft Services",
     "/images/servicedetails/artisans.webp",
