@@ -2094,3 +2094,76 @@
     transition: none;
   }
 }
+
+
+/* =========================================
+   MARKETPLACE HERO CART — TOP RIGHT
+========================================= */
+
+.accessories-hero {
+  position: relative;
+}
+
+/* Position the cart directly over the hero background */
+.marketplace-hero-cart {
+  position: absolute;
+  top: 20px;
+  right: 28px;
+  z-index: 20;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: auto;
+  height: auto;
+
+  padding: 0;
+  margin: 0;
+
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* Remove unwanted styling from the outer CartShortcut wrapper */
+.marketplace-hero-cart > * {
+  width: auto;
+  height: auto;
+  margin: 0;
+  padding: 0;
+
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* Keep the actual cart control visible and clickable */
+.marketplace-hero-cart button,
+.marketplace-hero-cart a {
+  cursor: pointer;
+}
+
+/* Tablet and mobile positioning */
+@media (max-width: 768px) {
+  .marketplace-hero-cart {
+    top: 14px;
+    right: 16px;
+  }
+}
+
+
+
+/* =========================================
+   MARKETPLACE CART — REMOVE OUTER RECTANGLE
+========================================= */
+
+.marketplace-hero-cart,
+.marketplace-hero-cart > div {
+  background: transparent !important;
+  box-shadow: none !important;
+  border-color: transparent !important;
+  padding: 0 !important;
+}

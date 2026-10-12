@@ -1064,3 +1064,35 @@
   }
 }
 
+
+/* =========================================
+   PRODUCTS PAGE CART SHORTCUT
+========================================= */
+
+.products-page-cart {
+  position: relative;
+  z-index: 20;
+
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+
+  width: 100%;
+  margin: 0;
+  padding: 0;
+
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.products-page-cart > div {
+  width: auto;
+  height: auto;
+  margin: 0;
+  padding: 0;
+
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}

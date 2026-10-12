@@ -39,11 +39,9 @@ function AccessoriesProductsPage() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const queryParams = new URLSearchParams(location.search);
-
-  const [search, setSearch] = useState(
-    queryParams.get("search") || "",
-  );
+  const [search, setSearch] = useState(() => {
+    return new URLSearchParams(location.search).get("search") || "";
+  });
 
   const [sort, setSort] = useState("featured");
   const [showFilters, setShowFilters] = useState(false);
@@ -52,11 +50,10 @@ function AccessoriesProductsPage() {
     useState(false);
   const [minimumRating, setMinimumRating] = useState(0);
 
-  // Keep the search field synchronized with the URL.
+  // Synchronize search with URL query parameters.
   useEffect(() => {
-    const urlSearch = new URLSearchParams(
-      location.search,
-    ).get("search") || "";
+    const urlSearch =
+      new URLSearchParams(location.search).get("search") || "";
 
     setSearch(urlSearch);
   }, [location.search]);
@@ -76,20 +73,19 @@ function AccessoriesProductsPage() {
       ? "All Products"
       : activeCategoryData?.name || "Products";
 
-  // Keep this URL consistent with the product-detail route in App.tsx.
+  // Keep the product-detail route consistent with App.tsx.
   const getProductUrl = (productId: number) =>
     `/accessories-sales/products/${productId}`;
 
   const categoryUrl = (slug: string) =>
-    slug === "all"
-      ? "/accessories/all"
-      : `/accessories/${slug}`;
+    slug === "all" ? "/accessories/all" : `/accessories/${slug}`;
 
   const subcategoryUrl = (
     category: string,
     subcategory: string,
   ) => `/accessories/${category}/${subcategory}`;
 
+  // Filter and sort products.
   const filteredProducts = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
 
@@ -133,21 +129,15 @@ function AccessoriesProductsPage() {
 
     switch (sort) {
       case "price-low":
-        result = [...result].sort(
-          (a, b) => a.price - b.price,
-        );
+        result = [...result].sort((a, b) => a.price - b.price);
         break;
 
       case "price-high":
-        result = [...result].sort(
-          (a, b) => b.price - a.price,
-        );
+        result = [...result].sort((a, b) => b.price - a.price);
         break;
 
       case "rating":
-        result = [...result].sort(
-          (a, b) => b.rating - a.rating,
-        );
+        result = [...result].sort((a, b) => b.rating - a.rating);
         break;
 
       default:
@@ -165,12 +155,19 @@ function AccessoriesProductsPage() {
     minimumRating,
   ]);
 
-  // First three products appear in the main product grid.
+  // First three products appear in the main grid.
   const mainProducts = filteredProducts.slice(0, 3);
 
   // Remaining matching products appear in Suggested Products.
   const suggestedProducts = filteredProducts.slice(3);
 
+  const hasActiveFilters =
+    search.trim() !== "" ||
+    fastDelivery ||
+    installationAvailable ||
+    minimumRating > 0;
+
+  // Clear filters and remove the search query from the URL.
   const clearFilters = () => {
     setSearch("");
     setFastDelivery(false);
@@ -178,7 +175,6 @@ function AccessoriesProductsPage() {
     setMinimumRating(0);
     setSort("featured");
 
-    // Remove the search parameter without reloading the page.
     const params = new URLSearchParams(location.search);
     params.delete("search");
 
@@ -197,24 +193,20 @@ function AccessoriesProductsPage() {
     setSearch(value);
   };
 
+  // Add product to the shared cart and open the cart page.
   const handleAddToCart = (product: AccessoryProduct) => {
-    // Add the selected product to the shared cart.
     addToCart(product);
-
-    // Open the cart page.
     navigate("/cart");
   };
 
-  const hasActiveFilters =
-    search.trim() !== "" ||
-    fastDelivery ||
-    installationAvailable ||
-    minimumRating > 0;
-
   return (
     <main className="accessories-products-page">
-      <CartShortcut />
+      {/* CART SHORTCUT */}
+      <div className="products-page-cart">
+        <CartShortcut />
+      </div>
 
+      {/* PAGE HEADING AND SEARCH */}
       <section className="products-page-top">
         <div className="products-page-heading">
           <span>MARKETPLACE</span>
@@ -229,7 +221,31 @@ function AccessoriesProductsPage() {
           </p>
         </div>
 
-        <div className="products-page-search">
+        <form
+          className="products-page-search"
+          onSubmit={(event) => {
+            event.preventDefault();
+
+            const params = new URLSearchParams(location.search);
+            const query = search.trim();
+
+            if (query) {
+              params.set("search", query);
+            } else {
+              params.delete("search");
+            }
+
+            const nextSearch = params.toString();
+
+            navigate(
+              {
+                pathname: location.pathname,
+                search: nextSearch ? `?${nextSearch}` : "",
+              },
+              { replace: true },
+            );
+          }}
+        >
           <Search size={19} aria-hidden="true" />
 
           <input
@@ -251,9 +267,10 @@ function AccessoriesProductsPage() {
               Clear
             </button>
           )}
-        </div>
+        </form>
       </section>
 
+      {/* SIDEBAR AND PRODUCT RESULTS */}
       <section className="products-marketplace">
         <aside
           className={`products-sidebar ${
@@ -262,7 +279,6 @@ function AccessoriesProductsPage() {
         >
           <div className="sidebar-heading">
             <strong>Categories</strong>
-
             <Link to="/accessories/all">View all</Link>
           </div>
 
@@ -386,12 +402,13 @@ function AccessoriesProductsPage() {
         </aside>
 
         <div className="products-results">
+          {/* BREADCRUMB */}
           <nav
             className="products-breadcrumb"
             aria-label="Breadcrumb"
           >
             <Link to="/accessories-sales">
-              Accessories &amp; Sales
+              Marketplace
             </Link>
 
             <ChevronRight size={14} />
@@ -416,6 +433,7 @@ function AccessoriesProductsPage() {
             )}
           </nav>
 
+          {/* RESULTS TOOLBAR */}
           <div className="products-results-toolbar">
             <button
               type="button"
@@ -465,6 +483,7 @@ function AccessoriesProductsPage() {
             </div>
           </div>
 
+          {/* PRODUCTS */}
           {filteredProducts.length > 0 ? (
             <div className="products-suggestions-layout">
               <section className="main-products-section">
@@ -574,6 +593,7 @@ function AccessoriesProductsPage() {
                 </div>
               </section>
 
+              {/* SUGGESTED PRODUCTS */}
               {suggestedProducts.length > 0 && (
                 <aside className="suggested-products">
                   <div className="suggested-products-heading">
@@ -625,6 +645,7 @@ function AccessoriesProductsPage() {
               )}
             </div>
           ) : (
+            /* EMPTY STATE */
             <div className="products-empty">
               <div className="products-empty-icon">✨</div>
 
@@ -669,4 +690,3 @@ function AccessoriesProductsPage() {
 }
 
 export default AccessoriesProductsPage;
-

@@ -49,7 +49,7 @@ import EduTechPage from "./pages/EduTechPage";
 import ProfessionalServicesPage from "./pages/ProfessionalServicesPage";
 
 import AMCPage from "./pages/AMCPage";
-import AccessoriesSalesPage from "./pages/AccessoriesSalesPage";
+import AccessoriesSalesPage from "./pages/Marketplace";
 import CityListingsPage from "./pages/CityListingsPage";
 
 import RegisterPage from "./pages/RegisterPage";
@@ -253,12 +253,14 @@ function Navbar() {
             Services
           </Link>
 
+
           <Link
-            to="/accessories-sales"
+            to="/marketplace"
             onClick={closeDropdowns}
           >
-            MarketPlace
+            Marketplace
           </Link>
+
 
           <Link
             to="/city-listings"
@@ -277,9 +279,8 @@ function Navbar() {
           >
             <button
               type="button"
-              className={`network-nav-button ${
-                networkOpen ? "active" : ""
-              }`}
+              className={`network-nav-button ${networkOpen ? "active" : ""
+                }`}
               onClick={() =>
                 setNetworkOpen((current) => !current)
               }
@@ -693,9 +694,8 @@ function HomePage() {
                 key={image}
                 src={image}
                 alt="NEED ONE SERVICE home service"
-                className={`hero-bg-image ${
-                  index === currentImage ? "active" : ""
-                }`}
+                className={`hero-bg-image ${index === currentImage ? "active" : ""
+                  }`}
               />
             ))}
 
@@ -887,6 +887,7 @@ function HomePage() {
     </div>
   );
 }
+
 /* =========================================================
    APP CONTENT
 ========================================================= */
@@ -907,81 +908,13 @@ function AppContent() {
 
       {/* APPLICATION ROUTES */}
       <Routes>
+        {/* HOME */}
         <Route path="/" element={<HomePage />} />
 
-        <Route path="/services" element={<ServicesPage />} />
-
-        <Route path="/amc" element={<AMCPage />} />
-
+        {/* SERVICES */}
         <Route
-          path="/city-listings"
-          element={<CityListingsPage />}
-        />
-
-        <Route
-          path="/accessories-sales"
-          element={<AccessoriesSalesPage />}
-        />
-
-        <Route
-          path="/accessories"
-          element={
-            <Navigate to="/accessories/all" replace />
-          }
-        />
-
-        <Route
-          path="/accessories/all"
-          element={<AccessoriesProductsPage />}
-        />
-
-        <Route
-          path="/accessories/:categorySlug/:subcategorySlug"
-          element={<AccessoriesProductsPage />}
-        />
-
-        <Route
-          path="/accessories/:categorySlug"
-          element={<AccessoriesProductsPage />}
-        />
-
-        <Route
-          path="/accessories-sales/products"
-          element={<AccessoriesProductsPage />}
-        />
-
-        <Route
-          path="/accessories-sales/products/:productId"
-          element={<ProductDetailsPage />}
-        />
-
-        <Route path="/cart" element={<CartPage />} />
-
-        <Route path="/register" element={<RegisterPage />} />
-
-        <Route
-          path="/register-professional"
-          element={<ProfessionalRegisterPage />}
-        />
-
-        <Route
-          path="/register-partner"
-          element={<PartnerRegisterPage />}
-        />
-
-        <Route
-          path="/register-vendor"
-          element={<VendorRegisterPage />}
-        />
-
-        <Route
-          path="/register-student"
-          element={<StudentRegisterPage />}
-        />
-
-        <Route
-          path="/register-tutor"
-          element={<TutorRegisterPage />}
+          path="/services"
+          element={<ServicesPage />}
         />
 
         <Route
@@ -1019,18 +952,125 @@ function AppContent() {
           element={<ServiceDetailPage />}
         />
 
-        <Route path="/contact" element={<ContactPage />} />
+        {/* AMC & CITY LISTINGS */}
+        <Route
+          path="/amc"
+          element={<AMCPage />}
+        />
 
-        <Route path="/login" element={<LoginPage />} />
+        <Route
+          path="/city-listings"
+          element={<CityListingsPage />}
+        />
 
-        {/* ADMIN */}
+        {/* MARKETPLACE */}
+        <Route
+          path="/marketplace"
+          element={<AccessoriesSalesPage />}
+        />
+
+        {/* Redirect the old Marketplace URL */}
+        <Route
+          path="/accessories-sales"
+          element={
+            <Navigate to="/marketplace" replace />
+          }
+        />
+
+        {/* PRODUCT CATEGORIES */}
+        <Route
+          path="/accessories"
+          element={
+            <Navigate to="/accessories/all" replace />
+          }
+        />
+
+        <Route
+          path="/accessories/all"
+          element={<AccessoriesProductsPage />}
+        />
+
+        <Route
+          path="/accessories/:categorySlug/:subcategorySlug"
+          element={<AccessoriesProductsPage />}
+        />
+
+        <Route
+          path="/accessories/:categorySlug"
+          element={<AccessoriesProductsPage />}
+        />
+
+        {/* PRODUCT LISTING & DETAILS */}
+        <Route
+          path="/accessories-sales/products"
+          element={<AccessoriesProductsPage />}
+        />
+
+        <Route
+          path="/accessories-sales/products/:productId"
+          element={<ProductDetailsPage />}
+        />
+
+        {/* CART */}
+        <Route
+          path="/cart"
+          element={<CartPage />}
+        />
+
+        {/* REGISTRATION */}
+        <Route
+          path="/register"
+          element={<RegisterPage />}
+        />
+
+        <Route
+          path="/register-professional"
+          element={<ProfessionalRegisterPage />}
+        />
+
+        <Route
+          path="/register-partner"
+          element={<PartnerRegisterPage />}
+        />
+
+        <Route
+          path="/register-vendor"
+          element={<VendorRegisterPage />}
+        />
+
+        <Route
+          path="/register-student"
+          element={<StudentRegisterPage />}
+        />
+
+        <Route
+          path="/register-tutor"
+          element={<TutorRegisterPage />}
+        />
+
+        {/* CONTACT & LOGIN */}
+        <Route
+          path="/contact"
+          element={<ContactPage />}
+        />
+
+        <Route
+          path="/login"
+          element={<LoginPage />}
+        />
+
+        {/* ADMIN LOGIN */}
         <Route
           path="/admin/login"
           element={<AdminLogin />}
         />
 
+        {/* PROTECTED ADMIN ROUTES */}
         <Route element={<AdminProtectedRoute />}>
-          <Route path="/admin" element={<AdminLayout />}>
+          <Route
+            path="/admin"
+            element={<AdminLayout />}
+          >
             <Route
               index
               element={<AdminDashboard />}
@@ -1074,6 +1114,7 @@ function AppContent() {
     </>
   );
 }
+
 
 /* =========================================================
    APP

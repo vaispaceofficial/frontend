@@ -11,7 +11,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 
-import "./AccessoriesSalesPage.css";
+import "./Marketplace.css";
 import CartShortcut from "../components/CartShortcut";
 import { addToCart } from "../data/cart";
 
@@ -223,9 +223,8 @@ function MiniVerticalCarousel({
   return (
     <div className={`hero-mini-carousel ${className}`}>
       <div
-        className={`hero-mini-track ${
-          direction === "down" ? "move-down" : "move-up"
-        }`}
+        className={`hero-mini-track ${direction === "down" ? "move-down" : "move-up"
+          }`}
       >
         {duplicatedItems.map((item, index) => (
           <div
@@ -260,7 +259,7 @@ function MiniVerticalCarousel({
    MAIN PAGE
 ========================================================= */
 
-function AccessoriesSalesPage() {
+function Marketplace() {
   const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
 
@@ -296,13 +295,18 @@ function AccessoriesSalesPage() {
 
   return (
     <main className="accessories-sales-page">
-      <CartShortcut />
+
 
       {/* =====================================================
           HERO
       ===================================================== */}
 
       <section className="accessories-hero">
+
+        <div className="marketplace-hero-cart">
+          <CartShortcut />
+        </div>
+
         <div className="accessories-hero-content">
           <span className="accessories-eyebrow">
             MARKETPLACE
@@ -622,5 +626,5 @@ function AccessoriesSalesPage() {
   );
 }
 
-export default AccessoriesSalesPage;
+export default Marketplace;
 
