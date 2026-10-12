@@ -273,6 +273,7 @@ function Navbar() {
             Contact
           </Link>
 
+
           <div
             className="network-nav-wrapper"
             ref={networkRef}
@@ -309,23 +310,23 @@ function Navbar() {
                     {
                       path: "/register-professional",
                       icon: "🔧",
-                      title: "Join as a Technician",
+                      title: "Join as a Professional",
                       description:
-                        "Provide professional home services",
+                        "Provide trusted home services",
                     },
                     {
-                      path: "/register-partner",
-                      icon: "🤝",
-                      title: "Join as a Service Partner",
+                      path: "/accessories-sales",
+                      icon: "🛠️",
+                      title: "Products & Spares",
                       description:
-                        "Grow your service business with us",
+                        "Explore and sell products and spare parts",
                     },
                     {
                       path: "/register-vendor",
                       icon: "🏪",
-                      title: "Join as a Vendor",
+                      title: "Business & Vendors",
                       description:
-                        "Sell products and accessories",
+                        "Grow your business with OneService",
                     },
                     {
                       path: "/register-student",
@@ -333,13 +334,6 @@ function Navbar() {
                       title: "Join as a Student",
                       description:
                         "Learn, train and build your skills",
-                    },
-                    {
-                      path: "/register-tutor",
-                      icon: "📚",
-                      title: "Join as a Tutor",
-                      description:
-                        "Share your knowledge and teach others",
                     },
                   ].map((item) => (
                     <Link
@@ -364,6 +358,7 @@ function Navbar() {
               </div>
             )}
           </div>
+
         </nav>
 
         <div className="nav-actions">
