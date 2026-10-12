@@ -410,7 +410,7 @@ function ServiceCardStack() {
   );
 
   const [orderedCards, setOrderedCards] = useState(homeServiceCards);
-  const [isAnimating, setIsAnimating] = useState(false);
+  const [, setIsAnimating] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
 
   const moveCard = () => {

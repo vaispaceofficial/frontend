@@ -343,7 +343,7 @@ function ServicesPage() {
 
                 <div className="service-list-footer">
                   <strong>
-                    Starting ₹{service.price}
+                    ₹{service.price}
                   </strong>
 
                   <span>
