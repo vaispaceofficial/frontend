@@ -2539,3 +2539,63 @@ border-color: #1d4ed8;
     animation: none;
   }
 }
+
+
+
+/* =========================================
+   PROFESSIONAL POPUP — CUSTOM SCROLL INDICATOR
+========================================= */
+
+.professional-detail-popup {
+  position: relative;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none;
+}
+
+.professional-detail-popup::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Thin blue indicator that follows scrolling */
+.professional-scroll-indicator {
+  position: absolute;
+  top: 8px;
+  right: 3px;
+  width: 3px;
+  height: var(--scroll-thumb-height, 40px);
+  border-radius: 999px;
+  background: #2563eb;
+  transform: translateY(var(--scroll-thumb-offset, 0px));
+  pointer-events: none;
+  z-index: 10;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .professional-scroll-indicator {
+    transition: none;
+  }
+}
+
+
+/* Add these rules at the END of ServiceDetailPage.css.
+   Existing pinned/modal popup styling remains unchanged. */
+.professional-popup-backdrop.preview {
+  background: transparent;
+  pointer-events: none;
+}
+
+.professional-popup-backdrop.preview .professional-detail-popup {
+  pointer-events: auto;
+}
+
+.professional-popup-backdrop.pinned {
+  pointer-events: auto;
+}
+
+.professional-popup-backdrop.pinned .professional-detail-popup {
+  pointer-events: auto;
+}

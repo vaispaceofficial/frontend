@@ -628,10 +628,10 @@
 .service-list-footer > strong::after {
   content: "Starts From";
   color: #2563eb;
-  font-size: 7px;
+  font-size: 9px;
   font-weight: 400;
   line-height: 1.4;
-  margin-left: 11px;
+  margin-left: 2px;
 }
 
 /* Explore link */

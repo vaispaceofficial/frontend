@@ -1,6 +1,6 @@
 
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import type { FormEvent, CSSProperties } from "react";
 
@@ -96,7 +96,7 @@ function ServiceDetailPage() {
 
       image: "/images/professionals/image1.avif",
 
-      rating: 5.0,
+      rating: 4.9,
 
       reviews: 128,
 
@@ -573,8 +573,15 @@ function ServiceDetailPage() {
   // Professional selection and details popup
 
   const [selectedProfessional, setSelectedProfessional] =
-
     useState<number | null>(null);
+
+  // A click pins the profile open; hover previews remain temporary.
+  const [isProfessionalPopupPinned, setIsProfessionalPopupPinned] =
+    useState(false);
+
+  const professionalPopupCloseTimer =
+    useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Persists after the profile popup is closed.
   const [confirmedProfessional, setConfirmedProfessional] =
     useState<number | null>(null);
@@ -672,10 +679,25 @@ function ServiceDetailPage() {
 
 
 
+  const cancelProfessionalPopupClose = () => {
+    if (professionalPopupCloseTimer.current !== null) {
+      clearTimeout(professionalPopupCloseTimer.current);
+      professionalPopupCloseTimer.current = null;
+    }
+  };
+
+  const scheduleProfessionalPopupClose = () => {
+    cancelProfessionalPopupClose();
+    professionalPopupCloseTimer.current = setTimeout(() => {
+      setSelectedProfessional(null);
+      professionalPopupCloseTimer.current = null;
+    }, 220);
+  };
+
   const closeProfessionalPopup = () => {
-
+    cancelProfessionalPopupClose();
     setSelectedProfessional(null);
-
+    setIsProfessionalPopupPinned(false);
   };
 
   const confirmProfessionalSelection = () => {
@@ -1135,9 +1157,39 @@ function ServiceDetailPage() {
 
                       }`}
 
-                    onClick={() => setSelectedProfessional(professional.id)}
+                    onMouseEnter={() => {
+                      cancelProfessionalPopupClose();
+                      if (!isProfessionalPopupPinned) {
+                        setSelectedProfessional(professional.id);
+                      }
+                    }}
 
-                    aria-pressed={isSelected}
+                    onMouseLeave={() => {
+                      if (!isProfessionalPopupPinned) {
+                        scheduleProfessionalPopupClose();
+                      }
+                    }}
+
+                    onFocus={() => {
+                      cancelProfessionalPopupClose();
+                      if (!isProfessionalPopupPinned) {
+                        setSelectedProfessional(professional.id);
+                      }
+                    }}
+
+                    onBlur={() => {
+                      if (!isProfessionalPopupPinned) {
+                        scheduleProfessionalPopupClose();
+                      }
+                    }}
+
+                    onClick={() => {
+                      cancelProfessionalPopupClose();
+                      setSelectedProfessional(professional.id);
+                      setIsProfessionalPopupPinned(true);
+                    }}
+
+                    aria-pressed={confirmedProfessional === professional.id}
 
                   >
 
@@ -1683,9 +1735,9 @@ function ServiceDetailPage() {
 
         <div
 
-          className="professional-popup-backdrop"
+          className={`professional-popup-backdrop ${isProfessionalPopupPinned ? "pinned" : "preview"}`}
 
-          onClick={closeProfessionalPopup}
+          onClick={isProfessionalPopupPinned ? closeProfessionalPopup : undefined}
 
         >
 
@@ -1695,9 +1747,17 @@ function ServiceDetailPage() {
 
             role="dialog"
 
-            aria-modal="true"
+            aria-modal={isProfessionalPopupPinned}
 
             aria-labelledby="professional-popup-title"
+
+            onMouseEnter={cancelProfessionalPopupClose}
+
+            onMouseLeave={() => {
+              if (!isProfessionalPopupPinned) {
+                scheduleProfessionalPopupClose();
+              }
+            }}
 
             onClick={(event) => event.stopPropagation()}
 
