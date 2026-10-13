@@ -50,7 +50,9 @@ import ProfessionalServicesPage from "./pages/ProfessionalServicesPage";
 
 import AMCPage from "./pages/AMCPage";
 import AccessoriesSalesPage from "./pages/Marketplace";
+
 import CityListingsPage from "./pages/CityListingsPage";
+import CityListingsBrowsePage from "./pages/CityListingsBrowsePage";
 
 import RegisterPage from "./pages/RegisterPage";
 import ProfessionalRegisterPage from "./pages/ProfessionalRegisterPage";
@@ -64,7 +66,6 @@ import AccessoriesProductsPage from "./pages/AccessoriesProductsPage";
 import ProductDetailsPage from "./pages/ProductDetailsPage";
 
 import ScrollToTop from "./components/ScrollToTop";
-
 import Footer from "./components/Footer";
 
 import AdminLayout from "./admin/components/AdminLayout";
@@ -126,12 +127,17 @@ const homeServiceCards = [
     title: "Home Services",
     description:
       "Reliable help for electrical, plumbing, carpentry and cleaning needs.",
-    image: "/images/services/HomeServices.webp",
+    image: "/images/homeservice.jpg",
     alt: "Home maintenance and repair services",
     path: "/services?category=Home%20Services",
     icon: House,
     accent: "#38bdf8",
-    services: ["Electrician", "Plumber", "Carpenter", "Cleaning"],
+    services: [
+      "Electrician",
+      "Plumber",
+      "Carpenter",
+      "Cleaning",
+    ],
   },
   {
     title: "Personal Services",
@@ -142,7 +148,11 @@ const homeServiceCards = [
     path: "/services?category=Personal%20Services",
     icon: Sparkles,
     accent: "#a78bfa",
-    services: ["Makeup", "Hair Styling", "Beautician"],
+    services: [
+      "Makeup",
+      "Hair Styling",
+      "Beautician",
+    ],
   },
   {
     title: "Home Staff",
@@ -170,9 +180,9 @@ const homeServiceCards = [
     path: "/services?category=EduTech%20%26%20Home%20Tutors",
     icon: GraduationCap,
     accent: "#fbbf24",
-    fallbackImage: "/images/services/homestaff.webp",
+    fallbackImage: "/images/edutech.jpg",
     services: [
-      "School Tuition",
+      "Home Tution",
       "Competitive Exam Coaching",
       "Higher Education Tutors",
       "Language & Skill Classes",
@@ -187,7 +197,7 @@ const homeServiceCards = [
     path: "/services?category=Professional%20Services",
     icon: BriefcaseBusiness,
     accent: "#fb923c",
-    fallbackImage: "/images/services/repairs.png",
+    fallbackImage: "/images/Lawyers.jpg",
     services: [
       "Legal, Tax & Financial",
       "Healthcare & Medical",
@@ -221,7 +231,10 @@ function Navbar() {
       }
     };
 
-    document.addEventListener("mousedown", handleOutsideClick);
+    document.addEventListener(
+      "mousedown",
+      handleOutsideClick,
+    );
 
     return () => {
       document.removeEventListener(
@@ -231,7 +244,9 @@ function Navbar() {
     };
   }, []);
 
-  const closeDropdowns = () => setNetworkOpen(false);
+  const closeDropdowns = () => {
+    setNetworkOpen(false);
+  };
 
   return (
     <header className="navbar">
@@ -249,10 +264,12 @@ function Navbar() {
         </Link>
 
         <nav className="nav-links">
-          <Link to="/services" onClick={closeDropdowns}>
+          <Link
+            to="/services"
+            onClick={closeDropdowns}
+          >
             Services
           </Link>
-
 
           <Link
             to="/marketplace"
@@ -261,7 +278,6 @@ function Navbar() {
             Marketplace
           </Link>
 
-
           <Link
             to="/city-listings"
             onClick={closeDropdowns}
@@ -269,10 +285,12 @@ function Navbar() {
             City Listings
           </Link>
 
-          <Link to="/contact" onClick={closeDropdowns}>
+          <Link
+            to="/contact"
+            onClick={closeDropdowns}
+          >
             Contact
           </Link>
-
 
           <div
             className="network-nav-wrapper"
@@ -280,8 +298,9 @@ function Navbar() {
           >
             <button
               type="button"
-              className={`network-nav-button ${networkOpen ? "active" : ""
-                }`}
+              className={`network-nav-button ${
+                networkOpen ? "active" : ""
+              }`}
               onClick={() =>
                 setNetworkOpen((current) => !current)
               }
@@ -300,6 +319,7 @@ function Navbar() {
               <div className="network-dropdown">
                 <div className="network-dropdown-header">
                   <span>JOIN OUR NETWORK</span>
+
                   <strong>
                     Choose how you want to grow with us
                   </strong>
@@ -358,7 +378,6 @@ function Navbar() {
               </div>
             )}
           </div>
-
         </nav>
 
         <div className="nav-actions">
@@ -387,25 +406,24 @@ function Navbar() {
 
 /* =========================================================
    GSAP SERVICE CARD STACK
-   - Auto rotates every 4.5 seconds
+   - Auto rotates every 3 seconds
    - Pauses on hover
-   - Click navigates to the selected category
-   - Next button advances the stack
+   - Clicking a card opens its category
+   - Respects reduced-motion preferences
 ========================================================= */
-
 
 function ServiceCardStack() {
   const stackRef = useRef<HTMLDivElement>(null);
   const animatingRef = useRef(false);
   const hoveredRef = useRef(false);
-  const reducedMotionRef = useRef(false);
-  const timerRef = useRef<number | null>(null);
 
-  const flipStateRef = useRef<ReturnType<typeof Flip.getState> | null>(
-    null,
-  );
+  const flipStateRef = useRef<
+    ReturnType<typeof Flip.getState> | null
+  >(null);
 
-  const [orderedCards, setOrderedCards] = useState(homeServiceCards);
+  const [orderedCards, setOrderedCards] =
+    useState(homeServiceCards);
+
   const [, setIsAnimating] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
 
@@ -415,7 +433,9 @@ function ServiceCardStack() {
     if (!stack || animatingRef.current) return;
 
     const cards = Array.from(
-      stack.querySelectorAll<HTMLElement>(".stack-service-card"),
+      stack.querySelectorAll<HTMLElement>(
+        ".stack-service-card",
+      ),
     );
 
     if (cards.length < 2) return;
@@ -423,7 +443,6 @@ function ServiceCardStack() {
     animatingRef.current = true;
     setIsAnimating(true);
 
-    // Capture each card's current position before changing its order.
     flipStateRef.current = Flip.getState(cards);
 
     setOrderedCards((current) => [
@@ -433,20 +452,21 @@ function ServiceCardStack() {
   };
 
   useEffect(() => {
-    reducedMotionRef.current = reducedMotion;
-  }, [reducedMotion]);
-
-  useEffect(() => {
     const media = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     );
 
-    const update = () => setReducedMotion(media.matches);
+    const update = () => {
+      setReducedMotion(media.matches);
+    };
 
     update();
+
     media.addEventListener("change", update);
 
-    return () => media.removeEventListener("change", update);
+    return () => {
+      media.removeEventListener("change", update);
+    };
   }, []);
 
   useLayoutEffect(() => {
@@ -479,20 +499,25 @@ function ServiceCardStack() {
   useEffect(() => {
     if (reducedMotion) return;
 
-    timerRef.current = window.setInterval(() => {
-      if (hoveredRef.current || animatingRef.current) return;
+    const timer = window.setInterval(() => {
+      if (
+        hoveredRef.current ||
+        animatingRef.current
+      ) {
+        return;
+      }
+
       moveCard();
     }, 3000);
 
     return () => {
-      if (timerRef.current !== null) {
-        window.clearInterval(timerRef.current);
-      }
+      window.clearInterval(timer);
     };
   }, [reducedMotion]);
 
   const currentIndex = homeServiceCards.findIndex(
-    (service) => service.title === orderedCards[0]?.title,
+    (service) =>
+      service.title === orderedCards[0]?.title,
   );
 
   return (
@@ -510,7 +535,10 @@ function ServiceCardStack() {
       onBlurCapture={(event) => {
         const next = event.relatedTarget as Node | null;
 
-        if (!next || !event.currentTarget.contains(next)) {
+        if (
+          !next ||
+          !event.currentTarget.contains(next)
+        ) {
           hoveredRef.current = false;
         }
       }}
@@ -535,14 +563,17 @@ function ServiceCardStack() {
         {orderedCards.map((service, index) => {
           const Icon = service.icon;
 
-          const originalIndex = homeServiceCards.findIndex(
-            (item) => item.title === service.title,
-          );
+          const originalIndex =
+            homeServiceCards.findIndex(
+              (item) => item.title === service.title,
+            );
 
           return (
             <Link
               to={service.path}
-              className={`stack-service-card stack-card-${index + 1}`}
+              className={`stack-service-card stack-card-${
+                index + 1
+              }`}
               key={service.title}
               style={
                 {
@@ -579,6 +610,7 @@ function ServiceCardStack() {
                   <span className="stack-brand-mark">
                     <Icon size={16} />
                   </span>
+
                   ONE SERVICE
                 </span>
 
@@ -598,12 +630,16 @@ function ServiceCardStack() {
 
               <div className="stack-card-bottom">
                 <div className="stack-card-tags">
-                  {service.services.slice(0, 2).map((item) => (
-                    <span key={item}>{item}</span>
-                  ))}
+                  {service.services
+                    .slice(0, 2)
+                    .map((item) => (
+                      <span key={item}>{item}</span>
+                    ))}
 
                   {service.services.length > 2 && (
-                    <span>+{service.services.length - 2}</span>
+                    <span>
+                      +{service.services.length - 2}
+                    </span>
                   )}
                 </div>
 
@@ -624,7 +660,6 @@ function ServiceCardStack() {
     </div>
   );
 }
-
 
 /* =========================================================
    HOME PAGE
@@ -647,7 +682,9 @@ function HomePage() {
       });
     }, 100);
 
-    return () => window.clearTimeout(timer);
+    return () => {
+      window.clearTimeout(timer);
+    };
   }, [location]);
 
   /*
@@ -656,11 +693,14 @@ function HomePage() {
   useEffect(() => {
     const timer = window.setInterval(() => {
       setCurrentImage(
-        (current) => (current + 1) % heroImages.length,
+        (current) =>
+          (current + 1) % heroImages.length,
       );
     }, 5000);
 
-    return () => window.clearInterval(timer);
+    return () => {
+      window.clearInterval(timer);
+    };
   }, []);
 
   const previousImage = () => {
@@ -673,7 +713,8 @@ function HomePage() {
 
   const nextImage = () => {
     setCurrentImage(
-      (current) => (current + 1) % heroImages.length,
+      (current) =>
+        (current + 1) % heroImages.length,
     );
   };
 
@@ -681,7 +722,6 @@ function HomePage() {
     <div className="app">
       <main>
         {/* HERO */}
-
         <section className="hero">
           <div className="hero-background">
             {heroImages.map((image, index) => (
@@ -689,8 +729,9 @@ function HomePage() {
                 key={image}
                 src={image}
                 alt="NEED ONE SERVICE home service"
-                className={`hero-bg-image ${index === currentImage ? "active" : ""
-                  }`}
+                className={`hero-bg-image ${
+                  index === currentImage ? "active" : ""
+                }`}
               />
             ))}
 
@@ -771,7 +812,6 @@ function HomePage() {
         </section>
 
         {/* BENEFITS */}
-
         <section className="service-benefits">
           <div className="benefit-item">
             <div className="benefit-icon">✓</div>
@@ -815,8 +855,10 @@ function HomePage() {
         </section>
 
         {/* SERVICES — GSAP CARD STACK */}
-
-        <section className="services-section" id="services">
+        <section
+          className="services-section"
+          id="services"
+        >
           <div className="services-stack-layout">
             <div className="services-stack-copy">
               <span className="services-eyebrow">
@@ -904,7 +946,10 @@ function AppContent() {
       {/* APPLICATION ROUTES */}
       <Routes>
         {/* HOME */}
-        <Route path="/" element={<HomePage />} />
+        <Route
+          path="/"
+          element={<HomePage />}
+        />
 
         {/* SERVICES */}
         <Route
@@ -947,15 +992,21 @@ function AppContent() {
           element={<ServiceDetailPage />}
         />
 
-        {/* AMC & CITY LISTINGS */}
+        {/* AMC */}
         <Route
           path="/amc"
           element={<AMCPage />}
         />
 
+        {/* CITY LISTINGS */}
         <Route
           path="/city-listings"
           element={<CityListingsPage />}
+        />
+
+        <Route
+          path="/city-listings-explore/browse"
+          element={<CityListingsBrowsePage />}
         />
 
         {/* MARKETPLACE */}
@@ -968,7 +1019,10 @@ function AppContent() {
         <Route
           path="/accessories-sales"
           element={
-            <Navigate to="/marketplace" replace />
+            <Navigate
+              to="/marketplace"
+              replace
+            />
           }
         />
 
@@ -976,7 +1030,10 @@ function AppContent() {
         <Route
           path="/accessories"
           element={
-            <Navigate to="/accessories/all" replace />
+            <Navigate
+              to="/accessories/all"
+              replace
+            />
           }
         />
 
@@ -1109,7 +1166,6 @@ function AppContent() {
     </>
   );
 }
-
 
 /* =========================================================
    APP

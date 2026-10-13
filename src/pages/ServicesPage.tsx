@@ -5,6 +5,23 @@ import {
   Wrench,
   Zap,
   Sparkles,
+  AirVent,
+  Tv,
+  Refrigerator,
+  WashingMachine,
+  Microwave,
+  Droplets,
+  Plug,
+  Hammer,
+  Scissors,
+  CookingPot,
+  Baby,
+  HeartHandshake,
+  GraduationCap,
+  BriefcaseBusiness,
+  House,
+  Paintbrush,
+  type LucideIcon,
 } from "lucide-react";
 
 import { useEffect, useMemo, useState } from "react";
@@ -24,10 +41,10 @@ const categories = [
 ];
 
 /* =========================================
-   SHORT SERVICE ADVERTISEMENTS
+   SERVICE-SPECIFIC ICONS
 ========================================= */
 
-const getServiceAd = (serviceName: string): string => {
+const getServiceIcon = (serviceName: string): LucideIcon => {
   const name = serviceName.toLowerCase();
 
   if (
@@ -35,55 +52,52 @@ const getServiceAd = (serviceName: string): string => {
     name.includes("ac repair") ||
     name === "ac"
   ) {
-    return "Beat the Heat";
+    return AirVent;
   }
 
   if (name.includes("television") || name.includes("tv")) {
-    return "Picture Perfect";
+    return Tv;
   }
 
-  if (
-    name.includes("refrigerator") ||
-    name.includes("fridge")
-  ) {
-    return "Keep It Cool";
+  if (name.includes("refrigerator") || name.includes("fridge")) {
+    return Refrigerator;
   }
 
   if (name.includes("washing machine")) {
-    return "Laundry Made Easy";
+    return WashingMachine;
   }
 
   if (name.includes("microwave")) {
-    return "Kitchen Fix Experts";
+    return Microwave;
   }
 
   if (
     name.includes("water purifier") ||
     name.includes("purifier")
   ) {
-    return "Pure Water, Always";
+    return Droplets;
   }
 
   if (
     name.includes("electrician") ||
     name.includes("electrical")
   ) {
-    return "Power Up Safely";
+    return Plug;
   }
 
   if (name.includes("plumb")) {
-    return "Stop Those Leaks";
+    return Droplets;
   }
 
   if (name.includes("carpenter")) {
-    return "Crafted to Perfection";
+    return Hammer;
   }
 
   if (
     name.includes("clean") ||
     name.includes("housekeeping")
   ) {
-    return "Fresh, Clean Spaces";
+    return Sparkles;
   }
 
   if (
@@ -91,32 +105,32 @@ const getServiceAd = (serviceName: string): string => {
     name.includes("beautician") ||
     name.includes("beauty")
   ) {
-    return "Glow with Confidence";
+    return Sparkles;
   }
 
   if (name.includes("hair") || name.includes("salon")) {
-    return "Your Style, Your Way";
+    return Scissors;
   }
 
   if (
-    name.includes("cook") ||
-    name.includes("cooking")
+    name.includes("cooking") ||
+    name.includes("cook")
   ) {
-    return "Comfort on Every Plate";
+    return CookingPot;
   }
 
   if (
     name.includes("babysit") ||
     name.includes("baby")
   ) {
-    return "Little Ones, Loved";
+    return Baby;
   }
 
   if (
     name.includes("elder") ||
     name.includes("assistance")
   ) {
-    return "Care from the Heart";
+    return HeartHandshake;
   }
 
   if (
@@ -124,31 +138,35 @@ const getServiceAd = (serviceName: string): string => {
     name.includes("education") ||
     name.includes("edutech")
   ) {
-    return "Learn and Shine";
-  }
-
-  if (
-    name.includes("maid") ||
-    name.includes("home staff")
-  ) {
-    return "More Time for You";
-  }
-
-  if (
-    name.includes("paint") ||
-    name.includes("painter")
-  ) {
-    return "Walls Come Alive";
+    return GraduationCap;
   }
 
   if (
     name.includes("professional") ||
     name.includes("business")
   ) {
-    return "Experts You Can Trust";
+    return BriefcaseBusiness;
   }
 
-  return "Service Made Simple";
+  if (name.includes("maid") || name.includes("home staff")) {
+    return House;
+  }
+
+  if (
+    name.includes("painting") ||
+    name.includes("painter")
+  ) {
+    return Paintbrush;
+  }
+
+  if (
+    name.includes("repair") ||
+    name.includes("service")
+  ) {
+    return Wrench;
+  }
+
+  return Zap;
 };
 
 function ServicesPage() {
@@ -175,8 +193,8 @@ function ServicesPage() {
 
   const [search, setSearch] = useState("");
 
-  // Synchronize the selected category with the URL.
-  // Supports browser Back and Forward navigation.
+  // Keep the selected category synchronized with the URL.
+  // This also handles browser Back/Forward navigation.
   useEffect(() => {
     setActiveCategory(getValidCategory(categoryFromUrl));
   }, [categoryFromUrl]);
@@ -184,6 +202,7 @@ function ServicesPage() {
   const handleCategoryChange = (category: string) => {
     setActiveCategory(category);
 
+    // Update the URL when a category tab is selected.
     const nextParams = new URLSearchParams(searchParams);
 
     if (category === "All") {
@@ -198,7 +217,7 @@ function ServicesPage() {
   const filteredServices = useMemo(() => {
     const searchText = search.trim().toLowerCase();
 
-    // Search across all services.
+    // Search across all services, regardless of selected category.
     if (searchText.length > 0) {
       return services.filter((service) => {
         const name = service.name.toLowerCase();
@@ -213,7 +232,7 @@ function ServicesPage() {
       });
     }
 
-    // Filter by selected category.
+    // Filter services by the selected category.
     return services.filter(
       (service) =>
         activeCategory === "All" ||
@@ -447,47 +466,53 @@ function ServicesPage() {
 
         {/* SERVICE CARDS */}
         <div className="services-grid">
-          {filteredServices.map((service) => (
-            <Link
-              key={service.id}
-              to={`/services/${service.id}`}
-              className="service-list-card"
-            >
-              <div className="service-list-image">
-                <img
-                  src={service.image}
-                  alt={service.name}
-                  loading="lazy"
-                />
+          {filteredServices.map((service) => {
+            const ServiceIcon = getServiceIcon(service.name);
 
-                {/* CONTINUOUSLY ANIMATED SERVICE AD */}
-                <div className="service-card-ad">
-                  <span className="service-card-ad-label">
-                    NEED ONE SERVICE
-                  </span>
+            return (
+              <Link
+                key={service.id}
+                to={`/services/${service.id}`}
+                className="service-list-card"
+              >
+                <div className="service-list-image">
+                  <img
+                    src={service.image}
+                    alt={service.name}
+                    loading="lazy"
+                  />
 
-                  <p>{getServiceAd(service.name)}</p>
-                </div>
-              </div>
-
-              <div className="service-list-content">
-                <span>{service.category}</span>
-
-                <h3>{service.name}</h3>
-
-                <p>{service.description}</p>
-
-                <div className="service-list-footer">
-                  <strong>₹{service.price}</strong>
-
-                  <span>
-                    Explore
-                    <ArrowRight size={15} />
+                  {/* SERVICE ICON — TOP LEFT OF IMAGE */}
+                  <span
+                    className="service-card-icon"
+                    aria-hidden="true"
+                  >
+                    <ServiceIcon
+                      size={21}
+                      strokeWidth={1.9}
+                    />
                   </span>
                 </div>
-              </div>
-            </Link>
-          ))}
+
+                <div className="service-list-content">
+                  <span>{service.category}</span>
+
+                  <h3>{service.name}</h3>
+
+                  <p>{service.description}</p>
+
+                  <div className="service-list-footer">
+                    <strong>₹{service.price}</strong>
+
+                    <span>
+                      Explore
+                      <ArrowRight size={15} />
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
         </div>
 
         {/* EMPTY RESULTS STATE */}

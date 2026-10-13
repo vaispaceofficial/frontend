@@ -1,5 +1,7 @@
 
 import { useCallback, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+
 import {
   Activity,
   GraduationCap,
@@ -24,7 +26,7 @@ import CityListingsShowcase from "../components/CityListingsShowcase";
 import CityBusinessProfileModal from "../components/CityBusinessProfileModal";
 import type { BusinessProfile } from "../components/CityBusinessProfileModal";
 
-type ListingCategory = {
+export type ListingCategory = {
   id: string;
   name: string;
   icon: typeof Activity;
@@ -34,7 +36,7 @@ type ListingCategory = {
 
 type ListingFilter = "all" | "top-rated" | "verified" | "open";
 
-type CityListing = {
+export type CityListing = {
   id: number;
   name: string;
   category: string;
@@ -56,7 +58,7 @@ type CityListing = {
   gallery: string[];
 };
 
-const categories: ListingCategory[] = [
+export const categories: ListingCategory[] = [
   {
     id: "health",
     name: "Health & Medical",
@@ -143,7 +145,7 @@ const categories: ListingCategory[] = [
   },
 ];
 
-const listings: CityListing[] = [
+export const listings: CityListing[] = [
   {
     id: 1,
     name: "City Orthopaedic Care",
@@ -469,6 +471,8 @@ const listings: CityListing[] = [
 ];
 
 function CityListingsPage() {
+  const navigate = useNavigate();
+
   const [activeCategory, setActiveCategory] = useState("all");
   const [activeFilter, setActiveFilter] = useState<ListingFilter>("all");
   const [search, setSearch] = useState("");
@@ -549,9 +553,9 @@ function CityListingsPage() {
     setSearch("");
   };
 
-const closeProfile = useCallback(() => {
-  setSelectedListing(null);
-}, []);
+  const closeProfile = useCallback(() => {
+    setSelectedListing(null);
+  }, []);
 
   const modalListing: BusinessProfile | null = selectedListing
     ? {
@@ -677,10 +681,24 @@ const closeProfile = useCallback(() => {
               </p>
             </div>
 
-            <span className="city-listings-count">
-              Showing {filteredListings.length}{" "}
-              {filteredListings.length === 1 ? "listing" : "listings"}
-            </span>
+            <div className="city-listings-header-actions">
+              <span className="city-listings-count">
+                Showing {filteredListings.length}{" "}
+                {filteredListings.length === 1 ? "listing" : "listings"}
+              </span>
+
+              <button
+                type="button"
+                className="city-listings-view-all"
+                onClick={() =>
+                  navigate("/city-listings-explore/browse")
+                }
+                aria-label="View all city listings"
+              >
+                View All
+                <ArrowRight size={17} />
+              </button>
+            </div>
           </div>
 
           <div
@@ -746,15 +764,11 @@ const closeProfile = useCallback(() => {
                     onClick={() => chooseFilter(filter, tag)}
                     aria-pressed={isActive}
                   >
-                    {tag === "Top Rated" && (
-                      <Star size={13} />
-                    )}
+                    {tag === "Top Rated" && <Star size={13} />}
                     {tag === "Verified Only" && (
                       <BadgeCheck size={14} />
                     )}
-                    {tag === "Open Now" && (
-                      <Clock3 size={13} />
-                    )}
+                    {tag === "Open Now" && <Clock3 size={13} />}
                     {tag}
                   </button>
                 );
