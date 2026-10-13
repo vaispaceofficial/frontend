@@ -1027,3 +1027,206 @@
 }
 
 
+/* =========================================
+   SERVICE CARD ICON
+========================================= */
+
+.service-list-image {
+  position: relative;
+  overflow: hidden;
+}
+
+.service-card-icon {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 2;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 44px;
+  height: 44px;
+
+  color: #2563eb;
+  background: rgba(255, 255, 255, 0.96);
+
+  border: 1px solid #dbeafe;
+  border-radius: 13px;
+
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.10);
+
+  transition:
+    transform 180ms ease,
+    background 180ms ease,
+    color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.service-list-card:hover .service-card-icon {
+  color: #ffffff;
+  background: #2563eb;
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.25);
+  transform: translateY(-2px);
+}
+
+@media (max-width: 600px) {
+  .service-card-icon {
+    top: 12px;
+    left: 12px;
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+  }
+
+  .service-card-icon svg {
+    width: 19px;
+    height: 19px;
+  }
+}
+
+
+/* =========================================
+   CONTINUOUS SERVICE AD ANIMATION
+========================================= */
+
+.service-list-image {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.service-list-image > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 500ms ease;
+}
+
+/* Image overlay */
+.service-card-ad {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+
+  padding: 20px;
+
+  background: linear-gradient(
+    90deg,
+    rgba(15, 45, 90, 0.72) 0%,
+    rgba(15, 45, 90, 0.38) 52%,
+    rgba(15, 45, 90, 0.03) 100%
+  );
+
+  pointer-events: none;
+}
+
+/* Small brand label */
+.service-card-ad-label {
+  display: inline-block;
+  margin-bottom: 7px;
+
+  color: #dbeafe;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+
+  animation: serviceAdLabelDance 3s ease-in-out infinite;
+}
+
+/* Short advertising message */
+.service-card-ad p {
+  max-width: 85%;
+  margin: 0;
+
+  color: #ffffff;
+  font-size: clamp(15px, 1.35vw, 20px);
+  font-weight: 750;
+  line-height: 1.25;
+  letter-spacing: -0.25px;
+
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
+
+  overflow-wrap: break-word;
+  animation: serviceAdTextDance 3.2s ease-in-out infinite;
+}
+
+/* Gentle continuous left-to-right movement */
+@keyframes serviceAdTextDance {
+  0% {
+    transform: translateX(-12px) rotate(-1deg);
+  }
+
+  25% {
+    transform: translateX(0) rotate(0deg);
+  }
+
+  50% {
+    transform: translateX(8px) rotate(1deg);
+  }
+
+  75% {
+    transform: translateX(0) rotate(0deg);
+  }
+
+  100% {
+    transform: translateX(-12px) rotate(-1deg);
+  }
+}
+
+/* Subtle floating movement for the brand label */
+@keyframes serviceAdLabelDance {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.8;
+  }
+
+  50% {
+    transform: translateY(-3px);
+    opacity: 1;
+  }
+}
+
+/* Gentle image zoom on hover */
+.service-list-card:hover .service-list-image > img {
+  transform: scale(1.035);
+}
+
+/* Responsive styling */
+@media (max-width: 600px) {
+  .service-card-ad {
+    padding: 13px;
+  }
+
+  .service-card-ad-label {
+    margin-bottom: 5px;
+    font-size: 8px;
+    letter-spacing: 1px;
+  }
+
+  .service-card-ad p {
+    max-width: 90%;
+    font-size: 15px;
+  }
+}
+
+/* Accessibility: respect reduced-motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  .service-card-ad-label,
+  .service-card-ad p {
+    animation: none;
+    transform: none;
+  }
+
+  .service-list-image > img {
+    transition: none;
+  }
+}

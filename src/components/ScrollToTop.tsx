@@ -1,8 +1,9 @@
+
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 
 function ScrollToTop() {
-  const { pathname, search, hash } = useLocation();
+  const { pathname, hash } = useLocation();
 
   useEffect(() => {
     // Preserve intentional navigation to an in-page section.
@@ -19,13 +20,13 @@ function ScrollToTop() {
       return;
     }
 
-    // Scroll to the top whenever the route or query changes.
+    // Scroll to the top when the page route changes.
     window.scrollTo({
       top: 0,
       left: 0,
       behavior: "auto",
     });
-  }, [pathname, search, hash]);
+  }, [pathname, hash]);
 
   return null;
 }

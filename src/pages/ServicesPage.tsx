@@ -23,6 +23,134 @@ const categories = [
   "EduTech & Home Tutors",
 ];
 
+/* =========================================
+   SHORT SERVICE ADVERTISEMENTS
+========================================= */
+
+const getServiceAd = (serviceName: string): string => {
+  const name = serviceName.toLowerCase();
+
+  if (
+    name.includes("air conditioner") ||
+    name.includes("ac repair") ||
+    name === "ac"
+  ) {
+    return "Beat the Heat";
+  }
+
+  if (name.includes("television") || name.includes("tv")) {
+    return "Picture Perfect";
+  }
+
+  if (
+    name.includes("refrigerator") ||
+    name.includes("fridge")
+  ) {
+    return "Keep It Cool";
+  }
+
+  if (name.includes("washing machine")) {
+    return "Laundry Made Easy";
+  }
+
+  if (name.includes("microwave")) {
+    return "Kitchen Fix Experts";
+  }
+
+  if (
+    name.includes("water purifier") ||
+    name.includes("purifier")
+  ) {
+    return "Pure Water, Always";
+  }
+
+  if (
+    name.includes("electrician") ||
+    name.includes("electrical")
+  ) {
+    return "Power Up Safely";
+  }
+
+  if (name.includes("plumb")) {
+    return "Stop Those Leaks";
+  }
+
+  if (name.includes("carpenter")) {
+    return "Crafted to Perfection";
+  }
+
+  if (
+    name.includes("clean") ||
+    name.includes("housekeeping")
+  ) {
+    return "Fresh, Clean Spaces";
+  }
+
+  if (
+    name.includes("makeup") ||
+    name.includes("beautician") ||
+    name.includes("beauty")
+  ) {
+    return "Glow with Confidence";
+  }
+
+  if (name.includes("hair") || name.includes("salon")) {
+    return "Your Style, Your Way";
+  }
+
+  if (
+    name.includes("cook") ||
+    name.includes("cooking")
+  ) {
+    return "Comfort on Every Plate";
+  }
+
+  if (
+    name.includes("babysit") ||
+    name.includes("baby")
+  ) {
+    return "Little Ones, Loved";
+  }
+
+  if (
+    name.includes("elder") ||
+    name.includes("assistance")
+  ) {
+    return "Care from the Heart";
+  }
+
+  if (
+    name.includes("tutor") ||
+    name.includes("education") ||
+    name.includes("edutech")
+  ) {
+    return "Learn and Shine";
+  }
+
+  if (
+    name.includes("maid") ||
+    name.includes("home staff")
+  ) {
+    return "More Time for You";
+  }
+
+  if (
+    name.includes("paint") ||
+    name.includes("painter")
+  ) {
+    return "Walls Come Alive";
+  }
+
+  if (
+    name.includes("professional") ||
+    name.includes("business")
+  ) {
+    return "Experts You Can Trust";
+  }
+
+  return "Service Made Simple";
+};
+
 function ServicesPage() {
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -47,8 +175,8 @@ function ServicesPage() {
 
   const [search, setSearch] = useState("");
 
-  // Keep the selected category synchronized with the URL.
-  // This also handles browser Back/Forward navigation.
+  // Synchronize the selected category with the URL.
+  // Supports browser Back and Forward navigation.
   useEffect(() => {
     setActiveCategory(getValidCategory(categoryFromUrl));
   }, [categoryFromUrl]);
@@ -56,7 +184,6 @@ function ServicesPage() {
   const handleCategoryChange = (category: string) => {
     setActiveCategory(category);
 
-    // Update the URL when a category tab is selected.
     const nextParams = new URLSearchParams(searchParams);
 
     if (category === "All") {
@@ -71,7 +198,7 @@ function ServicesPage() {
   const filteredServices = useMemo(() => {
     const searchText = search.trim().toLowerCase();
 
-    // Search across all services, regardless of selected category.
+    // Search across all services.
     if (searchText.length > 0) {
       return services.filter((service) => {
         const name = service.name.toLowerCase();
@@ -86,7 +213,7 @@ function ServicesPage() {
       });
     }
 
-    // Filter services by the selected category.
+    // Filter by selected category.
     return services.filter(
       (service) =>
         activeCategory === "All" ||
@@ -332,6 +459,15 @@ function ServicesPage() {
                   alt={service.name}
                   loading="lazy"
                 />
+
+                {/* CONTINUOUSLY ANIMATED SERVICE AD */}
+                <div className="service-card-ad">
+                  <span className="service-card-ad-label">
+                    NEED ONE SERVICE
+                  </span>
+
+                  <p>{getServiceAd(service.name)}</p>
+                </div>
               </div>
 
               <div className="service-list-content">
@@ -342,9 +478,7 @@ function ServicesPage() {
                 <p>{service.description}</p>
 
                 <div className="service-list-footer">
-                  <strong>
-                    ₹{service.price}
-                  </strong>
+                  <strong>₹{service.price}</strong>
 
                   <span>
                     Explore

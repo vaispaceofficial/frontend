@@ -482,7 +482,7 @@ function ServiceCardStack() {
     timerRef.current = window.setInterval(() => {
       if (hoveredRef.current || animatingRef.current) return;
       moveCard();
-    }, 4500);
+    }, 3000);
 
     return () => {
       if (timerRef.current !== null) {
