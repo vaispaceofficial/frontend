@@ -2096,15 +2096,16 @@
 }
 
 
+
 /* =========================================
-   MARKETPLACE HERO CART — TOP RIGHT
+   MARKETPLACE HERO CART + SELLER BUTTON
 ========================================= */
 
 .accessories-hero {
   position: relative;
 }
 
-/* Position the cart directly over the hero background */
+/* Top-right action group */
 .marketplace-hero-cart {
   position: absolute;
   top: 20px;
@@ -2112,12 +2113,13 @@
   z-index: 20;
 
   display: inline-flex;
+  flex-direction: row;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
+  gap: 12px;
 
   width: auto;
   height: auto;
-
   padding: 0;
   margin: 0;
 
@@ -2127,8 +2129,9 @@
   box-shadow: none;
 }
 
-/* Remove unwanted styling from the outer CartShortcut wrapper */
+/* Remove unwanted wrapper styling around CartShortcut */
 .marketplace-hero-cart > * {
+  flex: 0 0 auto;
   width: auto;
   height: auto;
   margin: 0;
@@ -2140,30 +2143,234 @@
   box-shadow: none;
 }
 
-/* Keep the actual cart control visible and clickable */
+/* Keep the cart control clickable */
 .marketplace-hero-cart button,
 .marketplace-hero-cart a {
   cursor: pointer;
 }
 
-/* Tablet and mobile positioning */
+/* Seller registration button */
+.marketplace-seller-button {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+
+  min-height: 42px;
+  padding: 0 16px;
+
+  background: #2563eb;
+  color: #ffffff;
+  border: 1px solid #2563eb;
+  border-radius: 9px;
+  box-shadow: none;
+
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+.marketplace-seller-button:hover {
+  background: #1d4ed8;
+  border-color: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+.marketplace-seller-button:focus-visible {
+  outline: 2px solid #93c5fd;
+  outline-offset: 3px;
+}
+
+/* Remove unwanted outer rectangles */
+.marketplace-hero-cart,
+.marketplace-hero-cart > div {
+  background: transparent !important;
+  box-shadow: none !important;
+  border-color: transparent !important;
+}
+
+/* Preserve the seller button's blue background */
+.marketplace-hero-cart .marketplace-seller-button {
+  background: #2563eb !important;
+  border-color: #2563eb !important;
+  color: #ffffff !important;
+}
+
+.marketplace-hero-cart .marketplace-seller-button:hover {
+  background: #1d4ed8 !important;
+  border-color: #1d4ed8 !important;
+}
+
+/* =========================================
+   TABLET
+========================================= */
+
 @media (max-width: 768px) {
   .marketplace-hero-cart {
     top: 14px;
     right: 16px;
+    gap: 8px;
+  }
+
+  .marketplace-seller-button {
+    min-height: 38px;
+    padding: 0 11px;
+    font-size: 12px;
+  }
+}
+
+/* =========================================
+   SMALL MOBILE
+========================================= */
+
+@media (max-width: 480px) {
+  .marketplace-hero-cart {
+    top: 12px;
+    right: 12px;
+    gap: 6px;
+  }
+
+  .marketplace-seller-button {
+    min-height: 35px;
+    padding: 0 9px;
+    gap: 5px;
+    font-size: 11px;
+    border-radius: 7px;
+  }
+
+  .marketplace-seller-button svg {
+    width: 14px;
+    height: 14px;
   }
 }
 
 
 
 /* =========================================
-   MARKETPLACE CART — REMOVE OUTER RECTANGLE
+   REGISTER AS A SELLER — INDEPENDENT BUTTON
+   Does not modify CartShortcut styling
 ========================================= */
 
-.marketplace-hero-cart,
-.marketplace-hero-cart > div {
-  background: transparent !important;
-  box-shadow: none !important;
-  border-color: transparent !important;
-  padding: 0 !important;
+.marketplace-hero-cart {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Seller button */
+.marketplace-register-button {
+  box-sizing: border-box;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 14px;
+
+  /* min-width: 176px; */
+  min-height: 50px;
+  padding: 10px 18px;
+
+  background: #ffffff;
+  border: 1px solid #d7e5ff;
+  border-radius: 16px;
+  box-shadow: none;
+
+  color: #172033;
+  font-family: "Neulis Sans", sans-serif;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+
+  transition: border-color 0.2s ease;
+}
+
+.marketplace-register-button:hover {
+  background: #ffffff;
+  border-color: #93baff;
+}
+
+.marketplace-register-button > svg {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  color: #2563eb;
+}
+
+.marketplace-register-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.marketplace-register-text strong {
+  color: #172033;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.marketplace-register-text small {
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+/* Tablet */
+@media (max-width: 768px) {
+  .marketplace-hero-cart {
+    gap: 8px;
+  }
+
+  .marketplace-register-button {
+    min-width: 145px;
+    min-height: 55px;
+    padding: 8px 10px;
+    gap: 8px;
+  }
+
+  .marketplace-register-text strong {
+    font-size: 12px;
+  }
+
+  .marketplace-register-text small {
+    font-size: 10px;
+  }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .marketplace-hero-cart {
+    gap: 6px;
+  }
+
+  .marketplace-register-button {
+    min-width: 0;
+    min-height: 48px;
+    padding: 7px 8px;
+    gap: 5px;
+  }
+
+  .marketplace-register-button > svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .marketplace-register-text strong {
+    font-size: 10px;
+  }
+
+  .marketplace-register-text small {
+    font-size: 9px;
+  }
 }

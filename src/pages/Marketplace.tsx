@@ -303,9 +303,20 @@ function Marketplace() {
 
       <section className="accessories-hero">
 
+
         <div className="marketplace-hero-cart">
           <CartShortcut />
+
+          {/* <Link
+            to="/products-and-spares"
+            className="marketplace-register-button"
+          >
+            <span className="marketplace-register-text">
+              <strong>Register</strong>
+            </span>
+          </Link> */}
         </div>
+
 
         <div className="accessories-hero-content">
           <span className="accessories-eyebrow">

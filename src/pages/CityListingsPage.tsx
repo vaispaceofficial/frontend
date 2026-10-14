@@ -1,5 +1,5 @@
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
@@ -7,8 +7,6 @@ import {
   GraduationCap,
   Armchair,
   CarFront,
-  Wrench,
-  Car,
   Search,
   MapPin,
   Star,
@@ -19,27 +17,39 @@ import {
   Clock3,
   X,
   CheckCircle2,
+  HardHat,
+  BriefcaseBusiness,
+  ShieldCheck,
+  Hotel,
+  Plane,
+  Monitor,
+  Factory,
+  Sparkles,
 } from "lucide-react";
+
+import type { LucideIcon } from "lucide-react";
 
 import "./CityListingsPage.css";
 import CityListingsShowcase from "../components/CityListingsShowcase";
 import CityBusinessProfileModal from "../components/CityBusinessProfileModal";
 import type { BusinessProfile } from "../components/CityBusinessProfileModal";
 
+type ListingFilter = "all" | "top-rated" | "verified" | "open";
+
 export type ListingCategory = {
   id: string;
   name: string;
-  icon: typeof Activity;
+  icon: LucideIcon;
   description: string;
   tags: string[];
+  subcategories: string[];
 };
-
-type ListingFilter = "all" | "top-rated" | "verified" | "open";
 
 export type CityListing = {
   id: number;
   name: string;
   category: string;
+  subcategory?: string;
   label: string;
   description: string;
   rating: number;
@@ -58,99 +68,241 @@ export type CityListing = {
   gallery: string[];
 };
 
+/* =========================================================
+   CATEGORIES
+========================================================= */
+
 export const categories: ListingCategory[] = [
   {
     id: "health",
-    name: "Health & Medical",
+    name: "Health & Medical Care",
     icon: Activity,
     description:
       "Discover doctors, clinics, diagnostic centres and hospitals.",
-    tags: [
-      "All Specialities",
-      "Orthopaedic Doctors",
-      "Gynaecology",
+    tags: ["All Specialities", "Top Rated", "Verified Only", "Open Now"],
+    subcategories: [
       "Hospitals",
-      "Multi-Speciality",
+      "Clinics",
+      "Orthopaedic Clinics",
+      "Gynaecology",
+      "Dental Clinics",
+      "Diagnostic Centres",
+      "Physiotherapy",
+      "Eye Care",
+      "Pharmacies",
     ],
   },
   {
     id: "education",
-    name: "Education & Colleges",
+    name: "Education, Coaching & Institutes",
     icon: GraduationCap,
     description:
-      "Explore schools, colleges, coaching centres and universities.",
-    tags: [
-      "All Specialities",
+      "Explore schools, colleges, coaching centres and educational institutes.",
+    tags: ["All Specialities", "Top Rated", "Verified Only", "Open Now"],
+    subcategories: [
       "Schools",
       "Engineering Colleges",
+      "Degree Colleges",
       "Coaching Centres",
+      "Competitive Exams",
       "Universities",
+      "Computer Institutes",
+      "Skill Development",
+    ],
+  },
+  {
+    id: "real-estate",
+    name: "Real Estate & Property",
+    icon: Building2,
+    description:
+      "Find property dealers, real estate consultants and property services.",
+    tags: ["All Specialities", "Top Rated", "Verified Only", "Open Now"],
+    subcategories: [
+      "Real Estate Agents",
+      "Residential Properties",
+      "Commercial Properties",
+      "Property Management",
+      "Rental Properties",
+      "Land & Plots",
+      "Property Consultants",
+    ],
+  },
+  {
+    id: "civil-construction",
+    name: "Civil Works, Construction & Heavy Equipment",
+    icon: HardHat,
+    description:
+      "Connect with builders, civil contractors and construction specialists.",
+    tags: ["All Specialities", "Top Rated", "Verified Only", "Open Now"],
+    subcategories: [
+      "Civil Contractors",
+      "Builders",
+      "Construction Companies",
+      "Heavy Equipment",
+      "Road Contractors",
+      "Building Materials",
+      "Plumbing Contractors",
+      "Electrical Contractors",
     ],
   },
   {
     id: "interior",
-    name: "Interior & Civil",
+    name: "Home Interiors & Architecture",
     icon: Armchair,
     description:
-      "Find interior designers, architects, builders and civil contractors.",
-    tags: [
-      "All Specialities",
+      "Discover interior designers, architects and home improvement specialists.",
+    tags: ["All Specialities", "Top Rated", "Verified Only", "Open Now"],
+    subcategories: [
       "Interior Designers",
       "Architects",
-      "Civil Contractors",
-      "Builders",
+      "Modular Kitchens",
+      "Furniture",
+      "Home Renovation",
+      "False Ceiling",
+      "Painting Services",
+      "Carpentry",
     ],
   },
   {
-    id: "showrooms",
-    name: "Car Showrooms",
+    id: "professional-business",
+    name: "Professional & Business Services",
+    icon: BriefcaseBusiness,
+    description:
+      "Find professional consultants and business support services.",
+    tags: ["All Specialities", "Top Rated", "Verified Only", "Open Now"],
+    subcategories: [
+      "Chartered Accountants",
+      "Legal Services",
+      "Business Consultants",
+      "Marketing Agencies",
+      "HR Services",
+      "Insurance Services",
+      "Tax Consultants",
+      "Recruitment Agencies",
+    ],
+  },
+  {
+    id: "it-security",
+    name: "IT, Hardware & Security Solutions",
+    icon: Monitor,
+    description:
+      "Explore IT companies, computer services and security solutions.",
+    tags: ["All Specialities", "Top Rated", "Verified Only", "Open Now"],
+    subcategories: [
+      "IT Services",
+      "Computer Repair",
+      "Laptop Services",
+      "CCTV Installation",
+      "Security Systems",
+      "Networking",
+      "Software Development",
+      "Computer Hardware",
+    ],
+  },
+  {
+    id: "events-media",
+    name: "Events, Entertainment & Media",
+    icon: Sparkles,
+    description:
+      "Discover event planners, photographers and entertainment services.",
+    tags: ["All Specialities", "Top Rated", "Verified Only", "Open Now"],
+    subcategories: [
+      "Event Planners",
+      "Wedding Services",
+      "Photographers",
+      "Videographers",
+      "Catering",
+      "Decoration",
+      "Entertainment",
+      "Digital Media",
+    ],
+  },
+  {
+    id: "travel-logistics",
+    name: "Travel, Transport & Logistics",
+    icon: Plane,
+    description:
+      "Find travel agencies, transport providers and logistics services.",
+    tags: ["All Specialities", "Top Rated", "Verified Only", "Open Now"],
+    subcategories: [
+      "Travel Agencies",
+      "Tour Operators",
+      "Packers & Movers",
+      "Cargo Services",
+      "Courier Services",
+      "Car Rentals",
+      "Bus Operators",
+      "Logistics Companies",
+    ],
+  },
+  {
+    id: "automotive",
+    name: "Automotive (Vehicle) Services",
     icon: CarFront,
     description:
-      "Explore automobile dealerships and vehicle showrooms.",
-    tags: [
-      "All Specialities",
+      "Explore vehicle showrooms, repair shops and automotive specialists.",
+    tags: ["All Specialities", "Top Rated", "Verified Only", "Open Now"],
+    subcategories: [
+      "Car Showrooms",
       "Car Dealers",
-      "New Cars",
-      "Used Cars",
-      "Electric Vehicles",
-    ],
-  },
-  {
-    id: "car-services",
-    name: "Car Services",
-    icon: Wrench,
-    description:
-      "Find automobile repair, maintenance and servicing businesses.",
-    tags: [
-      "All Specialities",
       "Car Repair",
       "Car Wash",
-      "Servicing",
+      "Vehicle Servicing",
+      "Two-Wheeler Services",
+      "Car Interiors",
+      "Car Accessories",
       "Roadside Assistance",
     ],
   },
   {
-    id: "car-interiors",
-    name: "Car Interiors",
-    icon: Car,
+    id: "industrial",
+    name: "Industrial & Manufacturing",
+    icon: Factory,
     description:
-      "Discover car accessories, seat covers and interior specialists.",
-    tags: [
-      "All Specialities",
-      "Seat Covers",
-      "Car Accessories",
-      "Car Audio",
-      "Interior Customisation",
+      "Connect with manufacturers, industrial suppliers and engineering firms.",
+    tags: ["All Specialities", "Top Rated", "Verified Only", "Open Now"],
+    subcategories: [
+      "Manufacturers",
+      "Industrial Equipment",
+      "Machine Suppliers",
+      "Fabrication",
+      "Metal Works",
+      "Industrial Automation",
+      "Wholesale Suppliers",
+      "Engineering Services",
+    ],
+  },
+  {
+    id: "hotel-bookings",
+    name: "Hotel Industry Bookings",
+    icon: Hotel,
+    description:
+      "Discover hotels, resorts and accommodation booking services.",
+    tags: ["All Specialities", "Top Rated", "Verified Only", "Open Now"],
+    subcategories: [
+      "Hotels",
+      "Resorts",
+      "Budget Stays",
+      "Luxury Stays",
+      "Service Apartments",
+      "Guest Houses",
+      "Banquet Halls",
+      "Online Booking Services",
     ],
   },
 ];
+
+/* =========================================================
+   LISTINGS
+========================================================= */
 
 export const listings: CityListing[] = [
   {
     id: 1,
     name: "City Orthopaedic Care",
     category: "health",
-    label: "Orthopaedic Doctors",
+    subcategory: "Orthopaedic Clinics",
+    label: "Orthopaedic Clinics",
     description: "Consultations for bone, joint and orthopaedic care.",
     rating: 4.8,
     reviews: 142,
@@ -196,6 +348,7 @@ export const listings: CityListing[] = [
     id: 2,
     name: "Women's Wellness Clinic",
     category: "health",
+    subcategory: "Gynaecology",
     label: "Gynaecology",
     description: "Women's health consultations and specialist care.",
     rating: 4.7,
@@ -225,10 +378,7 @@ export const listings: CityListing[] = [
       "Preventive Health Guidance",
       "General Health Consultation",
     ],
-    products: [
-      "Women's Wellness Products",
-      "Healthcare Essentials",
-    ],
+    products: ["Women's Wellness Products", "Healthcare Essentials"],
     gallery: [
       "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=1200&q=85",
       "https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=1200&q=85",
@@ -238,6 +388,7 @@ export const listings: CityListing[] = [
     id: 3,
     name: "City Multi-Speciality Centre",
     category: "health",
+    subcategory: "Hospitals",
     label: "Hospitals",
     description: "Outpatient consultations and diagnostic services.",
     rating: 4.6,
@@ -277,7 +428,8 @@ export const listings: CityListing[] = [
     id: 4,
     name: "Bright Future Academy",
     category: "education",
-    label: "Education & Coaching",
+    subcategory: "Coaching Centres",
+    label: "Coaching Centres",
     description: "Academic learning and examination preparation.",
     rating: 4.7,
     reviews: 86,
@@ -316,7 +468,8 @@ export const listings: CityListing[] = [
     id: 5,
     name: "Modern Space Interiors",
     category: "interior",
-    label: "Interior Design",
+    subcategory: "Interior Designers",
+    label: "Interior Designers",
     description: "Residential interiors, planning and renovation.",
     rating: 4.6,
     reviews: 64,
@@ -354,7 +507,8 @@ export const listings: CityListing[] = [
   {
     id: 6,
     name: "City Auto Showroom",
-    category: "showrooms",
+    category: "automotive",
+    subcategory: "Car Showrooms",
     label: "Car Showrooms",
     description: "Explore vehicles and automobile dealership services.",
     rating: 4.5,
@@ -393,8 +547,9 @@ export const listings: CityListing[] = [
   {
     id: 7,
     name: "Reliable Auto Care",
-    category: "car-services",
-    label: "Car Services",
+    category: "automotive",
+    subcategory: "Vehicle Servicing",
+    label: "Vehicle Servicing",
     description: "Vehicle maintenance, inspections and repairs.",
     rating: 4.6,
     reviews: 91,
@@ -432,7 +587,8 @@ export const listings: CityListing[] = [
   {
     id: 8,
     name: "Auto Style Studio",
-    category: "car-interiors",
+    category: "automotive",
+    subcategory: "Car Interiors",
     label: "Car Interiors",
     description: "Interior accessories and vehicle customisation.",
     rating: 4.5,
@@ -470,26 +626,65 @@ export const listings: CityListing[] = [
   },
 ];
 
+/* =========================================================
+   CATEGORY CAROUSEL ITEM
+   Decorative duplicate used for seamless marquee looping.
+========================================================= */
+
+type CategoryCarouselItemProps = {
+  category: ListingCategory;
+};
+
+function CategoryCarouselItem({
+  category,
+}: CategoryCarouselItemProps) {
+  const Icon = category.icon;
+
+  return (
+    <span className="city-listings-category-item">
+      <Icon size={16} aria-hidden="true" />
+      {category.name}
+    </span>
+  );
+}
+
+/* =========================================================
+   PAGE COMPONENT
+========================================================= */
+
 function CityListingsPage() {
   const navigate = useNavigate();
+  const listingsRef = useRef<HTMLElement | null>(null);
 
   const [activeCategory, setActiveCategory] = useState("all");
   const [activeFilter, setActiveFilter] = useState<ListingFilter>("all");
+  const [activeSubcategory, setActiveSubcategory] =
+    useState("All Specialities");
   const [search, setSearch] = useState("");
-  const [activeTag, setActiveTag] = useState("All Specialities");
   const [selectedListing, setSelectedListing] =
     useState<CityListing | null>(null);
 
-  const selectedCategory = categories.find(
-    (category) => category.id === activeCategory,
+  const selectedCategory = useMemo(
+    () => categories.find((category) => category.id === activeCategory),
+    [activeCategory],
   );
 
-  const availableTags = selectedCategory?.tags ?? [
-    "All Specialities",
-    "Top Rated",
-    "Verified Only",
-    "Open Now",
-  ];
+  const scrollToListings = useCallback(() => {
+    window.requestAnimationFrame(() => {
+      listingsRef.current?.scrollIntoView({
+        behavior: window.matchMedia(
+          "(prefers-reduced-motion: reduce)",
+        ).matches
+          ? "auto"
+          : "smooth",
+        block: "start",
+      });
+    });
+  }, []);
+
+  /* ---------------------------------------------------------
+     FILTER LISTINGS
+  --------------------------------------------------------- */
 
   const filteredListings = useMemo(() => {
     const term = search.trim().toLowerCase();
@@ -499,19 +694,27 @@ function CityListingsPage() {
         (item) => item.id === listing.category,
       );
 
-      const matchesCategory =
-        activeCategory === "all" ||
-        listing.category === activeCategory;
+      const searchableValues = [
+        listing.name,
+        listing.label,
+        listing.description,
+        listing.location,
+        listing.category,
+        listing.subcategory ?? "",
+        category?.name ?? "",
+        ...listing.services,
+        ...listing.products,
+      ];
 
       const matchesSearch =
         !term ||
-        [
-          listing.name,
-          listing.label,
-          listing.description,
-          listing.location,
-          category?.name ?? "",
-        ].some((value) => value.toLowerCase().includes(term));
+        searchableValues.some((value) =>
+          value.toLowerCase().includes(term),
+        );
+
+      const matchesCategory =
+        activeCategory === "all" ||
+        listing.category === activeCategory;
 
       const matchesFilter =
         activeFilter === "all" ||
@@ -519,43 +722,65 @@ function CityListingsPage() {
         (activeFilter === "verified" && listing.verified === true) ||
         (activeFilter === "open" && listing.openNow === true);
 
-      const matchesTag =
-        activeTag === "All Specialities" ||
-        (activeTag === "Top Rated" && listing.rating >= 4.7) ||
-        (activeTag === "Verified Only" && listing.verified === true) ||
-        (activeTag === "Open Now" && listing.openNow === true) ||
-        listing.label.toLowerCase().includes(activeTag.toLowerCase());
+      const matchesSubcategory =
+        activeSubcategory === "All Specialities" ||
+        listing.subcategory?.toLowerCase() ===
+          activeSubcategory.toLowerCase() ||
+        (!listing.subcategory &&
+          listing.label.toLowerCase() ===
+            activeSubcategory.toLowerCase());
 
       return (
-        matchesCategory &&
         matchesSearch &&
+        matchesCategory &&
         matchesFilter &&
-        matchesTag
+        matchesSubcategory
       );
     });
-  }, [activeCategory, activeFilter, activeTag, search]);
+  }, [
+    activeCategory,
+    activeFilter,
+    activeSubcategory,
+    search,
+  ]);
 
-  const chooseCategory = (categoryId: string) => {
-    setActiveCategory(categoryId);
-    setActiveFilter("all");
-    setActiveTag("All Specialities");
-  };
+  /* ---------------------------------------------------------
+     FILTER ACTIONS
+  --------------------------------------------------------- */
 
-  const chooseFilter = (filter: ListingFilter, tag: string) => {
-    setActiveFilter(filter);
-    setActiveTag(tag);
-  };
+  const chooseCategory = useCallback(
+    (categoryId: string) => {
+      setActiveCategory(categoryId);
+      setActiveFilter("all");
+      setActiveSubcategory("All Specialities");
+      scrollToListings();
+    },
+    [scrollToListings],
+  );
 
-  const resetFilters = () => {
+  const chooseFilter = useCallback(
+    (filter: ListingFilter) => {
+      setActiveFilter(filter);
+      scrollToListings();
+    },
+    [scrollToListings],
+  );
+
+  const resetFilters = useCallback(() => {
     setActiveCategory("all");
     setActiveFilter("all");
-    setActiveTag("All Specialities");
+    setActiveSubcategory("All Specialities");
     setSearch("");
-  };
+    scrollToListings();
+  }, [scrollToListings]);
 
   const closeProfile = useCallback(() => {
     setSelectedListing(null);
   }, []);
+
+  /* ---------------------------------------------------------
+     MODAL DATA
+  --------------------------------------------------------- */
 
   const modalListing: BusinessProfile | null = selectedListing
     ? {
@@ -563,7 +788,8 @@ function CityListingsPage() {
         name: selectedListing.name,
         category:
           categories.find(
-            (category) => category.id === selectedListing.category,
+            (category) =>
+              category.id === selectedListing.category,
           )?.name ?? "Business",
         label: selectedListing.label,
         description: selectedListing.description,
@@ -586,10 +812,15 @@ function CityListingsPage() {
       }
     : null;
 
+  /* ---------------------------------------------------------
+     RENDER
+  --------------------------------------------------------- */
+
   return (
     <main className="city-listings-page">
       <div className="city-listings-container">
         {/* HERO */}
+
         <section className="city-listings-hero">
           <div className="city-listings-hero-copy">
             <span className="city-listings-eyebrow">
@@ -603,21 +834,16 @@ function CityListingsPage() {
             </h1>
 
             <p>
-              Explore verified local businesses, healthcare specialists,
-              auto showrooms, educational institutions, and interior
-              services — right at your fingertips.
+              Explore local businesses, healthcare specialists, auto
+              showrooms, educational institutions and professional services
+              — right at your fingertips.
             </p>
 
             <form
               className="city-listings-search"
               onSubmit={(event) => {
                 event.preventDefault();
-                document
-                  .getElementById("city-listing-results")
-                  ?.scrollIntoView({
-                    behavior: "smooth",
-                    block: "start",
-                  });
+                scrollToListings();
               }}
             >
               <Search size={20} aria-hidden="true" />
@@ -626,7 +852,7 @@ function CityListingsPage() {
                 type="search"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Search doctors, cars, interiors, services..."
+                placeholder="Search businesses, services, locations..."
                 aria-label="Search city listings"
               />
 
@@ -670,14 +896,15 @@ function CityListingsPage() {
           <CityListingsShowcase />
         </section>
 
-        {/* CATEGORIES */}
+        {/* CATEGORIES AND FILTERS */}
+
         <section className="city-listings-section">
           <div className="city-listings-section-header">
             <div>
               <h2>Explore Categories</h2>
               <p>
-                Browse businesses and services by category to find what
-                you need in your city.
+                Browse businesses and services by category to find what you
+                need in your city.
               </p>
             </div>
 
@@ -693,52 +920,91 @@ function CityListingsPage() {
                 onClick={() =>
                   navigate("/city-listings-explore/browse")
                 }
-                aria-label="View all city listings"
               >
                 View All
-                <ArrowRight size={17} />
+                <ArrowRight size={16} />
               </button>
             </div>
           </div>
 
+          {/* CATEGORY MARQUEE */}
+
           <div
-            className="city-listings-filters"
+            className="city-listings-category-marquee"
             role="group"
             aria-label="Business categories"
           >
-            <button
-              type="button"
-              className={activeCategory === "all" ? "active" : ""}
-              onClick={() => chooseCategory("all")}
-              aria-pressed={activeCategory === "all"}
-            >
-              <LayoutGrid size={15} />
-              All Listings
-            </button>
+            {/* FIXED LEFT: ALL LISTINGS */}
 
-            {categories.map((category) => {
-              const Icon = category.icon;
+            <div className="city-listings-fixed-category">
+              <button
+                type="button"
+                className={`city-listings-category-item ${
+                  activeCategory === "all" ? "active" : ""
+                }`}
+                onClick={() => chooseCategory("all")}
+                aria-pressed={activeCategory === "all"}
+              >
+                <LayoutGrid size={16} aria-hidden="true" />
+                All Listings
+              </button>
+            </div>
 
-              return (
-                <button
-                  type="button"
-                  key={category.id}
-                  className={
-                    activeCategory === category.id ? "active" : ""
-                  }
-                  onClick={() => chooseCategory(category.id)}
-                  aria-pressed={activeCategory === category.id}
+            {/* MOVING RIGHT: OTHER CATEGORIES */}
+
+            <div className="city-listings-category-scroll">
+              <div className="city-listings-category-track">
+                {/* Interactive group */}
+
+                <div className="city-listings-category-group">
+                  {categories.map((category) => {
+                    const Icon = category.icon;
+
+                    return (
+                      <button
+                        type="button"
+                        key={category.id}
+                        className={`city-listings-category-item ${
+                          activeCategory === category.id
+                            ? "active"
+                            : ""
+                        }`}
+                        onClick={() =>
+                          chooseCategory(category.id)
+                        }
+                        aria-pressed={
+                          activeCategory === category.id
+                        }
+                      >
+                        <Icon size={16} aria-hidden="true" />
+                        {category.name}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Decorative group for seamless looping */}
+
+                <div
+                  className="city-listings-category-group"
+                  aria-hidden="true"
                 >
-                  <Icon size={15} />
-                  {category.name}
-                </button>
-              );
-            })}
+                  {categories.map((category) => (
+                    <CategoryCarouselItem
+                      key={`duplicate-${category.id}`}
+                      category={category}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
+
+          {/* GENERAL FILTERS */}
 
           <div className="city-listings-subcategory">
             <span className="city-listings-subcategory-label">
-              SUB-CATEGORIES
+              FILTER BY
             </span>
 
             <div
@@ -746,43 +1012,62 @@ function CityListingsPage() {
               role="group"
               aria-label="Listing filters"
             >
-              {availableTags.map((tag) => {
-                let filter: ListingFilter = "all";
+              <button
+                type="button"
+                className={activeFilter === "all" ? "active" : ""}
+                onClick={() => chooseFilter("all")}
+                aria-pressed={activeFilter === "all"}
+              >
+                <LayoutGrid size={14} />
+                All
+              </button>
 
-                if (tag === "Top Rated") filter = "top-rated";
-                if (tag === "Verified Only") filter = "verified";
-                if (tag === "Open Now") filter = "open";
+              <button
+                type="button"
+                className={
+                  activeFilter === "top-rated" ? "active" : ""
+                }
+                onClick={() => chooseFilter("top-rated")}
+                aria-pressed={activeFilter === "top-rated"}
+              >
+                <Star size={13} />
+                Top Rated
+              </button>
 
-                const isActive =
-                  activeTag === tag && activeFilter === filter;
+              <button
+                type="button"
+                className={
+                  activeFilter === "verified" ? "active" : ""
+                }
+                onClick={() => chooseFilter("verified")}
+                aria-pressed={activeFilter === "verified"}
+              >
+                <ShieldCheck size={14} />
+                Verified Only
+              </button>
 
-                return (
-                  <button
-                    type="button"
-                    key={tag}
-                    className={isActive ? "active" : ""}
-                    onClick={() => chooseFilter(filter, tag)}
-                    aria-pressed={isActive}
-                  >
-                    {tag === "Top Rated" && <Star size={13} />}
-                    {tag === "Verified Only" && (
-                      <BadgeCheck size={14} />
-                    )}
-                    {tag === "Open Now" && <Clock3 size={13} />}
-                    {tag}
-                  </button>
-                );
-              })}
+              <button
+                type="button"
+                className={
+                  activeFilter === "open" ? "active" : ""
+                }
+                onClick={() => chooseFilter("open")}
+                aria-pressed={activeFilter === "open"}
+              >
+                <Clock3 size={13} />
+                Open Now
+              </button>
 
-              {activeCategory !== "all" && (
+              {(activeCategory !== "all" ||
+                activeFilter !== "all" ||
+                activeSubcategory !== "All Specialities" ||
+                search.trim() !== "") && (
                 <button
                   type="button"
-                  onClick={() => {
-                    setActiveFilter("all");
-                    setActiveTag("All Specialities");
-                  }}
+                  onClick={resetFilters}
                 >
-                  Reset
+                  <X size={13} />
+                  Reset Filters
                 </button>
               )}
             </div>
@@ -790,7 +1075,9 @@ function CityListingsPage() {
         </section>
 
         {/* LISTING RESULTS */}
+
         <section
+          ref={listingsRef}
           className="city-listings-results city-listings-section"
           id="city-listing-results"
           aria-label="Business listings"
@@ -800,6 +1087,7 @@ function CityListingsPage() {
               <h2>
                 {selectedCategory?.name ?? "Explore Listings"}
               </h2>
+
               <p>
                 {selectedCategory?.description ??
                   "Discover businesses and services around your city."}
@@ -813,6 +1101,7 @@ function CityListingsPage() {
                 const category = categories.find(
                   (item) => item.id === listing.category,
                 );
+
                 const Icon = category?.icon ?? Building2;
 
                 return (
@@ -854,6 +1143,7 @@ function CityListingsPage() {
                       <div className="city-listings-result-title-row">
                         <div>
                           <h3>{listing.name}</h3>
+
                           <span className="city-listing-category">
                             {category?.name ?? "Business"}
                           </span>
@@ -890,12 +1180,18 @@ function CityListingsPage() {
           ) : (
             <div className="city-listings-empty">
               <Search size={32} />
+
               <h3>No matching listings found</h3>
+
               <p>
                 Try a different search, category or filter to find more
                 local businesses.
               </p>
-              <button type="button" onClick={resetFilters}>
+
+              <button
+                type="button"
+                onClick={resetFilters}
+              >
                 Clear filters
               </button>
             </div>
@@ -903,6 +1199,7 @@ function CityListingsPage() {
         </section>
 
         {/* BUSINESS REGISTRATION CTA */}
+
         <section className="city-listings-cta">
           <div>
             <span>FOR LOCAL BUSINESSES</span>
@@ -915,11 +1212,7 @@ function CityListingsPage() {
 
           <button
             type="button"
-            onClick={() =>
-              window.alert(
-                "Business registration can be connected when the registration page is ready.",
-              )
-            }
+            onClick={() => navigate("/join-our-network")}
           >
             List Your Business
             <ArrowRight size={17} />
@@ -927,7 +1220,8 @@ function CityListingsPage() {
         </section>
       </div>
 
-      {/* SEPARATE BUSINESS PROFILE MODAL */}
+      {/* BUSINESS PROFILE MODAL */}
+
       {modalListing && (
         <CityBusinessProfileModal
           listing={modalListing}

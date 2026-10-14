@@ -10,7 +10,7 @@
 }
 
 .city-browse-header {
-  background: #fff;
+  background: linear-gradient(to left, #A0D5FA 0%, #E0F1FD 100%);
   border-bottom: 1px solid var(--browse-border);
 }
 
