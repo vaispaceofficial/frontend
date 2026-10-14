@@ -1,6 +1,6 @@
 
 import { useEffect, useRef, useState } from "react";
-import type { CSSProperties } from "react";
+import type { CSSProperties, FormEvent } from "react";
 
 import {
   X,
@@ -19,9 +19,21 @@ import {
   Share2,
   Navigation,
   Building2,
+  Globe,
+  ExternalLink,
+  Send,
 } from "lucide-react";
 
 import "./CityBusinessProfileModal.css";
+
+export type CustomerReview = {
+  id: number;
+  name: string;
+  date: string;
+  rating: number;
+  comment: string;
+  avatar?: string;
+};
 
 export type BusinessProfile = {
   id: number;
@@ -38,6 +50,7 @@ export type BusinessProfile = {
   reviewCount?: number;
   address?: string;
   email?: string;
+  website?: string;
   coverImage?: string;
   avatar?: string;
   about?: string;
@@ -45,6 +58,14 @@ export type BusinessProfile = {
   amenities?: string[];
   services?: string[];
   gallery?: string[];
+  reviews?: CustomerReview[];
+  ratingBreakdown?: {
+    1: number;
+    2: number;
+    3: number;
+    4: number;
+    5: number;
+  };
 };
 
 type Props = {
@@ -89,6 +110,27 @@ const tabs: {
   },
 ];
 
+// Presentation fallback only. Replace with actual customer reviews
+// when your review backend is connected.
+const sampleReviews: CustomerReview[] = [
+  {
+    id: 1,
+    name: "Ananya Verma",
+    date: "3 weeks ago",
+    rating: 5,
+    comment:
+      "Empathetic doctors and very clean infrastructure!",
+  },
+];
+
+const defaultRatingBreakdown = {
+  5: 85,
+  4: 10,
+  3: 3,
+  2: 1,
+  1: 1,
+};
+
 function CityBusinessProfileModal({
   listing,
   onClose,
@@ -96,10 +138,18 @@ function CityBusinessProfileModal({
   const [activeTab, setActiveTab] =
     useState<ProfileTab>("overview");
 
-  // Keep the latest close handler without restarting the
-  // scroll-lock effect when the parent component rerenders.
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [reviewName, setReviewName] = useState("");
+  const [reviewComment, setReviewComment] = useState("");
+  const [reviewRating, setReviewRating] = useState(5);
+  const [submittedReviews, setSubmittedReviews] =
+    useState<CustomerReview[]>([]);
+
   const onCloseRef = useRef(onClose);
+  const showReviewFormRef = useRef(showReviewForm);
+
   onCloseRef.current = onClose;
+  showReviewFormRef.current = showReviewForm;
 
   const address =
     listing.address ||
@@ -131,9 +181,35 @@ function CityBusinessProfileModal({
     : [listing.coverImage || listing.image, listing.image];
 
   const directionsUrl =
-    `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+    `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}`;
 
-  // FIX: Preserve and restore the page's original scroll position.
+  const mapEmbedUrl =
+    `https://maps.google.com/maps?q=${encodeURIComponent(
+      `${listing.name}, ${address}`,
+    )}&z=15&output=embed`;
+
+  const websiteUrl = listing.website?.trim()
+    ? /^https?:\/\//i.test(listing.website.trim())
+      ? listing.website.trim()
+      : `https://${listing.website.trim()}`
+    : "";
+
+  const formatWebsite = (website: string) =>
+    website
+      .replace(/^https?:\/\//i, "")
+      .replace(/\/+$/, "");
+
+  const reviews = [
+    ...submittedReviews,
+    ...(listing.reviews ?? sampleReviews),
+  ];
+
+  const reviewCount =
+    (listing.reviewCount ?? 98) + submittedReviews.length;
+
+  const ratingBreakdown =
+    listing.ratingBreakdown ?? defaultRatingBreakdown;
+
   useEffect(() => {
     const scrollX = window.scrollX;
     const scrollY = window.scrollY;
@@ -141,7 +217,6 @@ function CityBusinessProfileModal({
     const body = document.body;
     const html = document.documentElement;
 
-    // Save the original inline styles so they can be restored.
     const previousBodyStyles = {
       position: body.style.position,
       top: body.style.top,
@@ -153,7 +228,6 @@ function CityBusinessProfileModal({
 
     const previousHtmlOverflow = html.style.overflow;
 
-    // Freeze the background page where it currently is.
     body.style.position = "fixed";
     body.style.top = `-${scrollY}px`;
     body.style.left = `-${scrollX}px`;
@@ -164,7 +238,11 @@ function CityBusinessProfileModal({
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        onCloseRef.current();
+        if (showReviewFormRef.current) {
+          setShowReviewForm(false);
+        } else {
+          onCloseRef.current();
+        }
       }
     };
 
@@ -173,7 +251,6 @@ function CityBusinessProfileModal({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
 
-      // Restore every inline style changed by the modal.
       body.style.position = previousBodyStyles.position;
       body.style.top = previousBodyStyles.top;
       body.style.left = previousBodyStyles.left;
@@ -182,7 +259,6 @@ function CityBusinessProfileModal({
       body.style.overflow = previousBodyStyles.overflow;
       html.style.overflow = previousHtmlOverflow;
 
-      // Restore the exact scroll position from before opening.
       window.scrollTo(scrollX, scrollY);
     };
   }, []);
@@ -222,6 +298,34 @@ function CityBusinessProfileModal({
     }
   };
 
+  const submitReview = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const name = reviewName.trim();
+    const comment = reviewComment.trim();
+
+    if (!name || !comment) return;
+
+    const newReview: CustomerReview = {
+      id: Date.now(),
+      name,
+      date: "Just now",
+      rating: reviewRating,
+      comment,
+    };
+
+    setSubmittedReviews((previous) => [
+      newReview,
+      ...previous,
+    ]);
+
+    setReviewName("");
+    setReviewComment("");
+    setReviewRating(5);
+    setShowReviewForm(false);
+    setActiveTab("reviews");
+  };
+
   const coverStyle: CSSProperties = {
     backgroundImage: `linear-gradient(
       90deg,
@@ -240,7 +344,11 @@ function CityBusinessProfileModal({
       className="business-profile-backdrop"
       onClick={(event) => {
         if (event.target === event.currentTarget) {
-          onCloseRef.current();
+          if (showReviewForm) {
+            setShowReviewForm(false);
+          } else {
+            onCloseRef.current();
+          }
         }
       }}
     >
@@ -310,9 +418,7 @@ function CityBusinessProfileModal({
                 <span className="business-profile-rating">
                   <Star size={15} fill="currentColor" />
                   {listing.rating.toFixed(1)}
-                  <span>
-                    ({listing.reviewCount ?? 142} reviews)
-                  </span>
+                  <span>({listing.reviewCount ?? 142} reviews)</span>
                 </span>
 
                 <span className="business-profile-meta-divider">
@@ -455,17 +561,51 @@ function CityBusinessProfileModal({
                     <p>
                       <Phone size={14} />
                       <span>
-                        {listing.phone ||
-                          "Phone number not provided"}
+                        {listing.phone ? (
+                          <a href={`tel:${listing.phone}`}>
+                            {listing.phone}
+                          </a>
+                        ) : (
+                          "Phone number not provided"
+                        )}
                       </span>
                     </p>
 
-                    {listing.email && (
-                      <p>
-                        <MessageCircle size={14} />
-                        <span>{listing.email}</span>
-                      </p>
-                    )}
+                    <p>
+                      <MessageCircle size={14} />
+                      <span>
+                        {listing.email ? (
+                          <a href={`mailto:${listing.email}`}>
+                            {listing.email}
+                          </a>
+                        ) : (
+                          "Email not provided"
+                        )}
+                      </span>
+                    </p>
+
+                    {/* Always show the website row */}
+                    <p className="business-profile-website">
+                      <Globe size={14} />
+
+                      <span>
+                        {websiteUrl ? (
+                          <a
+                            href={websiteUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            {formatWebsite(listing.website ?? "")}
+                          </a>
+                        ) : (
+                          <span className="business-profile-missing-value">
+                            Website not provided
+                          </span>
+                        )}
+                      </span>
+
+                      {websiteUrl && <ExternalLink size={12} />}
+                    </p>
                   </div>
                 </section>
               </aside>
@@ -517,9 +657,7 @@ function CityBusinessProfileModal({
 
               <div className="business-profile-empty-tab">
                 <ShoppingBag size={30} />
-
                 <h3>Catalogue coming soon</h3>
-
                 <p>
                   Product and catalogue information will appear
                   here when it is added for this business.
@@ -528,61 +666,316 @@ function CityBusinessProfileModal({
             </section>
           )}
 
+          {/* LOCATION & MAP */}
           {activeTab === "location" && (
-            <section className="business-profile-panel business-profile-full-panel">
-              <h2>Location & Map</h2>
+            <section className="business-profile-panel business-profile-full-panel business-profile-location-panel">
+              <h2>Location & Map View</h2>
 
-              <div className="business-profile-location-card">
-                <MapPin size={24} />
+              <p className="business-profile-map-address">
+                <MapPin size={15} />
+                {address}
+              </p>
 
-                <div>
-                  <strong>{listing.name}</strong>
-                  <p>{address}</p>
+              <div className="business-profile-map-frame">
+                <iframe
+                  title={`Map showing ${listing.name}`}
+                  src={mapEmbedUrl}
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  allowFullScreen
+                />
+
+                <div className="business-profile-map-label">
+                  <span className="business-profile-map-pin">
+                    <MapPin size={20} fill="currentColor" />
+                  </span>
+
+                  <div>
+                    <strong>{listing.name}</strong>
+                    <span>Business location</span>
+                  </div>
                 </div>
+
+                <a
+                  className="business-profile-map-directions"
+                  href={directionsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Navigation size={15} />
+                  Get Directions
+                </a>
               </div>
 
-              <a
-                className="business-profile-map-link"
-                href={directionsUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Open in Google Maps
-                <Navigation size={15} />
-              </a>
+              <div className="business-profile-location-details">
+                <MapPin size={18} />
+
+                <div>
+                  <strong>Business Address</strong>
+                  <p>{address}</p>
+                </div>
+
+                <a
+                  href={directionsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Open in Maps
+                  <ExternalLink size={13} />
+                </a>
+              </div>
             </section>
           )}
 
+          {/* CUSTOMER REVIEWS */}
           {activeTab === "reviews" && (
-            <section className="business-profile-panel business-profile-full-panel">
-              <h2>Customer Reviews</h2>
+            <div className="business-profile-reviews-layout">
+              <aside className="business-profile-panel business-profile-rating-summary">
+                <h2>User Ratings Summary</h2>
 
-              <div className="business-profile-review-summary">
-                <Star size={24} fill="currentColor" />
+                <div className="business-profile-rating-number">
+                  <strong>{listing.rating.toFixed(1)}</strong>
+                  <span>out of 5.0</span>
+                </div>
 
-                <strong>
-                  {listing.rating.toFixed(1)} / 5.0
-                </strong>
+                <div
+                  className="business-profile-rating-stars"
+                  aria-label={`${listing.rating.toFixed(1)} out of 5 stars`}
+                >
+                  {Array.from({ length: 5 }, (_, index) => (
+                    <Star
+                      key={index}
+                      size={19}
+                      fill={
+                        index < Math.round(listing.rating)
+                          ? "currentColor"
+                          : "none"
+                      }
+                    />
+                  ))}
+                </div>
 
-                <span>
-                  {listing.reviewCount ?? 142} reviews
-                </span>
-              </div>
-
-              <div className="business-profile-empty-tab">
-                <MessageCircle size={28} />
-
-                <h3>Customer feedback</h3>
-
-                <p>
-                  Individual customer reviews will appear here
-                  once real review data is connected.
+                <p className="business-profile-rating-count">
+                  Based on {reviewCount} customer reviews
                 </p>
+
+                <div className="business-profile-rating-breakdown">
+                  {([5, 4, 3, 2, 1] as const).map((star) => {
+                    const percentage = ratingBreakdown[star];
+
+                    return (
+                      <div
+                        className="business-profile-rating-row"
+                        key={star}
+                      >
+                        <span className="business-profile-rating-label">
+                          {star} ★
+                        </span>
+
+                        <div
+                          className="business-profile-rating-track"
+                          role="progressbar"
+                          aria-label={`${star} star reviews`}
+                          aria-valuenow={percentage}
+                          aria-valuemin={0}
+                          aria-valuemax={100}
+                        >
+                          <span
+                            style={{
+                              width: `${Math.min(
+                                100,
+                                Math.max(0, percentage),
+                              )}%`,
+                            }}
+                          />
+                        </div>
+
+                        <span className="business-profile-rating-percentage">
+                          {percentage}%
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <button
+                  type="button"
+                  className="business-profile-write-review"
+                  onClick={() => setShowReviewForm(true)}
+                >
+                  Write a Review
+                </button>
+              </aside>
+
+              <div className="business-profile-review-list">
+                {reviews.length > 0 ? (
+                  reviews.map((review) => (
+                    <article
+                      className="business-profile-review-card"
+                      key={review.id}
+                    >
+                      <div className="business-profile-review-avatar">
+                        {review.avatar ? (
+                          <img
+                            src={review.avatar}
+                            alt={review.name}
+                          />
+                        ) : (
+                          review.name.charAt(0).toUpperCase()
+                        )}
+                      </div>
+
+                      <div className="business-profile-review-content">
+                        <div className="business-profile-review-header">
+                          <div>
+                            <h3>{review.name}</h3>
+                            <span>{review.date}</span>
+                          </div>
+
+                          <div
+                            className="business-profile-review-stars"
+                            aria-label={`${review.rating} out of 5 stars`}
+                          >
+                            {Array.from(
+                              { length: 5 },
+                              (_, index) => (
+                                <Star
+                                  key={index}
+                                  size={15}
+                                  fill={
+                                    index < review.rating
+                                      ? "currentColor"
+                                      : "none"
+                                  }
+                                />
+                              ),
+                            )}
+                          </div>
+                        </div>
+
+                        <p>{review.comment}</p>
+                      </div>
+                    </article>
+                  ))
+                ) : (
+                  <div className="business-profile-no-reviews">
+                    <MessageCircle size={28} />
+                    <h3>No reviews yet</h3>
+                    <p>
+                      Be the first to share your experience with
+                      this business.
+                    </p>
+                  </div>
+                )}
               </div>
-            </section>
+            </div>
           )}
         </div>
       </section>
+
+      {/* WRITE A REVIEW POPUP */}
+      {showReviewForm && (
+        <div
+          className="business-profile-review-backdrop"
+          onClick={(event) => {
+            if (event.target === event.currentTarget) {
+              setShowReviewForm(false);
+            }
+          }}
+        >
+          <section
+            className="business-profile-review-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="business-review-title"
+          >
+            <button
+              type="button"
+              className="business-profile-review-close"
+              onClick={() => setShowReviewForm(false)}
+              aria-label="Close review form"
+            >
+              <X size={18} />
+            </button>
+
+            <h2 id="business-review-title">Write a Review</h2>
+            <p>Share your experience with {listing.name}.</p>
+
+            <form onSubmit={submitReview}>
+              <label htmlFor="business-review-name">
+                Your Name
+              </label>
+
+              <input
+                id="business-review-name"
+                value={reviewName}
+                onChange={(event) =>
+                  setReviewName(event.target.value)
+                }
+                placeholder="Enter your name"
+                required
+                maxLength={80}
+              />
+
+              <span className="business-profile-form-label">
+                Your Rating
+              </span>
+
+              <div className="business-profile-review-rating-picker">
+                {Array.from({ length: 5 }, (_, index) => {
+                  const rating = index + 1;
+
+                  return (
+                    <button
+                      type="button"
+                      key={rating}
+                      aria-label={`Rate ${rating} out of 5`}
+                      aria-pressed={reviewRating === rating}
+                      onClick={() => setReviewRating(rating)}
+                      className={
+                        rating <= reviewRating ? "selected" : ""
+                      }
+                    >
+                      <Star
+                        size={24}
+                        fill={
+                          rating <= reviewRating
+                            ? "currentColor"
+                            : "none"
+                        }
+                      />
+                    </button>
+                  );
+                })}
+              </div>
+
+              <label htmlFor="business-review-comment">
+                Your Review
+              </label>
+
+              <textarea
+                id="business-review-comment"
+                value={reviewComment}
+                onChange={(event) =>
+                  setReviewComment(event.target.value)
+                }
+                placeholder="Tell others about your experience..."
+                rows={4}
+                required
+                maxLength={1500}
+              />
+
+              <button
+                type="submit"
+                className="business-profile-submit-review"
+              >
+                <Send size={15} />
+                Submit Review
+              </button>
+            </form>
+          </section>
+        </div>
+      )}
     </div>
   );
 }
