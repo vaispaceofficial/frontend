@@ -9,6 +9,7 @@ import {
   ShieldCheck,
   Truck,
   ChevronRight,
+  Store,
 } from "lucide-react";
 
 import "./Marketplace.css";
@@ -223,8 +224,9 @@ function MiniVerticalCarousel({
   return (
     <div className={`hero-mini-carousel ${className}`}>
       <div
-        className={`hero-mini-track ${direction === "down" ? "move-down" : "move-up"
-          }`}
+        className={`hero-mini-track ${
+          direction === "down" ? "move-down" : "move-up"
+        }`}
       >
         {duplicatedItems.map((item, index) => (
           <div
@@ -263,9 +265,7 @@ function Marketplace() {
   const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
 
-  /* =======================================================
-     SEARCH
-  ======================================================= */
+  /* SEARCH */
 
   const handleSearch = () => {
     const query = searchTerm.trim();
@@ -280,44 +280,25 @@ function Marketplace() {
     );
   };
 
-  /* =======================================================
-     ADD TO CART
-  ======================================================= */
+  /* ADD TO CART */
 
-  const handleAddToCart = (product: (typeof products)[number]) => {
+  const handleAddToCart = (
+    product: (typeof products)[number]
+  ) => {
     addToCart(product);
     navigate("/cart");
   };
 
-  /* =======================================================
-     RENDER
-  ======================================================= */
+  /* RENDER */
 
   return (
     <main className="accessories-sales-page">
-
-
-      {/* =====================================================
-          HERO
-      ===================================================== */}
+      {/* HERO */}
 
       <section className="accessories-hero">
-
-
         <div className="marketplace-hero-cart">
           <CartShortcut />
-
-          {/* <Link
-            to="/register-vendor"
-            className="marketplace-register-button"
-          >
-            <span className="marketplace-register-text">
-              <strong>Register</strong>
-            </span>
-          </Link> */} 
-
         </div>
-
 
         <div className="accessories-hero-content">
           <span className="accessories-eyebrow">
@@ -330,9 +311,9 @@ function Marketplace() {
           </h1>
 
           <p>
-            Shop appliances and spare parts, electronics, fashion,
-            furniture, home decor, lighting, sports and fitness
-            essentials — all in one place.
+            Shop appliances and spare parts, electronics,
+            fashion, furniture, home decor, lighting, sports
+            and fitness essentials — all in one place.
           </p>
 
           {/* SEARCH */}
@@ -356,9 +337,7 @@ function Marketplace() {
               aria-label="Search marketplace products"
             />
 
-            <button type="submit">
-              Search
-            </button>
+            <button type="submit">Search</button>
           </form>
 
           {/* FEATURES */}
@@ -378,6 +357,34 @@ function Marketplace() {
               <Wrench size={18} />
               <span>Installation support</span>
             </div>
+          </div>
+
+          {/* REGISTER AS A SELLER */}
+
+          <div className="marketplace-seller-actions">
+            <Link
+              to="/register-vendor"
+              className="marketplace-seller-card"
+              aria-label="Register as a Seller"
+            >
+              <span className="marketplace-seller-icon">
+                <Store size={23} strokeWidth={1.8} />
+              </span>
+
+              <span className="marketplace-seller-copy">
+
+                <strong>Register as a Seller</strong>
+              </span>
+
+              <span className="marketplace-seller-arrow">
+                <ArrowRight size={20} />
+              </span>
+
+              <span
+                className="marketplace-seller-decoration"
+                aria-hidden="true"
+              />
+            </Link>
           </div>
         </div>
 
@@ -419,9 +426,7 @@ function Marketplace() {
         </div>
       </section>
 
-      {/* =====================================================
-          SHOP BY CATEGORY
-      ===================================================== */}
+      {/* SHOP BY CATEGORY */}
 
       <section className="accessories-section">
         <div className="accessories-section-heading">
@@ -434,7 +439,8 @@ function Marketplace() {
 
             <p>
               Explore five product categories, from appliance
-              spare parts to fashion, home decor and sports equipment.
+              spare parts to fashion, home decor and sports
+              equipment.
             </p>
           </div>
 
@@ -485,16 +491,12 @@ function Marketplace() {
         </div>
       </section>
 
-      {/* =====================================================
-          TOP PICKS
-      ===================================================== */}
+      {/* TOP PICKS */}
 
       <section className="accessories-section products-section">
         <div className="accessories-section-heading">
           <div>
-            <span className="section-label">
-              TOP PICKS
-            </span>
+            <span className="section-label">TOP PICKS</span>
 
             <h2>Popular picks across our categories</h2>
 
@@ -519,8 +521,6 @@ function Marketplace() {
               className="product-card"
               key={product.id}
             >
-              {/* PRODUCT IMAGE */}
-
               <Link
                 to={`/accessories-sales/products/${product.id}`}
                 className="product-image"
@@ -537,8 +537,6 @@ function Marketplace() {
                 </div>
               </Link>
 
-              {/* PRODUCT CART BUTTON */}
-
               <button
                 type="button"
                 className="product-cart-button"
@@ -547,8 +545,6 @@ function Marketplace() {
               >
                 <ShoppingCart size={18} />
               </button>
-
-              {/* PRODUCT INFORMATION */}
 
               <div className="product-info">
                 <span className="product-category">
@@ -575,9 +571,7 @@ function Marketplace() {
         </div>
       </section>
 
-      {/* =====================================================
-          SERVICE + PRODUCT
-      ===================================================== */}
+      {/* SERVICE + PRODUCT */}
 
       <section className="service-product-section accessories-final-cta">
         <div className="service-product-content">
@@ -591,9 +585,9 @@ function Marketplace() {
           </h2>
 
           <p>
-            NeedOneService connects products with professional service.
-            If your product needs installation, maintenance or support,
-            we can help with that too.
+            NeedOneService connects products with professional
+            service. If your product needs installation,
+            maintenance or support, we can help with that too.
           </p>
 
           <Link
@@ -639,4 +633,3 @@ function Marketplace() {
 }
 
 export default Marketplace;
-

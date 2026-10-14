@@ -25,6 +25,7 @@ import {
   Monitor,
   Factory,
   Sparkles,
+  Store,
 } from "lucide-react";
 
 import type { LucideIcon } from "lucide-react";
@@ -710,15 +711,15 @@ function CityListingsPage() {
   --------------------------------------------------------- */
 
 
-const chooseCategory = useCallback(
-  (categoryId: string) => {
-    setActiveCategory(categoryId);
-    setActiveFilter("all");
-    setActiveSubcategory("All Specialities");
-    scrollToListings();
-  },
-  [scrollToListings],
-);
+  const chooseCategory = useCallback(
+    (categoryId: string) => {
+      setActiveCategory(categoryId);
+      setActiveFilter("all");
+      setActiveSubcategory("All Specialities");
+      scrollToListings();
+    },
+    [scrollToListings],
+  );
 
 
   const chooseFilter = useCallback(
@@ -841,6 +842,7 @@ const chooseCategory = useCallback(
               </button>
             </form>
 
+
             <div className="city-listings-trust">
               <span className="city-listings-trust-item">
                 <BadgeCheck size={15} />
@@ -854,6 +856,31 @@ const chooseCategory = useCallback(
                 Customer Reviews
               </span>
             </div>
+
+
+
+            {/* BUSINESS REGISTRATION BUTTON */}
+            <div className="city-listings-hero-register">
+              <button
+                type="button"
+                className="city-listings-register-button"
+                aria-label="Register as a Business Listing"
+                onClick={() => navigate("/register-vendor")}
+              >
+                <Store size={20} strokeWidth={1.9} />
+
+                <span>Register as a Business Listing</span>
+
+                <ArrowRight size={16} />
+              </button>
+
+              <p className="city-listings-register-caption">
+                Grow your business. Reach more customers.
+              </p>
+            </div>
+
+
+
           </div>
 
           <CityListingsShowcase />
@@ -927,8 +954,8 @@ const chooseCategory = useCallback(
                         type="button"
                         key={category.id}
                         className={`city-listings-category-item ${activeCategory === category.id
-                            ? "active"
-                            : ""
+                          ? "active"
+                          : ""
                           }`}
                         onClick={() =>
                           chooseCategory(category.id)
