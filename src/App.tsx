@@ -51,6 +51,8 @@ import ProfessionalServicesPage from "./pages/ProfessionalServicesPage";
 import AMCPage from "./pages/AMCPage";
 import AccessoriesSalesPage from "./pages/Marketplace";
 
+
+
 import CityListingsPage from "./pages/CityListingsPage";
 import CityListingsBrowsePage from "./pages/CityListingsBrowsePage";
 
@@ -64,6 +66,8 @@ import TutorRegisterPage from "./pages/TutorRegisterPage";
 import CartPage from "./pages/CartPage";
 import AccessoriesProductsPage from "./pages/AccessoriesProductsPage";
 import ProductDetailsPage from "./pages/ProductDetailsPage";
+
+import FindMyPropertyPage from "./pages/FindMyPropertyPage";
 
 import ScrollToTop from "./components/ScrollToTop";
 import Footer from "./components/Footer";
@@ -298,9 +302,8 @@ function Navbar() {
           >
             <button
               type="button"
-              className={`network-nav-button ${
-                networkOpen ? "active" : ""
-              }`}
+              className={`network-nav-button ${networkOpen ? "active" : ""
+                }`}
               onClick={() =>
                 setNetworkOpen((current) => !current)
               }
@@ -571,9 +574,8 @@ function ServiceCardStack() {
           return (
             <Link
               to={service.path}
-              className={`stack-service-card stack-card-${
-                index + 1
-              }`}
+              className={`stack-service-card stack-card-${index + 1
+                }`}
               key={service.title}
               style={
                 {
@@ -729,9 +731,8 @@ function HomePage() {
                 key={image}
                 src={image}
                 alt="NEED ONE SERVICE home service"
-                className={`hero-bg-image ${
-                  index === currentImage ? "active" : ""
-                }`}
+                className={`hero-bg-image ${index === currentImage ? "active" : ""
+                  }`}
               />
             ))}
 
@@ -1008,6 +1009,8 @@ function AppContent() {
           path="/city-listings-explore/browse"
           element={<CityListingsBrowsePage />}
         />
+
+        <Route path="/find-my-property" element={<FindMyPropertyPage />} />
 
         {/* MARKETPLACE */}
         <Route

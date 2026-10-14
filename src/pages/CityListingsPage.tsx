@@ -81,15 +81,11 @@ export const categories: ListingCategory[] = [
       "Discover doctors, clinics, diagnostic centres and hospitals.",
     tags: ["All Specialities", "Top Rated", "Verified Only", "Open Now"],
     subcategories: [
-      "Hospitals",
-      "Clinics",
-      "Orthopaedic Clinics",
-      "Gynaecology",
-      "Dental Clinics",
+      "Hospitals & Clinics",
+      "Specialized Clinics",
+      "Alternative Medicine",
+      "Medical Supplies & Services",
       "Diagnostic Centres",
-      "Physiotherapy",
-      "Eye Care",
-      "Pharmacies",
     ],
   },
   {
@@ -100,14 +96,13 @@ export const categories: ListingCategory[] = [
       "Explore schools, colleges, coaching centres and educational institutes.",
     tags: ["All Specialities", "Top Rated", "Verified Only", "Open Now"],
     subcategories: [
-      "Schools",
-      "Engineering Colleges",
-      "Degree Colleges",
+      "Schools & Play Preschools",
+      "Colleges & Universities",
+      "Competitive Coaching",
       "Coaching Centres",
-      "Competitive Exams",
-      "Universities",
-      "Computer Institutes",
-      "Skill Development",
+      "IT & Tech Training Institutes",
+      "Non-IT & Skill Institutes",
+      "Tutions & Academics",
     ],
   },
   {
@@ -118,13 +113,9 @@ export const categories: ListingCategory[] = [
       "Find property dealers, real estate consultants and property services.",
     tags: ["All Specialities", "Top Rated", "Verified Only", "Open Now"],
     subcategories: [
-      "Real Estate Agents",
-      "Residential Properties",
-      "Commercial Properties",
-      "Property Management",
-      "Rental Properties",
-      "Land & Plots",
-      "Property Consultants",
+      "Property Sales",
+      "Rentals & Leasing",
+      "Property Services",
     ],
   },
   {
@@ -135,14 +126,12 @@ export const categories: ListingCategory[] = [
       "Connect with builders, civil contractors and construction specialists.",
     tags: ["All Specialities", "Top Rated", "Verified Only", "Open Now"],
     subcategories: [
-      "Civil Contractors",
-      "Builders",
+      "Construction & Building",
+      "Architects & Engineers",
       "Construction Companies",
-      "Heavy Equipment",
-      "Road Contractors",
-      "Building Materials",
-      "Plumbing Contractors",
-      "Electrical Contractors",
+      "Elevators & Lifts",
+      "Building Material Suppliers",
+      "Heavy Equipment Services",
     ],
   },
   {
@@ -154,13 +143,9 @@ export const categories: ListingCategory[] = [
     tags: ["All Specialities", "Top Rated", "Verified Only", "Open Now"],
     subcategories: [
       "Interior Designers",
-      "Architects",
-      "Modular Kitchens",
-      "Furniture",
-      "Home Renovation",
-      "False Ceiling",
-      "Painting Services",
-      "Carpentry",
+      "Modular & Furniture",
+      "Glass, Aluminium & Steel Works",
+      "Decor & Furnishings",
     ],
   },
   {
@@ -171,14 +156,9 @@ export const categories: ListingCategory[] = [
       "Find professional consultants and business support services.",
     tags: ["All Specialities", "Top Rated", "Verified Only", "Open Now"],
     subcategories: [
-      "Chartered Accountants",
-      "Legal Services",
-      "Business Consultants",
-      "Marketing Agencies",
-      "HR Services",
-      "Insurance Services",
-      "Tax Consultants",
-      "Recruitment Agencies",
+      "FInancial & Legal",
+      "Business Registration & ISO",
+      "Financial Services",
     ],
   },
   {
@@ -189,14 +169,9 @@ export const categories: ListingCategory[] = [
       "Explore IT companies, computer services and security solutions.",
     tags: ["All Specialities", "Top Rated", "Verified Only", "Open Now"],
     subcategories: [
-      "IT Services",
-      "Computer Repair",
-      "Laptop Services",
-      "CCTV Installation",
-      "Security Systems",
-      "Networking",
-      "Software Development",
-      "Computer Hardware",
+      "Computer & Laptop Repair",
+      "Networking & IT Infrastructure",
+      "Security & Automation",
     ],
   },
   {
@@ -208,13 +183,8 @@ export const categories: ListingCategory[] = [
     tags: ["All Specialities", "Top Rated", "Verified Only", "Open Now"],
     subcategories: [
       "Event Planners",
-      "Wedding Services",
-      "Photographers",
-      "Videographers",
-      "Catering",
-      "Decoration",
-      "Entertainment",
-      "Digital Media",
+      "Photography & Video",
+      "Event Vendors",
     ],
   },
   {
@@ -226,13 +196,8 @@ export const categories: ListingCategory[] = [
     tags: ["All Specialities", "Top Rated", "Verified Only", "Open Now"],
     subcategories: [
       "Travel Agencies",
-      "Tour Operators",
-      "Packers & Movers",
-      "Cargo Services",
-      "Courier Services",
-      "Car Rentals",
-      "Bus Operators",
-      "Logistics Companies",
+      "Tansport & Vehicle Rental",
+      "Logistics & Moving",
     ],
   },
   {
@@ -243,15 +208,9 @@ export const categories: ListingCategory[] = [
       "Explore vehicle showrooms, repair shops and automotive specialists.",
     tags: ["All Specialities", "Top Rated", "Verified Only", "Open Now"],
     subcategories: [
-      "Car Showrooms",
-      "Car Dealers",
-      "Car Repair",
-      "Car Wash",
-      "Vehicle Servicing",
-      "Two-Wheeler Services",
-      "Car Interiors",
-      "Car Accessories",
-      "Roadside Assistance",
+      "Car Care",
+      "BIke Care ",
+      "Dealerships",
     ],
   },
   {
@@ -262,14 +221,8 @@ export const categories: ListingCategory[] = [
       "Connect with manufacturers, industrial suppliers and engineering firms.",
     tags: ["All Specialities", "Top Rated", "Verified Only", "Open Now"],
     subcategories: [
-      "Manufacturers",
-      "Industrial Equipment",
-      "Machine Suppliers",
-      "Fabrication",
-      "Metal Works",
-      "Industrial Automation",
-      "Wholesale Suppliers",
-      "Engineering Services",
+      "Machinery & Tools",
+      "Printing & Packaging",
     ],
   },
   {
@@ -289,6 +242,14 @@ export const categories: ListingCategory[] = [
       "Banquet Halls",
       "Online Booking Services",
     ],
+  },
+  {
+    id: "find-my-property",
+    name: "Find My Property",
+    icon: Building2,
+    description: "Discover homes, offices and investment properties to buy, rent or lease.",
+    tags: ["Buy", "Rent", "Lease"],
+    subcategories: ["Residential", "Commercial", "Apartments", "Independent Houses", "Office Spaces"],
   },
 ];
 
@@ -725,10 +686,10 @@ function CityListingsPage() {
       const matchesSubcategory =
         activeSubcategory === "All Specialities" ||
         listing.subcategory?.toLowerCase() ===
-          activeSubcategory.toLowerCase() ||
+        activeSubcategory.toLowerCase() ||
         (!listing.subcategory &&
           listing.label.toLowerCase() ===
-            activeSubcategory.toLowerCase());
+          activeSubcategory.toLowerCase());
 
       return (
         matchesSearch &&
@@ -748,15 +709,17 @@ function CityListingsPage() {
      FILTER ACTIONS
   --------------------------------------------------------- */
 
-  const chooseCategory = useCallback(
-    (categoryId: string) => {
-      setActiveCategory(categoryId);
-      setActiveFilter("all");
-      setActiveSubcategory("All Specialities");
-      scrollToListings();
-    },
-    [scrollToListings],
-  );
+
+const chooseCategory = useCallback(
+  (categoryId: string) => {
+    setActiveCategory(categoryId);
+    setActiveFilter("all");
+    setActiveSubcategory("All Specialities");
+    scrollToListings();
+  },
+  [scrollToListings],
+);
+
 
   const chooseFilter = useCallback(
     (filter: ListingFilter) => {
@@ -784,32 +747,32 @@ function CityListingsPage() {
 
   const modalListing: BusinessProfile | null = selectedListing
     ? {
-        id: selectedListing.id,
-        name: selectedListing.name,
-        category:
-          categories.find(
-            (category) =>
-              category.id === selectedListing.category,
-          )?.name ?? "Business",
-        label: selectedListing.label,
-        description: selectedListing.description,
-        rating: selectedListing.rating,
-        location: selectedListing.location,
-        phone: selectedListing.phone,
-        image: selectedListing.image,
-        verified: selectedListing.verified,
-        openNow: selectedListing.openNow,
-        reviewCount: selectedListing.reviews,
-        email: selectedListing.email,
-        about: selectedListing.about,
-        hours: selectedListing.hours.map((item) => ({
-          day: item.days,
-          time: item.time,
-        })),
-        amenities: selectedListing.amenities,
-        services: selectedListing.services,
-        gallery: selectedListing.gallery,
-      }
+      id: selectedListing.id,
+      name: selectedListing.name,
+      category:
+        categories.find(
+          (category) =>
+            category.id === selectedListing.category,
+        )?.name ?? "Business",
+      label: selectedListing.label,
+      description: selectedListing.description,
+      rating: selectedListing.rating,
+      location: selectedListing.location,
+      phone: selectedListing.phone,
+      image: selectedListing.image,
+      verified: selectedListing.verified,
+      openNow: selectedListing.openNow,
+      reviewCount: selectedListing.reviews,
+      email: selectedListing.email,
+      about: selectedListing.about,
+      hours: selectedListing.hours.map((item) => ({
+        day: item.days,
+        time: item.time,
+      })),
+      amenities: selectedListing.amenities,
+      services: selectedListing.services,
+      gallery: selectedListing.gallery,
+    }
     : null;
 
   /* ---------------------------------------------------------
@@ -939,9 +902,8 @@ function CityListingsPage() {
             <div className="city-listings-fixed-category">
               <button
                 type="button"
-                className={`city-listings-category-item ${
-                  activeCategory === "all" ? "active" : ""
-                }`}
+                className={`city-listings-category-item ${activeCategory === "all" ? "active" : ""
+                  }`}
                 onClick={() => chooseCategory("all")}
                 aria-pressed={activeCategory === "all"}
               >
@@ -964,11 +926,10 @@ function CityListingsPage() {
                       <button
                         type="button"
                         key={category.id}
-                        className={`city-listings-category-item ${
-                          activeCategory === category.id
+                        className={`city-listings-category-item ${activeCategory === category.id
                             ? "active"
                             : ""
-                        }`}
+                          }`}
                         onClick={() =>
                           chooseCategory(category.id)
                         }
@@ -1062,14 +1023,14 @@ function CityListingsPage() {
                 activeFilter !== "all" ||
                 activeSubcategory !== "All Specialities" ||
                 search.trim() !== "") && (
-                <button
-                  type="button"
-                  onClick={resetFilters}
-                >
-                  <X size={13} />
-                  Reset Filters
-                </button>
-              )}
+                  <button
+                    type="button"
+                    onClick={resetFilters}
+                  >
+                    <X size={13} />
+                    Reset Filters
+                  </button>
+                )}
             </div>
           </div>
         </section>

@@ -308,13 +308,14 @@ function Marketplace() {
           <CartShortcut />
 
           {/* <Link
-            to="/products-and-spares"
+            to="/register-vendor"
             className="marketplace-register-button"
           >
             <span className="marketplace-register-text">
               <strong>Register</strong>
             </span>
-          </Link> */}
+          </Link> */} 
+
         </div>
 
 
