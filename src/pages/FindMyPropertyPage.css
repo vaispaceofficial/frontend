@@ -1,4 +1,9 @@
+
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
+
+/* =====================================================
+   FIND MY PROPERTY — BASE
+===================================================== */
 
 .fmp-page {
     --fmp-navy: #173867;
@@ -6,18 +11,28 @@
     --fmp-pale: #e8eef9;
     --fmp-ink: #172a47;
     --fmp-muted: #6d7d93;
+
+    width: 100%;
     max-width: 1180px;
+    min-width: 0;
     margin: 0 auto;
     padding: 12px 16px 24px;
+
     color: var(--fmp-ink);
     font-family: 'DM Sans', sans-serif;
     background: #fff;
-    font-size: 13px
+    font-size: 13px;
 }
 
-.fmp-page * {
-    box-sizing: border-box
+.fmp-page *,
+.fmp-page *::before,
+.fmp-page *::after {
+    box-sizing: border-box;
 }
+
+/* =====================================================
+   HEADER
+===================================================== */
 
 .fmp-header {
     display: flex;
@@ -25,54 +40,61 @@
     justify-content: space-between;
     gap: 16px;
     flex-wrap: wrap;
-    padding: 2px 0 10px
+    padding: 2px 0 10px;
 }
 
 .fmp-brand {
     display: flex;
     align-items: center;
     gap: 9px;
+    color: var(--fmp-navy);
     text-decoration: none;
-    color: var(--fmp-navy)
 }
 
 .fmp-brand-icon {
     display: grid;
     place-items: center;
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
+    width: 48px;
+    height: 48px;
+    flex: 0 0 auto;
+    border-radius: 10px;
     background: var(--fmp-navy);
-    color: #fff
+    color: #fff;
 }
 
 .fmp-brand strong {
     display: block;
     font-family: Manrope, sans-serif;
     font-size: 16px;
-    line-height: 1.25
+    line-height: 1.25;
 }
 
 .fmp-brand small {
     display: block;
-    font-size: 8px;
-    letter-spacing: .08em;
-    margin-top: 2px;
-    color: #7788a0
+    margin-top: 3px;
+    color: #7788a0;
+    font-size: 10px;
 }
 
 .fmp-post-top {
-    display: flex;
+    display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 5px;
+    padding: 12px 16px;
+
     background: var(--fmp-navy);
     color: #fff;
     border: 0;
-    border-radius: 6px;
-    padding: 9px 12px;
-    font-size: 11px;
-    font-weight: 700;
-    cursor: pointer
+    border-radius: 8px;
+
+    font: 700 12px 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.fmp-post-top:hover {
+    background: var(--fmp-blue);
 }
 
 .fmp-mini-nav {
@@ -80,203 +102,359 @@
     align-items: center;
     gap: 14px;
     width: 100%;
-    font-size: 10px
+    font-size: 10px;
 }
 
 .fmp-mini-nav a {
     color: #50617a;
-    text-decoration: none
+    text-decoration: none;
+}
+
+.fmp-mini-nav a:hover {
+    color: var(--fmp-navy);
 }
 
 .fmp-mini-nav span {
-    margin-left: auto;
     display: flex;
     align-items: center;
     gap: 4px;
-    color: #19836f
+    margin-left: auto;
+    color: #19836f;
 }
 
+/* =====================================================
+   SEARCH HERO
+===================================================== */
+
 .fmp-search-panel {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    padding: 20px;
     background: var(--fmp-pale);
     border-radius: 12px;
-    padding: 20px;
-    max-width: 100%;
 }
 
 .fmp-eyebrow {
     display: inline-block;
+    padding: 5px 8px;
     border-radius: 4px;
     background: #d6e3ff;
     color: #27579a;
-    padding: 4px 7px;
     font-size: 9px;
     font-weight: 700;
-    letter-spacing: .04em
+    letter-spacing: 0.04em;
 }
 
 .fmp-search-panel h1 {
-    font: 800 25px/1.2 Manrope, sans-serif;
     margin: 9px 0 5px;
-    color: #173867
+    color: #173867;
+    font: 800 25px/1.2 Manrope, sans-serif;
 }
 
 .fmp-intro {
-    font-size: 12px;
+    margin: 0 0 15px;
     color: #657690;
-    margin: 0 0 15px
+    font-size: 12px;
+    line-height: 1.6;
 }
+
+/* =====================================================
+   SEARCH FORM — KEEP EVERY FIELD FULL WIDTH
+===================================================== */
 
 .fmp-search-form {
-    background: #fff;
-    border-radius: 9px;
-    padding: 14px;
     display: flex;
     flex-direction: column;
-    gap: 8px
+    align-items: stretch;
+    gap: 10px;
+
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    padding: 16px;
+
+    background: #fff;
+    border-radius: 9px;
 }
 
-.fmp-field-title {
-    font-size: 10px;
+/* Field labels */
+
+.fmp-search-form .fmp-field-title {
+    display: block;
+    width: 100%;
+    margin: 2px 0 0;
     color: #5d6e85;
+    font-size: 11px;
     font-weight: 600;
-    margin-top: 2px
+    line-height: 1.4;
+    text-align: left;
 }
+
+/* =====================================================
+   OWNER / BUILDER NOTICE
+   Place immediately before Preferred city or locality
+===================================================== */
+
+.fmp-listing-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    margin: 2px 0 2px;
+    padding: 11px 13px;
+
+    background: #eff6ff;
+    border: 1px solid #dbeafe;
+    border-radius: 8px;
+
+    color: #1d4ed8;
+    font-size: 12px;
+    line-height: 1.55;
+    text-align: left;
+}
+
+.fmp-listing-note svg {
+    flex: 0 0 16px;
+    width: 16px;
+    height: 16px;
+    margin-top: 1px;
+}
+
+/* =====================================================
+   RENT / LEASE / BUY
+===================================================== */
 
 .fmp-deal-tabs {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 6px;
-    margin-bottom: 2px
+    width: 100%;
+    margin-bottom: 2px;
 }
 
 .fmp-deal-tabs button {
-    height: 38px;
-    border: 1px solid #e6ebf2;
-    background: #f4f6f9;
-    border-radius: 5px;
-    color: #53657e;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 2px;
-    font-size: 10px;
-    cursor: pointer
+    gap: 3px;
+
+    width: 100%;
+    min-width: 0;
+    height: 42px;
+    padding: 5px;
+
+    background: #f4f6f9;
+    border: 1px solid #e6ebf2;
+    border-radius: 6px;
+
+    color: #53657e;
+    font: 500 11px 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition:
+        background 0.2s ease,
+        color 0.2s ease,
+        border-color 0.2s ease;
 }
 
 .fmp-deal-tabs button.active {
     background: var(--fmp-navy);
-    color: white;
-    border-color: var(--fmp-navy)
+    color: #fff;
+    border-color: var(--fmp-navy);
 }
+
+.fmp-deal-tabs button:focus-visible,
+.fmp-post-top:focus-visible,
+.fmp-search-submit:focus-visible {
+    outline: 2px solid #6b8ec8;
+    outline-offset: 3px;
+}
+
+/* =====================================================
+   PROPERTY CATEGORY AND BEDROOM RADIOS
+===================================================== */
 
 .fmp-radio-row {
     display: flex;
     align-items: center;
-    gap: 18px;
     flex-wrap: wrap;
-    padding: 2px 0 4px
+    gap: 12px 18px;
+
+    width: 100%;
+    padding: 3px 0 5px;
 }
 
 .fmp-radio-row label {
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    font-size: 10px;
+
     color: #43536b;
-    cursor: pointer
+    font-size: 11px;
+    line-height: 1.5;
+    cursor: pointer;
 }
 
 .fmp-radio-row input {
+    flex: 0 0 auto;
+    margin: 0;
     accent-color: var(--fmp-navy);
-    margin: 0
 }
 
-.fmp-input-wrap,
-.fmp-select-wrap {
+.fmp-bedrooms {
+    gap: 10px 18px;
+}
+
+/* =====================================================
+   CITY / LOCALITY INPUT
+===================================================== */
+
+.fmp-input-wrap {
     position: relative;
     display: flex;
-    align-items: center
+    align-items: center;
+
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
 }
 
-.fmp-input-wrap>svg {
+.fmp-input-wrap > svg {
     position: absolute;
-    left: 10px;
+    left: 12px;
+    z-index: 1;
     color: #526b8c;
-    pointer-events: none
+    pointer-events: none;
 }
 
 .fmp-input-wrap input,
 .fmp-input,
 .fmp-select-wrap select {
+    display: block;
     width: 100%;
-    height: 35px;
-    border: 1px solid #dce3ed;
-    border-radius: 18px;
-    padding: 0 12px;
+    max-width: 100%;
+    min-width: 0;
+    height: 42px;
+    padding: 0 14px;
+
     background: #fff;
+    border: 1px solid #dce3ed;
+    border-radius: 22px;
+
     color: #273a54;
-    font: inherit;
-    font-size: 11px;
-    outline: none
+    font: 400 12px 'DM Sans', sans-serif;
+    outline: none;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
 }
 
 .fmp-input-wrap input {
-    padding-left: 28px
+    padding-left: 36px;
 }
 
 .fmp-input-wrap input:focus,
 .fmp-input:focus,
 .fmp-select-wrap select:focus {
     border-color: #6b8ec8;
-    box-shadow: 0 0 0 2px #dbe7fb
+    box-shadow: 0 0 0 3px #dbe7fb;
+}
+
+/* =====================================================
+   KEYWORDS INPUT
+===================================================== */
+
+.fmp-input {
+    border-radius: 22px;
+}
+
+/* =====================================================
+   BUDGET DROPDOWN
+===================================================== */
+
+.fmp-select-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
 }
 
 .fmp-select-wrap select {
     appearance: none;
-    border-radius: 7px;
-    padding-right: 30px
+    padding-right: 38px;
+    border-radius: 8px;
+    cursor: pointer;
 }
 
-.fmp-select-wrap>svg {
+.fmp-select-wrap > svg {
     position: absolute;
-    right: 10px;
+    right: 12px;
     color: #5d6e85;
-    pointer-events: none
+    pointer-events: none;
 }
+
+/* =====================================================
+   SEARCH BUTTON
+===================================================== */
 
 .fmp-search-submit {
-    width: 100%;
-    min-height: 36px;
-    border: 0;
-    border-radius: 20px;
-    background: #090909;
-    color: #fff;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 7px;
-    font-size: 11px;
-    font-weight: 700;
+    gap: 8px;
+
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    min-height: 42px;
+    margin-top: 3px;
+    padding: 10px 16px;
+
+    background: #090909;
+    border: 0;
+    border-radius: 24px;
+
+    color: #fff;
+    font: 700 12px 'DM Sans', sans-serif;
     cursor: pointer;
-    margin-top: 2px
+    transition: background 0.2s ease;
 }
 
 .fmp-search-submit:hover {
-    background: #173867
+    background: var(--fmp-navy);
 }
+
+/* =====================================================
+   TRUST NOTE
+===================================================== */
 
 .fmp-trust-note {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 5px;
+
+    margin: 11px 2px 0;
     color: #627894;
-    font-size: 9px;
-    margin: 11px 2px 0
+    font-size: 10px;
+    line-height: 1.5;
 }
 
+/* =====================================================
+   RESULTS
+===================================================== */
+
 .fmp-results-section {
-    padding: 22px 0 0
+    width: 100%;
+    min-width: 0;
+    padding: 22px 0 0;
 }
 
 .fmp-results-heading {
@@ -284,100 +462,120 @@
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    margin-bottom: 12px
+    margin-bottom: 12px;
 }
 
 .fmp-results-heading h2 {
-    font: 700 18px Manrope, sans-serif;
     margin: 0 0 4px;
-    color: var(--fmp-navy)
+    color: var(--fmp-navy);
+    font: 700 18px Manrope, sans-serif;
 }
 
 .fmp-results-heading p {
-    font-size: 11px;
+    margin: 0;
     color: #6c7b91;
-    margin: 0
+    font-size: 11px;
+    line-height: 1.5;
 }
 
 .fmp-results-tools {
     display: flex;
     align-items: center;
-    gap: 12px
+    gap: 12px;
+    flex-shrink: 0;
 }
 
 .fmp-filter-button,
 .fmp-reset-button {
-    border: 0;
-    background: transparent;
-    color: #536a88;
-    font-size: 10px;
     display: flex;
     align-items: center;
     gap: 5px;
-    cursor: pointer
+    padding: 5px 0;
+
+    background: transparent;
+    border: 0;
+    color: #536a88;
+    font-size: 11px;
+    cursor: pointer;
 }
 
 .fmp-reset-button {
     color: #173867;
-    font-weight: 600
+    font-weight: 600;
 }
+
+/* =====================================================
+   FILTER PANEL
+===================================================== */
 
 .fmp-filter-panel {
     display: flex;
     align-items: center;
     justify-content: flex-end;
+    flex-wrap: wrap;
     gap: 10px;
-    padding: 10px 12px;
+
     margin-bottom: 12px;
+    padding: 10px 12px;
+
     border: 1px solid #e3e9f2;
-    border-radius: 8px
+    border-radius: 8px;
 }
 
 .fmp-filter-panel label {
+    color: #5e6d82;
     font-size: 11px;
-    color: #5e6d82
 }
 
 .fmp-filter-panel select {
+    max-width: 100%;
     margin-left: 6px;
+    padding: 7px;
+
+    background: #fff;
     border: 1px solid #dce3ed;
     border-radius: 5px;
-    padding: 6px;
-    background: white;
-    color: #243b5b
+    color: #243b5b;
+    font: inherit;
 }
 
 .fmp-filter-panel button,
 .fmp-empty button {
+    padding: 8px 12px;
+    background: var(--fmp-navy);
     border: 0;
     border-radius: 5px;
-    padding: 7px 12px;
-    background: var(--fmp-navy);
     color: #fff;
+    font-size: 11px;
     cursor: pointer;
-    font-size: 10px
 }
+
+/* =====================================================
+   PROPERTY GRID
+===================================================== */
 
 .fmp-property-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px
+    gap: 12px;
+    width: 100%;
+    min-width: 0;
 }
 
 .fmp-property-card {
+    min-width: 0;
+    overflow: hidden;
+    background: #fff;
     border: 1px solid #dce3ed;
     border-radius: 9px;
-    overflow: hidden;
-    background: white;
-    min-width: 0;
-    box-shadow: 0 2px 8px #1a35520a
+    box-shadow: 0 2px 8px #1a35520a;
 }
 
 .fmp-property-image {
-    height: 210px;
     position: relative;
+    height: 210px;
+    overflow: hidden;
     background: #edf1f6;
-    overflow: hidden
 }
 
 .fmp-property-image img {
@@ -385,78 +583,89 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform .25s
+    transition: transform 0.25s ease;
 }
 
 .fmp-property-card:hover .fmp-property-image img {
-    transform: scale(1.025)
+    transform: scale(1.025);
 }
 
 .fmp-property-tag {
     position: absolute;
-    left: 9px;
     top: 9px;
-    background: #d7f4e8;
-    color: #167b5e;
-    border-radius: 4px;
+    left: 9px;
     padding: 4px 7px;
+
+    background: #d7f4e8;
+    border-radius: 4px;
+    color: #167b5e;
     font-size: 9px;
-    font-weight: 700
+    font-weight: 700;
 }
 
 .fmp-save {
     position: absolute;
-    right: 9px;
     top: 8px;
-    border: 1px solid #e3e8ef;
-    border-radius: 50%;
-    width: 28px;
-    height: 28px;
-    background: #ffffffed;
-    color: #63758e;
+    right: 9px;
+
     display: grid;
     place-items: center;
-    cursor: pointer
+    width: 30px;
+    height: 30px;
+
+    background: #ffffffed;
+    border: 1px solid #e3e8ef;
+    border-radius: 50%;
+    color: #63758e;
+    cursor: pointer;
 }
 
 .fmp-save.saved {
-    color: #d94b68
+    color: #d94b68;
 }
+
+/* =====================================================
+   PROPERTY DETAILS
+===================================================== */
 
 .fmp-property-content {
-    padding: 11px
+    min-width: 0;
+    padding: 11px;
 }
 
-.fmp-property-content>small {
+.fmp-property-content > small {
     color: #6e7d91;
-    font-size: 9px
+    font-size: 10px;
 }
 
 .fmp-property-content h3 {
-    font: 700 13px Manrope, sans-serif;
     margin: 5px 0;
-    color: #1c3455
+    color: #1c3455;
+    font: 700 13px/1.45 Manrope, sans-serif;
+    overflow-wrap: anywhere;
 }
 
 .fmp-property-location {
     display: flex;
     align-items: center;
     gap: 4px;
+    margin: 5px 0 9px;
+
     color: #74849a;
     font-size: 10px;
-    margin: 5px 0 9px
+    line-height: 1.5;
 }
 
 .fmp-property-price {
     display: block;
+    margin-bottom: 8px;
     color: #173867;
     font: 800 15px Manrope, sans-serif;
-    margin-bottom: 8px
 }
 
 .fmp-property-price span {
+    color: #8190a4;
     font: 400 10px 'DM Sans', sans-serif;
-    color: #8190a4
 }
 
 .fmp-property-specs {
@@ -464,134 +673,166 @@
     align-items: center;
     flex-wrap: wrap;
     gap: 8px;
-    border-top: 1px solid #e5eaf1;
+
     padding-top: 9px;
+    border-top: 1px solid #e5eaf1;
+
     color: #63758d;
-    font-size: 9px
+    font-size: 10px;
 }
 
 .fmp-property-specs span {
     display: inline-flex;
     align-items: center;
-    gap: 4px
+    gap: 4px;
 }
 
 .fmp-view-details {
     width: 100%;
     margin-top: 10px;
-    border: 1px solid #dce3ec;
+    padding: 9px 10px;
+
     background: #fff;
-    color: #344966;
+    border: 1px solid #dce3ec;
     border-radius: 6px;
-    padding: 8px 10px;
-    font-size: 10px;
-    cursor: pointer
+
+    color: #344966;
+    font-size: 11px;
+    cursor: pointer;
+    transition:
+        border-color 0.2s ease,
+        color 0.2s ease;
 }
 
 .fmp-view-details:hover {
     border-color: #173867;
-    color: #173867
+    color: #173867;
 }
+
+/* =====================================================
+   EMPTY RESULTS
+===================================================== */
 
 .fmp-empty {
     padding: 35px 15px;
-    text-align: center;
     border: 1px dashed #d3dce8;
     border-radius: 10px;
-    color: #708098
+    color: #708098;
+    text-align: center;
 }
 
 .fmp-empty h3 {
     margin: 8px 0;
-    color: #213b60
+    color: #213b60;
 }
 
 .fmp-empty p {
-    font-size: 11px
+    font-size: 11px;
+    line-height: 1.6;
 }
 
+/* =====================================================
+   PROPERTY OWNER CTA
+===================================================== */
+
 .fmp-owner-cta {
+    position: relative;
     margin-top: 24px;
-    border-radius: 10px;
-    background: #173867;
-    color: #fff;
     padding: 18px;
-    position: relative
+
+    background: #173867;
+    border-radius: 10px;
+    color: #fff;
 }
 
 .fmp-owner-icon {
     display: grid;
     place-items: center;
-    width: 30px;
-    height: 30px;
-    border-radius: 7px;
+    width: 34px;
+    height: 34px;
+    margin-bottom: 8px;
     background: #ffffff1c;
-    margin-bottom: 8px
+    border-radius: 7px;
 }
 
 .fmp-owner-cta h2 {
+    margin: 0 0 6px;
     font: 700 17px Manrope, sans-serif;
-    margin: 0 0 6px
 }
 
 .fmp-owner-cta p {
-    font-size: 11px;
-    color: #d6e2f3;
+    max-width: 600px;
     margin: 0 0 12px;
-    max-width: 600px
+    color: #d6e2f3;
+    font-size: 11px;
+    line-height: 1.6;
 }
 
 .fmp-owner-cta button {
-    width: 100%;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 6px;
-    border: 0;
-    border-radius: 18px;
+
+    width: 100%;
+    padding: 10px;
+
     background: #080b12;
+    border: 0;
+    border-radius: 20px;
     color: #fff;
-    padding: 9px;
-    font-size: 10px;
+
+    font-size: 11px;
     font-weight: 700;
-    cursor: pointer
+    cursor: pointer;
 }
+
+/* =====================================================
+   FOOTER
+===================================================== */
 
 .fmp-footer {
     display: flex;
     flex-direction: column;
     align-items: center;
-    text-align: center;
     gap: 4px;
     padding: 20px 0 0;
-    color: #718097
+
+    color: #718097;
+    text-align: center;
 }
 
 .fmp-footer strong {
+    color: #173867;
     font: 700 13px Manrope, sans-serif;
-    color: #173867
 }
 
 .fmp-footer span,
 .fmp-footer small {
-    font-size: 9px
+    font-size: 10px;
 }
 
 .fmp-footer a {
     margin-top: 5px;
-    font-size: 10px;
     color: #173867;
-    text-decoration: none
+    font-size: 11px;
+    text-decoration: none;
 }
+
+/* =====================================================
+   PROPERTY MODAL
+===================================================== */
 
 .fmp-modal-backdrop {
     position: fixed;
     inset: 0;
     z-index: 1000;
-    background: #07172dcc;
+
     display: grid;
     place-items: center;
-    padding: 18px
+    padding: 18px;
+
+    background: #07172dcc;
 }
 
 .fmp-modal {
@@ -599,170 +840,294 @@
     width: min(620px, 100%);
     max-height: 90vh;
     overflow: auto;
+
     background: #fff;
     border-radius: 12px;
-    box-shadow: 0 20px 70px #0003
+    box-shadow: 0 20px 70px #0003;
 }
 
-.fmp-modal>img {
+.fmp-modal > img {
+    display: block;
     width: 100%;
     height: 230px;
     object-fit: cover;
-    display: block
 }
 
 .fmp-modal-content {
-    padding: 20px
+    padding: 20px;
 }
 
 .fmp-modal-content h2 {
-    font: 800 22px Manrope, sans-serif;
+    margin: 10px 0;
     color: #173867;
-    margin: 10px 0
+    font: 800 22px Manrope, sans-serif;
 }
 
-.fmp-modal-content>p:not(.fmp-property-location) {
+.fmp-modal-content > p:not(.fmp-property-location) {
+    color: #566980;
     font-size: 12px;
     line-height: 1.7;
-    color: #566980
 }
 
 .fmp-modal-close {
     position: absolute;
-    right: 10px;
     top: 10px;
+    right: 10px;
     z-index: 1;
-    border: 0;
-    background: #fff;
-    border-radius: 50%;
-    width: 32px;
-    height: 32px;
+
     display: grid;
     place-items: center;
-    cursor: pointer
+    width: 32px;
+    height: 32px;
+
+    background: #fff;
+    border: 0;
+    border-radius: 50%;
+    cursor: pointer;
 }
 
 .fmp-modal-content .fmp-search-submit {
-    margin-top: 16px
+    margin-top: 16px;
 }
 
-@media(min-width:900px) {
+/* =====================================================
+   DESKTOP LAYOUT — FULL-WIDTH, LEFT-ALIGNED FORM
+===================================================== */
+
+@media (min-width: 900px) {
     .fmp-page {
-        padding: 18px 26px 30px
+        padding: 18px 26px 30px;
     }
 
     .fmp-header {
-        display: grid;
-        grid-template-columns: 1fr auto;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
     }
 
     .fmp-mini-nav {
-        grid-column: 1/-1;
-        grid-row: 2
+        display: none;
     }
 
     .fmp-search-panel {
+        width: 100%;
+        max-width: 100%;
         padding: 26px;
-        max-width: 100%
     }
 
+    /* Keep every form element in one column */
     .fmp-search-form {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+        width: 100%;
+        max-width: 100%;
+        padding: 16px;
+    }
+
+    /* All labels start from the left */
+    .fmp-search-form .fmp-field-title {
+        display: block;
+        align-self: stretch;
+        width: 100%;
+        margin: 2px 0 4px;
+        text-align: left;
+    }
+
+    /* Rent, Lease and Buy tabs stay full width */
+    .fmp-deal-tabs {
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        width: 100%;
+        margin-bottom: 6px;
+    }
+
+    /* Property categories stay on the left */
+    .fmp-radio-row {
+        display: flex;
         align-items: center;
-        gap: 10px 14px
+        justify-content: flex-start;
+        flex-wrap: wrap;
+        gap: 12px 18px;
+        width: 100%;
+        padding: 2px 0 6px;
     }
 
-    .fmp-field-title {
-        align-self: end
+    /* Owner notice spans the form width */
+    .fmp-listing-note {
+        width: 100%;
+        max-width: 100%;
+        margin: 0 0 8px;
     }
 
-    .fmp-deal-tabs,
-    .fmp-radio-row,
-    .fmp-input-wrap,
-    .fmp-input,
-    .fmp-select-wrap,
-    .fmp-bedrooms,
+    /* City, keywords and dropdowns span the full form */
+    .fmp-search-form .fmp-input-wrap,
+    .fmp-search-form > .fmp-input,
+    .fmp-search-form .fmp-select-wrap {
+        display: flex;
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        align-self: stretch;
+    }
+
+    .fmp-input-wrap input,
+    .fmp-search-form > .fmp-input,
+    .fmp-select-wrap select {
+        width: 100%;
+        min-width: 0;
+    }
+
+    /* Search button spans the entire form */
     .fmp-search-submit {
-        grid-column: 1/-1
+        width: 100%;
+        align-self: stretch;
+        margin-top: 4px;
     }
 
+    /* Property results */
     .fmp-property-grid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 16px
+        gap: 16px;
     }
 
     .fmp-property-image {
-        height: 230px
+        height: 230px;
     }
 
     .fmp-owner-cta {
-        padding: 24px
+        padding: 24px;
     }
 
     .fmp-owner-cta button {
-        max-width: 300px
+        max-width: 300px;
     }
 }
 
-@media(max-width:520px) {
+/* =====================================================
+   TABLET AND MOBILE
+===================================================== */
+
+@media (max-width: 899px) {
+    .fmp-search-form {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .fmp-search-form > *,
+    .fmp-search-form .fmp-field-title,
+    .fmp-search-form .fmp-listing-note,
+    .fmp-search-form .fmp-input-wrap,
+    .fmp-search-form > .fmp-input,
+    .fmp-search-form .fmp-select-wrap,
+    .fmp-search-form .fmp-search-submit {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+    }
+}
+
+@media (max-width: 640px) {
     .fmp-page {
-        padding: 8px 8px 18px
+        padding: 10px 10px 18px;
     }
 
     .fmp-search-panel {
-        padding: 12px
+        padding: 16px 12px;
     }
 
     .fmp-search-panel h1 {
-        font-size: 21px
-    }
-
-    .fmp-intro {
-        font-size: 11px;
-        line-height: 1.5
+        font-size: 22px;
     }
 
     .fmp-search-form {
-        padding: 10px
+        gap: 9px;
+        padding: 12px;
+    }
+
+    .fmp-listing-note {
+        padding: 10px;
+        font-size: 11px;
     }
 
     .fmp-property-grid {
-        gap: 8px
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
     }
 
     .fmp-property-image {
-        height: 125px
+        height: 150px;
     }
 
     .fmp-property-content {
-        padding: 8px
+        padding: 9px;
     }
 
     .fmp-property-content h3 {
-        font-size: 11px;
-        line-height: 1.4
+        font-size: 12px;
     }
 
     .fmp-property-price {
-        font-size: 13px
+        font-size: 14px;
     }
 
     .fmp-property-specs {
-        gap: 5px
+        gap: 6px;
+    }
+
+    .fmp-results-heading {
+        align-items: flex-start;
+        flex-direction: column;
     }
 
     .fmp-results-heading h2 {
-        font-size: 16px
+        font-size: 16px;
     }
 
     .fmp-results-tools {
-        gap: 7px
+        gap: 12px;
     }
 
     .fmp-filter-button,
     .fmp-reset-button {
-        font-size: 9px
+        font-size: 10px;
+    }
+
+    .fmp-filter-panel {
+        justify-content: flex-start;
+    }
+}
+
+@media (max-width: 380px) {
+    .fmp-deal-tabs button {
+        height: 40px;
+        font-size: 10px;
+    }
+
+    .fmp-radio-row {
+        gap: 10px 12px;
+    }
+
+    .fmp-radio-row label {
+        font-size: 10px;
+    }
+
+    .fmp-property-grid {
+        gap: 8px;
+    }
+
+    .fmp-property-image {
+        height: 125px;
+    }
+
+    .fmp-property-content {
+        padding: 8px;
+    }
+
+    .fmp-property-content h3 {
+        font-size: 11px;
     }
 }
 
@@ -793,6 +1158,8 @@
     box-sizing: border-box;
 }
 
+/* Two property cards per row in the embedded view */
+
 .fmp-embedded .fmp-property-grid {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -806,6 +1173,7 @@
 .fmp-embedded .fmp-property-image img {
     display: block;
     width: 100%;
+    height: 100%;
     object-fit: cover;
 }
 
@@ -815,6 +1183,28 @@
 
 .fmp-embedded .fmp-property-content h3 {
     overflow-wrap: anywhere;
+}
+
+/* Embedded form also remains full-width */
+
+.fmp-embedded .fmp-search-form {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    max-width: 100%;
+}
+
+.fmp-embedded .fmp-search-form > *,
+.fmp-embedded .fmp-search-form .fmp-field-title,
+.fmp-embedded .fmp-search-form .fmp-listing-note,
+.fmp-embedded .fmp-search-form .fmp-input-wrap,
+.fmp-embedded .fmp-search-form > .fmp-input,
+.fmp-embedded .fmp-search-form .fmp-select-wrap,
+.fmp-embedded .fmp-search-form .fmp-search-submit {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
 }
 
 @media (max-width: 640px) {
@@ -836,3 +1226,4 @@
         gap: 8px;
     }
 }
+

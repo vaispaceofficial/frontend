@@ -2,8 +2,7 @@
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  padding: 12px 5%;
-  background: #ffffff;
+  /* background: #ffffff; */
   border-bottom: 1px solid #eaf0f8;
 }
 
@@ -15,7 +14,7 @@
   color: #172033;
   text-decoration: none;
   border: 1px solid #dbeafe;
-  border-radius: 12px;
+  border-radius: 18px;
   background: #ffffff;
   transition: background 0.2s ease, border-color 0.2s ease;
 }

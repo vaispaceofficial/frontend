@@ -224,9 +224,8 @@ function MiniVerticalCarousel({
   return (
     <div className={`hero-mini-carousel ${className}`}>
       <div
-        className={`hero-mini-track ${
-          direction === "down" ? "move-down" : "move-up"
-        }`}
+        className={`hero-mini-track ${direction === "down" ? "move-down" : "move-up"
+          }`}
       >
         {duplicatedItems.map((item, index) => (
           <div
@@ -296,9 +295,31 @@ function Marketplace() {
       {/* HERO */}
 
       <section className="accessories-hero">
+
         <div className="marketplace-hero-cart">
+          {/* REGISTER AS A SELLER — FIRST */}
+          <Link
+            to="/register-vendor"
+            className="marketplace-seller-card"
+            aria-label="Register as a Seller"
+          >
+            <span className="marketplace-seller-icon">
+              <Store size={22} strokeWidth={1.8} />
+            </span>
+
+            <span className="marketplace-seller-copy">
+              <strong>Register as a Seller</strong>
+            </span>
+
+            <span className="marketplace-seller-arrow">
+              <ArrowRight size={18} />
+            </span>
+          </Link>
+
+          {/* MY CART — SECOND */}
           <CartShortcut />
         </div>
+
 
         <div className="accessories-hero-content">
           <span className="accessories-eyebrow">
@@ -359,33 +380,29 @@ function Marketplace() {
             </div>
           </div>
 
-          {/* REGISTER AS A SELLER */}
+          {/* 
+          REGISTER AS A SELLER */}
 
-          <div className="marketplace-seller-actions">
+          {/* <div className="marketplace-seller-actions">
             <Link
               to="/register-vendor"
               className="marketplace-seller-card"
               aria-label="Register as a Seller"
             >
               <span className="marketplace-seller-icon">
-                <Store size={23} strokeWidth={1.8} />
+                <Store size={22} strokeWidth={1.8} />
               </span>
 
               <span className="marketplace-seller-copy">
-
                 <strong>Register as a Seller</strong>
               </span>
 
               <span className="marketplace-seller-arrow">
-                <ArrowRight size={20} />
+                <ArrowRight size={18} />
               </span>
-
-              <span
-                className="marketplace-seller-decoration"
-                aria-hidden="true"
-              />
             </Link>
-          </div>
+          </div> */}
+
         </div>
 
         {/* THREE VERTICAL CAROUSELS */}

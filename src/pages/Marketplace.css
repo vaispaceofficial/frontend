@@ -1,3 +1,4 @@
+
 /* =========================================================
    ONE SERVICE — ACCESSORIES & SALES
    Premium / Clean / White + Blue
@@ -7,34 +8,34 @@
 .accessories-sales-page {
   width: 100%;
   min-height: 100vh;
-
   background: #ffffff;
   color: #172033;
-
-  overflow-x: hidden;
-
+  overflow-x: clip;
   font-family: "Neulis Sans", sans-serif;
 }
 
+.accessories-sales-page *,
+.accessories-sales-page *::before,
+.accessories-sales-page *::after {
+  box-sizing: border-box;
+}
+
 /* =========================================================
-   HERO
+   HERO SECTION
 ========================================================= */
 
 .accessories-hero {
+  position: relative;
   width: 100%;
   min-height: 690px;
 
-  padding: 110px 7% 90px;
+  /* Reserve space for the cart and seller actions */
+  padding: 145px 7% 65px;
 
   display: grid;
-
-  grid-template-columns:
-    minmax(0, 1fr)
-    minmax(480px, 650px);
-
+  grid-template-columns: minmax(0, 1fr) minmax(480px, 650px);
   align-items: center;
-
-  gap: 70px;
+  gap: 55px;
 
   background:
     radial-gradient(
@@ -53,50 +54,37 @@
 .accessories-hero-content {
   width: 100%;
   max-width: 650px;
+  min-width: 0;
 }
 
 .accessories-eyebrow {
   display: inline-flex;
-
   align-items: center;
-
   gap: 8px;
-
   margin-bottom: 20px;
 
   font-size: 12px;
-
   font-weight: 700;
-
   letter-spacing: 0.16em;
-
   color: #2563eb;
 }
 
 .accessories-eyebrow::before {
   content: "";
-
   width: 28px;
   height: 2px;
-
   border-radius: 999px;
-
   background: #2563eb;
 }
 
 .accessories-hero h1 {
   max-width: 650px;
-
   margin: 0;
 
   font-size: clamp(48px, 5vw, 76px);
-
   line-height: 0.98;
-
   letter-spacing: -0.045em;
-
   font-weight: 700;
-
   color: #172033;
 }
 
@@ -106,14 +94,166 @@
 
 .accessories-hero-content > p {
   max-width: 570px;
-
   margin: 28px 0 34px;
 
   font-size: 16px;
-
   line-height: 1.75;
-
   color: #64748b;
+}
+
+/* =========================================================
+   MARKETPLACE HERO ACTIONS
+   CartShortcut + Register as a Seller
+========================================================= */
+
+.marketplace-hero-cart {
+  position: absolute;
+  z-index: 20;
+  top: 22px;
+  right: 7%;
+
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+
+  width: auto;
+  max-width: calc(100% - 14%);
+  margin: 0;
+  padding: 0;
+
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.marketplace-hero-cart > * {
+  flex: 0 0 auto;
+  margin: 0;
+}
+
+.marketplace-hero-cart a,
+.marketplace-hero-cart button {
+  cursor: pointer;
+}
+
+/* =========================================================
+   REGISTER AS A SELLER
+========================================================= */
+
+.marketplace-seller-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+
+  width: auto;
+  margin: 0;
+  padding: 0;
+}
+
+.marketplace-seller-card {
+  box-sizing: border-box;
+
+  display: inline-flex;
+  flex: 0 1 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+
+  /* min-height: 52px; */
+  width: fit-content;
+  max-width: 100%;
+  padding: 9px 16px;
+
+  color: #172033;
+  background: #ffffff;
+  border: 1px solid #d7e5ff;
+  border-radius: 14px;
+
+  box-shadow: 0 5px 18px rgba(37, 99, 235, 0.04);
+
+  font-family: "Neulis Sans", sans-serif;
+  text-decoration: none;
+  white-space: nowrap;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.marketplace-seller-card:hover {
+  color: #172033;
+  background: #ffffff;
+  border-color: #93baff;
+  box-shadow: 0 8px 22px rgba(37, 99, 235, 0.09);
+  transform: translateY(-1px);
+}
+
+.marketplace-seller-card:focus-visible {
+  outline: 2px solid #93c5fd;
+  outline-offset: 3px;
+}
+
+.marketplace-seller-icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+
+  width: 20px;
+  height: 20px;
+
+  color: #2563eb;
+  background: transparent;
+}
+
+.marketplace-seller-icon svg {
+  display: block;
+  width: 22px;
+  height: 22px;
+}
+
+.marketplace-seller-copy {
+  display: flex;
+  flex: 0 1 auto;
+  align-items: center;
+  min-width: 0;
+}
+
+.marketplace-seller-copy > strong {
+  color: #172033;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.marketplace-seller-arrow {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+
+  width: 22px;
+  height: 22px;
+
+  color: #2563eb;
+  background: transparent;
+  border: 0;
+
+  transition: transform 0.2s ease;
+}
+
+.marketplace-seller-arrow svg {
+  display: block;
+  width: 18px;
+  height: 18px;
+}
+
+.marketplace-seller-card:hover .marketplace-seller-arrow {
+  transform: translateX(3px);
 }
 
 /* =========================================================
@@ -123,25 +263,18 @@
 .accessories-search {
   width: 100%;
   max-width: 590px;
-
   min-height: 60px;
 
   display: flex;
-
   align-items: center;
-
   gap: 12px;
 
   padding: 6px 7px 6px 18px;
 
   background: #ffffff;
-
   border: 1px solid #dbe5f1;
-
   border-radius: 16px;
-
-  box-shadow:
-    0 14px 40px rgba(37, 99, 235, 0.08);
+  box-shadow: 0 14px 40px rgba(37, 99, 235, 0.08);
 
   transition:
     border-color 0.25s ease,
@@ -150,32 +283,24 @@
 
 .accessories-search:focus-within {
   border-color: #93c5fd;
-
-  box-shadow:
-    0 16px 42px rgba(37, 99, 235, 0.13);
+  box-shadow: 0 16px 42px rgba(37, 99, 235, 0.13);
 }
 
 .accessories-search > svg {
   flex-shrink: 0;
-
   color: #64748b;
 }
 
 .accessories-search input {
   flex: 1;
-
   min-width: 0;
 
   border: 0;
-
   outline: 0;
-
   background: transparent;
 
   font-family: "Neulis Sans", sans-serif;
-
   font-size: 14px;
-
   color: #172033;
 }
 
@@ -185,23 +310,17 @@
 
 .accessories-search button {
   flex-shrink: 0;
-
   min-height: 46px;
-
   padding: 0 22px;
 
   border: 0;
-
   border-radius: 12px;
 
   background: #2563eb;
-
   color: #ffffff;
 
   font-family: "Neulis Sans", sans-serif;
-
   font-size: 13px;
-
   font-weight: 600;
 
   cursor: pointer;
@@ -213,7 +332,6 @@
 
 .accessories-search button:hover {
   background: #1d4ed8;
-
   transform: translateY(-1px);
 }
 
@@ -223,9 +341,8 @@
 
 .accessories-hero-features {
   display: flex;
-
   flex-wrap: wrap;
-
+  align-items: center;
   gap: 24px;
 
   margin-top: 30px;
@@ -233,161 +350,114 @@
 
 .accessories-hero-features > div {
   display: flex;
-
   align-items: center;
-
   gap: 8px;
 
   font-size: 12px;
-
   font-weight: 500;
-
   color: #64748b;
 }
 
 .accessories-hero-features svg {
+  flex-shrink: 0;
   color: #2563eb;
 }
 
 /* =========================================================
-   HERO — THREE VERTICAL IMAGE CAROUSELS
-   NO OUTER BLUE BOX
+   HERO IMAGE CAROUSELS
 ========================================================= */
 
 .accessories-hero-carousel {
   position: relative;
-
   width: 100%;
   max-width: 650px;
-
   height: 500px;
 
   display: flex;
-
   align-items: center;
-
   justify-content: center;
 
   overflow: hidden;
-
   background: transparent;
-
   border: 0;
-
   border-radius: 0;
-
   box-shadow: none;
 }
 
-/* =========================================================
-   CAROUSEL COLUMNS
-========================================================= */
-
 .hero-carousel-columns {
   position: relative;
-
   width: 100%;
-
   height: 430px;
 
   display: grid;
-
-  grid-template-columns:
-    repeat(3, minmax(0, 1fr));
-
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 15px;
 
   overflow: hidden;
 
-  mask-image:
-    linear-gradient(
-      to bottom,
-      transparent 0%,
-      #000 10%,
-      #000 90%,
-      transparent 100%
-    );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    #000 10%,
+    #000 90%,
+    transparent 100%
+  );
 
-  -webkit-mask-image:
-    linear-gradient(
-      to bottom,
-      transparent 0%,
-      #000 10%,
-      #000 90%,
-      transparent 100%
-    );
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    #000 10%,
+    #000 90%,
+    transparent 100%
+  );
 }
-
-/* =========================================================
-   INDIVIDUAL CAROUSEL COLUMN
-========================================================= */
 
 .hero-mini-carousel {
   position: relative;
-
   width: 100%;
   height: 100%;
+  min-width: 0;
 
   overflow: hidden;
-
   background: transparent;
-
   border: 0;
-
   border-radius: 0;
 }
 
-/* =========================================================
-   CAROUSEL TRACK
-========================================================= */
-
 .hero-mini-track {
   display: flex;
-
   flex-direction: column;
-
   gap: 14px;
 
   padding: 8px 4px;
-
   will-change: transform;
 }
 
 .hero-mini-track.move-up {
-  animation:
-    hero-carousel-up 16s linear infinite;
+  animation: hero-carousel-up 16s linear infinite;
 }
 
 .hero-mini-track.move-down {
-  animation:
-    hero-carousel-down 16s linear infinite;
+  animation: hero-carousel-down 16s linear infinite;
 }
 
-/* =========================================================
-   CAROUSEL CARD
-========================================================= */
-
 .hero-mini-card {
+  box-sizing: border-box;
   flex: 0 0 105px;
-
   width: 100%;
+  min-width: 0;
 
   display: flex;
-
   align-items: center;
-
   gap: 12px;
 
   padding: 9px;
 
   background: #ffffff;
-
   border: 1px solid #e4ebf5;
-
   border-radius: 16px;
 
-  box-shadow:
-    0 10px 28px rgba(37, 99, 235, 0.08);
+  box-shadow: 0 10px 28px rgba(37, 99, 235, 0.08);
 
   overflow: hidden;
 
@@ -399,61 +469,40 @@
 
 .hero-mini-card:hover {
   transform: translateY(-3px);
-
   border-color: #bfdbfe;
-
-  box-shadow:
-    0 16px 34px rgba(37, 99, 235, 0.13);
+  box-shadow: 0 16px 34px rgba(37, 99, 235, 0.13);
 }
-
-/* =========================================================
-   CAROUSEL IMAGE
-========================================================= */
 
 .hero-mini-image {
   flex: 0 0 82px;
-
   width: 82px;
-
   height: 87px;
 
   overflow: hidden;
-
   border-radius: 11px;
-
   background: #f1f5f9;
 }
 
 .hero-mini-image img {
-  width: 100%;
-
-  height: 100%;
-
   display: block;
+  width: 100%;
+  height: 100%;
 
   object-fit: cover;
 
-  transition:
-    transform 0.35s ease;
+  transition: transform 0.35s ease;
 }
 
 .hero-mini-card:hover .hero-mini-image img {
   transform: scale(1.06);
 }
 
-/* =========================================================
-   CAROUSEL CONTENT
-========================================================= */
-
 .hero-mini-content {
   min-width: 0;
-
   flex: 1;
 
   display: flex;
-
   flex-direction: column;
-
   gap: 4px;
 }
 
@@ -461,17 +510,12 @@
   overflow: hidden;
 
   font-family: "Neulis Sans", sans-serif;
-
   font-size: 11px;
-
   font-weight: 600;
-
   line-height: 1.2;
-
   color: #172033;
 
   white-space: nowrap;
-
   text-overflow: ellipsis;
 }
 
@@ -479,35 +523,20 @@
   overflow: hidden;
 
   font-family: "Neulis Sans", sans-serif;
-
   font-size: 9px;
-
   line-height: 1.35;
-
   color: #718096;
 
   white-space: nowrap;
-
   text-overflow: ellipsis;
 }
 
-/* =========================================================
-   CAROUSEL ARROW
-========================================================= */
-
 .hero-mini-arrow {
   flex-shrink: 0;
-
   margin-left: auto;
-
   color: #2563eb;
-
   opacity: 0.7;
 }
-
-/* =========================================================
-   CAROUSEL ANIMATIONS
-========================================================= */
 
 @keyframes hero-carousel-up {
   0% {
@@ -529,18 +558,9 @@
   }
 }
 
-/* =========================================================
-   PAUSE CAROUSEL ON HOVER
-========================================================= */
-
-.accessories-hero-carousel:hover
-.hero-mini-track {
+.accessories-hero-carousel:hover .hero-mini-track {
   animation-play-state: paused;
 }
-
-/* =========================================================
-   HIDDEN HERO LABELS
-========================================================= */
 
 .hero-carousel-heading,
 .hero-carousel-footer {
@@ -548,48 +568,33 @@
 }
 
 /* =========================================================
-   GENERAL SECTION
+   GENERAL SECTIONS
 ========================================================= */
 
 .accessories-section {
   width: 100%;
-
   padding: 100px 7%;
-
   background: #ffffff;
 }
 
-/* =========================================================
-   SECTION HEADING
-========================================================= */
-
 .accessories-section-heading {
   width: 100%;
-
   max-width: 1250px;
-
   margin: 0 auto 48px;
 
   display: flex;
-
   align-items: flex-end;
-
   justify-content: space-between;
-
   gap: 30px;
 }
 
 .section-label {
   display: block;
-
   margin-bottom: 13px;
 
   font-size: 11px;
-
   font-weight: 700;
-
   letter-spacing: 0.15em;
-
   color: #2563eb;
 }
 
@@ -597,23 +602,17 @@
   margin: 0;
 
   font-size: clamp(34px, 4vw, 52px);
-
   line-height: 1.05;
-
   letter-spacing: -0.035em;
-
   color: #172033;
 }
 
 .accessories-section-heading p {
   max-width: 580px;
-
   margin: 16px 0 0;
 
   font-size: 14px;
-
   line-height: 1.7;
-
   color: #718096;
 }
 
@@ -623,32 +622,24 @@
 
 .view-all-button {
   flex-shrink: 0;
-
   min-height: 44px;
-
   padding: 0 17px;
 
   display: inline-flex;
-
   align-items: center;
-
   justify-content: center;
-
   gap: 8px;
 
   border: 1px solid #dbe5f1;
-
   border-radius: 11px;
 
   background: #ffffff;
-
   color: #2563eb;
 
   font-family: "Neulis Sans", sans-serif;
-
   font-size: 12px;
-
   font-weight: 600;
+  text-decoration: none;
 
   cursor: pointer;
 
@@ -660,9 +651,7 @@
 
 .view-all-button:hover {
   border-color: #bfdbfe;
-
   background: #eff6ff;
-
   transform: translateY(-1px);
 }
 
@@ -672,53 +661,35 @@
 
 .category-grid {
   width: 100%;
-
   max-width: 1250px;
-
   margin: 0 auto;
 
   display: grid;
-
-  grid-template-columns:
-    repeat(3, minmax(0, 1fr));
-
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 18px;
 }
 
-/* =========================================================
-   CATEGORY CARD
-========================================================= */
-
 .category-card {
+  min-width: 0;
   min-height: 150px;
-
   padding: 23px;
 
   display: grid;
-
-  grid-template-columns:
-    auto
-    1fr
-    auto;
-
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-
   gap: 17px;
 
   text-align: left;
+  text-decoration: none;
 
   background: #ffffff;
-
   border: 1px solid #e5eaf1;
-
   border-radius: 18px;
-
   color: #172033;
 
   cursor: pointer;
 
-  box-shadow:
-    0 8px 26px rgba(15, 23, 42, 0.04);
+  box-shadow: 0 8px 26px rgba(15, 23, 42, 0.04);
 
   font-family: "Neulis Sans", sans-serif;
 
@@ -731,50 +702,39 @@
 
 .category-card:hover {
   transform: translateY(-4px);
-
   border-color: #bfdbfe;
-
-  box-shadow:
-    0 18px 40px rgba(37, 99, 235, 0.09);
+  box-shadow: 0 18px 40px rgba(37, 99, 235, 0.09);
 }
 
 .category-card.active {
   border-color: #93c5fd;
 
-  background:
-    linear-gradient(
-      135deg,
-      #ffffff,
-      #f4f8ff
-    );
+  background: linear-gradient(
+    135deg,
+    #ffffff,
+    #f4f8ff
+  );
 
-  box-shadow:
-    0 12px 32px rgba(37, 99, 235, 0.08);
+  box-shadow: 0 12px 32px rgba(37, 99, 235, 0.08);
 }
 
 .category-card > svg {
   flex-shrink: 0;
-
   color: #2563eb;
 }
 
 .category-icon {
   width: 48px;
-
   height: 48px;
 
   display: flex;
-
   align-items: center;
-
   justify-content: center;
 
   border-radius: 14px;
-
   background: #eff6ff;
 
   font-size: 21px;
-
   flex-shrink: 0;
 }
 
@@ -782,9 +742,8 @@
   margin: 0 0 6px;
 
   font-size: 15px;
-
   font-weight: 600;
-
+  line-height: 1.4;
   color: #172033;
 }
 
@@ -792,9 +751,7 @@
   margin: 0;
 
   font-size: 11px;
-
   line-height: 1.5;
-
   color: #718096;
 }
 
@@ -806,48 +763,27 @@
   background: #f8fbff;
 }
 
-/* =========================================================
-   PRODUCTS GRID
-   DESKTOP = 5 COLUMNS
-========================================================= */
-
 .products-grid {
   width: 100%;
-
   max-width: 1250px;
-
   margin: 0 auto;
 
   display: grid;
-
-  /*
-   * FIVE COLUMNS ON DESKTOP
-   */
-  grid-template-columns:
-    repeat(5, minmax(0, 1fr));
-
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 20px;
 }
 
-/* =========================================================
-   PRODUCT CARD
-========================================================= */
-
 .product-card {
   position: relative;
-
   min-width: 0;
 
   overflow: hidden;
 
   background: #ffffff;
-
   border: 1px solid #e4ebf5;
-
   border-radius: 18px;
 
-  box-shadow:
-    0 8px 28px rgba(15, 23, 42, 0.04);
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.04);
 
   transition:
     transform 0.25s ease,
@@ -857,126 +793,88 @@
 
 .product-card:hover {
   transform: translateY(-5px);
-
   border-color: #bfdbfe;
-
-  box-shadow:
-    0 18px 42px rgba(37, 99, 235, 0.09);
+  box-shadow: 0 18px 42px rgba(37, 99, 235, 0.09);
 }
-
-/* =========================================================
-   PRODUCT IMAGE
-========================================================= */
 
 .product-image {
   position: relative;
-
   width: 100%;
-
   height: 190px;
 
   display: flex;
-
   align-items: center;
-
   justify-content: center;
 
-  background:
-    linear-gradient(
-      135deg,
-      #f8fbff,
-      #eef6ff
-    );
+  background: linear-gradient(
+    135deg,
+    #f8fbff,
+    #eef6ff
+  );
 
   overflow: hidden;
+  text-decoration: none;
 }
 
 .product-placeholder {
   width: 100%;
-
   height: 100%;
 
   display: flex;
-
   align-items: center;
-
   justify-content: center;
 
   font-size: 54px;
 
-  background:
-    radial-gradient(
-      circle at center,
-      #eff6ff 0%,
-      #f8fbff 65%,
-      #ffffff 100%
-    );
+  background: radial-gradient(
+    circle at center,
+    #eff6ff 0%,
+    #f8fbff 65%,
+    #ffffff 100%
+  );
 }
-
-/* =========================================================
-   PRODUCT BADGE
-========================================================= */
 
 .product-badge {
   position: absolute;
-
   z-index: 2;
-
   top: 12px;
-
   left: 12px;
 
   padding: 5px 9px;
 
   border-radius: 999px;
-
   background: #ffffff;
-
   color: #2563eb;
 
   font-size: 9px;
-
   font-weight: 700;
-
   letter-spacing: 0.04em;
 
-  box-shadow:
-    0 6px 18px rgba(37, 99, 235, 0.08);
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.08);
 }
-
-/* =========================================================
-   PRODUCT CART BUTTON
-========================================================= */
 
 .product-cart-button {
   position: absolute;
-
+  z-index: 3;
   right: 12px;
-
   bottom: 12px;
 
   width: 38px;
-
   height: 38px;
 
   display: flex;
-
   align-items: center;
-
   justify-content: center;
 
   border: 1px solid #dbe5f1;
-
   border-radius: 11px;
 
   background: #ffffff;
-
   color: #2563eb;
 
   cursor: pointer;
 
-  box-shadow:
-    0 8px 20px rgba(37, 99, 235, 0.08);
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.08);
 
   transition:
     background 0.25s ease,
@@ -986,15 +884,9 @@
 
 .product-cart-button:hover {
   background: #2563eb;
-
   color: #ffffff;
-
   transform: translateY(-2px);
 }
-
-/* =========================================================
-   PRODUCT INFO
-========================================================= */
 
 .product-info {
   padding: 17px;
@@ -1002,51 +894,36 @@
 
 .product-category {
   display: block;
-
   margin-bottom: 7px;
 
   overflow: hidden;
 
   font-size: 9px;
-
   font-weight: 600;
-
   letter-spacing: 0.08em;
-
   text-transform: uppercase;
-
   color: #2563eb;
 
   white-space: nowrap;
-
   text-overflow: ellipsis;
 }
 
 .product-info h3 {
   min-height: 42px;
-
   margin: 0;
 
   overflow: hidden;
 
   font-size: 14px;
-
   font-weight: 600;
-
   line-height: 1.4;
-
   color: #172033;
 }
 
-/* =========================================================
-   PRODUCT PRICE
-========================================================= */
-
 .product-price {
   display: flex;
-
   align-items: center;
-
+  flex-wrap: wrap;
   gap: 8px;
 
   margin-top: 13px;
@@ -1054,52 +931,36 @@
 
 .product-price strong {
   font-size: 16px;
-
   font-weight: 700;
-
   color: #172033;
 }
 
 .product-price span {
   font-size: 11px;
-
   color: #94a3b8;
-
   text-decoration: line-through;
 }
 
-/* =========================================================
-   PRODUCT VIEW BUTTON
-========================================================= */
-
 .product-view-button {
   width: 100%;
-
+  min-height: 40px;
   margin-top: 14px;
 
-  min-height: 40px;
-
   display: flex;
-
   align-items: center;
-
   justify-content: center;
-
   gap: 7px;
 
   border: 0;
-
   border-radius: 10px;
 
   background: #eff6ff;
-
   color: #2563eb;
 
   font-family: "Neulis Sans", sans-serif;
-
   font-size: 11px;
-
   font-weight: 600;
+  text-decoration: none;
 
   cursor: pointer;
 
@@ -1110,7 +971,6 @@
 
 .product-view-button:hover {
   background: #2563eb;
-
   color: #ffffff;
 }
 
@@ -1120,61 +980,46 @@
 
 .no-products {
   width: 100%;
-
   max-width: 600px;
-
   margin: 0 auto;
-
   padding: 60px 25px;
 
   text-align: center;
 
   background: #ffffff;
-
   border: 1px solid #e4ebf5;
-
   border-radius: 20px;
 }
 
 .no-products > div {
   margin-bottom: 12px;
-
   font-size: 32px;
 }
 
 .no-products h3 {
   margin: 0;
-
   font-size: 18px;
-
   color: #172033;
 }
 
 .no-products p {
   margin: 9px 0 20px;
-
   font-size: 12px;
-
   color: #718096;
 }
 
 .no-products button {
   min-height: 42px;
-
   padding: 0 18px;
 
   border: 0;
-
   border-radius: 10px;
 
   background: #eff6ff;
-
   color: #2563eb;
 
   font-family: "Neulis Sans", sans-serif;
-
   font-size: 12px;
-
   font-weight: 600;
 
   cursor: pointer;
@@ -1186,7 +1031,6 @@
 
 .no-products button:hover {
   background: #2563eb;
-
   color: #ffffff;
 }
 
@@ -1196,17 +1040,11 @@
 
 .service-product-section {
   width: 100%;
-
   padding: 100px 7%;
 
   display: grid;
-
-  grid-template-columns:
-    minmax(0, 1fr)
-    minmax(0, 0.85fr);
-
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.85fr);
   align-items: center;
-
   gap: 80px;
 
   background: #ffffff;
@@ -1214,7 +1052,6 @@
 
 .service-product-content {
   width: 100%;
-
   max-width: 600px;
 }
 
@@ -1222,11 +1059,8 @@
   margin: 0;
 
   font-size: clamp(38px, 4vw, 58px);
-
   line-height: 1.02;
-
   letter-spacing: -0.04em;
-
   color: #172033;
 }
 
@@ -1236,46 +1070,32 @@
 
 .service-product-content > p {
   max-width: 570px;
-
   margin: 20px 0 28px;
 
   font-size: 14px;
-
   line-height: 1.75;
-
   color: #718096;
 }
 
-/* =========================================================
-   SERVICE PRODUCT BUTTON
-========================================================= */
-
 .service-product-button {
   min-height: 48px;
-
   padding: 0 20px;
 
   display: inline-flex;
-
   align-items: center;
-
   justify-content: center;
-
   gap: 9px;
 
   border: 0;
-
   border-radius: 12px;
 
   background: #2563eb;
-
   color: #ffffff;
 
   font-family: "Neulis Sans", sans-serif;
-
   font-size: 12px;
-
   font-weight: 600;
+  text-decoration: none;
 
   cursor: pointer;
 
@@ -1286,51 +1106,33 @@
 
 .service-product-button:hover {
   background: #1d4ed8;
-
   transform: translateY(-2px);
 }
 
-/* =========================================================
-   SERVICE PRODUCT CARD
-========================================================= */
-
 .service-product-card {
   width: 100%;
-
   padding: 28px;
 
   display: flex;
-
   flex-direction: column;
-
   gap: 0;
 
-  background:
-    linear-gradient(
-      145deg,
-      #ffffff,
-      #f4f8ff
-    );
+  background: linear-gradient(
+    145deg,
+    #ffffff,
+    #f4f8ff
+  );
 
   border: 1px solid #dbe5f1;
-
   border-radius: 22px;
 
-  box-shadow:
-    0 18px 45px rgba(37, 99, 235, 0.07);
+  box-shadow: 0 18px 45px rgba(37, 99, 235, 0.07);
 }
-
-/* =========================================================
-   SERVICE STEP
-========================================================= */
 
 .service-step {
   display: grid;
-
-  grid-template-columns: 48px 1fr;
-
+  grid-template-columns: 48px minmax(0, 1fr);
   align-items: start;
-
   gap: 16px;
 
   padding: 20px 0;
@@ -1344,41 +1146,31 @@
 
 .service-step:last-child {
   padding-bottom: 0;
-
   border-bottom: 0;
 }
 
 .service-step > span {
   width: 42px;
-
   height: 42px;
 
   display: flex;
-
   align-items: center;
-
   justify-content: center;
 
   border-radius: 12px;
-
   background: #eff6ff;
-
   color: #2563eb;
 
   font-size: 11px;
-
   font-weight: 700;
 }
 
 .service-step strong {
   display: block;
-
   margin-bottom: 5px;
 
   font-size: 14px;
-
   font-weight: 600;
-
   color: #172033;
 }
 
@@ -1386,9 +1178,7 @@
   margin: 0;
 
   font-size: 11px;
-
   line-height: 1.5;
-
   color: #718096;
 }
 
@@ -1398,23 +1188,18 @@
 
 .accessories-final-cta {
   width: 100%;
-
   padding: 110px 7%;
 
   display: flex;
-
   align-items: center;
-
   justify-content: space-between;
-
   gap: 50px;
 
-  background:
-    linear-gradient(
-      135deg,
-      #f8fbff,
-      #eef6ff
-    );
+  background: linear-gradient(
+    135deg,
+    #f8fbff,
+    #eef6ff
+  );
 }
 
 .accessories-final-cta > div {
@@ -1425,53 +1210,38 @@
   margin: 0;
 
   font-size: clamp(42px, 5vw, 64px);
-
   line-height: 1;
-
   letter-spacing: -0.04em;
-
   color: #172033;
 }
 
 .accessories-final-cta p {
   max-width: 580px;
-
   margin: 22px 0 0;
 
   font-size: 14px;
-
   line-height: 1.7;
-
   color: #718096;
 }
 
 .accessories-final-cta > button {
   flex-shrink: 0;
-
   min-height: 50px;
-
   padding: 0 24px;
 
   display: inline-flex;
-
   align-items: center;
-
   justify-content: center;
-
   gap: 9px;
 
   border: 0;
-
   border-radius: 12px;
 
   background: #2563eb;
-
   color: #ffffff;
 
   font-family: "Neulis Sans", sans-serif;
-
   font-size: 13px;
-
   font-weight: 600;
 
   cursor: pointer;
@@ -1483,7 +1253,6 @@
 
 .accessories-final-cta > button:hover {
   background: #1d4ed8;
-
   transform: translateY(-2px);
 }
 
@@ -1493,20 +1262,18 @@
 
 @media (max-width: 1200px) {
   .accessories-hero {
-    grid-template-columns:
-      minmax(0, 1fr)
-      minmax(420px, 540px);
+    grid-template-columns: minmax(0, 1fr) minmax(420px, 540px);
+    gap: 35px;
+    padding-left: 5%;
+    padding-right: 5%;
+  }
 
-    gap: 45px;
+  .marketplace-hero-cart {
+    right: 5%;
   }
 
   .products-grid {
-    /*
-     * 4 COLUMNS
-     */
-    grid-template-columns:
-      repeat(4, minmax(0, 1fr));
-
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 18px;
   }
 
@@ -1525,26 +1292,39 @@
 
 @media (max-width: 1100px) {
   .accessories-hero {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 30px;
 
-    gap: 55px;
-
-    padding-top: 90px;
+    min-height: auto;
+    padding: 145px 6% 55px;
   }
 
   .accessories-hero-content {
     max-width: 760px;
   }
 
-  .accessories-hero-carousel {
+  .accessories-hero h1 {
     max-width: 760px;
+  }
 
+  .accessories-hero-carousel {
+    width: 100%;
+    max-width: 760px;
+    height: 440px;
     margin: 0 auto;
   }
 
+  .hero-carousel-columns {
+    height: 390px;
+  }
+
+  .marketplace-hero-cart {
+    top: 18px;
+    right: 6%;
+  }
+
   .category-grid {
-    grid-template-columns:
-      repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .service-product-section {
@@ -1558,12 +1338,7 @@
 
 @media (max-width: 900px) {
   .products-grid {
-    /*
-     * 3 COLUMNS
-     */
-    grid-template-columns:
-      repeat(3, minmax(0, 1fr));
-
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 16px;
   }
 
@@ -1578,6 +1353,13 @@
   .product-info h3 {
     font-size: 14px;
   }
+
+  .accessories-section,
+  .service-product-section,
+  .accessories-final-cta {
+    padding-left: 6%;
+    padding-right: 6%;
+  }
 }
 
 /* =========================================================
@@ -1586,37 +1368,51 @@
 
 @media (max-width: 800px) {
   .accessories-hero {
-    min-height: auto;
-
-    padding: 80px 6% 70px;
-
-    gap: 35px;
+    padding: 135px 6% 50px;
+    gap: 28px;
   }
 
   .accessories-hero h1 {
-    font-size:
-      clamp(42px, 9vw, 64px);
+    font-size: clamp(42px, 8vw, 64px);
   }
 
   .accessories-hero-carousel {
-    height: 450px;
+    height: 430px;
   }
 
   .hero-carousel-columns {
-    height: 390px;
+    height: 380px;
   }
 
-  .accessories-section,
-  .products-section,
-  .service-product-section,
-  .accessories-final-cta {
-    padding-left: 6%;
+  .marketplace-hero-cart {
+    top: 16px;
+    right: 6%;
+    gap: 10px;
+  }
 
-    padding-right: 6%;
+  .marketplace-seller-card {
+    min-height: 48px;
+    padding: 9px 13px;
+    gap: 8px;
+    border-radius: 12px;
+  }
+
+  .marketplace-seller-copy > strong {
+    font-size: 12px;
+  }
+
+  .marketplace-seller-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .marketplace-seller-arrow svg {
+    width: 17px;
+    height: 17px;
   }
 
   .service-product-section {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .service-product-content {
@@ -1625,7 +1421,6 @@
 
   .accessories-final-cta {
     flex-direction: column;
-
     align-items: flex-start;
   }
 }
@@ -1636,41 +1431,73 @@
 
 @media (max-width: 650px) {
   .accessories-hero {
-    padding: 65px 20px 55px;
+    min-height: auto;
+    padding: 125px 20px 45px;
+    gap: 24px;
+  }
 
-    gap: 20px;
+  .marketplace-hero-cart {
+    top: 12px;
+    right: 20px;
+    left: 20px;
+
+    justify-content: flex-end;
+    gap: 8px;
+
+    max-width: none;
+  }
+
+  .marketplace-seller-card {
+    min-height: 42px;
+    gap: 6px;
+    padding: 8px 10px;
+    border-radius: 10px;
+  }
+
+  .marketplace-seller-copy > strong {
+    font-size: 10px;
+  }
+
+  .marketplace-seller-icon {
+    width: 19px;
+    height: 19px;
+  }
+
+  .marketplace-seller-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .marketplace-seller-arrow {
+    width: 17px;
+    height: 17px;
+  }
+
+  .marketplace-seller-arrow svg {
+    width: 15px;
+    height: 15px;
   }
 
   .accessories-eyebrow {
     margin-bottom: 15px;
-
     font-size: 10px;
   }
 
   .accessories-hero h1 {
-    font-size:
-      clamp(40px, 12vw, 56px);
-
+    font-size: clamp(40px, 10vw, 56px);
     line-height: 1;
   }
 
   .accessories-hero-content > p {
     margin: 20px 0 25px;
-
     font-size: 13px;
-
     line-height: 1.65;
   }
 
-  /* =======================================================
-     MOBILE SEARCH
-  ======================================================= */
-
   .accessories-search {
     min-height: 54px;
-
+    gap: 9px;
     padding-left: 14px;
-
     border-radius: 13px;
   }
 
@@ -1680,21 +1507,13 @@
 
   .accessories-search button {
     min-height: 42px;
-
     padding: 0 15px;
-
     border-radius: 9px;
-
     font-size: 11px;
   }
 
-  /* =======================================================
-     MOBILE FEATURES
-  ======================================================= */
-
   .accessories-hero-features {
     gap: 12px 18px;
-
     margin-top: 22px;
   }
 
@@ -1702,47 +1521,33 @@
     font-size: 10px;
   }
 
-  /* =======================================================
-     MOBILE CAROUSELS
-  ======================================================= */
-
   .accessories-hero-carousel {
-    height: 420px;
-
+    height: 390px;
     max-width: 100%;
-
     overflow: hidden;
   }
 
   .hero-carousel-columns {
-    height: 350px;
-
+    height: 335px;
     gap: 7px;
   }
 
   .hero-mini-track {
     gap: 9px;
-
     padding: 6px 2px;
   }
 
   .hero-mini-card {
     flex-basis: 82px;
-
     gap: 7px;
-
     padding: 7px;
-
     border-radius: 13px;
   }
 
   .hero-mini-image {
     flex: 0 0 62px;
-
     width: 62px;
-
     height: 68px;
-
     border-radius: 9px;
   }
 
@@ -1758,30 +1563,16 @@
     display: none;
   }
 
-  /* =======================================================
-     MOBILE SECTIONS
-  ======================================================= */
-
   .accessories-section,
-  .products-section,
   .service-product-section,
   .accessories-final-cta {
-    padding-top: 70px;
-
-    padding-bottom: 70px;
-
-    padding-left: 20px;
-
-    padding-right: 20px;
+    padding: 70px 20px;
   }
 
   .accessories-section-heading {
     margin-bottom: 32px;
-
     align-items: flex-start;
-
     flex-direction: column;
-
     gap: 20px;
   }
 
@@ -1793,31 +1584,21 @@
     font-size: 12px;
   }
 
-  /* =======================================================
-     MOBILE CATEGORY
-  ======================================================= */
-
   .category-grid {
-    grid-template-columns: 1fr;
-
+    grid-template-columns: minmax(0, 1fr);
     gap: 13px;
   }
 
   .category-card {
     min-height: 100px;
-
     padding: 17px;
-
     border-radius: 15px;
   }
 
   .category-icon {
     width: 42px;
-
     height: 42px;
-
     border-radius: 12px;
-
     font-size: 18px;
   }
 
@@ -1829,14 +1610,8 @@
     font-size: 10px;
   }
 
-  /* =======================================================
-     MOBILE PRODUCTS — 2 COLUMNS
-  ======================================================= */
-
   .products-grid {
-    grid-template-columns:
-      repeat(2, minmax(0, 1fr));
-
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 14px;
   }
 
@@ -1858,11 +1633,11 @@
 
   .product-info h3 {
     min-height: 40px;
-
     font-size: 13px;
   }
 
   .product-price {
+    gap: 6px;
     margin-top: 11px;
   }
 
@@ -1876,25 +1651,16 @@
 
   .product-view-button {
     min-height: 38px;
-
     margin-top: 12px;
-
     font-size: 10px;
   }
 
   .product-cart-button {
     width: 34px;
-
     height: 34px;
-
     right: 10px;
-
     bottom: 10px;
   }
-
-  /* =======================================================
-     MOBILE SERVICE + PRODUCT
-  ======================================================= */
 
   .service-product-section {
     gap: 40px;
@@ -1910,30 +1676,21 @@
 
   .service-product-card {
     padding: 22px;
-
     border-radius: 18px;
   }
 
   .service-step {
-    grid-template-columns:
-      42px 1fr;
-
+    grid-template-columns: 42px minmax(0, 1fr);
     gap: 12px;
   }
 
   .service-step > span {
     width: 38px;
-
     height: 38px;
   }
 
-  /* =======================================================
-     MOBILE CTA
-  ======================================================= */
-
   .accessories-final-cta {
     align-items: flex-start;
-
     gap: 28px;
   }
 
@@ -1956,9 +1713,43 @@
 
 @media (max-width: 420px) {
   .accessories-hero {
-    padding-left: 16px;
+    padding: 115px 16px 40px;
+  }
 
-    padding-right: 16px;
+  .marketplace-hero-cart {
+    right: 16px;
+    left: 16px;
+    gap: 6px;
+  }
+
+  .marketplace-seller-card {
+    min-height: 39px;
+    gap: 5px;
+    padding: 7px 8px;
+  }
+
+  .marketplace-seller-copy > strong {
+    font-size: 9px;
+  }
+
+  .marketplace-seller-icon {
+    width: 17px;
+    height: 17px;
+  }
+
+  .marketplace-seller-icon svg {
+    width: 17px;
+    height: 17px;
+  }
+
+  .marketplace-seller-arrow {
+    width: 15px;
+    height: 15px;
+  }
+
+  .marketplace-seller-arrow svg {
+    width: 14px;
+    height: 14px;
   }
 
   .accessories-hero h1 {
@@ -1973,45 +1764,31 @@
     padding: 0 12px;
   }
 
-  /* =======================================================
-     SMALL CAROUSEL
-  ======================================================= */
-
   .accessories-hero-carousel {
-    height: 390px;
-
-    gap: 5px;
+    height: 360px;
   }
 
   .hero-carousel-columns {
-    height: 325px;
-
+    height: 310px;
     gap: 5px;
   }
 
   .hero-mini-track {
     gap: 7px;
-
     padding: 5px 1px;
   }
 
   .hero-mini-card {
     flex-basis: 76px;
-
     gap: 6px;
-
     padding: 6px;
-
     border-radius: 11px;
   }
 
   .hero-mini-image {
     flex: 0 0 55px;
-
     width: 55px;
-
     height: 62px;
-
     border-radius: 8px;
   }
 
@@ -2023,16 +1800,8 @@
     font-size: 6.5px;
   }
 
-  /* =======================================================
-     SMALL MOBILE PRODUCT GRID
-  ======================================================= */
-
   .products-grid {
-    /*
-     * ONE COLUMN ON VERY SMALL SCREENS
-     */
-    grid-template-columns: 1fr;
-
+    grid-template-columns: minmax(0, 1fr);
     gap: 16px;
   }
 
@@ -2053,22 +1822,15 @@
   }
 
   .accessories-section,
-  .products-section,
   .service-product-section,
   .accessories-final-cta {
     padding-left: 16px;
-
     padding-right: 16px;
   }
 
   .category-card {
-    grid-template-columns:
-      42px
-      minmax(0, 1fr)
-      auto;
-
+    grid-template-columns: 42px minmax(0, 1fr) auto;
     gap: 10px;
-
     padding: 14px;
   }
 }
@@ -2090,518 +1852,9 @@
   .product-cart-button,
   .product-view-button,
   .service-product-button,
-  .accessories-final-cta > button {
+  .accessories-final-cta > button,
+  .marketplace-seller-card,
+  .marketplace-seller-arrow {
     transition: none;
-  }
-}
-
-
-
-/* =========================================
-   MARKETPLACE HERO CART + SELLER BUTTON
-========================================= */
-
-.accessories-hero {
-  position: relative;
-}
-
-/* Top-right action group */
-.marketplace-hero-cart {
-  position: absolute;
-  top: 20px;
-  right: 28px;
-  z-index: 20;
-
-  display: inline-flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 12px;
-
-  width: auto;
-  height: auto;
-  padding: 0;
-  margin: 0;
-
-  background: transparent;
-  border: none;
-  border-radius: 0;
-  box-shadow: none;
-}
-
-/* Remove unwanted wrapper styling around CartShortcut */
-.marketplace-hero-cart > * {
-  flex: 0 0 auto;
-  width: auto;
-  height: auto;
-  margin: 0;
-  padding: 0;
-
-  background: transparent;
-  border: none;
-  border-radius: 0;
-  box-shadow: none;
-}
-
-/* Keep the cart control clickable */
-.marketplace-hero-cart button,
-.marketplace-hero-cart a {
-  cursor: pointer;
-}
-
-/* Seller registration button */
-.marketplace-seller-button {
-  display: inline-flex;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-
-  min-height: 42px;
-  padding: 0 16px;
-
-  background: #2563eb;
-  color: #ffffff;
-  border: 1px solid #2563eb;
-  border-radius: 9px;
-  box-shadow: none;
-
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 1;
-  text-decoration: none;
-  white-space: nowrap;
-
-  transition:
-    background 0.2s ease,
-    border-color 0.2s ease,
-    transform 0.2s ease;
-}
-
-.marketplace-seller-button:hover {
-  background: #1d4ed8;
-  border-color: #1d4ed8;
-  transform: translateY(-1px);
-}
-
-.marketplace-seller-button:focus-visible {
-  outline: 2px solid #93c5fd;
-  outline-offset: 3px;
-}
-
-/* Remove unwanted outer rectangles */
-.marketplace-hero-cart,
-.marketplace-hero-cart > div {
-  background: transparent !important;
-  box-shadow: none !important;
-  border-color: transparent !important;
-}
-
-/* Preserve the seller button's blue background */
-.marketplace-hero-cart .marketplace-seller-button {
-  background: #2563eb !important;
-  border-color: #2563eb !important;
-  color: #ffffff !important;
-}
-
-.marketplace-hero-cart .marketplace-seller-button:hover {
-  background: #1d4ed8 !important;
-  border-color: #1d4ed8 !important;
-}
-
-/* =========================================
-   TABLET
-========================================= */
-
-@media (max-width: 768px) {
-  .marketplace-hero-cart {
-    top: 14px;
-    right: 16px;
-    gap: 8px;
-  }
-
-  .marketplace-seller-button {
-    min-height: 38px;
-    padding: 0 11px;
-    font-size: 12px;
-  }
-}
-
-/* =========================================
-   SMALL MOBILE
-========================================= */
-
-@media (max-width: 480px) {
-  .marketplace-hero-cart {
-    top: 12px;
-    right: 12px;
-    gap: 6px;
-  }
-
-  .marketplace-seller-button {
-    min-height: 35px;
-    padding: 0 9px;
-    gap: 5px;
-    font-size: 11px;
-    border-radius: 7px;
-  }
-
-  .marketplace-seller-button svg {
-    width: 14px;
-    height: 14px;
-  }
-}
-
-
-
-/* =========================================
-   REGISTER AS A SELLER — INDEPENDENT BUTTON
-   Does not modify CartShortcut styling
-========================================= */
-
-.marketplace-hero-cart {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-}
-
-/* Seller button */
-.marketplace-register-button {
-  box-sizing: border-box;
-  display: inline-flex;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 14px;
-
-  /* min-width: 176px; */
-  min-height: 50px;
-  padding: 10px 18px;
-
-  background: #ffffff;
-  border: 1px solid #d7e5ff;
-  border-radius: 16px;
-  box-shadow: none;
-
-  color: #172033;
-  font-family: "Neulis Sans", sans-serif;
-  text-decoration: none;
-  white-space: nowrap;
-  cursor: pointer;
-
-  transition: border-color 0.2s ease;
-}
-
-.marketplace-register-button:hover {
-  background: #ffffff;
-  border-color: #93baff;
-}
-
-.marketplace-register-button > svg {
-  flex-shrink: 0;
-  width: 24px;
-  height: 24px;
-  color: #2563eb;
-}
-
-.marketplace-register-text {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
-}
-
-.marketplace-register-text strong {
-  color: #172033;
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 1.2;
-}
-
-.marketplace-register-text small {
-  color: #64748b;
-  font-size: 13px;
-  font-weight: 400;
-  line-height: 1.2;
-}
-
-/* Tablet */
-@media (max-width: 768px) {
-  .marketplace-hero-cart {
-    gap: 8px;
-  }
-
-  .marketplace-register-button {
-    min-width: 145px;
-    min-height: 55px;
-    padding: 8px 10px;
-    gap: 8px;
-  }
-
-  .marketplace-register-text strong {
-    font-size: 12px;
-  }
-
-  .marketplace-register-text small {
-    font-size: 10px;
-  }
-}
-
-/* Mobile */
-@media (max-width: 480px) {
-  .marketplace-hero-cart {
-    gap: 6px;
-  }
-
-  .marketplace-register-button {
-    min-width: 0;
-    min-height: 48px;
-    padding: 7px 8px;
-    gap: 5px;
-  }
-
-  .marketplace-register-button > svg {
-    width: 18px;
-    height: 18px;
-  }
-
-  .marketplace-register-text strong {
-    font-size: 10px;
-  }
-
-  .marketplace-register-text small {
-    font-size: 9px;
-  }
-}
-
-
-/* =========================================================
-   REGISTER AS A SELLER — COMPACT CARD
-========================================================= */
-
-.marketplace-seller-actions {
-  display: flex;
-  align-items: center;
-  width: 100%;
-  margin-top: 18px;
-}
-
-.marketplace-seller-card {
-  position: relative;
-  isolation: isolate;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: min(100%, 510px);
-  min-height: 0;
-  padding: 10px 14px;
-  box-sizing: border-box;
-  overflow: hidden;
-
-  color: #17243b;
-  text-decoration: none;
-  background: linear-gradient(
-    115deg,
-    #ffffff 0%,
-    #f5f9ff 58%,
-    #edf5ff 100%
-  );
-
-  border: 1px solid #bfdbfe;
-  border-radius: 14px;
-  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.07);
-
-  transition:
-    transform 0.25s ease,
-    border-color 0.25s ease,
-    box-shadow 0.25s ease;
-}
-
-.marketplace-seller-card:hover {
-  transform: translateY(-2px);
-  border-color: #60a5fa;
-  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.12);
-}
-
-.marketplace-seller-card:focus-visible {
-  outline: 3px solid rgba(37, 99, 235, 0.3);
-  outline-offset: 3px;
-}
-
-/* Seller icon */
-
-.marketplace-seller-icon {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex: 0 0 40px;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-
-  color: #ffffff;
-  background: linear-gradient(135deg, #3b82f6, #075cf5);
-  border-radius: 50%;
-
-  transition: transform 0.25s ease;
-}
-
-.marketplace-seller-card:hover .marketplace-seller-icon {
-  transform: scale(1.05);
-}
-
-/* Seller text */
-
-.marketplace-seller-copy {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  align-items: flex-start;
-  min-width: 0;
-  gap: 2px;
-}
-
-.marketplace-seller-eyebrow {
-  color: #2563eb;
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 1px;
-  line-height: 1.3;
-}
-
-.marketplace-seller-copy > strong {
-  color: #17243b;
-  font-size: 15px;
-  font-weight: 750;
-  line-height: 1.3;
-}
-
-.marketplace-seller-description {
-  color: #64748b;
-  font-size: 11px;
-  line-height: 1.35;
-}
-
-/* Arrow */
-
-.marketplace-seller-arrow {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex: 0 0 32px;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-
-  color: #2563eb;
-  background: #ffffff;
-  border: 1px solid #e1ecff;
-  border-radius: 50%;
-
-  transition:
-    color 0.25s ease,
-    background-color 0.25s ease,
-    transform 0.25s ease;
-}
-
-.marketplace-seller-card:hover .marketplace-seller-arrow {
-  color: #ffffff;
-  background: #2563eb;
-  transform: translateX(3px);
-}
-
-/* Decorative detail */
-
-.marketplace-seller-decoration {
-  position: absolute;
-  z-index: 0;
-  top: -15px;
-  left: -19px;
-  width: 24px;
-  height: 36px;
-  pointer-events: none;
-  transform: rotate(-15deg);
-  background:
-    linear-gradient(#2563eb, #2563eb) 14px 0 / 2px 9px no-repeat,
-    linear-gradient(#2563eb, #2563eb) 0 13px / 10px 2px no-repeat,
-    linear-gradient(#2563eb, #2563eb) 4px 29px / 9px 2px no-repeat;
-}
-
-/* =========================================================
-   RESPONSIVE
-========================================================= */
-
-@media (max-width: 768px) {
-  .marketplace-seller-actions {
-    margin-top: 14px;
-  }
-
-  .marketplace-seller-card {
-    width: 100%;
-    min-height: 0;
-    gap: 10px;
-    padding: 9px 11px;
-    border-radius: 12px;
-  }
-
-  .marketplace-seller-icon {
-    flex-basis: 36px;
-    width: 36px;
-    height: 36px;
-  }
-
-  .marketplace-seller-copy > strong {
-    font-size: 14px;
-  }
-
-  .marketplace-seller-description {
-    font-size: 10px;
-  }
-
-  .marketplace-seller-arrow {
-    flex-basis: 30px;
-    width: 30px;
-    height: 30px;
-  }
-}
-
-@media (max-width: 420px) {
-  .marketplace-seller-card {
-    gap: 8px;
-    padding: 8px 10px;
-  }
-
-  .marketplace-seller-icon {
-    flex-basis: 32px;
-    width: 32px;
-    height: 32px;
-  }
-
-  .marketplace-seller-copy {
-    gap: 2px;
-  }
-
-  .marketplace-seller-copy > strong {
-    font-size: 13px;
-  }
-
-  .marketplace-seller-eyebrow {
-    font-size: 8px;
-    letter-spacing: 0.7px;
-  }
-
-  .marketplace-seller-description {
-    font-size: 9px;
-  }
-
-  .marketplace-seller-arrow {
-    flex-basis: 28px;
-    width: 28px;
-    height: 28px;
   }
 }

@@ -24,7 +24,11 @@ import {
 import "./FindMyPropertyPage.css";
 
 type DealType = "Rent" | "Lease" | "Sale";
-type PropertyKind = "All" | "Residential" | "Commercial";
+type PropertyKind =
+  | "All"
+  | "Residential"
+  | "Commercial"
+  | "Co-Workspace";
 
 type Property = {
   id: number;
@@ -349,7 +353,7 @@ export default function FindMyPropertyPage({
 
           <div className="fmp-radio-row">
             {(
-              ["All", "Residential", "Commercial","Co-Workspace"] as PropertyKind[]
+              ["All", "Residential", "Commercial", "Co-Workspace"] as PropertyKind[]
             ).map((item) => (
               <label key={item}>
                 <input
@@ -362,6 +366,13 @@ export default function FindMyPropertyPage({
               </label>
             ))}
           </div>
+
+
+          <div className="fmp-listing-note">
+            <ShieldCheck size={14} />
+            <span>Listings may only be posted by property owners and authorized builders.</span>
+          </div>
+
 
           <label className="fmp-field-title" htmlFor="fmp-city">
             Preferred city or locality
@@ -541,9 +552,8 @@ export default function FindMyPropertyPage({
                         : "Save property"
                     }
                     aria-pressed={saved.includes(property.id)}
-                    className={`fmp-save ${
-                      saved.includes(property.id) ? "saved" : ""
-                    }`}
+                    className={`fmp-save ${saved.includes(property.id) ? "saved" : ""
+                      }`}
                     onClick={() => toggleSaved(property.id)}
                   >
                     <Heart

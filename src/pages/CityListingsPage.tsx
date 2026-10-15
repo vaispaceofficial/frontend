@@ -84,7 +84,7 @@ export const categories: ListingCategory[] = [
     subcategories: [
       "Hospitals & Clinics",
       "Specialized Clinics",
-      "Alternative Medicine",
+      "Ayurveda & Homeopathy",
       "Medical Supplies & Services",
       "Diagnostic Centres",
     ],
