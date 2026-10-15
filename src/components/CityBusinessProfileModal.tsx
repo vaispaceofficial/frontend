@@ -1,12 +1,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { CSSProperties, FormEvent } from "react";
-
 import {
   X,
   Star,
   MapPin,
   Phone,
+  PhoneCall,
   Clock3,
   BadgeCheck,
   IdCard,
@@ -23,9 +23,7 @@ import {
   ExternalLink,
   Send,
 } from "lucide-react";
-
 import "./CityBusinessProfileModal.css";
-
 export type CustomerReview = {
   id: number;
   name: string;
@@ -34,7 +32,6 @@ export type CustomerReview = {
   comment: string;
   avatar?: string;
 };
-
 export type BusinessProfile = {
   id: number;
   name: string;
@@ -67,12 +64,10 @@ export type BusinessProfile = {
     5: number;
   };
 };
-
 type Props = {
   listing: BusinessProfile;
   onClose: () => void;
 };
-
 type ProfileTab =
   | "overview"
   | "media"
@@ -80,7 +75,6 @@ type ProfileTab =
   | "products"
   | "location"
   | "reviews";
-
 const tabs: {
   id: ProfileTab;
   label: string;
@@ -109,7 +103,6 @@ const tabs: {
     icon: MessageCircle,
   },
 ];
-
 // Presentation fallback only. Replace with actual customer reviews
 // when your review backend is connected.
 const sampleReviews: CustomerReview[] = [
@@ -122,7 +115,6 @@ const sampleReviews: CustomerReview[] = [
       "Empathetic doctors and very clean infrastructure!",
   },
 ];
-
 const defaultRatingBreakdown = {
   5: 85,
   4: 10,
@@ -130,38 +122,37 @@ const defaultRatingBreakdown = {
   2: 1,
   1: 1,
 };
-
 function CityBusinessProfileModal({
   listing,
   onClose,
 }: Props) {
   const [activeTab, setActiveTab] =
     useState<ProfileTab>("overview");
-
   const [showReviewForm, setShowReviewForm] = useState(false);
+  const [showCallbackForm, setShowCallbackForm] = useState(false);
+  const [callbackName, setCallbackName] = useState("");
+  const [callbackPhone, setCallbackPhone] = useState("");
+  const [callbackMessage, setCallbackMessage] = useState("");
   const [reviewName, setReviewName] = useState("");
   const [reviewComment, setReviewComment] = useState("");
   const [reviewRating, setReviewRating] = useState(5);
   const [submittedReviews, setSubmittedReviews] =
     useState<CustomerReview[]>([]);
-
   const onCloseRef = useRef(onClose);
   const showReviewFormRef = useRef(showReviewForm);
-
+  const showCallbackFormRef = useRef(showCallbackForm);
   onCloseRef.current = onClose;
   showReviewFormRef.current = showReviewForm;
-
+  showCallbackFormRef.current = showCallbackForm;
   const address =
     listing.address ||
     (listing.location.toLowerCase().includes("add business")
       ? "Business address will be updated soon"
       : listing.location);
-
   const hours = listing.hours ?? [
     { day: "Mon – Sat", time: "09:00 AM – 08:30 PM" },
     { day: "Sunday", time: "10:00 AM – 01:30 PM" },
   ];
-
   const amenities = listing.amenities ?? [
     "Professional Consultation",
     "Experienced Staff",
@@ -169,54 +160,42 @@ function CityBusinessProfileModal({
     "Customer Support",
     "Appointment Available",
   ];
-
   const services = listing.services ?? [
     listing.label,
     "Professional Consultation",
     "Customer Assistance",
   ];
-
   const gallery = listing.gallery?.length
     ? listing.gallery
     : [listing.coverImage || listing.image, listing.image];
-
   const directionsUrl =
     `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}`;
-
   const mapEmbedUrl =
     `https://maps.google.com/maps?q=${encodeURIComponent(
       `${listing.name}, ${address}`,
     )}&z=15&output=embed`;
-
   const websiteUrl = listing.website?.trim()
     ? /^https?:\/\//i.test(listing.website.trim())
       ? listing.website.trim()
       : `https://${listing.website.trim()}`
     : "";
-
   const formatWebsite = (website: string) =>
     website
       .replace(/^https?:\/\//i, "")
       .replace(/\/+$/, "");
-
   const reviews = [
     ...submittedReviews,
     ...(listing.reviews ?? sampleReviews),
   ];
-
   const reviewCount =
     (listing.reviewCount ?? 98) + submittedReviews.length;
-
   const ratingBreakdown =
     listing.ratingBreakdown ?? defaultRatingBreakdown;
-
   useEffect(() => {
     const scrollX = window.scrollX;
     const scrollY = window.scrollY;
-
     const body = document.body;
     const html = document.documentElement;
-
     const previousBodyStyles = {
       position: body.style.position,
       top: body.style.top,
@@ -225,9 +204,7 @@ function CityBusinessProfileModal({
       width: body.style.width,
       overflow: body.style.overflow,
     };
-
     const previousHtmlOverflow = html.style.overflow;
-
     body.style.position = "fixed";
     body.style.top = `-${scrollY}px`;
     body.style.left = `-${scrollX}px`;
@@ -235,22 +212,20 @@ function CityBusinessProfileModal({
     body.style.width = "100%";
     body.style.overflow = "hidden";
     html.style.overflow = "hidden";
-
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        if (showReviewFormRef.current) {
+        if (showCallbackFormRef.current) {
+          setShowCallbackForm(false);
+        } else if (showReviewFormRef.current) {
           setShowReviewForm(false);
         } else {
           onCloseRef.current();
         }
       }
     };
-
     window.addEventListener("keydown", handleKeyDown);
-
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
-
       body.style.position = previousBodyStyles.position;
       body.style.top = previousBodyStyles.top;
       body.style.left = previousBodyStyles.left;
@@ -258,15 +233,59 @@ function CityBusinessProfileModal({
       body.style.width = previousBodyStyles.width;
       body.style.overflow = previousBodyStyles.overflow;
       html.style.overflow = previousHtmlOverflow;
-
       window.scrollTo(scrollX, scrollY);
     };
   }, []);
-
   const callBusiness = () => {
     if (listing.phone) {
       window.location.href = `tel:${listing.phone}`;
     }
+  };
+
+  const getWhatsAppNumber = () => {
+    const digits = (listing.phone || "").replace(/\D/g, "");
+    if (!digits) return "";
+    return digits.length === 10 ? `91${digits}` : digits;
+  };
+
+  const openWhatsApp = (message?: string) => {
+    const phone = getWhatsAppNumber();
+
+    if (!phone) {
+      window.alert("WhatsApp contact number is not available for this listing.");
+      return;
+    }
+
+    const text =
+      message ||
+      `Hi, I'm interested in ${listing.name}.\\n` +
+        `Location: ${address}\\n` +
+        "Please share more details about this business listing.";
+
+    window.open(
+      `https://wa.me/${phone}?text=${encodeURIComponent(text)}`,
+      "_blank",
+      "noopener,noreferrer",
+    );
+  };
+
+  const submitCallbackRequest = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const name = callbackName.trim();
+    const phone = callbackPhone.trim();
+    if (!name || !phone) return;
+
+    const message =
+      `Hello, I would like to request a callback regarding this business listing.\\n\\n` +
+      `Business: ${listing.name}\\n` +
+      `Location: ${address}\\n` +
+      `Customer name: ${name}\\n` +
+      `Customer phone: ${phone}\\n` +
+      `Message: ${callbackMessage.trim() || "Please contact me."}`;
+
+    openWhatsApp(message);
+    setShowCallbackForm(false);
   };
 
   const shareBusiness = async () => {
@@ -275,7 +294,6 @@ function CityBusinessProfileModal({
       text: `${listing.name} — ${address}`,
       url: window.location.href,
     };
-
     try {
       if (navigator.share) {
         await navigator.share(shareData);
@@ -283,7 +301,6 @@ function CityBusinessProfileModal({
         await navigator.clipboard.writeText(
           `${listing.name}\n${address}\n${window.location.href}`,
         );
-
         window.alert("Business details copied to clipboard.");
       } else {
         window.alert(`${listing.name}\n${address}`);
@@ -297,15 +314,11 @@ function CityBusinessProfileModal({
       }
     }
   };
-
   const submitReview = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-
     const name = reviewName.trim();
     const comment = reviewComment.trim();
-
     if (!name || !comment) return;
-
     const newReview: CustomerReview = {
       id: Date.now(),
       name,
@@ -313,19 +326,16 @@ function CityBusinessProfileModal({
       rating: reviewRating,
       comment,
     };
-
     setSubmittedReviews((previous) => [
       newReview,
       ...previous,
     ]);
-
     setReviewName("");
     setReviewComment("");
     setReviewRating(5);
     setShowReviewForm(false);
     setActiveTab("reviews");
   };
-
   const coverStyle: CSSProperties = {
     backgroundImage: `linear-gradient(
       90deg,
@@ -338,13 +348,14 @@ function CityBusinessProfileModal({
       transparent 75%
     ), url("${listing.coverImage || listing.image}")`,
   };
-
   return (
     <div
       className="business-profile-backdrop"
       onClick={(event) => {
         if (event.target === event.currentTarget) {
-          if (showReviewForm) {
+          if (showCallbackForm) {
+            setShowCallbackForm(false);
+          } else if (showReviewForm) {
             setShowReviewForm(false);
           } else {
             onCloseRef.current();
@@ -366,7 +377,6 @@ function CityBusinessProfileModal({
         >
           <X size={20} />
         </button>
-
         {/* BUSINESS COVER */}
         <header
           className="business-profile-cover"
@@ -381,21 +391,18 @@ function CityBusinessProfileModal({
               }
               alt={`${listing.name} profile`}
             />
-
             <div className="business-profile-heading">
               <div className="business-profile-badges">
                 <span className="business-profile-category-badge">
                   <Building2 size={13} />
                   {listing.category}
                 </span>
-
                 {listing.verified && (
                   <span className="business-profile-verified">
                     <BadgeCheck size={14} />
                     Verified
                   </span>
                 )}
-
                 {listing.openNow !== undefined && (
                   <span
                     className={`business-profile-open-status ${
@@ -407,24 +414,19 @@ function CityBusinessProfileModal({
                   </span>
                 )}
               </div>
-
               <h1>{listing.name}</h1>
-
               <p className="business-profile-tagline">
                 {listing.description}
               </p>
-
               <div className="business-profile-meta">
                 <span className="business-profile-rating">
                   <Star size={15} fill="currentColor" />
                   {listing.rating.toFixed(1)}
                   <span>({listing.reviewCount ?? 142} reviews)</span>
                 </span>
-
                 <span className="business-profile-meta-divider">
                   •
                 </span>
-
                 <span className="business-profile-location-meta">
                   <MapPin size={14} />
                   <span>{address}</span>
@@ -432,8 +434,18 @@ function CityBusinessProfileModal({
               </div>
             </div>
           </div>
-
           <div className="business-profile-actions">
+            <button
+              type="button"
+              className="business-profile-whatsapp"
+              onClick={() => openWhatsApp()}
+              aria-label="Contact business on WhatsApp"
+              title="Chat on WhatsApp"
+            >
+              <MessageCircle size={17} />
+              <span>WhatsApp</span>
+            </button>
+
             <button
               type="button"
               className="business-profile-call"
@@ -446,7 +458,16 @@ function CityBusinessProfileModal({
               }
             >
               <Phone size={15} />
-              Call Now
+              <span>Call Now</span>
+            </button>
+
+            <button
+              type="button"
+              className="business-profile-callback"
+              onClick={() => setShowCallbackForm(true)}
+            >
+              <PhoneCall size={16} />
+              <span>Request a Call Back</span>
             </button>
 
             <a
@@ -456,7 +477,7 @@ function CityBusinessProfileModal({
               rel="noopener noreferrer"
             >
               <Navigation size={15} />
-              Directions
+              <span>Directions</span>
             </a>
 
             <button
@@ -470,7 +491,6 @@ function CityBusinessProfileModal({
             </button>
           </div>
         </header>
-
         {/* PROFILE NAVIGATION */}
         <nav
           className="business-profile-tabs"
@@ -479,7 +499,6 @@ function CityBusinessProfileModal({
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const active = activeTab === tab.id;
-
             return (
               <button
                 type="button"
@@ -496,7 +515,6 @@ function CityBusinessProfileModal({
             );
           })}
         </nav>
-
         {/* TAB CONTENT */}
         <div className="business-profile-body">
           {activeTab === "overview" && (
@@ -504,17 +522,14 @@ function CityBusinessProfileModal({
               <div className="business-profile-main-column">
                 <section className="business-profile-panel">
                   <h2>About Business</h2>
-
                   <p>
                     {listing.about || listing.description}
                     {!listing.about &&
                       ` ${listing.name} provides professional services with a focus on quality, customer care, and reliable support.`}
                   </p>
                 </section>
-
                 <section className="business-profile-panel">
                   <h2>Key Highlights & Amenities</h2>
-
                   <div className="business-profile-amenities">
                     {amenities.map((amenity) => (
                       <div
@@ -528,14 +543,12 @@ function CityBusinessProfileModal({
                   </div>
                 </section>
               </div>
-
               <aside className="business-profile-side-column">
                 <section className="business-profile-panel">
                   <h2>
                     <Clock3 size={17} />
                     Operating Hours
                   </h2>
-
                   <div className="business-profile-hours">
                     {hours.map((item) => (
                       <div key={item.day}>
@@ -545,19 +558,16 @@ function CityBusinessProfileModal({
                     ))}
                   </div>
                 </section>
-
                 <section className="business-profile-panel">
                   <h2>
                     <IdCard size={17} />
                     Contact Details
                   </h2>
-
                   <div className="business-profile-contact">
                     <p>
                       <MapPin size={14} />
                       <span>{address}</span>
                     </p>
-
                     <p>
                       <Phone size={14} />
                       <span>
@@ -570,7 +580,6 @@ function CityBusinessProfileModal({
                         )}
                       </span>
                     </p>
-
                     <p>
                       <MessageCircle size={14} />
                       <span>
@@ -583,11 +592,9 @@ function CityBusinessProfileModal({
                         )}
                       </span>
                     </p>
-
                     {/* Always show the website row */}
                     <p className="business-profile-website">
                       <Globe size={14} />
-
                       <span>
                         {websiteUrl ? (
                           <a
@@ -603,7 +610,6 @@ function CityBusinessProfileModal({
                           </span>
                         )}
                       </span>
-
                       {websiteUrl && <ExternalLink size={12} />}
                     </p>
                   </div>
@@ -611,15 +617,12 @@ function CityBusinessProfileModal({
               </aside>
             </div>
           )}
-
           {activeTab === "media" && (
             <section className="business-profile-panel business-profile-full-panel">
               <h2>Media & Gallery</h2>
-
               <p className="business-profile-section-description">
                 Photos provided for this business.
               </p>
-
               <div className="business-profile-gallery">
                 {gallery.map((image, index) => (
                   <img
@@ -632,11 +635,9 @@ function CityBusinessProfileModal({
               </div>
             </section>
           )}
-
           {activeTab === "services" && (
             <section className="business-profile-panel business-profile-full-panel">
               <h2>Services Offered</h2>
-
               <div className="business-profile-services">
                 {services.map((service, index) => (
                   <div
@@ -650,11 +651,9 @@ function CityBusinessProfileModal({
               </div>
             </section>
           )}
-
           {activeTab === "products" && (
             <section className="business-profile-panel business-profile-full-panel">
               <h2>Products / Catalogue</h2>
-
               <div className="business-profile-empty-tab">
                 <ShoppingBag size={30} />
                 <h3>Catalogue coming soon</h3>
@@ -665,17 +664,14 @@ function CityBusinessProfileModal({
               </div>
             </section>
           )}
-
           {/* LOCATION & MAP */}
           {activeTab === "location" && (
             <section className="business-profile-panel business-profile-full-panel business-profile-location-panel">
               <h2>Location & Map View</h2>
-
               <p className="business-profile-map-address">
                 <MapPin size={15} />
                 {address}
               </p>
-
               <div className="business-profile-map-frame">
                 <iframe
                   title={`Map showing ${listing.name}`}
@@ -684,18 +680,15 @@ function CityBusinessProfileModal({
                   referrerPolicy="no-referrer-when-downgrade"
                   allowFullScreen
                 />
-
                 <div className="business-profile-map-label">
                   <span className="business-profile-map-pin">
                     <MapPin size={20} fill="currentColor" />
                   </span>
-
                   <div>
                     <strong>{listing.name}</strong>
                     <span>Business location</span>
                   </div>
                 </div>
-
                 <a
                   className="business-profile-map-directions"
                   href={directionsUrl}
@@ -706,15 +699,12 @@ function CityBusinessProfileModal({
                   Get Directions
                 </a>
               </div>
-
               <div className="business-profile-location-details">
                 <MapPin size={18} />
-
                 <div>
                   <strong>Business Address</strong>
                   <p>{address}</p>
                 </div>
-
                 <a
                   href={directionsUrl}
                   target="_blank"
@@ -726,18 +716,15 @@ function CityBusinessProfileModal({
               </div>
             </section>
           )}
-
           {/* CUSTOMER REVIEWS */}
           {activeTab === "reviews" && (
             <div className="business-profile-reviews-layout">
               <aside className="business-profile-panel business-profile-rating-summary">
                 <h2>User Ratings Summary</h2>
-
                 <div className="business-profile-rating-number">
                   <strong>{listing.rating.toFixed(1)}</strong>
                   <span>out of 5.0</span>
                 </div>
-
                 <div
                   className="business-profile-rating-stars"
                   aria-label={`${listing.rating.toFixed(1)} out of 5 stars`}
@@ -754,15 +741,12 @@ function CityBusinessProfileModal({
                     />
                   ))}
                 </div>
-
                 <p className="business-profile-rating-count">
                   Based on {reviewCount} customer reviews
                 </p>
-
                 <div className="business-profile-rating-breakdown">
                   {([5, 4, 3, 2, 1] as const).map((star) => {
                     const percentage = ratingBreakdown[star];
-
                     return (
                       <div
                         className="business-profile-rating-row"
@@ -771,7 +755,6 @@ function CityBusinessProfileModal({
                         <span className="business-profile-rating-label">
                           {star} ★
                         </span>
-
                         <div
                           className="business-profile-rating-track"
                           role="progressbar"
@@ -789,7 +772,6 @@ function CityBusinessProfileModal({
                             }}
                           />
                         </div>
-
                         <span className="business-profile-rating-percentage">
                           {percentage}%
                         </span>
@@ -797,7 +779,6 @@ function CityBusinessProfileModal({
                     );
                   })}
                 </div>
-
                 <button
                   type="button"
                   className="business-profile-write-review"
@@ -806,7 +787,6 @@ function CityBusinessProfileModal({
                   Write a Review
                 </button>
               </aside>
-
               <div className="business-profile-review-list">
                 {reviews.length > 0 ? (
                   reviews.map((review) => (
@@ -824,14 +804,12 @@ function CityBusinessProfileModal({
                           review.name.charAt(0).toUpperCase()
                         )}
                       </div>
-
                       <div className="business-profile-review-content">
                         <div className="business-profile-review-header">
                           <div>
                             <h3>{review.name}</h3>
                             <span>{review.date}</span>
                           </div>
-
                           <div
                             className="business-profile-review-stars"
                             aria-label={`${review.rating} out of 5 stars`}
@@ -852,7 +830,6 @@ function CityBusinessProfileModal({
                             )}
                           </div>
                         </div>
-
                         <p>{review.comment}</p>
                       </div>
                     </article>
@@ -872,6 +849,83 @@ function CityBusinessProfileModal({
           )}
         </div>
       </section>
+      {/* REQUEST A CALL BACK POPUP */}
+      {showCallbackForm && (
+        <div
+          className="business-profile-review-backdrop"
+          onClick={(event) => {
+            if (event.target === event.currentTarget) {
+              setShowCallbackForm(false);
+            }
+          }}
+        >
+          <section
+            className="business-profile-review-modal business-profile-callback-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="callback-title"
+          >
+            <button
+              type="button"
+              className="business-profile-review-close"
+              onClick={() => setShowCallbackForm(false)}
+              aria-label="Close callback form"
+            >
+              <X size={18} />
+            </button>
+
+            <h2 id="callback-title">Request a Call Back</h2>
+            <p>
+              Leave your contact details and send a callback request to{" "}
+              <strong>{listing.name}</strong>.
+            </p>
+
+            <form onSubmit={submitCallbackRequest}>
+              <label htmlFor="callback-name">Your Name</label>
+              <input
+                id="callback-name"
+                value={callbackName}
+                onChange={(event) => setCallbackName(event.target.value)}
+                placeholder="Enter your name"
+                autoComplete="name"
+                maxLength={80}
+                required
+              />
+
+              <label htmlFor="callback-phone">Phone Number</label>
+              <input
+                id="callback-phone"
+                type="tel"
+                value={callbackPhone}
+                onChange={(event) => setCallbackPhone(event.target.value)}
+                placeholder="Enter your phone number"
+                autoComplete="tel"
+                pattern="[+]?[0-9 ()-]{10,20}"
+                maxLength={20}
+                required
+              />
+
+              <label htmlFor="callback-message">Message (Optional)</label>
+              <textarea
+                id="callback-message"
+                value={callbackMessage}
+                onChange={(event) => setCallbackMessage(event.target.value)}
+                placeholder="What would you like to know?"
+                rows={3}
+                maxLength={500}
+              />
+
+              <button
+                type="submit"
+                className="business-profile-submit-review"
+              >
+                <PhoneCall size={16} />
+                Send Callback Request
+              </button>
+            </form>
+          </section>
+        </div>
+      )}
 
       {/* WRITE A REVIEW POPUP */}
       {showReviewForm && (
@@ -897,15 +951,12 @@ function CityBusinessProfileModal({
             >
               <X size={18} />
             </button>
-
             <h2 id="business-review-title">Write a Review</h2>
             <p>Share your experience with {listing.name}.</p>
-
             <form onSubmit={submitReview}>
               <label htmlFor="business-review-name">
                 Your Name
               </label>
-
               <input
                 id="business-review-name"
                 value={reviewName}
@@ -916,15 +967,12 @@ function CityBusinessProfileModal({
                 required
                 maxLength={80}
               />
-
               <span className="business-profile-form-label">
                 Your Rating
               </span>
-
               <div className="business-profile-review-rating-picker">
                 {Array.from({ length: 5 }, (_, index) => {
                   const rating = index + 1;
-
                   return (
                     <button
                       type="button"
@@ -948,11 +996,9 @@ function CityBusinessProfileModal({
                   );
                 })}
               </div>
-
               <label htmlFor="business-review-comment">
                 Your Review
               </label>
-
               <textarea
                 id="business-review-comment"
                 value={reviewComment}
@@ -964,7 +1010,6 @@ function CityBusinessProfileModal({
                 required
                 maxLength={1500}
               />
-
               <button
                 type="submit"
                 className="business-profile-submit-review"
@@ -979,5 +1024,4 @@ function CityBusinessProfileModal({
     </div>
   );
 }
-
 export default CityBusinessProfileModal;

@@ -15,10 +15,16 @@ import {
   Bath,
   Maximize2,
   Plus,
+  Images,
+  Navigation,
+  ChevronLeft,
+  ChevronRight,
   X,
   House,
   KeyRound,
   ShieldCheck,
+  Landmark,
+  Check,
 } from "lucide-react";
 
 import "./FindMyPropertyPage.css";
@@ -45,6 +51,8 @@ type Property = {
   label: string;
   image: string;
   description: string;
+  gallery?: string[];
+  highlights?: string[];
 };
 
 type FindMyPropertyPageProps = {
@@ -69,6 +77,18 @@ const properties: Property[] = [
       "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=85",
     description:
       "A bright, spacious apartment with modern finishes and convenient access to everyday amenities.",
+    gallery: [
+      "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=85",
+      "https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=900&q=80",
+      "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=900&q=80",
+      "https://images.unsplash.com/photo-1600607687644-c7171b42498f?auto=format&fit=crop&w=900&q=80",
+    ],
+    highlights: [
+      "Madhurawada main road connectivity",
+      "Public transport and bus access",
+      "Schools and colleges in the area",
+      "Shopping and daily essentials nearby",
+    ],
   },
   {
     id: 2,
@@ -85,6 +105,18 @@ const properties: Property[] = [
       "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1200&q=85",
     description:
       "Contemporary office space with an open-plan layout suitable for growing teams and businesses.",
+    gallery: [
+      "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=1200&q=85",
+      "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=900&q=80",
+      "https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=900&q=80",
+      "https://images.unsplash.com/photo-1497366858526-0766cadbe8fa?auto=format&fit=crop&w=900&q=80",
+    ],
+    highlights: [
+      "MVP Colony main-road access",
+      "Public transport connections",
+      "Nearby shops and food options",
+      "Business services in the area",
+    ],
   },
   {
     id: 3,
@@ -102,6 +134,18 @@ const properties: Property[] = [
       "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?auto=format&fit=crop&w=1200&q=85",
     description:
       "A welcoming family home with generous living spaces and a practical layout.",
+    gallery: [
+      "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?auto=format&fit=crop&w=1200&q=85",
+      "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=900&q=80",
+      "https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=900&q=80",
+      "https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=900&q=80",
+    ],
+    highlights: [
+      "Yendada road connectivity",
+      "Local schools and colleges",
+      "Daily shopping options nearby",
+      "Public transport access",
+    ],
   },
   {
     id: 4,
@@ -118,6 +162,18 @@ const properties: Property[] = [
       "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1200&q=85",
     description:
       "Street-facing commercial space in a convenient business location.",
+    gallery: [
+      "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1200&q=85",
+      "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=900&q=80",
+      "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=900&q=80",
+      "https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=900&q=80",
+    ],
+    highlights: [
+      "Dwaraka Nagar commercial area",
+      "Main-road visibility and access",
+      "Public transport connections",
+      "Nearby shops and business services",
+    ],
   },
 ];
 
@@ -153,6 +209,12 @@ export default function FindMyPropertyPage({
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [sort, setSort] = useState("recommended");
   const [selected, setSelected] = useState<Property | null>(null);
+  const [selectedPropertyTab, setSelectedPropertyTab] = useState<"overview" | "gallery" | "location">("overview");
+  const [activeGalleryImage, setActiveGalleryImage] = useState(0);
+  const [showEnquiryForm, setShowEnquiryForm] = useState(false);
+  const [enquiryName, setEnquiryName] = useState("");
+  const [enquiryMobile, setEnquiryMobile] = useState("");
+  const [enquiryDetails, setEnquiryDetails] = useState("");
 
   const results = useMemo(() => {
     const term = submitted.keywords.trim().toLowerCase();
@@ -250,12 +312,38 @@ export default function FindMyPropertyPage({
     );
   };
 
-  const openPropertyEnquiry = (property: Property) => {
-    navigate(
-      `/contact?subject=${encodeURIComponent(
-        `Property Enquiry - ${property.title}`,
-      )}`,
-    );
+  const openPropertyDetails = (property: Property) => {
+    setSelected(property);
+    setSelectedPropertyTab("overview");
+    setActiveGalleryImage(0);
+  };
+
+  const getPropertyGallery = (property: Property) =>
+    property.gallery?.length ? property.gallery : [property.image];
+
+  const getMapSearch = (property: Property) =>
+    encodeURIComponent(`${property.title}, ${property.location}`);
+
+  const openPropertyEnquiry = () => {
+    setShowEnquiryForm(true);
+  };
+
+  const submitPropertyEnquiry = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!selected) return;
+
+    const params = new URLSearchParams({
+      subject: `Property Callback Request - ${selected.title}`,
+      name: enquiryName.trim(),
+      mobile: enquiryMobile.trim(),
+      details: enquiryDetails.trim(),
+      property: selected.title,
+      location: selected.location,
+    });
+
+    setShowEnquiryForm(false);
+    setSelected(null);
+    navigate(`/contact?${params.toString()}`);
   };
 
   return (
@@ -606,7 +694,7 @@ export default function FindMyPropertyPage({
                   <button
                     type="button"
                     className="fmp-view-details"
-                    onClick={() => setSelected(property)}
+                    onClick={() => openPropertyDetails(property)}
                   >
                     View Details
                   </button>
@@ -669,73 +757,267 @@ export default function FindMyPropertyPage({
           onClick={() => setSelected(null)}
         >
           <section
-            className="fmp-modal"
+            className="fmp-modal fmp-property-detail-modal"
             role="dialog"
             aria-modal="true"
             aria-labelledby="fmp-modal-title"
             onClick={(event) => event.stopPropagation()}
           >
-            <button
-              type="button"
-              className="fmp-modal-close"
-              aria-label="Close details"
-              onClick={() => setSelected(null)}
-            >
-              <X size={18} />
-            </button>
-
-            <img src={selected.image} alt={selected.title} />
-
-            <div className="fmp-modal-content">
-              <span className="fmp-eyebrow">
-                {selected.label}
+            <div className="fmp-property-modal-hero">
+              <img
+                src={getPropertyGallery(selected)[activeGalleryImage] ?? selected.image}
+                alt={`${selected.title} - image ${activeGalleryImage + 1}`}
+              />
+              {getPropertyGallery(selected).length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    className="fmp-gallery-arrow fmp-gallery-previous"
+                    aria-label="Previous property image"
+                    onClick={() =>
+                      setActiveGalleryImage((index) =>
+                        (index - 1 + getPropertyGallery(selected).length) % getPropertyGallery(selected).length,
+                      )
+                    }
+                  >
+                    <ChevronLeft size={20} />
+                  </button>
+                  <button
+                    type="button"
+                    className="fmp-gallery-arrow fmp-gallery-next"
+                    aria-label="Next property image"
+                    onClick={() =>
+                      setActiveGalleryImage((index) =>
+                        (index + 1) % getPropertyGallery(selected).length,
+                      )
+                    }
+                  >
+                    <ChevronRight size={20} />
+                  </button>
+                </>
+              )}
+              <span className="fmp-modal-image-count">
+                <Images size={13} /> {activeGalleryImage + 1} / {getPropertyGallery(selected).length}
               </span>
-
-              <h2 id="fmp-modal-title">{selected.title}</h2>
-
-              <p className="fmp-property-location">
-                <MapPin size={14} />
-                {selected.location}
-              </p>
-
-              <strong className="fmp-property-price">
-                {money(selected.price)}{" "}
-                <span>{selected.period ?? ""}</span>
-              </strong>
-
-              <p>{selected.description}</p>
-
-              <div className="fmp-property-specs">
-                {selected.beds && (
-                  <span>
-                    <BedDouble size={14} />
-                    {selected.beds} BHK
-                  </span>
-                )}
-
-                {selected.baths && (
-                  <span>
-                    <Bath size={14} />
-                    {selected.baths} Bath
-                  </span>
-                )}
-
-                <span>
-                  <Maximize2 size={13} />
-                  {selected.area.toLocaleString("en-IN")} sq.ft.
-                </span>
-              </div>
-
               <button
                 type="button"
-                className="fmp-search-submit"
-                onClick={() => openPropertyEnquiry(selected)}
+                className="fmp-modal-close"
+                aria-label="Close details"
+                onClick={() => setSelected(null)}
               >
-                Enquire about property
-                <ArrowRight size={15} />
+                <X size={18} />
               </button>
             </div>
+
+            <div className="fmp-property-modal-body">
+              <div className="fmp-property-modal-heading">
+                <span className="fmp-property-modal-label">{selected.label}</span>
+                <h2 id="fmp-modal-title">{selected.title}</h2>
+                <p className="fmp-property-location">
+                  <MapPin size={14} />
+                  {selected.location}
+                </p>
+                <strong className="fmp-property-price">
+                  {money(selected.price)} <span>{selected.period ?? ""}</span>
+                </strong>
+              </div>
+
+              <div className="fmp-property-modal-tabs" role="tablist" aria-label="Property details">
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={selectedPropertyTab === "overview"}
+                  className={selectedPropertyTab === "overview" ? "active" : ""}
+                  onClick={() => setSelectedPropertyTab("overview")}
+                >
+                  <House size={16} /> Overview
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={selectedPropertyTab === "gallery"}
+                  className={selectedPropertyTab === "gallery" ? "active" : ""}
+                  onClick={() => setSelectedPropertyTab("gallery")}
+                >
+                  <Images size={16} /> Property Gallery
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={selectedPropertyTab === "location"}
+                  className={selectedPropertyTab === "location" ? "active" : ""}
+                  onClick={() => setSelectedPropertyTab("location")}
+                >
+                  <MapPin size={16} /> Location &amp; Map
+                </button>
+              </div>
+
+              <div className="fmp-property-tab-content">
+                {selectedPropertyTab === "overview" && (
+                  <div className="fmp-property-overview-panel" role="tabpanel">
+                    <div className="fmp-property-overview-card">
+                      <h3>About this property</h3>
+                      <p>{selected.description}</p>
+                      <div className="fmp-property-highlights">
+                        <h4><Landmark size={15} /> Nearby highlights &amp; landmarks</h4>
+                        <ul className="fmp-property-highlights-list">
+                          {(selected.highlights ?? [
+                            "Main-road connectivity",
+                            "Public transport access",
+                            "Schools and everyday essentials nearby",
+                            "Local shops and services",
+                          ]).map((highlight) => (
+                            <li key={highlight}><Check size={14} /> <span>{highlight}</span></li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                    <div className="fmp-property-overview-card">
+                      <h3>Property details</h3>
+                      <div className="fmp-property-detail-grid">
+                        <div><span>Listing type</span><strong>{selected.deal === "Sale" ? "For Sale" : `For ${selected.deal}`}</strong></div>
+                        <div><span>Category</span><strong>{selected.kind}</strong></div>
+                        {selected.beds != null && <div><span>Bedrooms</span><strong>{selected.beds} BHK</strong></div>}
+                        {selected.baths != null && <div><span>Bathrooms</span><strong>{selected.baths}</strong></div>}
+                        <div><span>Area</span><strong>{selected.area.toLocaleString("en-IN")} sq.ft.</strong></div>
+                        <div><span>Location</span><strong>{selected.location}</strong></div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {selectedPropertyTab === "gallery" && (
+                  <div className="fmp-property-gallery-panel" role="tabpanel">
+                    <div className="fmp-property-gallery-main">
+                      <img src={getPropertyGallery(selected)[activeGalleryImage] ?? selected.image} alt={`${selected.title} gallery view ${activeGalleryImage + 1}`} />
+                    </div>
+                    <div className="fmp-property-gallery-thumbnails">
+                      {getPropertyGallery(selected).map((image, index) => (
+                        <button
+                          type="button"
+                          key={`${image}-${index}`}
+                          className={activeGalleryImage === index ? "active" : ""}
+                          onClick={() => setActiveGalleryImage(index)}
+                          aria-label={`View property image ${index + 1}`}
+                          aria-pressed={activeGalleryImage === index}
+                        >
+                          <img src={image} alt="" loading="lazy" />
+                        </button>
+                      ))}
+                    </div>
+                    {getPropertyGallery(selected).length === 1 && (
+                      <p className="fmp-gallery-note">More property images can be added to this listing's gallery.</p>
+                    )}
+                  </div>
+                )}
+
+                {selectedPropertyTab === "location" && (
+                  <div className="fmp-property-location-panel" role="tabpanel">
+                    <div className="fmp-property-location-summary">
+                      <MapPin size={20} />
+                      <div><h3>Property location</h3><p>{selected.location}</p></div>
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${getMapSearch(selected)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="fmp-map-directions"
+                      >
+                        <Navigation size={15} /> Directions
+                      </a>
+                    </div>
+                    <iframe
+                      title={`Map showing ${selected.title}`}
+                      src={`https://www.google.com/maps?q=${getMapSearch(selected)}&output=embed`}
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="fmp-property-modal-footer">
+                <button
+                  type="button"
+                  className="fmp-search-submit fmp-property-enquiry-button"
+                  onClick={openPropertyEnquiry}
+                >
+                  Enquire about property <ArrowRight size={16} />
+                </button>
+              </div>
+            </div>
           </section>
+
+          {showEnquiryForm && (
+            <div
+              className="fmp-enquiry-backdrop"
+              role="presentation"
+              onClick={(event) => {
+                if (event.target === event.currentTarget) setShowEnquiryForm(false);
+              }}
+            >
+              <section
+                className="fmp-enquiry-modal"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="fmp-enquiry-title"
+                onClick={(event) => event.stopPropagation()}
+              >
+                <button
+                  type="button"
+                  className="fmp-enquiry-close"
+                  aria-label="Close enquiry form"
+                  onClick={() => setShowEnquiryForm(false)}
+                >
+                  <X size={18} />
+                </button>
+                <span className="fmp-property-modal-label">PROPERTY ENQUIRY</span>
+                <h2 id="fmp-enquiry-title">Request a Call Back</h2>
+                <p className="fmp-enquiry-intro">
+                  Share your contact details about <strong>{selected.title}</strong> and continue to the contact page to complete your request.
+                </p>
+                <form onSubmit={submitPropertyEnquiry} className="fmp-enquiry-form">
+                  <label htmlFor="fmp-enquiry-name">Full name</label>
+                  <input
+                    id="fmp-enquiry-name"
+                    name="name"
+                    value={enquiryName}
+                    onChange={(event) => setEnquiryName(event.target.value)}
+                    placeholder="Enter your name"
+                    autoComplete="name"
+                    maxLength={100}
+                    required
+                  />
+                  <label htmlFor="fmp-enquiry-mobile">Mobile number</label>
+                  <input
+                    id="fmp-enquiry-mobile"
+                    name="mobile"
+                    type="tel"
+                    value={enquiryMobile}
+                    onChange={(event) => setEnquiryMobile(event.target.value)}
+                    placeholder="Enter your mobile number"
+                    autoComplete="tel"
+                    inputMode="tel"
+                    pattern="[+]?[0-9 ()-]{10,20}"
+                    maxLength={20}
+                    required
+                  />
+                  <label htmlFor="fmp-enquiry-details">Additional details</label>
+                  <textarea
+                    id="fmp-enquiry-details"
+                    name="details"
+                    value={enquiryDetails}
+                    onChange={(event) => setEnquiryDetails(event.target.value)}
+                    placeholder="Preferred time to call or any questions (optional)"
+                    rows={3}
+                    maxLength={600}
+                  />
+                  <button type="submit" className="fmp-enquiry-submit">
+                    Request a Callback <ArrowRight size={16} />
+                  </button>
+                </form>
+              </section>
+            </div>
+          )}
         </div>
       )}
     </main>

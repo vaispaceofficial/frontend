@@ -1451,3 +1451,185 @@
   }
 }
 
+
+/* Append these styles to CityBusinessProfileModal.css */
+
+.business-profile-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.business-profile-actions button,
+.business-profile-actions a {
+  box-sizing: border-box;
+  min-height: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 15px;
+  border-radius: 11px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+}
+
+.business-profile-actions button:hover:not(:disabled),
+.business-profile-actions a:hover {
+  transform: translateY(-1px);
+}
+
+.business-profile-actions button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.business-profile-actions .business-profile-whatsapp {
+  color: #fff;
+  background: #168c55;
+  border: 1px solid #22a568;
+}
+
+.business-profile-actions .business-profile-whatsapp:hover {
+  background: #117546;
+}
+
+.business-profile-actions .business-profile-callback {
+  color: #fff;
+  background: #102b4e;
+  border: 1px solid #345579;
+}
+
+.business-profile-actions .business-profile-callback:hover {
+  background: #193d63;
+}
+
+.business-profile-actions .business-profile-call,
+.business-profile-actions .business-profile-directions {
+  color: #fff;
+  background: #2563eb;
+  border: 1px solid #4b83f5;
+}
+
+.business-profile-actions .business-profile-share {
+  width: 46px;
+  min-width: 46px;
+  padding: 0;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+.business-profile-callback-modal {
+  position: relative;
+}
+
+.business-profile-callback-modal form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.business-profile-callback-modal form label {
+  margin-top: 5px;
+  color: #334155;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.business-profile-callback-modal form input,
+.business-profile-callback-modal form textarea {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 12px 13px;
+  color: #172033;
+  background: #fff;
+  border: 1px solid #d7e0ed;
+  border-radius: 9px;
+  font: inherit;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.business-profile-callback-modal form input:focus,
+.business-profile-callback-modal form textarea:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.business-profile-callback-modal form textarea {
+  resize: vertical;
+}
+
+.business-profile-callback-modal .business-profile-submit-review {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 12px;
+}
+
+@media (max-width: 1100px) {
+  .business-profile-actions {
+    gap: 7px;
+  }
+
+  .business-profile-actions button,
+  .business-profile-actions a {
+    padding: 0 11px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 760px) {
+  .business-profile-actions {
+    justify-content: flex-start;
+    gap: 8px;
+  }
+
+  .business-profile-actions button,
+  .business-profile-actions a {
+    min-height: 42px;
+    padding: 0 11px;
+    font-size: 12px;
+  }
+
+  .business-profile-actions .business-profile-share {
+    min-width: 42px;
+    width: 42px;
+  }
+}
+
+@media (max-width: 480px) {
+  .business-profile-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .business-profile-actions button,
+  .business-profile-actions a {
+    width: 100%;
+    min-width: 0;
+    padding: 0 8px;
+    gap: 6px;
+    white-space: normal;
+    text-align: center;
+  }
+
+  .business-profile-actions .business-profile-share {
+    width: 100%;
+    min-width: 0;
+    grid-column: span 2;
+  }
+}
