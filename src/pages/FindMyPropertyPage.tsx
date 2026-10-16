@@ -1,5 +1,5 @@
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -184,37 +184,50 @@ const money = (amount: number) =>
     maximumFractionDigits: 0,
   }).format(amount);
 
+const initialFilters = {
+  deal: "Rent" as DealType,
+  kind: "All" as PropertyKind,
+  city: "Visakhapatnam",
+  keywords: "",
+  budget: "any",
+  bedrooms: "any",
+};
+
 export default function FindMyPropertyPage({
   embedded = false,
 }: FindMyPropertyPageProps) {
   const navigate = useNavigate();
 
-  const [deal, setDeal] = useState<DealType>("Rent");
-  const [kind, setKind] = useState<PropertyKind>("All");
-  const [city, setCity] = useState("Visakhapatnam");
-  const [keywords, setKeywords] = useState("");
-  const [budget, setBudget] = useState("any");
-  const [bedrooms, setBedrooms] = useState("any");
+  const [deal, setDeal] = useState<DealType>(initialFilters.deal);
+  const [kind, setKind] = useState<PropertyKind>(initialFilters.kind);
+  const [city, setCity] = useState(initialFilters.city);
+  const [keywords, setKeywords] = useState(initialFilters.keywords);
+  const [budget, setBudget] = useState(initialFilters.budget);
+  const [bedrooms, setBedrooms] = useState(initialFilters.bedrooms);
 
-  const [submitted, setSubmitted] = useState({
-    deal: "Rent" as DealType,
-    kind: "All" as PropertyKind,
-    city: "Visakhapatnam",
-    keywords: "",
-    budget: "any",
-    bedrooms: "any",
-  });
-
+  const [submitted, setSubmitted] = useState(initialFilters);
   const [saved, setSaved] = useState<number[]>([]);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [sort, setSort] = useState("recommended");
+
   const [selected, setSelected] = useState<Property | null>(null);
-  const [selectedPropertyTab, setSelectedPropertyTab] = useState<"overview" | "gallery" | "location">("overview");
+  const [selectedPropertyTab, setSelectedPropertyTab] = useState<
+    "overview" | "gallery" | "location"
+  >("overview");
   const [activeGalleryImage, setActiveGalleryImage] = useState(0);
+
   const [showEnquiryForm, setShowEnquiryForm] = useState(false);
   const [enquiryName, setEnquiryName] = useState("");
   const [enquiryMobile, setEnquiryMobile] = useState("");
   const [enquiryDetails, setEnquiryDetails] = useState("");
+
+  const getPropertyGallery = (property: Property) =>
+    property.gallery?.length ? property.gallery : [property.image];
+
+  const selectedGallery = selected ? getPropertyGallery(selected) : [];
+
+  const getMapSearch = (property: Property) =>
+    encodeURIComponent(`${property.title}, ${property.location}`);
 
   const results = useMemo(() => {
     const term = submitted.keywords.trim().toLowerCase();
@@ -225,11 +238,13 @@ export default function FindMyPropertyPage({
       const kindMatch =
         submitted.kind === "All" || property.kind === submitted.kind;
 
+      const cityTerm = submitted.city.trim().toLowerCase();
+
       const cityMatch =
-        !submitted.city.trim() ||
+        !cityTerm ||
         `${property.city} ${property.location}`
           .toLowerCase()
-          .includes(submitted.city.trim().toLowerCase());
+          .includes(cityTerm);
 
       const termMatch =
         !term ||
@@ -261,14 +276,50 @@ export default function FindMyPropertyPage({
 
     if (sort === "price-low") {
       items = [...items].sort((a, b) => a.price - b.price);
-    }
-
-    if (sort === "price-high") {
+    } else if (sort === "price-high") {
       items = [...items].sort((a, b) => b.price - a.price);
     }
 
     return items;
   }, [submitted, sort]);
+
+  // Keep the page behind the popup from scrolling and support Escape.
+  useEffect(() => {
+    if (!selected) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        if (showEnquiryForm) {
+          setShowEnquiryForm(false);
+        } else {
+          setSelected(null);
+        }
+      }
+
+      if (event.key === "ArrowRight" && !showEnquiryForm) {
+        setActiveGalleryImage((index) =>
+          (index + 1) % getPropertyGallery(selected).length,
+        );
+      }
+
+      if (event.key === "ArrowLeft" && !showEnquiryForm) {
+        setActiveGalleryImage((index) => {
+          const length = getPropertyGallery(selected).length;
+          return (index - 1 + length) % length;
+        });
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [selected, showEnquiryForm]);
 
   const searchProperties = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -284,15 +335,6 @@ export default function FindMyPropertyPage({
   };
 
   const resetFilters = () => {
-    const initialFilters = {
-      deal: "Rent" as DealType,
-      kind: "All" as PropertyKind,
-      city: "Visakhapatnam",
-      keywords: "",
-      budget: "any",
-      bedrooms: "any",
-    };
-
     setDeal(initialFilters.deal);
     setKind(initialFilters.kind);
     setCity(initialFilters.city);
@@ -316,19 +358,24 @@ export default function FindMyPropertyPage({
     setSelected(property);
     setSelectedPropertyTab("overview");
     setActiveGalleryImage(0);
+    setShowEnquiryForm(false);
   };
 
-  const getPropertyGallery = (property: Property) =>
-    property.gallery?.length ? property.gallery : [property.image];
-
-  const getMapSearch = (property: Property) =>
-    encodeURIComponent(`${property.title}, ${property.location}`);
+  const closePropertyDetails = () => {
+    setShowEnquiryForm(false);
+    setSelected(null);
+  };
 
   const openPropertyEnquiry = () => {
+    setEnquiryName("");
+    setEnquiryMobile("");
+    setEnquiryDetails("");
     setShowEnquiryForm(true);
   };
 
-  const submitPropertyEnquiry = (event: FormEvent<HTMLFormElement>) => {
+  const submitPropertyEnquiry = (
+    event: FormEvent<HTMLFormElement>,
+  ) => {
     event.preventDefault();
     if (!selected) return;
 
@@ -347,9 +394,7 @@ export default function FindMyPropertyPage({
   };
 
   return (
-    <main
-      className={`fmp-page${embedded ? " fmp-embedded" : ""}`}
-    >
+    <main className={`fmp-page${embedded ? " fmp-embedded" : ""}`}>
       {!embedded && (
         <header className="fmp-header">
           <Link to="/city-listings" className="fmp-brand">
@@ -374,14 +419,26 @@ export default function FindMyPropertyPage({
             List Property
           </button>
 
-          <nav className="fmp-mini-nav">
-            <a href="#buy" onClick={() => setDeal("Sale")}>
+          <nav className="fmp-mini-nav" aria-label="Property types">
+            <a
+              href="#buy"
+              onClick={() => setDeal("Sale")}
+              aria-label="Search properties to buy"
+            >
               Buy
             </a>
-            <a href="#buy" onClick={() => setDeal("Rent")}>
+            <a
+              href="#buy"
+              onClick={() => setDeal("Rent")}
+              aria-label="Search properties to rent"
+            >
               Rent
             </a>
-            <a href="#buy" onClick={() => setDeal("Lease")}>
+            <a
+              href="#buy"
+              onClick={() => setDeal("Lease")}
+              aria-label="Search properties to lease"
+            >
               Lease
             </a>
             <span>
@@ -404,44 +461,40 @@ export default function FindMyPropertyPage({
           lease or buy — start with the right space.
         </p>
 
-        <form
-          className="fmp-search-form"
-          onSubmit={searchProperties}
-        >
-          <label className="fmp-field-title">
-            I'm looking for
-          </label>
+        <form className="fmp-search-form" onSubmit={searchProperties}>
+          <label className="fmp-field-title">I'm looking for</label>
 
           <div className="fmp-deal-tabs">
-            {(["Rent", "Lease", "Sale"] as DealType[]).map(
-              (item) => (
-                <button
-                  key={item}
-                  type="button"
-                  className={deal === item ? "active" : ""}
-                  onClick={() => setDeal(item)}
-                >
-                  {item === "Rent" ? (
-                    <KeyRound size={14} />
-                  ) : item === "Lease" ? (
-                    <Building2 size={14} />
-                  ) : (
-                    <House size={14} />
-                  )}
-
-                  <span>{item === "Sale" ? "Buy" : item}</span>
-                </button>
-              ),
-            )}
+            {(["Rent", "Lease", "Sale"] as DealType[]).map((item) => (
+              <button
+                key={item}
+                type="button"
+                className={deal === item ? "active" : ""}
+                aria-pressed={deal === item}
+                onClick={() => setDeal(item)}
+              >
+                {item === "Rent" ? (
+                  <KeyRound size={14} />
+                ) : item === "Lease" ? (
+                  <Building2 size={14} />
+                ) : (
+                  <House size={14} />
+                )}
+                <span>{item === "Sale" ? "Buy" : item}</span>
+              </button>
+            ))}
           </div>
 
-          <label className="fmp-field-title">
-            Property category
-          </label>
+          <label className="fmp-field-title">Property category</label>
 
           <div className="fmp-radio-row">
             {(
-              ["All", "Residential", "Commercial", "Co-Workspace"] as PropertyKind[]
+              [
+                "All",
+                "Residential",
+                "Commercial",
+                "Co-Workspace",
+              ] as PropertyKind[]
             ).map((item) => (
               <label key={item}>
                 <input
@@ -455,12 +508,13 @@ export default function FindMyPropertyPage({
             ))}
           </div>
 
-
           <div className="fmp-listing-note">
             <ShieldCheck size={14} />
-            <span>Listings may only be posted by property owners and authorized builders.</span>
+            <span>
+              Listings may only be posted by property owners and
+              authorized builders.
+            </span>
           </div>
-
 
           <label className="fmp-field-title" htmlFor="fmp-city">
             Preferred city or locality
@@ -468,19 +522,16 @@ export default function FindMyPropertyPage({
 
           <div className="fmp-input-wrap">
             <MapPin size={15} />
-
             <input
               id="fmp-city"
               value={city}
               onChange={(event) => setCity(event.target.value)}
               placeholder="Enter city or locality"
+              autoComplete="address-level2"
             />
           </div>
 
-          <label
-            className="fmp-field-title"
-            htmlFor="fmp-keywords"
-          >
+          <label className="fmp-field-title" htmlFor="fmp-keywords">
             Keywords
           </label>
 
@@ -504,12 +555,9 @@ export default function FindMyPropertyPage({
             >
               <option value="any">Any budget</option>
               <option value="under25">Up to ₹25,000</option>
-              <option value="25to50">
-                ₹25,001 – ₹50,000
-              </option>
+              <option value="25to50">₹25,001 – ₹50,000</option>
               <option value="over50">Above ₹50,000</option>
             </select>
-
             <ChevronDown size={14} />
           </div>
 
@@ -570,6 +618,7 @@ export default function FindMyPropertyPage({
               className="fmp-filter-button"
               onClick={() => setFiltersOpen((open) => !open)}
               aria-expanded={filtersOpen}
+              aria-controls="fmp-filter-panel"
             >
               <SlidersHorizontal size={14} />
               Filters
@@ -586,7 +635,7 @@ export default function FindMyPropertyPage({
         </div>
 
         {filtersOpen && (
-          <div className="fmp-filter-panel">
+          <div className="fmp-filter-panel" id="fmp-filter-panel">
             <label>
               Sort by
               <select
@@ -594,12 +643,8 @@ export default function FindMyPropertyPage({
                 onChange={(event) => setSort(event.target.value)}
               >
                 <option value="recommended">Recommended</option>
-                <option value="price-low">
-                  Price: low to high
-                </option>
-                <option value="price-high">
-                  Price: high to low
-                </option>
+                <option value="price-low">Price: low to high</option>
+                <option value="price-high">Price: high to low</option>
               </select>
             </label>
 
@@ -614,93 +659,89 @@ export default function FindMyPropertyPage({
 
         {results.length > 0 ? (
           <div className="fmp-property-grid">
-            {results.map((property) => (
-              <article
-                className="fmp-property-card"
-                key={property.id}
-              >
-                <div className="fmp-property-image">
-                  <img
-                    src={property.image}
-                    alt={property.title}
-                    loading="lazy"
-                  />
+            {results.map((property) => {
+              const isSaved = saved.includes(property.id);
 
-                  <span className="fmp-property-tag">
-                    {property.deal === "Sale"
-                      ? "Buy"
-                      : property.deal}
-                  </span>
-
-                  <button
-                    type="button"
-                    aria-label={
-                      saved.includes(property.id)
-                        ? "Remove from favourites"
-                        : "Save property"
-                    }
-                    aria-pressed={saved.includes(property.id)}
-                    className={`fmp-save ${saved.includes(property.id) ? "saved" : ""
-                      }`}
-                    onClick={() => toggleSaved(property.id)}
-                  >
-                    <Heart
-                      size={15}
-                      fill={
-                        saved.includes(property.id)
-                          ? "currentColor"
-                          : "none"
-                      }
+              return (
+                <article
+                  className="fmp-property-card"
+                  key={property.id}
+                >
+                  <div className="fmp-property-image">
+                    <img
+                      src={property.image}
+                      alt={property.title}
+                      loading="lazy"
                     />
-                  </button>
-                </div>
 
-                <div className="fmp-property-content">
-                  <small>{property.label}</small>
-
-                  <h3>{property.title}</h3>
-
-                  <p className="fmp-property-location">
-                    <MapPin size={12} />
-                    {property.location}
-                  </p>
-
-                  <strong className="fmp-property-price">
-                    {money(property.price)}{" "}
-                    <span>{property.period ?? ""}</span>
-                  </strong>
-
-                  <div className="fmp-property-specs">
-                    {property.beds && (
-                      <span>
-                        <BedDouble size={13} />
-                        {property.beds} BHK
-                      </span>
-                    )}
-
-                    {property.baths && (
-                      <span>
-                        <Bath size={13} />
-                        {property.baths} Bath
-                      </span>
-                    )}
-
-                    <span>
-                      <Maximize2 size={12} />
-                      {property.area.toLocaleString("en-IN")} sq.ft.
+                    <span className="fmp-property-tag">
+                      {property.deal === "Sale" ? "Buy" : property.deal}
                     </span>
+
+                    <button
+                      type="button"
+                      aria-label={
+                        isSaved
+                          ? "Remove from favourites"
+                          : "Save property"
+                      }
+                      aria-pressed={isSaved}
+                      className={`fmp-save${isSaved ? " saved" : ""}`}
+                      onClick={() => toggleSaved(property.id)}
+                    >
+                      <Heart
+                        size={15}
+                        fill={isSaved ? "currentColor" : "none"}
+                      />
+                    </button>
                   </div>
 
-                  <button
-                    type="button"
-                    className="fmp-view-details"
-                    onClick={() => openPropertyDetails(property)}
-                  >
-                    View Details
-                  </button>
-                </div>
-              </article>
-            ))}
+                  <div className="fmp-property-content">
+                    <small>{property.label}</small>
+                    <h3>{property.title}</h3>
+
+                    <p className="fmp-property-location">
+                      <MapPin size={12} />
+                      {property.location}
+                    </p>
+
+                    <strong className="fmp-property-price">
+                      {money(property.price)}{" "}
+                      <span>{property.period ?? ""}</span>
+                    </strong>
+
+                    <div className="fmp-property-specs">
+                      {property.beds != null && (
+                        <span>
+                          <BedDouble size={13} />
+                          {property.beds} BHK
+                        </span>
+                      )}
+
+                      {property.baths != null && (
+                        <span>
+                          <Bath size={13} />
+                          {property.baths} Bath
+                        </span>
+                      )}
+
+                      <span>
+                        <Maximize2 size={12} />
+                        {property.area.toLocaleString("en-IN")} sq.ft.
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="fmp-view-details"
+                      onClick={() => openPropertyDetails(property)}
+                    >
+                      View Details
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
           </div>
         ) : (
           <div className="fmp-empty">
@@ -754,7 +795,7 @@ export default function FindMyPropertyPage({
         <div
           className="fmp-modal-backdrop"
           role="presentation"
-          onClick={() => setSelected(null)}
+          onClick={closePropertyDetails}
         >
           <section
             className="fmp-modal fmp-property-detail-modal"
@@ -763,32 +804,39 @@ export default function FindMyPropertyPage({
             aria-labelledby="fmp-modal-title"
             onClick={(event) => event.stopPropagation()}
           >
+            {/* Main property image and popup controls */}
             <div className="fmp-property-modal-hero">
               <img
-                src={getPropertyGallery(selected)[activeGalleryImage] ?? selected.image}
+                src={
+                  selectedGallery[activeGalleryImage] ?? selected.image
+                }
                 alt={`${selected.title} - image ${activeGalleryImage + 1}`}
               />
-              {getPropertyGallery(selected).length > 1 && (
+
+              {selectedGallery.length > 1 && (
                 <>
                   <button
                     type="button"
                     className="fmp-gallery-arrow fmp-gallery-previous"
                     aria-label="Previous property image"
                     onClick={() =>
-                      setActiveGalleryImage((index) =>
-                        (index - 1 + getPropertyGallery(selected).length) % getPropertyGallery(selected).length,
+                      setActiveGalleryImage(
+                        (index) =>
+                          (index - 1 + selectedGallery.length) %
+                          selectedGallery.length,
                       )
                     }
                   >
                     <ChevronLeft size={20} />
                   </button>
+
                   <button
                     type="button"
                     className="fmp-gallery-arrow fmp-gallery-next"
                     aria-label="Next property image"
                     onClick={() =>
-                      setActiveGalleryImage((index) =>
-                        (index + 1) % getPropertyGallery(selected).length,
+                      setActiveGalleryImage(
+                        (index) => (index + 1) % selectedGallery.length,
                       )
                     }
                   >
@@ -796,138 +844,260 @@ export default function FindMyPropertyPage({
                   </button>
                 </>
               )}
+
               <span className="fmp-modal-image-count">
-                <Images size={13} /> {activeGalleryImage + 1} / {getPropertyGallery(selected).length}
+                <Images size={13} />
+                {activeGalleryImage + 1} / {selectedGallery.length}
               </span>
+
               <button
                 type="button"
                 className="fmp-modal-close"
                 aria-label="Close details"
-                onClick={() => setSelected(null)}
+                onClick={closePropertyDetails}
               >
                 <X size={18} />
               </button>
             </div>
 
             <div className="fmp-property-modal-body">
+              {/* Property heading and price appear only once */}
               <div className="fmp-property-modal-heading">
-                <span className="fmp-property-modal-label">{selected.label}</span>
+                <span className="fmp-property-modal-label">
+                  {selected.label}
+                </span>
+
                 <h2 id="fmp-modal-title">{selected.title}</h2>
+
                 <p className="fmp-property-location">
                   <MapPin size={14} />
                   {selected.location}
                 </p>
+
                 <strong className="fmp-property-price">
-                  {money(selected.price)} <span>{selected.period ?? ""}</span>
+                  {money(selected.price)}{" "}
+                  <span>{selected.period ?? ""}</span>
                 </strong>
               </div>
 
-              <div className="fmp-property-modal-tabs" role="tablist" aria-label="Property details">
+              {/* Keep these three tabs aligned with the existing CSS */}
+              <div
+                className="fmp-property-modal-tabs"
+                role="tablist"
+                aria-label="Property details"
+              >
                 <button
                   type="button"
                   role="tab"
+                  id="fmp-tab-overview"
+                  aria-controls="fmp-panel-overview"
                   aria-selected={selectedPropertyTab === "overview"}
-                  className={selectedPropertyTab === "overview" ? "active" : ""}
+                  className={
+                    selectedPropertyTab === "overview" ? "active" : ""
+                  }
                   onClick={() => setSelectedPropertyTab("overview")}
                 >
-                  <House size={16} /> Overview
+                  <House size={16} />
+                  Overview
                 </button>
+
                 <button
                   type="button"
                   role="tab"
+                  id="fmp-tab-gallery"
+                  aria-controls="fmp-panel-gallery"
                   aria-selected={selectedPropertyTab === "gallery"}
-                  className={selectedPropertyTab === "gallery" ? "active" : ""}
+                  className={
+                    selectedPropertyTab === "gallery" ? "active" : ""
+                  }
                   onClick={() => setSelectedPropertyTab("gallery")}
                 >
-                  <Images size={16} /> Property Gallery
+                  <Images size={16} />
+                  Property Gallery
                 </button>
+
                 <button
                   type="button"
                   role="tab"
+                  id="fmp-tab-location"
+                  aria-controls="fmp-panel-location"
                   aria-selected={selectedPropertyTab === "location"}
-                  className={selectedPropertyTab === "location" ? "active" : ""}
+                  className={
+                    selectedPropertyTab === "location" ? "active" : ""
+                  }
                   onClick={() => setSelectedPropertyTab("location")}
                 >
-                  <MapPin size={16} /> Location &amp; Map
+                  <MapPin size={16} />
+                  Location &amp; Map
                 </button>
               </div>
 
               <div className="fmp-property-tab-content">
                 {selectedPropertyTab === "overview" && (
-                  <div className="fmp-property-overview-panel" role="tabpanel">
+                  <div
+                    className="fmp-property-overview-panel"
+                    id="fmp-panel-overview"
+                    role="tabpanel"
+                    aria-labelledby="fmp-tab-overview"
+                  >
                     <div className="fmp-property-overview-card">
                       <h3>About this property</h3>
                       <p>{selected.description}</p>
+
                       <div className="fmp-property-highlights">
-                        <h4><Landmark size={15} /> Nearby highlights &amp; landmarks</h4>
+                        <h4>
+                          <Landmark size={15} />
+                          Nearby highlights &amp; landmarks
+                        </h4>
+
                         <ul className="fmp-property-highlights-list">
-                          {(selected.highlights ?? [
-                            "Main-road connectivity",
-                            "Public transport access",
-                            "Schools and everyday essentials nearby",
-                            "Local shops and services",
-                          ]).map((highlight) => (
-                            <li key={highlight}><Check size={14} /> <span>{highlight}</span></li>
+                          {(
+                            selected.highlights ?? [
+                              "Main-road connectivity",
+                              "Public transport access",
+                              "Schools and everyday essentials nearby",
+                              "Local shops and services",
+                            ]
+                          ).map((highlight) => (
+                            <li key={highlight}>
+                              <Check size={14} />
+                              <span>{highlight}</span>
+                            </li>
                           ))}
                         </ul>
                       </div>
                     </div>
+
                     <div className="fmp-property-overview-card">
                       <h3>Property details</h3>
+
                       <div className="fmp-property-detail-grid">
-                        <div><span>Listing type</span><strong>{selected.deal === "Sale" ? "For Sale" : `For ${selected.deal}`}</strong></div>
-                        <div><span>Category</span><strong>{selected.kind}</strong></div>
-                        {selected.beds != null && <div><span>Bedrooms</span><strong>{selected.beds} BHK</strong></div>}
-                        {selected.baths != null && <div><span>Bathrooms</span><strong>{selected.baths}</strong></div>}
-                        <div><span>Area</span><strong>{selected.area.toLocaleString("en-IN")} sq.ft.</strong></div>
-                        <div><span>Location</span><strong>{selected.location}</strong></div>
+                        <div>
+                          <span>Listing type</span>
+                          <strong>
+                            {selected.deal === "Sale"
+                              ? "For Sale"
+                              : `For ${selected.deal}`}
+                          </strong>
+                        </div>
+
+                        <div>
+                          <span>Category</span>
+                          <strong>{selected.kind}</strong>
+                        </div>
+
+                        {selected.beds != null && (
+                          <div>
+                            <span>Bedrooms</span>
+                            <strong>{selected.beds} BHK</strong>
+                          </div>
+                        )}
+
+                        {selected.baths != null && (
+                          <div>
+                            <span>Bathrooms</span>
+                            <strong>{selected.baths}</strong>
+                          </div>
+                        )}
+
+                        <div>
+                          <span>Area</span>
+                          <strong>
+                            {selected.area.toLocaleString("en-IN")} sq.ft.
+                          </strong>
+                        </div>
+
+                        <div>
+                          <span>Location</span>
+                          <strong>{selected.location}</strong>
+                        </div>
                       </div>
                     </div>
                   </div>
                 )}
 
                 {selectedPropertyTab === "gallery" && (
-                  <div className="fmp-property-gallery-panel" role="tabpanel">
+                  <div
+                    className="fmp-property-gallery-panel"
+                    id="fmp-panel-gallery"
+                    role="tabpanel"
+                    aria-labelledby="fmp-tab-gallery"
+                  >
                     <div className="fmp-property-gallery-main">
-                      <img src={getPropertyGallery(selected)[activeGalleryImage] ?? selected.image} alt={`${selected.title} gallery view ${activeGalleryImage + 1}`} />
+                      <img
+                        src={
+                          selectedGallery[activeGalleryImage] ??
+                          selected.image
+                        }
+                        alt={`${selected.title} gallery view ${
+                          activeGalleryImage + 1
+                        }`}
+                      />
                     </div>
+
                     <div className="fmp-property-gallery-thumbnails">
-                      {getPropertyGallery(selected).map((image, index) => (
+                      {selectedGallery.map((image, index) => (
                         <button
                           type="button"
                           key={`${image}-${index}`}
-                          className={activeGalleryImage === index ? "active" : ""}
+                          className={
+                            activeGalleryImage === index ? "active" : ""
+                          }
                           onClick={() => setActiveGalleryImage(index)}
                           aria-label={`View property image ${index + 1}`}
                           aria-pressed={activeGalleryImage === index}
                         >
-                          <img src={image} alt="" loading="lazy" />
+                          <img
+                            src={image}
+                            alt={`Property view ${index + 1}`}
+                            loading="lazy"
+                          />
                         </button>
                       ))}
                     </div>
-                    {getPropertyGallery(selected).length === 1 && (
-                      <p className="fmp-gallery-note">More property images can be added to this listing's gallery.</p>
+
+                    {selectedGallery.length === 1 && (
+                      <p className="fmp-gallery-note">
+                        More property images can be added to this
+                        listing's gallery.
+                      </p>
                     )}
                   </div>
                 )}
 
                 {selectedPropertyTab === "location" && (
-                  <div className="fmp-property-location-panel" role="tabpanel">
+                  <div
+                    className="fmp-property-location-panel"
+                    id="fmp-panel-location"
+                    role="tabpanel"
+                    aria-labelledby="fmp-tab-location"
+                  >
                     <div className="fmp-property-location-summary">
                       <MapPin size={20} />
-                      <div><h3>Property location</h3><p>{selected.location}</p></div>
+
+                      <div>
+                        <h3>Property location</h3>
+                        <p>{selected.location}</p>
+                      </div>
+
                       <a
-                        href={`https://www.google.com/maps/search/?api=1&query=${getMapSearch(selected)}`}
+                        href={`https://www.google.com/maps/search/?api=1&query=${getMapSearch(
+                          selected,
+                        )}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="fmp-map-directions"
                       >
-                        <Navigation size={15} /> Directions
+                        <Navigation size={15} />
+                        Directions
                       </a>
                     </div>
+
                     <iframe
                       title={`Map showing ${selected.title}`}
-                      src={`https://www.google.com/maps?q=${getMapSearch(selected)}&output=embed`}
+                      src={`https://www.google.com/maps?q=${getMapSearch(
+                        selected,
+                      )}&output=embed`}
                       loading="lazy"
                       referrerPolicy="no-referrer-when-downgrade"
                     />
@@ -935,89 +1105,123 @@ export default function FindMyPropertyPage({
                 )}
               </div>
 
+              {/* Keep the primary action at the bottom of the details popup */}
               <div className="fmp-property-modal-footer">
                 <button
                   type="button"
                   className="fmp-search-submit fmp-property-enquiry-button"
                   onClick={openPropertyEnquiry}
                 >
-                  Enquire about property <ArrowRight size={16} />
+                  Enquire about property
+                  <ArrowRight size={16} />
                 </button>
               </div>
             </div>
-          </section>
 
-          {showEnquiryForm && (
-            <div
-              className="fmp-enquiry-backdrop"
-              role="presentation"
-              onClick={(event) => {
-                if (event.target === event.currentTarget) setShowEnquiryForm(false);
-              }}
-            >
-              <section
-                className="fmp-enquiry-modal"
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby="fmp-enquiry-title"
-                onClick={(event) => event.stopPropagation()}
+            {/* Enquiry form appears over the property popup */}
+            {showEnquiryForm && (
+              <div
+                className="fmp-enquiry-backdrop"
+                role="presentation"
+                onClick={(event) => {
+                  if (event.target === event.currentTarget) {
+                    setShowEnquiryForm(false);
+                  }
+                }}
               >
-                <button
-                  type="button"
-                  className="fmp-enquiry-close"
-                  aria-label="Close enquiry form"
-                  onClick={() => setShowEnquiryForm(false)}
+                <section
+                  className="fmp-enquiry-modal"
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="fmp-enquiry-title"
+                  onClick={(event) => event.stopPropagation()}
                 >
-                  <X size={18} />
-                </button>
-                <span className="fmp-property-modal-label">PROPERTY ENQUIRY</span>
-                <h2 id="fmp-enquiry-title">Request a Call Back</h2>
-                <p className="fmp-enquiry-intro">
-                  Share your contact details about <strong>{selected.title}</strong> and continue to the contact page to complete your request.
-                </p>
-                <form onSubmit={submitPropertyEnquiry} className="fmp-enquiry-form">
-                  <label htmlFor="fmp-enquiry-name">Full name</label>
-                  <input
-                    id="fmp-enquiry-name"
-                    name="name"
-                    value={enquiryName}
-                    onChange={(event) => setEnquiryName(event.target.value)}
-                    placeholder="Enter your name"
-                    autoComplete="name"
-                    maxLength={100}
-                    required
-                  />
-                  <label htmlFor="fmp-enquiry-mobile">Mobile number</label>
-                  <input
-                    id="fmp-enquiry-mobile"
-                    name="mobile"
-                    type="tel"
-                    value={enquiryMobile}
-                    onChange={(event) => setEnquiryMobile(event.target.value)}
-                    placeholder="Enter your mobile number"
-                    autoComplete="tel"
-                    inputMode="tel"
-                    pattern="[+]?[0-9 ()-]{10,20}"
-                    maxLength={20}
-                    required
-                  />
-                  <label htmlFor="fmp-enquiry-details">Additional details</label>
-                  <textarea
-                    id="fmp-enquiry-details"
-                    name="details"
-                    value={enquiryDetails}
-                    onChange={(event) => setEnquiryDetails(event.target.value)}
-                    placeholder="Preferred time to call or any questions (optional)"
-                    rows={3}
-                    maxLength={600}
-                  />
-                  <button type="submit" className="fmp-enquiry-submit">
-                    Request a Callback <ArrowRight size={16} />
+                  <button
+                    type="button"
+                    className="fmp-enquiry-close"
+                    aria-label="Close enquiry form"
+                    onClick={() => setShowEnquiryForm(false)}
+                  >
+                    <X size={18} />
                   </button>
-                </form>
-              </section>
-            </div>
-          )}
+
+                  <span className="fmp-property-modal-label">
+                    PROPERTY ENQUIRY
+                  </span>
+
+                  <h2 id="fmp-enquiry-title">Request a Call Back</h2>
+
+                  <p className="fmp-enquiry-intro">
+                    Share your contact details about{" "}
+                    <strong>{selected.title}</strong> to continue your
+                    request.
+                  </p>
+
+                  <form
+                    onSubmit={submitPropertyEnquiry}
+                    className="fmp-enquiry-form"
+                  >
+                    <label htmlFor="fmp-enquiry-name">Full name</label>
+                    <input
+                      id="fmp-enquiry-name"
+                      name="name"
+                      value={enquiryName}
+                      onChange={(event) =>
+                        setEnquiryName(event.target.value)
+                      }
+                      placeholder="Enter your name"
+                      autoComplete="name"
+                      maxLength={100}
+                      required
+                    />
+
+                    <label htmlFor="fmp-enquiry-mobile">
+                      Mobile number
+                    </label>
+                    <input
+                      id="fmp-enquiry-mobile"
+                      name="mobile"
+                      type="tel"
+                      value={enquiryMobile}
+                      onChange={(event) =>
+                        setEnquiryMobile(event.target.value)
+                      }
+                      placeholder="Enter your mobile number"
+                      autoComplete="tel"
+                      inputMode="tel"
+                      pattern="[+]?[0-9 ()-]{10,20}"
+                      title="Enter a valid mobile number."
+                      maxLength={20}
+                      required
+                    />
+
+                    <label htmlFor="fmp-enquiry-details">
+                      Additional details
+                    </label>
+                    <textarea
+                      id="fmp-enquiry-details"
+                      name="details"
+                      value={enquiryDetails}
+                      onChange={(event) =>
+                        setEnquiryDetails(event.target.value)
+                      }
+                      placeholder="Preferred time to call or any questions (optional)"
+                      rows={3}
+                      maxLength={600}
+                    />
+
+                    <button
+                      type="submit"
+                      className="fmp-enquiry-submit"
+                    >
+                      Request a Callback
+                      <ArrowRight size={16} />
+                    </button>
+                  </form>
+                </section>
+              </div>
+            )}
+          </section>
         </div>
       )}
     </main>
