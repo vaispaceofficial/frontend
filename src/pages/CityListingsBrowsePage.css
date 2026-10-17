@@ -1809,3 +1809,702 @@
         font-size: 12px;
     }
 }
+
+
+/* =========================================================
+   CATEGORY FILTER TAGS
+========================================================= */
+
+.city-browse-category-filter-section {
+    padding: 16px 0;
+    border-bottom: 1px solid #e8edf4;
+}
+
+.city-browse-category-filter-section h4 {
+    margin: 0 0 12px;
+    color: #172b4d;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.city-browse-category-filter-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.city-browse-category-filter-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 34px;
+    padding: 8px 12px;
+    border: 1px solid #dce5f1;
+    border-radius: 8px;
+    background: #fff;
+    color: #42526b;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.3;
+    cursor: pointer;
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        color 0.2s ease;
+}
+
+.city-browse-category-filter-chip:hover {
+    border-color: #2563eb;
+    color: #2563eb;
+}
+
+.city-browse-category-filter-chip.active {
+    border-color: #2563eb;
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+.city-browse-category-filter-chip:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 3px;
+}
+
+/* =========================================================
+   ACTIVE CATEGORY FILTER
+========================================================= */
+
+.city-browse-active-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 16px;
+    color: #64748b;
+    font-size: 12px;
+}
+
+.city-browse-active-filters button {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 10px;
+    border: 1px solid #bfdbfe;
+    border-radius: 7px;
+    background: #eff6ff;
+    color: #2563eb;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.city-browse-active-filters button:hover {
+    border-color: #2563eb;
+    background: #dbeafe;
+}
+
+
+/* =========================================
+   CITY LISTINGS — COMPACT FILTER DROPDOWN
+========================================= */
+
+.city-listings-filter-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  left: auto;
+
+  width: min(620px, calc(100vw - 40px));
+  max-width: 620px;
+  max-height: 380px;
+
+  padding: 18px;
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 16px 22px;
+
+  background: #ffffff;
+  border: 1px solid #e5eaf2;
+  border-radius: 14px;
+  box-shadow: 0 14px 38px rgba(15, 35, 65, 0.14);
+
+  z-index: 1000;
+  box-sizing: border-box;
+}
+
+/* Each filter group occupies one column */
+.city-listings-filter-group {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+/* Group heading */
+.city-listings-filter-group-title {
+  margin: 0;
+  color: #183153;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+/* Options displayed as compact chips */
+.city-listings-filter-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+/* Individual option */
+.city-listings-filter-option {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-height: 30px;
+  max-width: 100%;
+  padding: 6px 10px;
+
+  border: 1px solid #dce5f1;
+  border-radius: 7px;
+  background: #f8faff;
+
+  color: #35465e;
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 1.35;
+  text-align: center;
+  overflow-wrap: anywhere;
+
+  cursor: pointer;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease;
+}
+
+.city-listings-filter-option:hover {
+  background: #eff6ff;
+  border-color: #93baff;
+  color: #2563eb;
+}
+
+.city-listings-filter-option.active,
+.city-listings-filter-option[aria-pressed="true"] {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #ffffff;
+}
+
+/* Keep dropdown positioned relative to its trigger area */
+.city-listings-filter-wrapper {
+  position: relative;
+}
+
+/* Responsive layout */
+@media (max-width: 640px) {
+  .city-listings-filter-dropdown {
+    position: absolute;
+    right: -8px;
+    left: auto;
+
+    width: min(440px, calc(100vw - 24px));
+    max-height: 340px;
+    padding: 14px;
+
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .city-listings-filter-option {
+    min-height: 29px;
+    padding: 6px 9px;
+    font-size: 11px;
+  }
+}
+
+
+/* =========================================
+   FILTER DROPDOWN — WIDE & COMPACT
+========================================= */
+
+.city-browse-filter-dropdown {
+    position: relative;
+}
+
+/* Main dropdown panel */
+.city-browse-filter-menu {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    left: auto;
+
+    width: min(620px, calc(100vw - 36px));
+    max-width: 620px;
+    max-height: 390px;
+
+    padding: 18px;
+    overflow-x: hidden;
+    overflow-y: auto;
+
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-content: start;
+    align-items: start;
+    gap: 14px 22px;
+
+    background: #fff;
+    border: 1px solid #e4eaf2;
+    border-radius: 14px;
+    box-shadow: 0 12px 34px rgba(20, 40, 70, 0.15);
+
+    z-index: 1002;
+    box-sizing: border-box;
+}
+
+/* Dropdown heading spans the full width */
+.city-browse-filter-menu-header {
+    grid-column: 1 / -1;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+
+    padding-bottom: 12px;
+    border-bottom: 1px solid #edf0f5;
+}
+
+.city-browse-filter-menu-header h3 {
+    margin: 0;
+    color: #183153;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.city-browse-filter-menu-header p {
+    margin: 4px 0 0;
+    color: #7b8798;
+    font-size: 11px;
+}
+
+/* Each category filter group */
+.city-browse-category-filter-section {
+    min-width: 0;
+    padding: 0;
+    margin: 0;
+}
+
+.city-browse-category-filter-section h4 {
+    margin: 0 0 9px;
+    color: #273b55;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.4;
+}
+
+/* Options wrap into rows instead of one long column */
+.city-browse-category-filter-options {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 6px;
+}
+
+/* Compact filter chips */
+.city-browse-category-filter-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 29px;
+    max-width: 100%;
+    padding: 6px 9px;
+
+    background: #f7f9fc;
+    border: 1px solid #e0e7f0;
+    border-radius: 7px;
+
+    color: #46566c;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.3;
+    text-align: center;
+    overflow-wrap: anywhere;
+
+    cursor: pointer;
+    transition: background 0.18s ease, border-color 0.18s ease,
+        color 0.18s ease;
+}
+
+.city-browse-category-filter-chip:hover {
+    background: #eff6ff;
+    border-color: #93baff;
+    color: #2563eb;
+}
+
+.city-browse-category-filter-chip.active {
+    background: #2563eb;
+    border-color: #2563eb;
+    color: #fff;
+}
+
+/* Verification and open-now options span both columns */
+.city-browse-filter-menu > .city-browse-filter-option {
+    grid-column: 1 / -1;
+    margin: 0;
+    padding: 10px 0;
+
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    border-top: 1px solid #edf0f5;
+}
+
+.city-browse-filter-option-text {
+    flex: 1;
+    min-width: 0;
+}
+
+.city-browse-filter-option-text strong {
+    display: block;
+    font-size: 12px;
+}
+
+.city-browse-filter-option-text small {
+    display: block;
+    margin-top: 3px;
+    font-size: 10px;
+}
+
+/* Footer spans the full dropdown width */
+.city-browse-filter-menu-footer {
+    grid-column: 1 / -1;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+
+    padding-top: 12px;
+    border-top: 1px solid #edf0f5;
+}
+
+/* Prevent the full-screen backdrop from becoming the visible panel */
+.city-browse-filter-backdrop {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: default;
+    z-index: 1000;
+}
+
+/* Keep the dropdown panel above the backdrop */
+.city-browse-filter-menu {
+    z-index: 1002;
+}
+
+/* Tablet and mobile */
+@media (max-width: 640px) {
+    .city-browse-filter-menu {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        right: auto;
+        transform: translate(-50%, -50%);
+
+        width: calc(100vw - 28px);
+        max-width: 440px;
+        max-height: 75vh;
+
+        padding: 15px;
+        gap: 13px 14px;
+    }
+
+    .city-browse-category-filter-chip {
+        min-height: 28px;
+        padding: 6px 8px;
+        font-size: 10.5px;
+    }
+}
+
+@media (max-width: 380px) {
+    .city-browse-filter-menu {
+        grid-template-columns: 1fr;
+    }
+
+    .city-browse-filter-menu-header,
+    .city-browse-filter-menu-footer,
+    .city-browse-filter-menu > .city-browse-filter-option {
+        grid-column: 1;
+    }
+}
+
+
+/* =========================================
+   SORT BY — MATCH FILTER DROPDOWN
+========================================= */
+
+.city-browse-sort {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    position: relative;
+}
+
+.city-browse-sort > span {
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.city-browse-sort select {
+    appearance: none;
+    -webkit-appearance: none;
+
+    min-width: 155px;
+    height: 42px;
+    padding: 0 38px 0 13px;
+
+    border: 1px solid #dce5f1;
+    border-radius: 10px;
+    outline: none;
+
+    background-color: #fff;
+    color: #24364d;
+
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+
+    cursor: pointer;
+    box-shadow: 0 3px 10px rgba(20, 40, 70, 0.04);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.city-browse-sort {
+    position: relative;
+}
+
+.city-browse-sort::after {
+    content: "";
+    position: absolute;
+    right: 14px;
+    top: 50%;
+
+    width: 7px;
+    height: 7px;
+
+    border-right: 1.8px solid #2563eb;
+    border-bottom: 1.8px solid #2563eb;
+
+    transform: translateY(-70%) rotate(45deg);
+    pointer-events: none;
+}
+
+.city-browse-sort select:hover {
+    border-color: #93baff;
+}
+
+.city-browse-sort select:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.city-browse-sort select option {
+    padding: 10px;
+    background: #fff;
+    color: #24364d;
+}
+
+@media (max-width: 540px) {
+    .city-browse-sort {
+        gap: 6px;
+    }
+
+    .city-browse-sort > span {
+        font-size: 11px;
+    }
+
+    .city-browse-sort select {
+        min-width: 130px;
+        height: 39px;
+        font-size: 11px;
+    }
+}
+
+
+/* =========================================================
+   CITY LISTINGS — SPONSORED AD BLOCKS
+   Rendered only between business listing cards.
+========================================================= */
+
+.city-listing-ad {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-self: stretch;
+    min-width: 0;
+    overflow: hidden;
+    background: #ffffff;
+    border: 1px solid #dbe7f5;
+    border-radius: 14px;
+    box-shadow: 0 3px 14px rgba(15, 23, 42, 0.045);
+    transition:
+        box-shadow 0.2s ease,
+        border-color 0.2s ease,
+        transform 0.2s ease;
+}
+
+.city-listing-ad:hover {
+    border-color: #bfdbfe;
+    box-shadow: 0 8px 22px rgba(37, 99, 235, 0.09);
+    transform: translateY(-2px);
+}
+
+.city-listing-ad-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 13px 16px 0;
+}
+
+.city-listing-ad-label {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 8px;
+    border-radius: 5px;
+    background: #eff6ff;
+    color: #2563eb;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.35px;
+}
+
+.city-listing-ad-mark {
+    color: #94a3b8;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.city-listing-ad-content {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 16px;
+}
+
+.city-listing-ad-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 48px;
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+.city-listing-ad-copy {
+    flex: 1;
+    min-width: 0;
+}
+
+.city-listing-ad-copy h3 {
+    margin: 0 0 6px;
+    color: #0f172a;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.4;
+}
+
+.city-listing-ad-copy p {
+    margin: 0;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.65;
+}
+
+.city-listing-ad-cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    gap: 7px;
+    padding: 9px 12px;
+    border: 1px solid #bfdbfe;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #2563eb;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+@media (max-width: 760px) {
+    .city-listing-ad-content {
+        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 12px;
+        padding: 14px;
+    }
+
+    .city-listing-ad-icon {
+        flex-basis: 40px;
+        width: 40px;
+        height: 40px;
+    }
+
+    .city-listing-ad-copy {
+        flex-basis: calc(100% - 55px);
+    }
+
+    .city-listing-ad-copy h3 {
+        font-size: 14px;
+    }
+
+    .city-listing-ad-cta {
+        margin-left: 52px;
+    }
+}
+
+@media (max-width: 420px) {
+    .city-listing-ad-top {
+        padding-right: 12px;
+        padding-left: 12px;
+    }
+
+    .city-listing-ad-content {
+        padding: 12px;
+    }
+
+    .city-listing-ad-cta {
+        margin-left: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .city-listing-ad {
+        transition: none;
+    }
+
+    .city-listing-ad:hover {
+        transform: none;
+    }
+}
+
+

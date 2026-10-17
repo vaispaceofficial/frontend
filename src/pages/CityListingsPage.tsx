@@ -67,6 +67,8 @@ export type CityListing = {
   services: string[];
   products: string[];
   gallery: string[];
+  /** Optional category-specific values used by listing filters. */
+  filterAttributes?: Record<string, string[]>;
 };
 
 /* =========================================================
@@ -253,6 +255,7 @@ export const categories: ListingCategory[] = [
     subcategories: ["Residential", "Commercial", "Apartments", "Independent Houses", "Office Spaces"],
   },
 ];
+
 
 /* =========================================================
    LISTINGS
@@ -684,13 +687,18 @@ function CityListingsPage() {
         (activeFilter === "verified" && listing.verified === true) ||
         (activeFilter === "open" && listing.openNow === true);
 
+      const selectedSubcategory = activeSubcategory.toLowerCase();
+      const listingFilterValues = Object.values(
+        listing.filterAttributes ?? {},
+      ).flat();
+
       const matchesSubcategory =
         activeSubcategory === "All Specialities" ||
-        listing.subcategory?.toLowerCase() ===
-        activeSubcategory.toLowerCase() ||
-        (!listing.subcategory &&
-          listing.label.toLowerCase() ===
-          activeSubcategory.toLowerCase());
+        listing.subcategory?.toLowerCase() === selectedSubcategory ||
+        listing.label.toLowerCase() === selectedSubcategory ||
+        listingFilterValues.some(
+          (value) => value.toLowerCase() === selectedSubcategory,
+        );
 
       return (
         matchesSearch &&
@@ -989,7 +997,7 @@ function CityListingsPage() {
           </div>
 
           {/* GENERAL FILTERS */}
-
+          {activeCategory !== "find-my-property" && (
           <div className="city-listings-subcategory">
             <span className="city-listings-subcategory-label">
               FILTER BY
@@ -1060,6 +1068,55 @@ function CityListingsPage() {
                 )}
             </div>
           </div>
+          )}
+
+          {/* CATEGORY-SPECIFIC FILTERS */}
+          {selectedCategory && (
+            <div className="city-listings-subcategory city-listings-category-specific-filters">
+              <span className="city-listings-subcategory-label">
+                {selectedCategory.id === "find-my-property"
+                  ? "PROPERTY TYPE"
+                  : "SPECIALITIES"}
+              </span>
+
+              <div
+                className="city-listings-filters city-listings-subfilters"
+                role="group"
+                aria-label={`${selectedCategory.name} filters`}
+              >
+                <button
+                  type="button"
+                  className={activeSubcategory === "All Specialities" ? "active" : ""}
+                  onClick={() => {
+                    setActiveSubcategory("All Specialities");
+                    scrollToListings();
+                  }}
+                  aria-pressed={activeSubcategory === "All Specialities"}
+                >
+                  <LayoutGrid size={14} />
+                  {selectedCategory.id === "find-my-property" ? "All Properties" : "All Specialities"}
+                </button>
+
+                {(selectedCategory.id === "find-my-property"
+                  ? selectedCategory.tags
+                  : selectedCategory.subcategories
+                ).map((option) => (
+                  <button
+                    type="button"
+                    key={option}
+                    className={activeSubcategory.toLowerCase() === option.toLowerCase() ? "active" : ""}
+                    onClick={() => {
+                      setActiveSubcategory(option);
+                      scrollToListings();
+                    }}
+                    aria-pressed={activeSubcategory.toLowerCase() === option.toLowerCase()}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </section>
 
         {/* LISTING RESULTS */}

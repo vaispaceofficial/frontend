@@ -1,5 +1,4 @@
-
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
 import {
@@ -18,17 +17,15 @@ import {
     House,
 } from "lucide-react";
 
-import {
-    categories,
-    listings,
-} from "./CityListingsPage";
-
+import { categories, listings } from "./CityListingsPage";
 import type { CityListing } from "./CityListingsPage";
 
 import CityBusinessProfileModal from "../components/CityBusinessProfileModal";
 import type { BusinessProfile } from "../components/CityBusinessProfileModal";
 
 import FindMyPropertyPage from "./FindMyPropertyPage";
+import { getListingFilterGroups } from "./cityListingFilters";
+import type { ListingFilterGroup } from "./cityListingFilters";
 
 import "./CityListingsBrowsePage.css";
 
@@ -45,6 +42,11 @@ type PropertyFormData = {
     locality: string;
 };
 
+type SelectedListingFilter = {
+    groupId: string;
+    option: string;
+} | null;
+
 const INITIAL_PROPERTY_FORM: PropertyFormData = {
     category: "Residential",
     listingType: "Rent",
@@ -52,6 +54,53 @@ const INITIAL_PROPERTY_FORM: PropertyFormData = {
     price: "",
     locality: "",
 };
+
+const normalize = (value: string | undefined | null) =>
+    (value ?? "").trim().toLowerCase();
+
+/* =========================================================
+   SPONSORED ADVERTISEMENT CARD
+   Ads are rendered only between business listing cards.
+========================================================= */
+
+function CityListingAd() {
+    return (
+        <article
+            className="city-listing-ad"
+            aria-label="Sponsored advertisement"
+        >
+            <div className="city-listing-ad-top">
+                <span className="city-listing-ad-label">
+                    Sponsored
+                </span>
+
+                <span className="city-listing-ad-mark">
+                    ADVERTISEMENT
+                </span>
+            </div>
+
+            <div className="city-listing-ad-content">
+                <div className="city-listing-ad-icon">
+                    <Building2 size={25} />
+                </div>
+
+                <div className="city-listing-ad-copy">
+                    <h3>Promote your business on OneService</h3>
+
+                    <p>
+                        Reach more local customers and give your business
+                        greater visibility with a featured advertisement.
+                    </p>
+                </div>
+
+                <span className="city-listing-ad-cta">
+                    Featured promotion
+                    <ArrowRight size={16} />
+                </span>
+            </div>
+        </article>
+    );
+}
 
 export default function CityListingsBrowsePage() {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -65,6 +114,9 @@ export default function CityListingsBrowsePage() {
     const [verifiedOnly, setVerifiedOnly] = useState(false);
     const [filtersOpen, setFiltersOpen] = useState(false);
 
+    const [selectedListingFilter, setSelectedListingFilter] =
+        useState<SelectedListingFilter>(null);
+
     const [selectedListing, setSelectedListing] =
         useState<CityListing | null>(null);
 
@@ -72,7 +124,6 @@ export default function CityListingsBrowsePage() {
         searchParams.get("category") ?? "",
     );
 
-    // Property form state.
     const [showListPropertyForm, setShowListPropertyForm] =
         useState(false);
 
@@ -83,17 +134,9 @@ export default function CityListingsBrowsePage() {
         useState(false);
 
     const activeCategory = searchParams.get("category") ?? "all";
+    const activeSubcategory = searchParams.get("subcategory") ?? "all";
 
-    const activeSubcategory =
-        searchParams.get("subcategory") ?? "all";
-
-    const isPropertyCategory =
-        activeCategory === PROPERTY_CATEGORY_ID;
-
-    const activeFilterCount = [
-        verifiedOnly,
-        openNowOnly,
-    ].filter(Boolean).length;
+    const isPropertyCategory = activeCategory === PROPERTY_CATEGORY_ID;
 
     const selectedCategory = categories.find(
         (category) => category.id === activeCategory,
@@ -103,6 +146,39 @@ export default function CityListingsBrowsePage() {
         activeSubcategory !== "all"
             ? activeSubcategory
             : selectedCategory?.name ?? "All Listings";
+
+    const filterGroups: ListingFilterGroup[] = useMemo(
+        () =>
+            getListingFilterGroups(
+                activeCategory,
+                activeSubcategory,
+            ),
+        [activeCategory, activeSubcategory],
+    );
+
+    const activeFilterCount = [
+        verifiedOnly,
+        openNowOnly,
+        Boolean(selectedListingFilter),
+        activeSubcategory !== "all",
+    ].filter(Boolean).length;
+
+    const updateUrl = (
+        updates: Record<string, string | null>,
+        replace = false,
+    ) => {
+        const next = new URLSearchParams(searchParams);
+
+        Object.entries(updates).forEach(([key, value]) => {
+            if (value === null || value.trim() === "") {
+                next.delete(key);
+            } else {
+                next.set(key, value);
+            }
+        });
+
+        setSearchParams(next, { replace });
+    };
 
     const updatePropertyForm = (
         field: keyof PropertyFormData,
@@ -127,12 +203,14 @@ export default function CityListingsBrowsePage() {
     };
 
     const previewProperty = () => {
+        const price = Number(propertyForm.price);
+
         if (
             !propertyForm.title.trim() ||
-            !propertyForm.price.trim() ||
             !propertyForm.locality.trim() ||
-            !Number.isFinite(Number(propertyForm.price)) ||
-            Number(propertyForm.price) <= 0
+            !propertyForm.price.trim() ||
+            !Number.isFinite(price) ||
+            price <= 0
         ) {
             return;
         }
@@ -140,46 +218,63 @@ export default function CityListingsBrowsePage() {
         setShowPropertyPreview(true);
     };
 
-    /* =====================================================
-       CATEGORY SELECTION
-    ===================================================== */
+    /* CATEGORY SELECTION */
 
     const selectCategory = (categoryId: string) => {
-        const next = new URLSearchParams(searchParams);
+        setSelectedListingFilter(null);
 
         if (categoryId === "all") {
-            next.delete("category");
-            next.delete("subcategory");
+            updateUrl({
+                category: null,
+                subcategory: null,
+            });
+
             setExpandedCategory("");
-        } else {
-            next.set("category", categoryId);
-            next.delete("subcategory");
-            setExpandedCategory(categoryId);
+            return;
         }
 
-        setSearchParams(next);
+        updateUrl({
+            category: categoryId,
+            subcategory: null,
+        });
+
+        setExpandedCategory(categoryId);
     };
 
-    /* =====================================================
-       SUBCATEGORY SELECTION
-    ===================================================== */
+    /* SIDEBAR SUBCATEGORY SELECTION */
 
     const selectSubcategory = (
         categoryId: string,
         subcategory: string,
     ) => {
-        const next = new URLSearchParams(searchParams);
-
-        next.set("category", categoryId);
-        next.set("subcategory", subcategory);
-
+        setSelectedListingFilter(null);
         setExpandedCategory(categoryId);
-        setSearchParams(next);
+
+        updateUrl({
+            category: categoryId,
+            subcategory:
+                normalize(subcategory) === "all" ||
+                normalize(subcategory).startsWith("all ")
+                    ? null
+                    : subcategory,
+        });
     };
 
-    /* =====================================================
-       CATEGORY EXPANSION
-    ===================================================== */
+    const selectFilterSubcategory = (subcategory: string) => {
+        setSelectedListingFilter(null);
+
+        if (normalize(subcategory) === "all") {
+            updateUrl({ subcategory: null });
+            return;
+        }
+
+        updateUrl({
+            category: activeCategory === "all" ? null : activeCategory,
+            subcategory,
+        });
+    };
+
+    /* EXPAND/COLLAPSE SIDEBAR CATEGORIES */
 
     const toggleCategory = (categoryId: string) => {
         const nextExpanded =
@@ -188,36 +283,50 @@ export default function CityListingsBrowsePage() {
         setExpandedCategory(nextExpanded);
 
         if (activeCategory !== categoryId) {
-            const next = new URLSearchParams(searchParams);
+            setSelectedListingFilter(null);
 
-            next.set("category", categoryId);
-            next.delete("subcategory");
-
-            setSearchParams(next);
-        } else if (
-            activeSubcategory !== "all" &&
-            nextExpanded === categoryId
-        ) {
-            const next = new URLSearchParams(searchParams);
-
-            next.delete("subcategory");
-            setSearchParams(next);
+            updateUrl({
+                category: categoryId,
+                subcategory: null,
+            });
+        } else if (activeSubcategory !== "all") {
+            setSelectedListingFilter(null);
+            updateUrl({ subcategory: null });
         }
     };
 
-    /* =====================================================
-       FILTER ACTIONS
-    ===================================================== */
+    /* FILTER OPTION SELECTION */
+
+    const chooseCategoryFilter = (
+        groupId: string,
+        option: string,
+    ) => {
+        setSelectedListingFilter((current) => {
+            if (
+                current?.groupId === groupId &&
+                normalize(current.option) === normalize(option)
+            ) {
+                return null;
+            }
+
+            return { groupId, option };
+        });
+    };
+
+    /* CLEAR FILTERS */
 
     const clearFilters = () => {
         setVerifiedOnly(false);
         setOpenNowOnly(false);
+        setSelectedListingFilter(null);
+        updateUrl({ subcategory: null });
     };
 
     const clearAll = () => {
         setSearch("");
         setVerifiedOnly(false);
         setOpenNowOnly(false);
+        setSelectedListingFilter(null);
         setSortBy("recommended");
 
         const next = new URLSearchParams();
@@ -232,25 +341,81 @@ export default function CityListingsBrowsePage() {
         setSearchParams(next);
     };
 
-    /* =====================================================
-       FILTER BUSINESS LISTINGS
-    ===================================================== */
+    /* MATCH A SELECTED OPTION AGAINST ITS CORRECT ATTRIBUTE */
+
+    const matchesCategoryFilter = (
+        listing: CityListing,
+        selectedFilter: NonNullable<SelectedListingFilter>,
+    ): boolean => {
+        const { groupId, option } = selectedFilter;
+        const normalizedOption = normalize(option);
+        const attributes = listing.filterAttributes;
+
+        if (attributes) {
+            const attributeValues = Object.entries(attributes)
+                .filter(
+                    ([key]) => normalize(key) === normalize(groupId),
+                )
+                .flatMap(([, values]) => values);
+
+            if (
+                attributeValues.some(
+                    (value) => normalize(value) === normalizedOption,
+                )
+            ) {
+                return true;
+            }
+
+            const hasAttribute = Object.keys(attributes).some(
+                (key) => normalize(key) === normalize(groupId),
+            );
+
+            if (hasAttribute) {
+                return false;
+            }
+        }
+
+        if (
+            groupId === "services" ||
+            groupId === "accommodation" ||
+            groupId === "educationServices"
+        ) {
+            return (
+                normalize(listing.subcategory) === normalizedOption ||
+                normalize(listing.label) === normalizedOption ||
+                listing.services.some(
+                    (service) => normalize(service) === normalizedOption,
+                ) ||
+                listing.products.some(
+                    (product) => normalize(product) === normalizedOption,
+                )
+            );
+        }
+
+        return false;
+    };
+
+    /* FILTER BUSINESS LISTINGS */
 
     const filteredListings = useMemo(() => {
-        const query = search.trim().toLowerCase();
+        const query = normalize(search);
 
         const filtered = listings.filter((listing) => {
             const matchesCategory =
                 activeCategory === "all" ||
                 listing.category === activeCategory;
 
+            const listingSubcategory = normalize(listing.subcategory);
+            const listingLabel = normalize(listing.label);
+            const selectedSubcategory = normalize(activeSubcategory);
+
             const matchesSubcategory =
-                activeSubcategory === "all" ||
-                listing.subcategory?.toLowerCase() ===
-                    activeSubcategory.toLowerCase() ||
-                (!listing.subcategory &&
-                    listing.label.toLowerCase() ===
-                        activeSubcategory.toLowerCase());
+                selectedSubcategory === "all" ||
+                listingSubcategory === selectedSubcategory ||
+                (
+                    !listingSubcategory &&
+                    listingLabel === selectedSubcategory
+                );
 
             const matchesSearch =
                 !query ||
@@ -274,12 +439,17 @@ export default function CityListingsBrowsePage() {
             const matchesVerified =
                 !verifiedOnly || listing.verified === true;
 
+            const matchesDropdownFilter =
+                !selectedListingFilter ||
+                matchesCategoryFilter(listing, selectedListingFilter);
+
             return (
                 matchesCategory &&
                 matchesSubcategory &&
                 matchesSearch &&
                 matchesOpen &&
-                matchesVerified
+                matchesVerified &&
+                matchesDropdownFilter
             );
         });
 
@@ -297,49 +467,103 @@ export default function CityListingsBrowsePage() {
         sortBy,
         openNowOnly,
         verifiedOnly,
+        selectedListingFilter,
     ]);
 
-    /* =====================================================
-       BUSINESS PROFILE MODAL DATA
-    ===================================================== */
+    /* =========================================================
+       RANDOM AD POSITIONS
+
+       - Ads appear only between business cards.
+       - Ads are not rendered for property browsing.
+       - Show at most two ads per result list.
+       - Keep ads separated by at least one business card.
+       - Recalculate when the filtered results change.
+    ========================================================= */
+
+    const adPositions = useMemo(() => {
+        if (isPropertyCategory || filteredListings.length < 5) {
+            return [];
+        }
+
+        const totalCards = filteredListings.length;
+
+        // Positions represent the number of cards shown before an ad.
+        // This avoids inserting an ad before the first card or after
+        // the final card.
+        const possiblePositions = Array.from(
+            { length: totalCards - 2 },
+            (_, index) => index + 2,
+        );
+
+        // Shuffle candidate positions.
+        for (let i = possiblePositions.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+
+            [
+                possiblePositions[i],
+                possiblePositions[j],
+            ] = [
+                possiblePositions[j],
+                possiblePositions[i],
+            ];
+        }
+
+        const selectedPositions: number[] = [];
+
+        for (const position of possiblePositions) {
+            if (selectedPositions.length >= 2) {
+                break;
+            }
+
+            const sufficientlySpaced = selectedPositions.every(
+                (existingPosition) =>
+                    Math.abs(existingPosition - position) >= 2,
+            );
+
+            if (sufficientlySpaced) {
+                selectedPositions.push(position);
+            }
+        }
+
+        return selectedPositions.sort((a, b) => a - b);
+    }, [filteredListings, isPropertyCategory]);
+
+    /* BUSINESS PROFILE MODAL DATA */
 
     const modalListing: BusinessProfile | null = selectedListing
         ? {
-              id: selectedListing.id,
-              name: selectedListing.name,
-              category:
-                  categories.find(
-                      (category) =>
-                          category.id === selectedListing.category,
-                  )?.name ?? "Business",
-              label: selectedListing.label,
-              description: selectedListing.description,
-              rating: selectedListing.rating,
-              location: selectedListing.location,
-              phone: selectedListing.phone,
-              image: selectedListing.image,
-              verified: selectedListing.verified,
-              openNow: selectedListing.openNow,
-              reviewCount: selectedListing.reviews,
-              email: selectedListing.email,
-              about: selectedListing.about,
-              hours: selectedListing.hours.map((item) => ({
-                  day: item.days,
-                  time: item.time,
-              })),
-              amenities: selectedListing.amenities,
-              services: selectedListing.services,
-              gallery: selectedListing.gallery,
-          }
+            id: selectedListing.id,
+            name: selectedListing.name,
+            category:
+                categories.find(
+                    (category) =>
+                        category.id === selectedListing.category,
+                )?.name ?? "Business",
+            label: selectedListing.label,
+            description: selectedListing.description,
+            rating: selectedListing.rating,
+            location: selectedListing.location,
+            phone: selectedListing.phone,
+            image: selectedListing.image,
+            verified: selectedListing.verified,
+            openNow: selectedListing.openNow,
+            reviewCount: selectedListing.reviews,
+            email: selectedListing.email,
+            about: selectedListing.about,
+            hours: selectedListing.hours.map((item) => ({
+                day: item.days,
+                time: item.time,
+            })),
+            amenities: selectedListing.amenities,
+            services: selectedListing.services,
+            gallery: selectedListing.gallery,
+        }
         : null;
-
-    /* =====================================================
-       RENDER
-    ===================================================== */
 
     return (
         <main className="city-browse-page">
             {/* PAGE HEADER */}
+
             <section className="city-browse-header">
                 <div className="city-browse-header-inner">
                     <div className="city-browse-breadcrumb">
@@ -368,8 +592,7 @@ export default function CityListingsBrowsePage() {
 
                             <h1>
                                 {isPropertyCategory
-                                    ? selectedCategory?.name ??
-                                      "Find My Property"
+                                    ? selectedCategory?.name ?? "Find My Property"
                                     : activeCategoryName}
                             </h1>
 
@@ -396,21 +619,15 @@ export default function CityListingsBrowsePage() {
                                 value={search}
                                 onChange={(event) => {
                                     const value = event.target.value;
+
                                     setSearch(value);
 
-                                    const next = new URLSearchParams(
-                                        searchParams,
+                                    updateUrl(
+                                        {
+                                            search: value.trim() ? value : null,
+                                        },
+                                        true,
                                     );
-
-                                    if (value.trim()) {
-                                        next.set("search", value);
-                                    } else {
-                                        next.delete("search");
-                                    }
-
-                                    setSearchParams(next, {
-                                        replace: true,
-                                    });
                                 }}
                                 placeholder="Search businesses, services, locations..."
                                 aria-label="Search listings"
@@ -423,16 +640,7 @@ export default function CityListingsBrowsePage() {
                                     aria-label="Clear search"
                                     onClick={() => {
                                         setSearch("");
-
-                                        const next = new URLSearchParams(
-                                            searchParams,
-                                        );
-
-                                        next.delete("search");
-
-                                        setSearchParams(next, {
-                                            replace: true,
-                                        });
+                                        updateUrl({ search: null }, true);
                                     }}
                                 >
                                     <X size={17} />
@@ -451,8 +659,8 @@ export default function CityListingsBrowsePage() {
             </section>
 
             {/* MAIN LAYOUT */}
+
             <section className="city-browse-layout">
-                {/* CATEGORY SIDEBAR */}
                 <aside className="city-browse-sidebar">
                     <div className="city-browse-sidebar-heading">
                         <h2>Categories</h2>
@@ -478,18 +686,11 @@ export default function CityListingsBrowsePage() {
 
                     {categories.map((category) => {
                         const count = listings.filter(
-                            (listing) =>
-                                listing.category === category.id,
+                            (listing) => listing.category === category.id,
                         ).length;
 
-                        const isExpanded =
-                            expandedCategory === category.id;
-
-                        const isActiveCategory =
-                            activeCategory === category.id;
-
-                        const subcategories =
-                            category.subcategories ?? [];
+                        const isExpanded = expandedCategory === category.id;
+                        const isActiveCategory = activeCategory === category.id;
 
                         return (
                             <div
@@ -501,9 +702,7 @@ export default function CityListingsBrowsePage() {
                                     className={`city-browse-category ${
                                         isActiveCategory ? "active" : ""
                                     }`}
-                                    onClick={() =>
-                                        toggleCategory(category.id)
-                                    }
+                                    onClick={() => toggleCategory(category.id)}
                                     aria-expanded={isExpanded}
                                 >
                                     <span className="city-browse-category-name">
@@ -540,29 +739,29 @@ export default function CityListingsBrowsePage() {
                                             }
                                         >
                                             <span>All {category.name}</span>
+
                                             <span className="city-browse-subcategory-count">
                                                 {count}
                                             </span>
                                         </button>
 
-                                        {subcategories.map(
+                                        {(category.subcategories ?? []).map(
                                             (subcategory) => {
                                                 const subcategoryCount =
                                                     listings.filter(
                                                         (listing) =>
                                                             listing.category ===
                                                                 category.id &&
-                                                            (
+                                                            normalize(
                                                                 listing.subcategory ??
-                                                                listing.label
-                                                            ).toLowerCase() ===
-                                                                subcategory.toLowerCase(),
+                                                                    listing.label,
+                                                            ) === normalize(subcategory),
                                                     ).length;
 
                                                 const isActiveSubcategory =
                                                     isActiveCategory &&
-                                                    activeSubcategory.toLowerCase() ===
-                                                        subcategory.toLowerCase();
+                                                    normalize(activeSubcategory) ===
+                                                        normalize(subcategory);
 
                                                 return (
                                                     <button
@@ -581,6 +780,7 @@ export default function CityListingsBrowsePage() {
                                                         }
                                                     >
                                                         <span>{subcategory}</span>
+
                                                         <span className="city-browse-subcategory-count">
                                                             {subcategoryCount}
                                                         </span>
@@ -595,11 +795,11 @@ export default function CityListingsBrowsePage() {
                     })}
                 </aside>
 
-                {/* RESULTS AREA */}
+                {/* RESULTS */}
+
                 <div className="city-browse-results">
                     {isPropertyCategory ? (
                         <div className="city-property-content">
-                            {/* PROPERTY HEADER AND LIST PROPERTY BUTTON */}
                             <div className="city-property-topbar">
                                 <div className="city-property-brand">
                                     <span className="city-property-brand-icon">
@@ -608,9 +808,7 @@ export default function CityListingsBrowsePage() {
 
                                     <div>
                                         <h2>Find My Property</h2>
-                                        <p>
-                                            YOUR SPACE. YOUR NEXT CHAPTER.
-                                        </p>
+                                        <p>YOUR SPACE. YOUR NEXT CHAPTER.</p>
                                     </div>
                                 </div>
 
@@ -632,15 +830,14 @@ export default function CityListingsBrowsePage() {
                                 </button>
                             </div>
 
-                            {/* INLINE PROPERTY FORM */}
                             {showListPropertyForm && (
                                 <section className="city-property-form-card">
                                     <div className="city-property-form-heading">
                                         <div>
                                             <h3>List your property</h3>
                                             <p>
-                                                Create a sample listing to
-                                                preview the owner experience.
+                                                Create a sample listing to preview
+                                                the owner experience.
                                             </p>
                                         </div>
 
@@ -689,6 +886,7 @@ export default function CityListingsBrowsePage() {
                                                                 )
                                                             }
                                                         />
+
                                                         <span>{category}</span>
                                                     </label>
                                                 ))}
@@ -725,6 +923,7 @@ export default function CityListingsBrowsePage() {
                                                                 )
                                                             }
                                                         />
+
                                                         <span>{type}</span>
                                                     </label>
                                                 ))}
@@ -733,6 +932,7 @@ export default function CityListingsBrowsePage() {
 
                                         <label className="city-property-input-label">
                                             Property title
+
                                             <input
                                                 type="text"
                                                 value={propertyForm.title}
@@ -749,6 +949,7 @@ export default function CityListingsBrowsePage() {
 
                                         <label className="city-property-input-label">
                                             Price (₹)
+
                                             <input
                                                 type="number"
                                                 min="1"
@@ -766,6 +967,7 @@ export default function CityListingsBrowsePage() {
 
                                         <label className="city-property-input-label">
                                             Locality
+
                                             <input
                                                 type="text"
                                                 value={propertyForm.locality}
@@ -791,9 +993,8 @@ export default function CityListingsBrowsePage() {
                                     {showPropertyPreview && (
                                         <div className="city-property-preview">
                                             <div className="city-property-preview-top">
-                                                <span>
-                                                    SAMPLE LISTING PREVIEW
-                                                </span>
+                                                <span>SAMPLE LISTING PREVIEW</span>
+
                                                 <span className="city-property-preview-badge">
                                                     Preview
                                                 </span>
@@ -806,8 +1007,7 @@ export default function CityListingsBrowsePage() {
                                                 {Number(
                                                     propertyForm.price,
                                                 ).toLocaleString("en-IN")}
-                                                {propertyForm.listingType ===
-                                                "Sale"
+                                                {propertyForm.listingType === "Sale"
                                                     ? ""
                                                     : propertyForm.listingType ===
                                                         "Rent"
@@ -821,38 +1021,30 @@ export default function CityListingsBrowsePage() {
                                             </p>
 
                                             <div className="city-property-preview-meta">
-                                                <span>
-                                                    {propertyForm.category}
-                                                </span>
-                                                <span>
-                                                    {propertyForm.listingType}
-                                                </span>
+                                                <span>{propertyForm.category}</span>
+                                                <span>{propertyForm.listingType}</span>
                                             </div>
 
                                             <p className="city-property-preview-note">
-                                                This is a sample preview only.
-                                                Your property has not been
-                                                published.
+                                                This is a sample preview only. Your
+                                                property has not been published.
                                             </p>
                                         </div>
                                     )}
                                 </section>
                             )}
 
-                            {/* EXISTING PROPERTY SEARCH AND RESULTS */}
                             <FindMyPropertyPage embedded />
                         </div>
                     ) : (
                         <>
-                            {/* BUSINESS RESULTS TOOLBAR */}
                             <div className="city-browse-results-toolbar">
                                 <div className="city-browse-results-title">
                                     <h2>{activeCategoryName}</h2>
+
                                     <p>
                                         Showing{" "}
-                                        <strong>
-                                            {filteredListings.length}
-                                        </strong>{" "}
+                                        <strong>{filteredListings.length}</strong>{" "}
                                         {filteredListings.length === 1
                                             ? "business"
                                             : "businesses"}
@@ -860,19 +1052,22 @@ export default function CityListingsBrowsePage() {
                                 </div>
 
                                 <div className="city-browse-toolbar-actions">
-                                    <div className="city-browse-filter-dropdown">
+                                    {/* FILTER DROPDOWN */}
+
+                                    <div
+                                        className="city-browse-filter-dropdown"
+                                        onMouseEnter={() => setFiltersOpen(true)}
+                                        onMouseLeave={() => setFiltersOpen(false)}
+                                    >
                                         <button
                                             type="button"
                                             className={`city-browse-filter-trigger ${
-                                                filtersOpen ||
-                                                activeFilterCount > 0
+                                                filtersOpen || activeFilterCount > 0
                                                     ? "active"
                                                     : ""
                                             }`}
                                             onClick={() =>
-                                                setFiltersOpen(
-                                                    (current) => !current,
-                                                )
+                                                setFiltersOpen((current) => !current)
                                             }
                                             aria-expanded={filtersOpen}
                                             aria-haspopup="true"
@@ -909,24 +1104,72 @@ export default function CityListingsBrowsePage() {
                                                     <div className="city-browse-filter-menu-header">
                                                         <div>
                                                             <h3>Filters</h3>
-                                                            <p>
-                                                                Refine your
-                                                                results
-                                                            </p>
+                                                            <p>Refine your results</p>
                                                         </div>
 
                                                         <button
                                                             type="button"
                                                             aria-label="Close filters"
                                                             onClick={() =>
-                                                                setFiltersOpen(
-                                                                    false,
-                                                                )
+                                                                setFiltersOpen(false)
                                                             }
                                                         >
                                                             <X size={17} />
                                                         </button>
                                                     </div>
+
+                                                    {filterGroups.map((group) => (
+                                                        <div
+                                                            className="city-browse-category-filter-section"
+                                                            key={`${group.id}-${group.label}`}
+                                                        >
+                                                            <h4>{group.label}</h4>
+
+                                                            {group.options.length > 0 ? (
+                                                                <div className="city-browse-category-filter-options">
+                                                                    {group.options.map(
+                                                                        (option) => {
+                                                                            const isChecked =
+                                                                                selectedListingFilter?.groupId ===
+                                                                                    group.id &&
+                                                                                normalize(
+                                                                                    selectedListingFilter.option,
+                                                                                ) ===
+                                                                                    normalize(option);
+
+                                                                            return (
+                                                                                <button
+                                                                                    type="button"
+                                                                                    key={option}
+                                                                                    className={`city-browse-category-filter-chip ${
+                                                                                        isChecked
+                                                                                            ? "active"
+                                                                                            : ""
+                                                                                    }`}
+                                                                                    onClick={() =>
+                                                                                        chooseCategoryFilter(
+                                                                                            group.id,
+                                                                                            option,
+                                                                                        )
+                                                                                    }
+                                                                                    aria-pressed={
+                                                                                        isChecked
+                                                                                    }
+                                                                                >
+                                                                                    {option}
+                                                                                </button>
+                                                                            );
+                                                                        },
+                                                                    )}
+                                                                </div>
+                                                            ) : (
+                                                                <p>
+                                                                    No additional options
+                                                                    available.
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                    ))}
 
                                                     <label className="city-browse-filter-option">
                                                         <span className="city-browse-filter-option-icon">
@@ -935,12 +1178,10 @@ export default function CityListingsBrowsePage() {
 
                                                         <span className="city-browse-filter-option-text">
                                                             <strong>
-                                                                Verified
-                                                                businesses
+                                                                Verified businesses
                                                             </strong>
                                                             <small>
-                                                                Show verified
-                                                                listings only
+                                                                Show verified listings only
                                                             </small>
                                                         </span>
 
@@ -961,12 +1202,9 @@ export default function CityListingsBrowsePage() {
                                                         </span>
 
                                                         <span className="city-browse-filter-option-text">
-                                                            <strong>
-                                                                Open now
-                                                            </strong>
+                                                            <strong>Open now</strong>
                                                             <small>
-                                                                Show currently
-                                                                open listings
+                                                                Show currently open listings
                                                             </small>
                                                         </span>
 
@@ -1005,8 +1243,11 @@ export default function CityListingsBrowsePage() {
                                         )}
                                     </div>
 
+                                    {/* SORT */}
+
                                     <label className="city-browse-sort">
                                         <span>Sort by</span>
+
                                         <select
                                             value={sortBy}
                                             onChange={(event) =>
@@ -1016,9 +1257,11 @@ export default function CityListingsBrowsePage() {
                                             <option value="recommended">
                                                 Recommended
                                             </option>
+
                                             <option value="rating">
                                                 Highest rated
                                             </option>
+
                                             <option value="reviews">
                                                 Most reviewed
                                             </option>
@@ -1027,123 +1270,194 @@ export default function CityListingsBrowsePage() {
                                 </div>
                             </div>
 
-                            {/* BUSINESS LISTINGS */}
+                            {/* ACTIVE FILTER CHIPS */}
+
+                            {(activeSubcategory !== "all" ||
+                                selectedListingFilter ||
+                                verifiedOnly ||
+                                openNowOnly) && (
+                                <div className="city-browse-active-filters">
+                                    <span>Active filters:</span>
+
+                                    {activeSubcategory !== "all" && (
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                selectFilterSubcategory("all")
+                                            }
+                                            aria-label={`Remove ${activeSubcategory} filter`}
+                                        >
+                                            {activeSubcategory}
+                                            <X size={14} />
+                                        </button>
+                                    )}
+
+                                    {selectedListingFilter && (
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setSelectedListingFilter(null)
+                                            }
+                                            aria-label={`Remove ${selectedListingFilter.option} filter`}
+                                        >
+                                            {selectedListingFilter.option}
+                                            <X size={14} />
+                                        </button>
+                                    )}
+
+                                    {verifiedOnly && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setVerifiedOnly(false)}
+                                        >
+                                            Verified
+                                            <X size={14} />
+                                        </button>
+                                    )}
+
+                                    {openNowOnly && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setOpenNowOnly(false)}
+                                        >
+                                            Open now
+                                            <X size={14} />
+                                        </button>
+                                    )}
+
+                                    <button
+                                        type="button"
+                                        onClick={clearFilters}
+                                    >
+                                        Clear filters
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* BUSINESS LIST + RANDOM AD BLOCKS */}
+
                             {filteredListings.length > 0 ? (
                                 <div className="city-browse-list">
-                                    {filteredListings.map((listing) => (
-                                        <article
-                                            className="city-browse-business-card"
-                                            key={listing.id}
-                                            onClick={() =>
-                                                setSelectedListing(listing)
-                                            }
-                                            onKeyDown={(event) => {
-                                                if (
-                                                    event.key === "Enter" ||
-                                                    event.key === " "
-                                                ) {
-                                                    event.preventDefault();
-                                                    setSelectedListing(listing);
+                                    {filteredListings.map((listing, index) => (
+                                        <Fragment key={listing.id}>
+                                            <article
+                                                className="city-browse-business-card"
+                                                onClick={() =>
+                                                    setSelectedListing(listing)
                                                 }
-                                            }}
-                                            role="button"
-                                            tabIndex={0}
-                                        >
-                                            <div className="city-browse-business-image">
-                                                <img
-                                                    src={listing.image}
-                                                    alt={listing.name}
-                                                    loading="lazy"
-                                                />
+                                                onKeyDown={(event) => {
+                                                    if (
+                                                        event.key === "Enter" ||
+                                                        event.key === " "
+                                                    ) {
+                                                        event.preventDefault();
+                                                        setSelectedListing(listing);
+                                                    }
+                                                }}
+                                                role="button"
+                                                tabIndex={0}
+                                            >
+                                                <div className="city-browse-business-image">
+                                                    <img
+                                                        src={listing.image}
+                                                        alt={listing.name}
+                                                        loading="lazy"
+                                                    />
 
-                                                {listing.verified && (
-                                                    <span className="city-browse-verified-badge">
-                                                        <ShieldCheck size={13} />
-                                                        Verified
-                                                    </span>
-                                                )}
-                                            </div>
-
-                                            <div className="city-browse-business-info">
-                                                <div className="city-browse-business-topline">
-                                                    <span className="city-browse-business-category">
-                                                        {categories.find(
-                                                            (category) =>
-                                                                category.id ===
-                                                                listing.category,
-                                                        )?.name ??
-                                                            listing.category}
-                                                    </span>
-
-                                                    {listing.openNow && (
-                                                        <span className="city-browse-open-badge">
-                                                            <span />
-                                                            Open now
+                                                    {listing.verified && (
+                                                        <span className="city-browse-verified-badge">
+                                                            <ShieldCheck size={13} />
+                                                            Verified
                                                         </span>
                                                     )}
                                                 </div>
 
-                                                <h3>{listing.name}</h3>
-
-                                                <p className="city-browse-business-label">
-                                                    {listing.subcategory ??
-                                                        listing.label}
-                                                </p>
-
-                                                <p className="city-browse-business-description">
-                                                    {listing.description}
-                                                </p>
-
-                                                <div className="city-browse-business-meta">
-                                                    <span className="city-browse-rating">
-                                                        <Star
-                                                            size={15}
-                                                            fill="currentColor"
-                                                        />
-                                                        <strong>
-                                                            {listing.rating.toFixed(1)}
-                                                        </strong>
-                                                        <span>
-                                                            ({listing.reviews})
+                                                <div className="city-browse-business-info">
+                                                    <div className="city-browse-business-topline">
+                                                        <span className="city-browse-business-category">
+                                                            {categories.find(
+                                                                (category) =>
+                                                                    category.id ===
+                                                                    listing.category,
+                                                            )?.name ?? listing.category}
                                                         </span>
-                                                    </span>
 
-                                                    <span className="city-browse-location">
-                                                        <MapPin size={15} />
-                                                        {listing.location}
-                                                    </span>
+                                                        {listing.openNow && (
+                                                            <span className="city-browse-open-badge">
+                                                                <span />
+                                                                Open now
+                                                            </span>
+                                                        )}
+                                                    </div>
+
+                                                    <h3>{listing.name}</h3>
+
+                                                    <p className="city-browse-business-label">
+                                                        {listing.subcategory ??
+                                                            listing.label}
+                                                    </p>
+
+                                                    <p className="city-browse-business-description">
+                                                        {listing.description}
+                                                    </p>
+
+                                                    <div className="city-browse-business-meta">
+                                                        <span className="city-browse-rating">
+                                                            <Star
+                                                                size={15}
+                                                                fill="currentColor"
+                                                            />
+
+                                                            <strong>
+                                                                {listing.rating.toFixed(1)}
+                                                            </strong>
+
+                                                            <span>
+                                                                ({listing.reviews})
+                                                            </span>
+                                                        </span>
+
+                                                        <span className="city-browse-location">
+                                                            <MapPin size={15} />
+                                                            {listing.location}
+                                                        </span>
+                                                    </div>
+
+                                                    <div className="city-browse-business-actions">
+                                                        <button
+                                                            type="button"
+                                                            onClick={(event) => {
+                                                                event.stopPropagation();
+                                                                setSelectedListing(listing);
+                                                            }}
+                                                        >
+                                                            View details
+                                                            <ArrowRight size={15} />
+                                                        </button>
+
+                                                        <a
+                                                            href={`tel:${listing.phone.replace(
+                                                                /[^\d+]/g,
+                                                                "",
+                                                            )}`}
+                                                            onClick={(event) =>
+                                                                event.stopPropagation()
+                                                            }
+                                                            aria-label={`Call ${listing.name}`}
+                                                        >
+                                                            <Phone size={15} />
+                                                            Call
+                                                        </a>
+                                                    </div>
                                                 </div>
+                                            </article>
 
-                                                <div className="city-browse-business-actions">
-                                                    <button
-                                                        type="button"
-                                                        onClick={(event) => {
-                                                            event.stopPropagation();
-                                                            setSelectedListing(
-                                                                listing,
-                                                            );
-                                                        }}
-                                                    >
-                                                        View details
-                                                        <ArrowRight size={15} />
-                                                    </button>
-
-                                                    <a
-                                                        href={`tel:${listing.phone.replace(
-                                                            /[^\d+]/g,
-                                                            "",
-                                                        )}`}
-                                                        onClick={(event) =>
-                                                            event.stopPropagation()
-                                                        }
-                                                        aria-label={`Call ${listing.name}`}
-                                                    >
-                                                        <Phone size={15} />
-                                                        Call
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        </article>
+                                            {/* Ads are inserted directly after a card.
+                                                They cannot appear elsewhere on the page. */}
+                                            {adPositions.includes(index + 1) && (
+                                                <CityListingAd />
+                                            )}
+                                        </Fragment>
                                     ))}
                                 </div>
                             ) : (
@@ -1151,11 +1465,14 @@ export default function CityListingsBrowsePage() {
                                     <span>
                                         <Search size={28} />
                                     </span>
+
                                     <h3>No businesses found</h3>
+
                                     <p>
                                         Try another search term or clear your
                                         filters to see more listings.
                                     </p>
+
                                     <button
                                         type="button"
                                         onClick={clearAll}
@@ -1170,6 +1487,7 @@ export default function CityListingsBrowsePage() {
             </section>
 
             {/* BUSINESS PROFILE MODAL */}
+
             {modalListing && (
                 <CityBusinessProfileModal
                     listing={modalListing}
