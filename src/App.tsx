@@ -338,7 +338,7 @@ function Navbar() {
                         "Provide trusted home services",
                     },
                     {
-                      path: "/accessories-sales",
+                      path: "/register-partner",
                       icon: "🛠️",
                       title: "Products & Spares",
                       description:
