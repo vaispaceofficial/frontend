@@ -468,7 +468,7 @@ export const services: ServiceItem[] = [
 
   createService(
     "school-tuition",
-    "Home Tution",
+    "Home Tuition",
     edutech,
     "School Tuition",
     "/images/servicedetails/Tutors.webp",

@@ -17,14 +17,15 @@ import {
   Plus,
   Images,
   Navigation,
-  ChevronLeft,
-  ChevronRight,
   X,
   House,
   KeyRound,
   ShieldCheck,
   Landmark,
   Check,
+  MessageCircle,
+  Phone,
+  Share2,
 } from "lucide-react";
 
 import "./FindMyPropertyPage.css";
@@ -804,51 +805,13 @@ export default function FindMyPropertyPage({
             aria-labelledby="fmp-modal-title"
             onClick={(event) => event.stopPropagation()}
           >
-            {/* Main property image and popup controls */}
+            {/* Premium property hero with key contact actions */}
             <div className="fmp-property-modal-hero">
               <img
-                src={
-                  selectedGallery[activeGalleryImage] ?? selected.image
-                }
-                alt={`${selected.title} - image ${activeGalleryImage + 1}`}
+                src={selectedGallery[0] ?? selected.image}
+                alt={`${selected.title}`}
               />
-
-              {selectedGallery.length > 1 && (
-                <>
-                  <button
-                    type="button"
-                    className="fmp-gallery-arrow fmp-gallery-previous"
-                    aria-label="Previous property image"
-                    onClick={() =>
-                      setActiveGalleryImage(
-                        (index) =>
-                          (index - 1 + selectedGallery.length) %
-                          selectedGallery.length,
-                      )
-                    }
-                  >
-                    <ChevronLeft size={20} />
-                  </button>
-
-                  <button
-                    type="button"
-                    className="fmp-gallery-arrow fmp-gallery-next"
-                    aria-label="Next property image"
-                    onClick={() =>
-                      setActiveGalleryImage(
-                        (index) => (index + 1) % selectedGallery.length,
-                      )
-                    }
-                  >
-                    <ChevronRight size={20} />
-                  </button>
-                </>
-              )}
-
-              <span className="fmp-modal-image-count">
-                <Images size={13} />
-                {activeGalleryImage + 1} / {selectedGallery.length}
-              </span>
+              <div className="fmp-property-hero-shade" />
 
               <button
                 type="button"
@@ -858,27 +821,57 @@ export default function FindMyPropertyPage({
               >
                 <X size={18} />
               </button>
+
+              <div className="fmp-property-hero-content">
+                <div className="fmp-property-hero-copy">
+                  <span className="fmp-property-hero-label">{selected.label}</span>
+                  <h2 id="fmp-modal-title">{selected.title}</h2>
+                  <p className="fmp-property-hero-location"><MapPin size={15} />{selected.location}</p>
+                  <strong className="fmp-property-hero-price">
+                    {money(selected.price)} <span>{selected.period ?? (selected.deal === "Sale" ? "asking price" : "")}</span>
+                  </strong>
+                </div>
+                <div className="fmp-property-hero-actions" aria-label="Property contact actions">
+                  <a
+                    className="fmp-hero-action fmp-action-whatsapp"
+                    href={`https://wa.me/?text=${encodeURIComponent(`I'm interested in ${selected.title} at ${selected.location} (${money(selected.price)} ${selected.period ?? ""}).`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  ><MessageCircle size={18} /><span>WhatsApp</span></a>
+                  <button
+                    type="button"
+                    className="fmp-hero-action fmp-action-call"
+                    onClick={openPropertyEnquiry}
+                    title="Request a call back because a listing phone number is not available"
+                  ><Phone size={17} /><span>Call Now</span></button>
+                  <a
+                    className="fmp-hero-action fmp-action-directions"
+                    href={`https://www.google.com/maps/search/?api=1&query=${getMapSearch(selected)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  ><Navigation size={17} /><span>Directions</span></a>
+                  <button
+                    type="button"
+                    className="fmp-hero-action fmp-action-share"
+                    onClick={async () => {
+                      const shareUrl = window.location.href;
+                      const shareData = { title: selected.title, text: `${selected.title} · ${selected.location} · ${money(selected.price)} ${selected.period ?? ""}`, url: shareUrl };
+                      try {
+                        if (navigator.share) await navigator.share(shareData);
+                        else if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(`${shareData.text}\n${shareUrl}`);
+                        else window.prompt("Copy this property link", shareUrl);
+                      } catch (error) {
+                        if (error instanceof Error && error.name !== "AbortError") window.prompt("Copy this property link", shareUrl);
+                      }
+                    }}
+                    aria-label="Share property"
+                    title="Share property"
+                  ><Share2 size={18} /><span>Share</span></button>
+                </div>
+              </div>
             </div>
 
             <div className="fmp-property-modal-body">
-              {/* Property heading and price appear only once */}
-              <div className="fmp-property-modal-heading">
-                <span className="fmp-property-modal-label">
-                  {selected.label}
-                </span>
-
-                <h2 id="fmp-modal-title">{selected.title}</h2>
-
-                <p className="fmp-property-location">
-                  <MapPin size={14} />
-                  {selected.location}
-                </p>
-
-                <strong className="fmp-property-price">
-                  {money(selected.price)}{" "}
-                  <span>{selected.period ?? ""}</span>
-                </strong>
-              </div>
 
               {/* Keep these three tabs aligned with the existing CSS */}
               <div
@@ -1023,35 +1016,22 @@ export default function FindMyPropertyPage({
                     role="tabpanel"
                     aria-labelledby="fmp-tab-gallery"
                   >
-                    <div className="fmp-property-gallery-main">
-                      <img
-                        src={
-                          selectedGallery[activeGalleryImage] ??
-                          selected.image
-                        }
-                        alt={`${selected.title} gallery view ${
-                          activeGalleryImage + 1
-                        }`}
-                      />
+                    <div className="fmp-property-gallery-heading">
+                      <div><h3>Property Gallery</h3><p>Explore photos of this property.</p></div>
+                      <span>{selectedGallery.length} {selectedGallery.length === 1 ? "photo" : "photos"}</span>
                     </div>
-
-                    <div className="fmp-property-gallery-thumbnails">
+                    <div className="fmp-property-gallery-grid">
                       {selectedGallery.map((image, index) => (
                         <button
                           type="button"
                           key={`${image}-${index}`}
-                          className={
-                            activeGalleryImage === index ? "active" : ""
-                          }
+                          className={`fmp-property-gallery-card${activeGalleryImage === index ? " active" : ""}`}
                           onClick={() => setActiveGalleryImage(index)}
                           aria-label={`View property image ${index + 1}`}
                           aria-pressed={activeGalleryImage === index}
                         >
-                          <img
-                            src={image}
-                            alt={`Property view ${index + 1}`}
-                            loading="lazy"
-                          />
+                          <img src={image} alt={`${selected.title} gallery view ${index + 1}`} loading="lazy" />
+                          <span><Images size={13} /> View photo {index + 1}</span>
                         </button>
                       ))}
                     </div>

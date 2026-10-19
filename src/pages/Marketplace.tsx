@@ -455,7 +455,7 @@ function Marketplace() {
             <h2>Find what you need</h2>
 
             <p>
-              Explore five product categories, from appliance
+              Explore product categories, from appliance
               spare parts to fashion, home decor and sports
               equipment.
             </p>
