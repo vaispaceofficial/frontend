@@ -521,10 +521,10 @@ const translations = {
     hindi: "Hindi",
     signIn: "Already registered?",
     login: "Sign in",
-    network: "ONESERVICE PROFESSIONAL NETWORK",
+    network: "NeedOneService PROFESSIONAL NETWORK",
     eyebrow: "PROFESSIONAL REGISTRATION",
     heading: "Showcase your skills.",
-    brand: "ONE SERVICE",
+    brand: "NeedOneService",
     intro:
       "Join the NeedOneService professional network to connect with customers, showcase your expertise and grow your service business.",
     secure: "Secure registration",
@@ -564,6 +564,7 @@ const translations = {
     category: "Professional category",
     categoryHint: "Select your main service category",
     services: "Services you provide",
+servicesHint: "Select all services you offer. You can choose multiple options.",
     experience: "Years of experience",
     experienceHint: "Select your experience",
     currentOccupation: "Current occupation",
@@ -696,6 +697,7 @@ const translations = {
     category: "వృత్తి విభాగం",
     categoryHint: "మీ ప్రధాన సేవా విభాగాన్ని ఎంచుకోండి",
     services: "మీరు అందించే సేవలు",
+    servicesHint: "మీరు అందించే అన్ని సేవలను ఎంచుకోండి. ఒకటి కంటే ఎక్కువ ఎంచుకోవచ్చు.",
     experience: "పని అనుభవం",
     experienceHint: "మీ అనుభవాన్ని ఎంచుకోండి",
     currentOccupation: "ప్రస్తుత వృత్తి",
@@ -817,6 +819,7 @@ const translations = {
     category: "पेशेवर श्रेणी",
     categoryHint: "अपनी मुख्य सेवा श्रेणी चुनें",
     services: "आपके द्वारा प्रदान की जाने वाली सेवाएँ",
+    servicesHint: "अपनी सभी सेवाएँ चुनें। आप एक से अधिक विकल्प चुन सकते हैं।",
     experience: "कार्य अनुभव",
     experienceHint: "अपना अनुभव चुनें",
     currentOccupation: "वर्तमान पेशा",
@@ -1326,35 +1329,50 @@ export default function ProfessionalRegisterPage() {
 
   const renderDayOptions = () => (
     <div className="partner-field partner-full-width">
-      <span className="partner-label">{t("workingDays")}</span>
+  <span className="partner-label">{t("services")}</span>
 
-      <div className="partner-chip-group">
-        {workingDayValues.map((day, index) => {
-          const selected = formData.workingDays.includes(day);
+  <p className="partner-services-hint">
+    {t("servicesHint")}
+  </p>
 
-          return (
-            <button
-              className={`partner-chip${selected ? " active" : ""}`}
-              type="button"
-              key={day}
-              onClick={() => {
-                const updated = selected
-                  ? formData.workingDays.filter((item) => item !== day)
-                  : [...formData.workingDays, day];
+  <div className="partner-chip-group">
+    {(serviceOptionsByCategory[formData.category] ?? []).map(
+      (service) => {
+        const selected = formData.services.includes(service);
 
-                updateField("workingDays", updated);
-              }}
-              aria-pressed={selected}
-            >
-              {dictionary.days[index]}
-            </button>
+        return (
+          <button
+            type="button"
+            key={service}
+            className={`partner-chip${selected ? " active" : ""}`}
+            aria-pressed={selected}
+            onClick={() => {
+              const updated = selected
+                ? formData.services.filter(
+                    (item) => item !== service
+                  )
+                : [...formData.services, service];
 
-          );
-        })}
-      </div>
+              updateField("services", updated);
+            }}
+          >
+            {selected && <Check size={14} />}
+            {serviceLabels[service]?.[language] ?? service}
+          </button>
+        );
+      }
+    )}
+  </div>
 
-      {renderError("workingDays")}
-    </div>
+  {formData.services.length > 0 && (
+    <p className="partner-selected-count">
+      {formData.services.length} service
+      {formData.services.length !== 1 ? "s" : ""} selected
+    </p>
+  )}
+
+  {renderError("services")}
+</div>
   );
 
   const stepTitles = [
@@ -1447,21 +1465,22 @@ export default function ProfessionalRegisterPage() {
     <main className="partner-page">
       <div className="partner-shell">
         <header className="partner-topbar">
-          <Link className="partner-brand" to="/">
+          {/* <Link className="partner-brand" to="/">
             <span className="partner-brand-mark">O</span>
             <span>{t("brand")}</span>
-          </Link>
+          </Link> */}
 
           <div className="partner-topbar-actions">
-            <span className="partner-signin">
-              {t("signIn")} <Link to="/login">{t("login")}</Link>
-            </span>
-
             <LanguagePicker
               language={language}
               setLanguage={setLanguage}
               t={t}
             />
+
+            <span className="partner-signin">
+              {t("signIn")} <Link to="/login">{t("login")}</Link>
+            </span>
+
           </div>
         </header>
 
@@ -1470,24 +1489,14 @@ export default function ProfessionalRegisterPage() {
             <span className="partner-eyebrow">{t("eyebrow")}</span>
             <h1>{t("heading")}</h1>
             <p>{t("intro")}</p>
+          </div>
 
+          <div className="partner-secure-row">
             <div className="partner-secure-label">
               <ShieldCheck size={17} />
               <span>{t("secure")}</span>
             </div>
           </div>
-
-          {/* <div className="partner-hero-decoration" aria-hidden="true">
-            <div className="partner-decoration-circle">
-              <BriefcaseBusiness size={54} />
-            </div>
-
-            <div className="partner-decoration-card">
-              <CheckCircle2 size={18} />
-              <span>{t("network")}</span>
-            </div>
-          </div> */}
-
         </section>
 
         <section className="partner-form-card">

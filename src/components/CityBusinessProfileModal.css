@@ -1633,3 +1633,170 @@
     grid-column: span 2;
   }
 }
+
+/* Append this file's contents to CityBusinessProfileModal.css */
+.business-profile-gallery-item {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 12px;
+  background: #10131c;
+  cursor: zoom-in;
+  text-align: left;
+}
+.business-profile-gallery-item img {
+  display: block;
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  transition: transform 250ms ease, opacity 250ms ease;
+}
+.business-profile-gallery-item:hover img { transform: scale(1.04); opacity: 0.84; }
+.business-profile-gallery-view {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 11px;
+  border: 1px solid rgb(255 255 255 / 25%);
+  border-radius: 8px;
+  background: rgb(12 16 26 / 78%);
+  color: #fff;
+  font-size: 12px;
+  opacity: 0;
+  transition: opacity 200ms ease;
+  pointer-events: none;
+}
+.business-profile-gallery-item:hover .business-profile-gallery-view,
+.business-profile-gallery-item:focus-visible .business-profile-gallery-view { opacity: 1; }
+.business-profile-gallery-item:focus-visible { outline: 3px solid #818cf8; outline-offset: 3px; }
+
+.business-profile-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: rgb(4 6 12 / 96%);
+  backdrop-filter: blur(12px);
+  color: #fff;
+}
+.business-profile-lightbox-close {
+  position: absolute;
+  top: 22px;
+  right: 24px;
+  z-index: 3;
+  display: grid;
+  width: 46px;
+  height: 46px;
+  place-items: center;
+  border: 1px solid rgb(255 255 255 / 18%);
+  border-radius: 50%;
+  background: rgb(255 255 255 / 9%);
+  color: white;
+  cursor: pointer;
+  transition: background 180ms ease, transform 180ms ease;
+}
+.business-profile-lightbox-close:hover { transform: rotate(90deg); background: rgb(255 255 255 / 18%); }
+.business-profile-lightbox-counter {
+  position: absolute;
+  top: 30px;
+  left: 50%;
+  z-index: 2;
+  transform: translateX(-50%);
+  padding: 8px 14px;
+  border: 1px solid rgb(255 255 255 / 14%);
+  border-radius: 30px;
+  background: rgb(255 255 255 / 8%);
+  color: white;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.business-profile-lightbox-image-wrap {
+  display: flex;
+  width: calc(100% - 180px);
+  height: calc(100% - 150px);
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.business-profile-lightbox-image {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  user-select: none;
+  transition: transform 180ms ease;
+  transform-origin: center center;
+}
+.business-profile-lightbox-nav {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  display: grid;
+  width: 50px;
+  height: 64px;
+  place-items: center;
+  transform: translateY(-50%);
+  border: 1px solid rgb(255 255 255 / 20%);
+  border-radius: 14px;
+  background: rgb(255 255 255 / 10%);
+  color: #fff;
+  font-size: 40px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 180ms ease;
+}
+.business-profile-lightbox-nav:hover { background: rgb(255 255 255 / 22%); }
+.business-profile-lightbox-nav.previous { left: 24px; }
+.business-profile-lightbox-nav.next { right: 24px; }
+.business-profile-lightbox-controls {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transform: translateX(-50%);
+  padding: 8px;
+  border: 1px solid rgb(255 255 255 / 14%);
+  border-radius: 14px;
+  background: rgb(255 255 255 / 9%);
+}
+.business-profile-lightbox-controls button {
+  display: grid;
+  min-width: 40px;
+  height: 38px;
+  place-items: center;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+}
+.business-profile-lightbox-controls button:hover:not(:disabled) { background: rgb(255 255 255 / 14%); }
+.business-profile-lightbox-controls button:disabled { opacity: 0.35; cursor: not-allowed; }
+@media (max-width: 640px) {
+  .business-profile-gallery-item img { height: 160px; }
+  .business-profile-gallery-view { opacity: 1; right: 8px; bottom: 8px; padding: 6px 8px; }
+  .business-profile-lightbox-close { top: 14px; right: 14px; width: 40px; height: 40px; }
+  .business-profile-lightbox-counter { top: 22px; left: 18px; transform: none; }
+  .business-profile-lightbox-image-wrap { width: calc(100% - 28px); height: calc(100% - 140px); }
+  .business-profile-lightbox-nav { width: 40px; height: 48px; border-radius: 10px; font-size: 32px; }
+  .business-profile-lightbox-nav.previous { left: 8px; }
+  .business-profile-lightbox-nav.next { right: 8px; }
+  .business-profile-lightbox-controls { bottom: 16px; }
+}
+

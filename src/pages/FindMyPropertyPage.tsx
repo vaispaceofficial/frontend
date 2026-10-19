@@ -216,6 +216,8 @@ export default function FindMyPropertyPage({
     "overview" | "gallery" | "location"
   >("overview");
   const [activeGalleryImage, setActiveGalleryImage] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [imageZoom, setImageZoom] = useState(1);
 
   const [showEnquiryForm, setShowEnquiryForm] = useState(false);
   const [enquiryName, setEnquiryName] = useState("");
@@ -293,24 +295,31 @@ export default function FindMyPropertyPage({
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        if (showEnquiryForm) {
+        if (lightboxOpen) {
+          setLightboxOpen(false);
+          setImageZoom(1);
+        } else if (showEnquiryForm) {
           setShowEnquiryForm(false);
         } else {
           setSelected(null);
         }
       }
 
-      if (event.key === "ArrowRight" && !showEnquiryForm) {
+      if (lightboxOpen || showEnquiryForm) return;
+
+      if (event.key === "ArrowRight") {
         setActiveGalleryImage((index) =>
           (index + 1) % getPropertyGallery(selected).length,
         );
+        setImageZoom(1);
       }
 
-      if (event.key === "ArrowLeft" && !showEnquiryForm) {
+      if (event.key === "ArrowLeft") {
         setActiveGalleryImage((index) => {
           const length = getPropertyGallery(selected).length;
           return (index - 1 + length) % length;
         });
+        setImageZoom(1);
       }
     };
 
@@ -320,7 +329,7 @@ export default function FindMyPropertyPage({
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [selected, showEnquiryForm]);
+  }, [selected, showEnquiryForm, lightboxOpen]);
 
   const searchProperties = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -359,10 +368,14 @@ export default function FindMyPropertyPage({
     setSelected(property);
     setSelectedPropertyTab("overview");
     setActiveGalleryImage(0);
+    setLightboxOpen(false);
+    setImageZoom(1);
     setShowEnquiryForm(false);
   };
 
   const closePropertyDetails = () => {
+    setLightboxOpen(false);
+    setImageZoom(1);
     setShowEnquiryForm(false);
     setSelected(null);
   };
@@ -1017,29 +1030,45 @@ export default function FindMyPropertyPage({
                     aria-labelledby="fmp-tab-gallery"
                   >
                     <div className="fmp-property-gallery-heading">
-                      <div><h3>Property Gallery</h3><p>Explore photos of this property.</p></div>
-                      <span>{selectedGallery.length} {selectedGallery.length === 1 ? "photo" : "photos"}</span>
+                      <div>
+                        <h3>Property Gallery</h3>
+                        <p>Click any photo to view it in full size.</p>
+                      </div>
+                      <span>
+                        {selectedGallery.length}{" "}
+                        {selectedGallery.length === 1 ? "photo" : "photos"}
+                      </span>
                     </div>
+
                     <div className="fmp-property-gallery-grid">
                       {selectedGallery.map((image, index) => (
                         <button
                           type="button"
                           key={`${image}-${index}`}
-                          className={`fmp-property-gallery-card${activeGalleryImage === index ? " active" : ""}`}
-                          onClick={() => setActiveGalleryImage(index)}
-                          aria-label={`View property image ${index + 1}`}
-                          aria-pressed={activeGalleryImage === index}
+                          className="fmp-property-gallery-card"
+                          onClick={() => {
+                            setActiveGalleryImage(index);
+                            setImageZoom(1);
+                            setLightboxOpen(true);
+                          }}
+                          aria-label={`Enlarge property image ${index + 1}`}
                         >
-                          <img src={image} alt={`${selected.title} gallery view ${index + 1}`} loading="lazy" />
-                          <span><Images size={13} /> View photo {index + 1}</span>
+                          <img
+                            src={image}
+                            alt={`${selected.title} gallery view ${index + 1}`}
+                            loading="lazy"
+                          />
+                          <span className="fmp-gallery-view-label">
+                            <Maximize2 size={14} />
+                            View image
+                          </span>
                         </button>
                       ))}
                     </div>
 
                     {selectedGallery.length === 1 && (
                       <p className="fmp-gallery-note">
-                        More property images can be added to this
-                        listing's gallery.
+                        More property images can be added to this listing's gallery.
                       </p>
                     )}
                   </div>
@@ -1097,6 +1126,121 @@ export default function FindMyPropertyPage({
                 </button>
               </div>
             </div>
+
+            {/* Full-screen property image viewer */}
+            {lightboxOpen && selected && (
+              <div
+                className="fmp-image-lightbox"
+                role="dialog"
+                aria-modal="true"
+                aria-label="Enlarged property image"
+                onClick={() => {
+                  setLightboxOpen(false);
+                  setImageZoom(1);
+                }}
+              >
+                <button
+                  type="button"
+                  className="fmp-lightbox-close"
+                  aria-label="Close enlarged image"
+                  onClick={() => {
+                    setLightboxOpen(false);
+                    setImageZoom(1);
+                  }}
+                >
+                  <X size={25} />
+                </button>
+
+                <div className="fmp-lightbox-counter">
+                  {activeGalleryImage + 1} / {selectedGallery.length}
+                </div>
+
+                <div
+                  className="fmp-lightbox-image-wrap"
+                  onClick={(event) => event.stopPropagation()}
+                  onWheel={(event) => {
+                    event.preventDefault();
+                    setImageZoom((zoom) =>
+                      Math.min(4, Math.max(1, zoom + (event.deltaY < 0 ? 0.2 : -0.2))),
+                    );
+                  }}
+                >
+                  <img
+                    src={selectedGallery[activeGalleryImage] ?? selected.image}
+                    alt={`${selected.title} enlarged view`}
+                    style={{
+                      transform: `scale(${imageZoom})`,
+                      cursor: imageZoom > 1 ? "zoom-out" : "zoom-in",
+                    }}
+                    onClick={() =>
+                      setImageZoom((zoom) => (zoom > 1 ? 1 : 2))
+                    }
+                  />
+                </div>
+
+                <div
+                  className="fmp-lightbox-controls"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <button
+                    type="button"
+                    aria-label="Zoom out"
+                    disabled={imageZoom <= 1}
+                    onClick={() =>
+                      setImageZoom((zoom) => Math.max(1, zoom - 0.25))
+                    }
+                  >
+                    −
+                  </button>
+                  <span>{Math.round(imageZoom * 100)}%</span>
+                  <button
+                    type="button"
+                    aria-label="Zoom in"
+                    disabled={imageZoom >= 4}
+                    onClick={() =>
+                      setImageZoom((zoom) => Math.min(4, zoom + 0.25))
+                    }
+                  >
+                    +
+                  </button>
+                  <button type="button" onClick={() => setImageZoom(1)}>
+                    Reset zoom
+                  </button>
+                </div>
+
+                {selectedGallery.length > 1 && (
+                  <div
+                    className="fmp-lightbox-navigation"
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    <button
+                      type="button"
+                      aria-label="Previous image"
+                      onClick={() => {
+                        setActiveGalleryImage(
+                          (index) => (index - 1 + selectedGallery.length) % selectedGallery.length,
+                        );
+                        setImageZoom(1);
+                      }}
+                    >
+                      Previous
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="Next image"
+                      onClick={() => {
+                        setActiveGalleryImage(
+                          (index) => (index + 1) % selectedGallery.length,
+                        );
+                        setImageZoom(1);
+                      }}
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Enquiry form appears over the property popup */}
             {showEnquiryForm && (
