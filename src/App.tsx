@@ -40,6 +40,9 @@ import ServicesPage from "./pages/ServicesPage";
 import ServiceDetailPage from "./pages/ServiceDetailPage";
 import ContactPage from "./pages/ContactPage";
 import LoginPage from "./pages/LoginPage";
+import ProfilePage from "./pages/ProfilePage";
+
+import ProfessionalHubPage from "./pages/ProfessionalHub";
 
 import HomeAppliancesPage from "./pages/HomeAppliancesPage";
 import HomeServicesPage from "./pages/HomeServicesPage";
@@ -215,14 +218,177 @@ const homeServiceCards = [
   },
 ];
 
+
+/* =========================================================
+   WORKSPACE ROLE DETECTION
+========================================================= */
+
+type WorkspaceRole =
+  | "professional"
+  | "seller"
+  | "vendor"
+  | "student"
+  | "tutor";
+
+type WorkspaceInfo = {
+  role: WorkspaceRole;
+  label: string;
+  path: string;
+};
+
+const WORKSPACE_ROUTES: Record<WorkspaceRole, WorkspaceInfo> = {
+  professional: {
+    role: "professional",
+    label: "Professional Hub",
+    path: "/profile/professional-hub",
+  },
+  seller: {
+    role: "seller",
+    label: "Seller Hub",
+    path: "/profile/seller-hub",
+  },
+  vendor: {
+    role: "vendor",
+    label: "Vendor Hub",
+    path: "/profile/vendor-hub",
+  },
+  student: {
+    role: "student",
+    label: "Student Hub",
+    path: "/profile/student-hub",
+  },
+  tutor: {
+    role: "tutor",
+    label: "Tutor Hub",
+    path: "/profile/tutor-hub",
+  },
+};
+
+function readWorkspaceRole(): WorkspaceInfo | null {
+  const savedRole = localStorage
+    .getItem("oneservice_workspace_role")
+    ?.toLowerCase()
+    .trim();
+
+  if (
+    savedRole &&
+    Object.prototype.hasOwnProperty.call(
+      WORKSPACE_ROUTES,
+      savedRole,
+    )
+  ) {
+    return WORKSPACE_ROUTES[savedRole as WorkspaceRole];
+  }
+
+  // Backward compatibility with existing professional registrations.
+  try {
+    const raw = localStorage.getItem(
+      "oneservice_professional_application",
+    );
+
+    if (raw) {
+      const application = JSON.parse(raw);
+
+      if (application?.id && application?.fullName) {
+        return WORKSPACE_ROUTES.professional;
+      }
+    }
+  } catch {
+    // Invalid saved data is ignored.
+  }
+
+  // Detect other registrations if they use these storage keys.
+  const registrationKeys: {
+    key: string;
+    role: WorkspaceRole;
+  }[] = [
+    {
+      key: "oneservice_partner_application",
+      role: "seller",
+    },
+    {
+      key: "oneservice_seller_application",
+      role: "seller",
+    },
+    {
+      key: "oneservice_vendor_application",
+      role: "vendor",
+    },
+    {
+      key: "oneservice_student_application",
+      role: "student",
+    },
+    {
+      key: "oneservice_tutor_application",
+      role: "tutor",
+    },
+  ];
+
+  for (const registration of registrationKeys) {
+    const raw = localStorage.getItem(registration.key);
+
+    if (!raw) continue;
+
+    try {
+      const application = JSON.parse(raw);
+
+      if (application && typeof application === "object") {
+        return WORKSPACE_ROUTES[registration.role];
+      }
+    } catch {
+      // Continue checking other registration keys.
+    }
+  }
+
+  return null;
+}
+
+
+
+
 /* =========================================================
    NAVBAR
+   Logged-in registered users see My Workspace.
 ========================================================= */
 
 function Navbar() {
   const [networkOpen, setNetworkOpen] = useState(false);
+
+  const [isLoggedIn, setIsLoggedIn] = useState(() =>
+    Boolean(localStorage.getItem("oneservice_user")),
+  );
+
+  const [workspace, setWorkspace] =
+    useState<WorkspaceInfo | null>(() => readWorkspaceRole());
+
   const networkRef = useRef<HTMLDivElement>(null);
 
+  // Keep authentication and workspace in sync.
+  useEffect(() => {
+    const updateNavbar = () => {
+      setIsLoggedIn(
+        Boolean(localStorage.getItem("oneservice_user")),
+      );
+
+      setWorkspace(readWorkspaceRole());
+    };
+
+    window.addEventListener("oneservice-auth-change", updateNavbar);
+    window.addEventListener("oneservice-workspace-change", updateNavbar);
+    window.addEventListener("oneservice-professional-change", updateNavbar);
+    window.addEventListener("storage", updateNavbar);
+
+    updateNavbar();
+
+    return () => {
+      window.removeEventListener("oneservice-auth-change", updateNavbar);
+      window.removeEventListener("oneservice-workspace-change", updateNavbar);
+      window.removeEventListener("oneservice-professional-change", updateNavbar);
+      window.removeEventListener("storage", updateNavbar);
+    };
+  }, []);
+
+  // Close dropdown when clicking outside.
   useEffect(() => {
     const handleOutsideClick = (event: MouseEvent) => {
       const target = event.target as Node;
@@ -235,22 +401,49 @@ function Navbar() {
       }
     };
 
-    document.addEventListener(
-      "mousedown",
-      handleOutsideClick,
-    );
+    document.addEventListener("mousedown", handleOutsideClick);
 
     return () => {
-      document.removeEventListener(
-        "mousedown",
-        handleOutsideClick,
-      );
+      document.removeEventListener("mousedown", handleOutsideClick);
     };
   }, []);
 
   const closeDropdowns = () => {
     setNetworkOpen(false);
   };
+
+  const networkItems = [
+    {
+      path: "/register-professional",
+      icon: "🔧",
+      title: "Join as a Professional",
+      description: "Provide trusted home services",
+    },
+    {
+      path: "/register-partner",
+      icon: "🛠️",
+      title: "Products & Spares",
+      description: "Explore and sell products and spare parts",
+    },
+    {
+      path: "/register-vendor",
+      icon: "🏪",
+      title: "Business & Vendors",
+      description: "Grow your business with OneService",
+    },
+    {
+      path: "/register-student",
+      icon: "🎓",
+      title: "Join as a Student",
+      description: "Learn, train and build your skills",
+    },
+    {
+      path: "/register-tutor",
+      icon: "📚",
+      title: "Join as a Tutor",
+      description: "Teach and share your expertise",
+    },
+  ];
 
   return (
     <header className="navbar">
@@ -268,31 +461,19 @@ function Navbar() {
         </Link>
 
         <nav className="nav-links">
-          <Link
-            to="/services"
-            onClick={closeDropdowns}
-          >
+          <Link to="/services" onClick={closeDropdowns}>
             Services
           </Link>
 
-          <Link
-            to="/marketplace"
-            onClick={closeDropdowns}
-          >
+          <Link to="/marketplace" onClick={closeDropdowns}>
             Marketplace
           </Link>
 
-          <Link
-            to="/city-listings"
-            onClick={closeDropdowns}
-          >
+          <Link to="/city-listings" onClick={closeDropdowns}>
             City Listings
           </Link>
 
-          <Link
-            to="/contact"
-            onClick={closeDropdowns}
-          >
+          <Link to="/contact" onClick={closeDropdowns}>
             Contact
           </Link>
 
@@ -300,85 +481,71 @@ function Navbar() {
             className="network-nav-wrapper"
             ref={networkRef}
           >
-            <button
-              type="button"
-              className={`network-nav-button ${networkOpen ? "active" : ""
-                }`}
-              onClick={() =>
-                setNetworkOpen((current) => !current)
-              }
-              aria-expanded={networkOpen}
-              aria-haspopup="true"
-            >
-              <span>Join Our Network</span>
+            {isLoggedIn && workspace ? (
+              <Link
+                to={workspace.path}
+                className="network-nav-button my-workspace-button"
+                onClick={closeDropdowns}
+                title={`Open ${workspace.label}`}
+              >
+                <BriefcaseBusiness size={17} />
+                <span>My Workspace</span>
+                <ChevronDown size={14} />
+              </Link>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  className={`network-nav-button ${
+                    networkOpen ? "active" : ""
+                  }`}
+                  onClick={() =>
+                    setNetworkOpen((current) => !current)
+                  }
+                  aria-expanded={networkOpen}
+                  aria-haspopup="true"
+                >
+                  <span>Join Our Network</span>
 
-              <ChevronDown
-                size={14}
-                className={networkOpen ? "open" : ""}
-              />
-            </button>
+                  <ChevronDown
+                    size={14}
+                    className={networkOpen ? "open" : ""}
+                  />
+                </button>
 
-            {networkOpen && (
-              <div className="network-dropdown">
-                <div className="network-dropdown-header">
-                  <span>JOIN OUR NETWORK</span>
+                {networkOpen && (
+                  <div className="network-dropdown">
+                    <div className="network-dropdown-header">
+                      <span>JOIN OUR NETWORK</span>
+                      <strong>
+                        Choose how you want to grow with us
+                      </strong>
+                    </div>
 
-                  <strong>
-                    Choose how you want to grow with us
-                  </strong>
-                </div>
+                    <div className="network-dropdown-items">
+                      {networkItems.map((item) => (
+                        <Link
+                          key={item.path}
+                          to={item.path}
+                          className="network-dropdown-item"
+                          onClick={closeDropdowns}
+                        >
+                          <div className="network-item-icon">
+                            {item.icon}
+                          </div>
 
-                <div className="network-dropdown-items">
-                  {[
-                    {
-                      path: "/register-professional",
-                      icon: "🔧",
-                      title: "Join as a Professional",
-                      description:
-                        "Provide trusted home services",
-                    },
-                    {
-                      path: "/register-partner",
-                      icon: "🛠️",
-                      title: "Products & Spares",
-                      description:
-                        "Explore and sell products and spare parts",
-                    },
-                    {
-                      path: "/register-vendor",
-                      icon: "🏪",
-                      title: "Business & Vendors",
-                      description:
-                        "Grow your business with OneService",
-                    },
-                    {
-                      path: "/register-student",
-                      icon: "🎓",
-                      title: "Join as a Student",
-                      description:
-                        "Learn, train and build your skills",
-                    },
-                  ].map((item) => (
-                    <Link
-                      key={item.path}
-                      to={item.path}
-                      className="network-dropdown-item"
-                      onClick={closeDropdowns}
-                    >
-                      <div className="network-item-icon">
-                        {item.icon}
-                      </div>
+                          <div className="network-item-content">
+                            <strong>{item.title}</strong>
+                            <span>{item.description}</span>
+                          </div>
 
-                      <div className="network-item-content">
-                        <strong>{item.title}</strong>
-                        <span>{item.description}</span>
-                      </div>
-
-                      <ArrowRight size={15} />
-                    </Link>
-                  ))}
-                </div>
-              </div>
+                          <ArrowRight size={15} />
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </nav>
@@ -393,19 +560,33 @@ function Navbar() {
             <Search size={20} />
           </Link>
 
-          <Link
-            to="/login"
-            className="login-button"
-            onClick={closeDropdowns}
-          >
-            <UserRound size={18} />
-            <span>Login</span>
-          </Link>
+          {isLoggedIn ? (
+            <Link
+              to="/profile"
+              className="login-button navbar-profile-button"
+              aria-label="My Profile"
+              title="My Profile"
+              onClick={closeDropdowns}
+            >
+              <UserRound size={21} strokeWidth={1.8} />
+            </Link>
+          ) : (
+            <Link
+              to="/login"
+              className="login-button"
+              onClick={closeDropdowns}
+            >
+              <UserRound size={18} />
+              <span>Login</span>
+            </Link>
+          )}
         </div>
       </div>
     </header>
   );
 }
+
+
 
 /* =========================================================
    GSAP SERVICE CARD STACK
@@ -1113,6 +1294,14 @@ function AppContent() {
           path="/login"
           element={<LoginPage />}
         />
+
+        <Route path="/profile" element={<ProfilePage />} />
+
+        <Route
+          path="/profile/professional-hub"
+          element={<ProfessionalHubPage />}
+        />
+
 
         {/* ADMIN LOGIN */}
         <Route

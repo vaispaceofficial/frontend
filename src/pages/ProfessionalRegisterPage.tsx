@@ -1,11 +1,11 @@
+
 import { useState } from "react";
 import type { FormEvent } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
   ArrowRight,
   Check,
-  CheckCircle2,
   Eye,
   EyeOff,
   LockKeyhole,
@@ -319,7 +319,7 @@ const serviceLabels: Record<string, Record<Language, string>> = {
   "Fan installation": {
     en: "Fan installation",
     te: "ఫ్యాన్ ఇన్‌స్టాలేషన్",
-    hi: "पंखा इंस्टॉलेशन",
+    hi: "पंखा इंस्टॉलेషన్",
   },
   "Lighting installation": {
     en: "Lighting installation",
@@ -564,7 +564,7 @@ const translations = {
     category: "Professional category",
     categoryHint: "Select your main service category",
     services: "Services you provide",
-servicesHint: "Select all services you offer. You can choose multiple options.",
+    servicesHint: "Select all services you offer. You can choose multiple options.",
     experience: "Years of experience",
     experienceHint: "Select your experience",
     currentOccupation: "Current occupation",
@@ -924,12 +924,13 @@ function LanguagePicker({
 }
 
 export default function ProfessionalRegisterPage() {
+  const navigate = useNavigate();
+
   const [language, setLanguage] = useState<Language>("en");
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] =
     useState<ProfessionalFormData>(initialForm);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [submitted, setSubmitted] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] =
     useState(false);
@@ -1113,10 +1114,48 @@ export default function ProfessionalRegisterPage() {
 
     if (!validateStep(5)) return;
 
-    // Frontend demonstration only.
-    // Connect the registration API here to save the data.
-    setSubmitted(true);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    // Save only the summary needed by the Profile page.
+    // Passwords and uploaded document contents are not stored.
+    const application = {
+      id: `PRO-${Date.now()}`,
+      fullName: formData.fullName.trim(),
+      mobile: formData.mobile.trim(),
+      email: formData.email.trim(),
+      city: formData.city.trim(),
+      state: formData.state.trim(),
+      category: formData.category,
+      services: [...formData.services],
+      experience: formData.experience,
+      workType: formData.workType,
+      workingDays: [...formData.workingDays],
+      serviceArea: formData.serviceArea.trim(),
+      submittedAt: new Date().toISOString(),
+      status: "pending",
+    };
+
+    try {
+      localStorage.setItem(
+        "oneservice_professional_application",
+        JSON.stringify(application),
+      );
+
+      localStorage.setItem(
+        "oneservice_professional_notice",
+        "true",
+      );
+
+      window.dispatchEvent(
+        new Event("oneservice-professional-change"),
+      );
+
+      navigate("/profile", { replace: true });
+    } catch {
+      setErrors((previous) => ({
+        ...previous,
+        submission:
+          "We couldn't save your application in this browser. Please try again.",
+      }));
+    }
   };
 
   const inputClass = (key: string) =>
@@ -1157,20 +1196,22 @@ export default function ProfessionalRegisterPage() {
           autoComplete={
             key === "fullName"
               ? "name"
-              : key === "mobile"
+              : key === "mobile" || key === "whatsapp"
                 ? "tel"
-                : key === "whatsapp"
-                  ? "tel"
-                  : key === "email"
-                    ? "email"
-                    : key === "address"
-                      ? "street-address"
-                      : "off"
+                : key === "email"
+                  ? "email"
+                  : key === "address"
+                    ? "street-address"
+                    : "off"
           }
         />
 
         {errors[key] && (
-          <span id={`${key}-error`} className="partner-error" role="alert">
+          <span
+            id={`${key}-error`}
+            className="partner-error"
+            role="alert"
+          >
             {errors[key]}
           </span>
         )}
@@ -1229,7 +1270,11 @@ export default function ProfessionalRegisterPage() {
         </select>
 
         {errors[key] && (
-          <span id={`${key}-error`} className="partner-error" role="alert">
+          <span
+            id={`${key}-error`}
+            className="partner-error"
+            role="alert"
+          >
             {errors[key]}
           </span>
         )}
@@ -1301,7 +1346,11 @@ export default function ProfessionalRegisterPage() {
       )}
 
       {errors[key] && (
-        <span id={`${key}-error`} className="partner-error" role="alert">
+        <span
+          id={`${key}-error`}
+          className="partner-error"
+          role="alert"
+        >
           {errors[key]}
         </span>
       )}
@@ -1329,50 +1378,35 @@ export default function ProfessionalRegisterPage() {
 
   const renderDayOptions = () => (
     <div className="partner-field partner-full-width">
-  <span className="partner-label">{t("services")}</span>
+      <span className="partner-label">{t("workingDays")}</span>
 
-  <p className="partner-services-hint">
-    {t("servicesHint")}
-  </p>
+      <div className="partner-chip-group">
+        {workingDayValues.map((day, index) => {
+          const selected = formData.workingDays.includes(day);
 
-  <div className="partner-chip-group">
-    {(serviceOptionsByCategory[formData.category] ?? []).map(
-      (service) => {
-        const selected = formData.services.includes(service);
+          return (
+            <button
+              type="button"
+              key={day}
+              className={`partner-chip${selected ? " active" : ""}`}
+              aria-pressed={selected}
+              onClick={() => {
+                const updated = selected
+                  ? formData.workingDays.filter((item) => item !== day)
+                  : [...formData.workingDays, day];
 
-        return (
-          <button
-            type="button"
-            key={service}
-            className={`partner-chip${selected ? " active" : ""}`}
-            aria-pressed={selected}
-            onClick={() => {
-              const updated = selected
-                ? formData.services.filter(
-                    (item) => item !== service
-                  )
-                : [...formData.services, service];
+                updateField("workingDays", updated);
+              }}
+            >
+              {selected && <Check size={14} />}
+              {dictionary.days[index]}
+            </button>
+          );
+        })}
+      </div>
 
-              updateField("services", updated);
-            }}
-          >
-            {selected && <Check size={14} />}
-            {serviceLabels[service]?.[language] ?? service}
-          </button>
-        );
-      }
-    )}
-  </div>
-
-  {formData.services.length > 0 && (
-    <p className="partner-selected-count">
-      {formData.services.length} service
-      {formData.services.length !== 1 ? "s" : ""} selected
-    </p>
-  )}
-
-  {renderError("services")}
-</div>
+      {renderError("workingDays")}
+    </div>
   );
 
   const stepTitles = [
@@ -1393,83 +1427,10 @@ export default function ProfessionalRegisterPage() {
     t("securityDesc"),
   ];
 
-  if (submitted) {
-    return (
-      <main className="partner-page">
-        <div className="partner-shell">
-          <header className="partner-topbar">
-            <Link className="partner-brand" to="/">
-              <span className="partner-brand-mark">O</span>
-              <span>{t("brand")}</span>
-            </Link>
-
-            <LanguagePicker
-              language={language}
-              setLanguage={setLanguage}
-              t={t}
-            />
-          </header>
-
-          <section className="partner-success">
-            <div className="partner-success-icon">
-              <CheckCircle2 size={42} />
-            </div>
-
-            <span className="partner-eyebrow">
-              {t("successEyebrow")}
-            </span>
-
-            <h1>{t("successTitle")}</h1>
-            <p>{t("successDesc")}</p>
-
-            <div className="partner-summary">
-              <h2>{t("summary")}</h2>
-
-              <div className="partner-summary-row">
-                <span>{t("professional")}</span>
-                <strong>{formData.fullName}</strong>
-              </div>
-
-              <div className="partner-summary-row">
-                <span>{t("email")}</span>
-                <strong>{formData.email}</strong>
-              </div>
-
-              <div className="partner-summary-row">
-                <span>{t("mobile")}</span>
-                <strong>{formData.mobile}</strong>
-              </div>
-
-              <div className="partner-summary-row">
-                <span>{t("categorySummary")}</span>
-                <strong>
-                  {categoryLabels[formData.category]?.[language] ??
-                    formData.category}
-                </strong>
-              </div>
-            </div>
-
-            <p className="partner-note">{t("frontendNote")}</p>
-
-            <Link className="partner-primary-btn" to="/">
-              <ArrowLeft size={18} />
-              {t("home")}
-            </Link>
-          </section>
-        </div>
-      </main>
-    );
-  }
-
   return (
     <main className="partner-page">
       <div className="partner-shell">
         <header className="partner-topbar">
-          {/* <Link className="partner-brand" to="/">
-            <span className="partner-brand-mark">O</span>
-            <span>{t("brand")}</span>
-          </Link> */}
-
           <div className="partner-topbar-actions">
             <LanguagePicker
               language={language}
@@ -1480,7 +1441,6 @@ export default function ProfessionalRegisterPage() {
             <span className="partner-signin">
               {t("signIn")} <Link to="/login">{t("login")}</Link>
             </span>
-
           </div>
         </header>
 
@@ -1568,6 +1528,12 @@ export default function ProfessionalRegisterPage() {
               }
             }}
           >
+            {errors.submission && (
+              <div className="partner-error" role="alert">
+                {errors.submission}
+              </div>
+            )}
+
             {currentStep === 0 && (
               <div className="partner-form-grid">
                 {renderFileInput(
@@ -1620,6 +1586,10 @@ export default function ProfessionalRegisterPage() {
                 <div className="partner-field partner-full-width">
                   <span className="partner-label">{t("services")}</span>
 
+                  <p className="partner-services-hint">
+                    {t("servicesHint")}
+                  </p>
+
                   <div className="partner-chip-group">
                     {(serviceOptionsByCategory[formData.category] ?? []).map(
                       (service) => {
@@ -1635,19 +1605,27 @@ export default function ProfessionalRegisterPage() {
                             onClick={() => {
                               const updated = selected
                                 ? formData.services.filter(
-                                  (item) => item !== service,
-                                )
+                                    (item) => item !== service,
+                                  )
                                 : [...formData.services, service];
 
                               updateField("services", updated);
                             }}
                           >
+                            {selected && <Check size={14} />}
                             {serviceLabels[service]?.[language] ?? service}
                           </button>
                         );
                       },
                     )}
                   </div>
+
+                  {formData.services.length > 0 && (
+                    <p className="partner-selected-count">
+                      {formData.services.length} service
+                      {formData.services.length !== 1 ? "s" : ""} selected
+                    </p>
+                  )}
 
                   {renderError("services")}
                 </div>
