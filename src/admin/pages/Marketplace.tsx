@@ -13,7 +13,7 @@ import {
   X,
 } from "lucide-react";
 
-import "./Products.css";
+import "./Marketplace.css";
 
 type VendorStatus = "Active" | "Pending";
 
@@ -177,7 +177,7 @@ export default function Products() {
             VENDOR MANAGEMENT · TAB 2
           </div>
 
-          <h1>Buy Products / Spares</h1>
+          <h1>Marketplace</h1>
 
           <p>
             Manage product sellers, spare-part vendors, and retail

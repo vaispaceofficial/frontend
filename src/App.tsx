@@ -76,9 +76,9 @@ import AdminLayout from "./admin/components/AdminLayout";
 import AdminProtectedRoute from "./admin/components/AdminProtectedRoute";
 
 import AdminDashboard from "./admin/pages/AdminDashboard";
-import BookServicesPage from "./admin/pages/BookServices";
-import ProductsPage from "./admin/pages/Products";
-import BusinessesPage from "./admin/pages/Businesses";
+import BookServicesPage from "./admin/pages/Professionals";
+import ProductsPage from "./admin/pages/Marketplace";
+import BusinessesPage from "./admin/pages/Citylistings";
 import SubscriptionsPage from "./admin/pages/Subscriptions";
 import CompliancePage from "./admin/pages/Compliance";
 import SettingsPage from "./admin/pages/Settings";

@@ -9,7 +9,7 @@ import {
   X,
 } from "lucide-react";
 
-import "./Businesses.css";
+import "./Citylistings.css";
 
 type RegistrationStatus = "Paid" | "Pending";
 
@@ -140,11 +140,10 @@ export default function Businesses() {
             CORPORATE DIRECTORY · TAB 3
           </div>
 
-          <h1>Find Businesses / Contractors</h1>
+          <h1>Find City Listings</h1>
 
           <p>
-            Manage B2B businesses, interior designers, wholesale
-            plywood stores, and construction contractors.
+            Manage city listings and related information.
           </p>
         </div>
       </section>

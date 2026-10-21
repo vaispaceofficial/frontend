@@ -19,17 +19,17 @@ const menuItems = [
     end: true,
   },
   {
-    label: "Book Services",
+    label: "Professionals",
     path: "/admin/book-services",
     icon: Wrench,
   },
   {
-    label: "Buy Products / Spares",
+    label: "Marketplace",
     path: "/admin/products",
     icon: ShoppingBag,
   },
   {
-    label: "Businesses / Contractors",
+    label: "City Listings",
     path: "/admin/businesses",
     icon: Building2,
   },

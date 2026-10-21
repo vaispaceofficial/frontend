@@ -21,7 +21,7 @@ const kpis = [
     icon: Users,
   },
   {
-    title: "Providers (Services)",
+    title: "Professionals (Services)",
     value: "650",
     subtitle: "Technicians / Professionals",
     icon: Wrench,
