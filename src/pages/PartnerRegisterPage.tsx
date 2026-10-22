@@ -622,8 +622,6 @@ const translations = {
   },
 };
 
-
-
 const initialFormData: SellerFormData = {
   contactName: "",
   designation: "",
@@ -677,7 +675,6 @@ function PartnerRegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
-  const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleTextChange = (
@@ -751,11 +748,15 @@ function PartnerRegisterPage() {
           (!/^\d{4}$/.test(formData.yearEstablished) ||
             Number(formData.yearEstablished) < 1800 ||
             Number(formData.yearEstablished) > new Date().getFullYear())
-        ) return t.invalidYear;
+        ) {
+          return t.invalidYear;
+        }
         if (
           formData.website &&
           !/^https?:\/\/.+\..+/i.test(formData.website.trim())
-        ) return t.invalidWebsite;
+        ) {
+          return t.invalidWebsite;
+        }
         return "";
 
       case 2:
@@ -767,7 +768,9 @@ function PartnerRegisterPage() {
         if (
           formData.authorizedSeller === "yes" &&
           !formData.brandAuthorizationDocument
-        ) return t.requiredBrandDoc;
+        ) {
+          return t.requiredBrandDoc;
+        }
         return "";
 
       case 3:
@@ -784,28 +787,39 @@ function PartnerRegisterPage() {
       case 4:
         if (!/^[A-Z]{5}\d{4}[A-Z]$/i.test(formData.panNumber.trim()))
           return t.invalidPan;
+
         if (
           formData.gstNumber &&
           !/^\d{2}[A-Z]{5}\d{4}[A-Z][A-Z0-9]Z[A-Z0-9]$/i.test(
             formData.gstNumber.trim()
           )
-        ) return t.invalidGST;
+        ) {
+          return t.invalidGST;
+        }
+
         if (!formData.panDocument) return t.requiredPanDoc;
         if (!formData.addressProof) return t.requiredAddressProof;
+
         if (
           businessRegistrationRequired(formData.businessType) &&
           !formData.businessRegistration
-        ) return t.requiredRegistration;
+        ) {
+          return t.requiredRegistration;
+        }
         return "";
 
       case 5:
         if (formData.password.length < 8) return t.requiredPassword;
-        if (!formData.confirmPassword ||
-            formData.password !== formData.confirmPassword)
+        if (
+          !formData.confirmPassword ||
+          formData.password !== formData.confirmPassword
+        ) {
           return t.passwordMismatch;
+        }
         if (!formData.terms) return t.requiredTerms;
         if (!formData.verificationConsent) return t.requiredVerification;
-        if (!formData.productAuthenticityConsent) return t.requiredAuthenticity;
+        if (!formData.productAuthenticityConsent)
+          return t.requiredAuthenticity;
         return "";
 
       default:
@@ -821,11 +835,15 @@ function PartnerRegisterPage() {
 
   const handleNext = () => {
     const validationError = validateStep(currentStep);
+
     if (validationError) {
       setError(validationError);
       return;
     }
-    if (currentStep < t.steps.length - 1) goToStep(currentStep + 1);
+
+    if (currentStep < t.steps.length - 1) {
+      goToStep(currentStep + 1);
+    }
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -837,6 +855,7 @@ function PartnerRegisterPage() {
     }
 
     const validationError = validateStep(currentStep);
+
     if (validationError) {
       setError(validationError);
       return;
@@ -846,13 +865,82 @@ function PartnerRegisterPage() {
     setIsSubmitting(true);
 
     try {
-      // Connect your seller registration API here.
-      // Submit documents using FormData and do not store passwords as plain text.
-      // This timeout is only a UI demo; it does not register a real seller.
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      setSubmitted(true);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    } catch {
+      /*
+       * Frontend demo submission:
+       * - Save application details for the Seller Hub.
+       * - Never store the password, PAN/GSTIN values, or uploaded files
+       *   in localStorage.
+       * - Real registration and document storage require a backend API.
+       */
+      const application = {
+        id: `SEL-${Date.now()}`,
+        role: "seller",
+        status: "Pending",
+        submittedAt: new Date().toISOString(),
+
+        contactName: formData.contactName.trim(),
+        fullName: formData.contactName.trim(),
+        designation: formData.designation.trim(),
+        mobile: formData.mobile,
+        whatsapp: formData.whatsapp,
+        email: formData.email.trim(),
+
+        sellerType: formData.sellerType,
+        businessName: formData.businessName.trim(),
+        businessType: formData.businessType,
+        yearEstablished: formData.yearEstablished,
+        website: formData.website.trim(),
+
+        categories: [...formData.categories],
+        brands: formData.brands.trim(),
+        products: formData.products.trim(),
+        productCondition: formData.productCondition,
+        authorizedSeller: formData.authorizedSeller,
+
+        address: formData.address.trim(),
+        city: formData.city.trim(),
+        state: formData.state.trim(),
+        pincode: formData.pincode,
+        deliveryCoverage: formData.deliveryCoverage.trim(),
+        dispatchTime: formData.dispatchTime,
+        inventory: formData.inventory,
+        returnPolicy: formData.returnPolicy,
+
+        hasBusinessRegistration: Boolean(formData.businessRegistration),
+        hasPanDocument: Boolean(formData.panDocument),
+        hasGstDocument: Boolean(formData.gstDocument),
+        hasAddressProof: Boolean(formData.addressProof),
+        hasBrandAuthorizationDocument: Boolean(
+          formData.brandAuthorizationDocument
+        ),
+        hasProductCatalogue: Boolean(formData.productCatalogue),
+
+        termsAccepted: formData.terms,
+        verificationConsent: formData.verificationConsent,
+        productAuthenticityConsent: formData.productAuthenticityConsent,
+      };
+
+      localStorage.setItem(
+        "oneservice_partner_application",
+        JSON.stringify(application)
+      );
+
+      // Keep this alias so other OneService pages can find the seller application.
+      localStorage.setItem(
+        "oneservice_seller_application",
+        JSON.stringify(application)
+      );
+
+      localStorage.setItem("oneservice_workspace_role", "seller");
+
+      // Notify profile/navigation components in the current browser tab.
+      window.dispatchEvent(new Event("oneservice-workspace-change"));
+      window.dispatchEvent(new Event("oneservice-seller-change"));
+      window.dispatchEvent(new Event("storage"));
+
+      navigate("/profile", { replace: true });
+    } catch (submissionError) {
+      console.error("Unable to save the seller application:", submissionError);
       setError(t.submissionError);
     } finally {
       setIsSubmitting(false);
@@ -861,43 +949,12 @@ function PartnerRegisterPage() {
 
   const categories = t.categoriesList;
 
-  if (submitted) {
-    return (
-      <main className="partner-register-page">
-        <section className="partner-success-section">
-          <div className="partner-success-card">
-            <div className="partner-success-icon"><Check size={32} /></div>
-            <span className="partner-eyebrow">{t.successEyebrow}</span>
-            <h1>{t.successTitle}</h1>
-            <p>{t.successDesc}</p>
-            <div className="partner-success-summary">
-              <div><span>{t.business}</span><strong>{formData.businessName}</strong></div>
-              <div><span>{t.contact}</span><strong>{formData.contactName}</strong></div>
-              <div><span>{t.mobile}</span><strong>+91 {formData.mobile}</strong></div>
-            </div>
-            <div className="partner-success-actions">
-              <Link to="/" className="partner-secondary-button">{t.backHome}</Link>
-              <button
-                type="button"
-                className="partner-primary-button"
-                onClick={() => navigate("/login")}
-              >
-                {t.loginButton} <ArrowRight size={16} />
-              </button>
-            </div>
-          </div>
-        </section>
-      </main>
-    );
-  }
-
   return (
     <main className="partner-register-page">
       <section className="partner-wizard">
         <header className="partner-wizard-header">
-          <Link to="/" className="partner-brand">
-            {/* <span className="partner-brand-mark"><Check size={19} /></span> */}
-            {/* <span><strong>NeedOneService</strong><small>{t.network}</small></span> */}
+          <Link to="/" className="partner-brand" aria-label="NeedOneService home">
+            {/* Existing brand mark and text can be restored here if required. */}
           </Link>
 
           <div className="partner-header-actions">
@@ -917,6 +974,7 @@ function PartnerRegisterPage() {
                 <option value="hi">{t.hindi}</option>
               </select>
             </label>
+
             <div className="partner-login-note">
               {t.signIn} <Link to="/login">{t.login}</Link>
             </div>
@@ -926,11 +984,15 @@ function PartnerRegisterPage() {
         <div className="partner-wizard-intro">
           <div>
             <span className="partner-eyebrow">{t.eyebrow}</span>
-            <h1>{t.heading} <span>{t.brand}</span></h1>
+            <h1>
+              {t.heading} <span>{t.brand}</span>
+            </h1>
             <p>{t.intro}</p>
           </div>
+
           <div className="partner-secure-note">
-            <LockKeyhole size={16} /><span>{t.secure}</span>
+            <LockKeyhole size={16} />
+            <span>{t.secure}</span>
           </div>
         </div>
 
@@ -944,6 +1006,7 @@ function PartnerRegisterPage() {
               <h2>{t.steps[currentStep][0]}</h2>
               <p>{t.steps[currentStep][1]}</p>
             </div>
+
             <div className="partner-progress-percent">
               {Math.round(((currentStep + 1) / t.steps.length) * 100)}%
               <span> {t.completed}</span>
@@ -960,7 +1023,9 @@ function PartnerRegisterPage() {
           >
             <div
               className="partner-progress-fill"
-              style={{ width: `${((currentStep + 1) / t.steps.length) * 100}%` }}
+              style={{
+                width: `${((currentStep + 1) / t.steps.length) * 100}%`,
+              }}
             />
           </div>
 
@@ -968,46 +1033,126 @@ function PartnerRegisterPage() {
             {t.steps.map((step, index) => (
               <div
                 key={step[0]}
-                className={`partner-step-indicator ${index === currentStep ? "current" : ""} ${index < currentStep ? "completed" : ""}`}
+                className={`partner-step-indicator ${
+                  index === currentStep ? "current" : ""
+                } ${index < currentStep ? "completed" : ""}`}
               >
-                <span>{index < currentStep ? <Check size={14} /> : String(index + 1).padStart(2, "0")}</span>
+                <span>
+                  {index < currentStep ? (
+                    <Check size={14} />
+                  ) : (
+                    String(index + 1).padStart(2, "0")
+                  )}
+                </span>
                 <small>{step[0]}</small>
               </div>
             ))}
           </div>
 
-          <form className="partner-register-form" onSubmit={handleSubmit} noValidate>
+          <form
+            className="partner-register-form"
+            onSubmit={handleSubmit}
+            noValidate
+          >
             {error && (
               <div className="partner-form-error" role="alert">
                 <span>{error}</span>
-                <button type="button" aria-label="Dismiss error" onClick={() => setError("")}>×</button>
+                <button
+                  type="button"
+                  aria-label="Dismiss error"
+                  onClick={() => setError("")}
+                >
+                  ×
+                </button>
               </div>
             )}
 
             {currentStep === 0 && (
-              <FormStep number="01" title={t.contactTitle} description={t.contactDesc}>
+              <FormStep
+                number="01"
+                title={t.contactTitle}
+                description={t.contactDesc}
+              >
                 <div className="partner-form-grid">
                   <Field label={t.fullName}>
                     <div className="partner-input-wrap">
                       <UserRound size={16} />
-                      <input name="contactName" value={formData.contactName} onChange={handleTextChange} placeholder={t.fullName.replace(" *", "")} autoComplete="name" autoFocus />
+                      <input
+                        name="contactName"
+                        value={formData.contactName}
+                        onChange={handleTextChange}
+                        placeholder={t.fullName.replace(" *", "")}
+                        autoComplete="name"
+                        autoFocus
+                      />
                     </div>
                   </Field>
+
                   <Field label={t.designation}>
-                    <input name="designation" value={formData.designation} onChange={handleTextChange} placeholder={t.designation} />
+                    <input
+                      name="designation"
+                      value={formData.designation}
+                      onChange={handleTextChange}
+                      placeholder={t.designation}
+                    />
                   </Field>
+
                   <Field label={t.mobile}>
                     <div className="partner-input-wrap">
-                      <Phone size={16} /><span className="partner-country-code">+91</span>
-                      <input name="mobile" type="tel" inputMode="numeric" value={formData.mobile} onChange={(e) => { setFormData(p => ({ ...p, mobile: e.target.value.replace(/\D/g, "").slice(0, 10) })); setError(""); }} maxLength={10} placeholder="10" autoComplete="tel-national" />
+                      <Phone size={16} />
+                      <span className="partner-country-code">+91</span>
+                      <input
+                        name="mobile"
+                        type="tel"
+                        inputMode="numeric"
+                        value={formData.mobile}
+                        onChange={(event) => {
+                          setFormData((previous) => ({
+                            ...previous,
+                            mobile: event.target.value
+                              .replace(/\D/g, "")
+                              .slice(0, 10),
+                          }));
+                          setError("");
+                        }}
+                        maxLength={10}
+                        placeholder="10"
+                        autoComplete="tel-national"
+                      />
                     </div>
                   </Field>
+
                   <Field label={t.whatsapp}>
-                    <input name="whatsapp" type="tel" inputMode="numeric" value={formData.whatsapp} onChange={(e) => { setFormData(p => ({ ...p, whatsapp: e.target.value.replace(/\D/g, "").slice(0, 10) })); setError(""); }} maxLength={10} placeholder="10" />
+                    <input
+                      name="whatsapp"
+                      type="tel"
+                      inputMode="numeric"
+                      value={formData.whatsapp}
+                      onChange={(event) => {
+                        setFormData((previous) => ({
+                          ...previous,
+                          whatsapp: event.target.value
+                            .replace(/\D/g, "")
+                            .slice(0, 10),
+                        }));
+                        setError("");
+                      }}
+                      maxLength={10}
+                      placeholder="10"
+                    />
                   </Field>
+
                   <Field label={t.email} full>
                     <div className="partner-input-wrap">
-                      <Mail size={16} /><input type="email" name="email" value={formData.email} onChange={handleTextChange} placeholder="business@example.com" autoComplete="email" />
+                      <Mail size={16} />
+                      <input
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleTextChange}
+                        placeholder="business@example.com"
+                        autoComplete="email"
+                      />
                     </div>
                   </Field>
                 </div>
@@ -1015,111 +1160,259 @@ function PartnerRegisterPage() {
             )}
 
             {currentStep === 1 && (
-              <FormStep number="02" title={t.businessTitle} description={t.businessDesc}>
+              <FormStep
+                number="02"
+                title={t.businessTitle}
+                description={t.businessDesc}
+              >
                 <div className="partner-form-grid">
                   <Field label={t.sellerType}>
-                    <select name="sellerType" value={formData.sellerType} onChange={handleTextChange}>
+                    <select
+                      name="sellerType"
+                      value={formData.sellerType}
+                      onChange={handleTextChange}
+                    >
                       <option value="">{t.chooseSeller}</option>
                       <option value="manufacturer">{t.manufacturer}</option>
                       <option value="wholesaler">{t.wholesaler}</option>
                       <option value="distributor">{t.distributor}</option>
                       <option value="retailer">{t.retailer}</option>
-                      <option value="authorized-dealer">{t.authorizedDealer}</option>
+                      <option value="authorized-dealer">
+                        {t.authorizedDealer}
+                      </option>
                       <option value="importer">{t.importer}</option>
                       <option value="other">{t.other}</option>
                     </select>
                   </Field>
+
                   <Field label={t.businessName}>
-                    <input name="businessName" value={formData.businessName} onChange={handleTextChange} placeholder={t.businessName.replace(" *", "")} autoFocus />
+                    <input
+                      name="businessName"
+                      value={formData.businessName}
+                      onChange={handleTextChange}
+                      placeholder={t.businessName.replace(" *", "")}
+                      autoFocus
+                    />
                   </Field>
+
                   <Field label={t.legalType}>
-                    <select name="businessType" value={formData.businessType} onChange={handleTextChange}>
+                    <select
+                      name="businessType"
+                      value={formData.businessType}
+                      onChange={handleTextChange}
+                    >
                       <option value="">{t.chooseType}</option>
                       <option value="sole-proprietorship">{t.sole}</option>
                       <option value="partnership">{t.partnership}</option>
-                      <option value="private-limited">{t.privateLimited}</option>
+                      <option value="private-limited">
+                        {t.privateLimited}
+                      </option>
                       <option value="llp">{t.llp}</option>
                       <option value="individual">{t.individual}</option>
                       <option value="other">{t.other}</option>
                     </select>
                   </Field>
+
                   <Field label={t.year}>
-                    <input type="number" name="yearEstablished" value={formData.yearEstablished} onChange={handleTextChange} min="1800" max={new Date().getFullYear()} placeholder="2020" />
+                    <input
+                      type="number"
+                      name="yearEstablished"
+                      value={formData.yearEstablished}
+                      onChange={handleTextChange}
+                      min="1800"
+                      max={new Date().getFullYear()}
+                      placeholder="2020"
+                    />
                   </Field>
+
                   <Field label={t.website} full>
-                    <input type="url" name="website" value={formData.website} onChange={handleTextChange} placeholder="https://yourbusiness.com" />
+                    <input
+                      type="url"
+                      name="website"
+                      value={formData.website}
+                      onChange={handleTextChange}
+                      placeholder="https://yourbusiness.com"
+                    />
                   </Field>
                 </div>
               </FormStep>
             )}
 
             {currentStep === 2 && (
-              <FormStep number="03" title={t.productTitle} description={t.productDesc}>
+              <FormStep
+                number="03"
+                title={t.productTitle}
+                description={t.productDesc}
+              >
                 <div className="partner-form-grid">
                   <Field label={t.categories} full>
                     <div className="partner-chip-grid">
                       {categories.map((category) => {
-                        const selected = formData.categories.includes(category);
+                        const selected =
+                          formData.categories.includes(category);
+
                         return (
-                          <button key={category} type="button" aria-pressed={selected} className={`partner-service-chip ${selected ? "selected" : ""}`} onClick={() => toggleCategory(category)}>
-                            {selected && <Check size={13} />}{category}
+                          <button
+                            key={category}
+                            type="button"
+                            aria-pressed={selected}
+                            className={`partner-service-chip ${
+                              selected ? "selected" : ""
+                            }`}
+                            onClick={() => toggleCategory(category)}
+                          >
+                            {selected && <Check size={13} />}
+                            {category}
                           </button>
                         );
                       })}
                     </div>
                   </Field>
+
                   <Field label={t.brands} full>
-                    <input name="brands" value={formData.brands} onChange={handleTextChange} placeholder={t.brandsHint} />
+                    <input
+                      name="brands"
+                      value={formData.brands}
+                      onChange={handleTextChange}
+                      placeholder={t.brandsHint}
+                    />
                   </Field>
+
                   <Field label={t.products} full>
-                    <textarea name="products" value={formData.products} onChange={handleTextChange} placeholder={t.productsHint} rows={3} />
+                    <textarea
+                      name="products"
+                      value={formData.products}
+                      onChange={handleTextChange}
+                      placeholder={t.productsHint}
+                      rows={3}
+                    />
                   </Field>
+
                   <Field label={t.condition}>
-                    <select name="productCondition" value={formData.productCondition} onChange={handleTextChange}>
+                    <select
+                      name="productCondition"
+                      value={formData.productCondition}
+                      onChange={handleTextChange}
+                    >
                       <option value="">{t.chooseCondition}</option>
                       <option value="new">{t.new}</option>
                       <option value="refurbished">{t.refurbished}</option>
                       <option value="both">{t.both}</option>
                     </select>
                   </Field>
+
                   <Field label={t.authorization}>
-                    <select name="authorizedSeller" value={formData.authorizedSeller} onChange={handleTextChange}>
+                    <select
+                      name="authorizedSeller"
+                      value={formData.authorizedSeller}
+                      onChange={handleTextChange}
+                    >
                       <option value="">{t.chooseAnswer}</option>
                       <option value="yes">{t.yes}</option>
                       <option value="no">{t.no}</option>
                     </select>
                   </Field>
+
                   {formData.authorizedSeller === "yes" && (
-                    <FileUpload label={t.brandDoc} file={formData.brandAuthorizationDocument} onChange={(e) => handleFileChange(e, "brandAuthorizationDocument")} t={t} />
+                    <FileUpload
+                      label={t.brandDoc}
+                      file={formData.brandAuthorizationDocument}
+                      onChange={(event) =>
+                        handleFileChange(
+                          event,
+                          "brandAuthorizationDocument"
+                        )
+                      }
+                      t={t}
+                    />
                   )}
-                  <FileUpload label={`${t.catalogue} (${t.optional})`} file={formData.productCatalogue} onChange={(e) => handleFileChange(e, "productCatalogue")} t={t} />
+
+                  <FileUpload
+                    label={`${t.catalogue} (${t.optional})`}
+                    file={formData.productCatalogue}
+                    onChange={(event) =>
+                      handleFileChange(event, "productCatalogue")
+                    }
+                    t={t}
+                  />
                 </div>
               </FormStep>
             )}
 
             {currentStep === 3 && (
-              <FormStep number="04" title={t.locationTitle} description={t.locationDesc}>
+              <FormStep
+                number="04"
+                title={t.locationTitle}
+                description={t.locationDesc}
+              >
                 <div className="partner-form-grid">
                   <Field label={t.address} full>
                     <div className="partner-input-wrap partner-textarea-wrap">
                       <MapPin size={16} />
-                      <textarea name="address" value={formData.address} onChange={handleTextChange} placeholder={t.address.replace(" *", "")} rows={3} autoFocus />
+                      <textarea
+                        name="address"
+                        value={formData.address}
+                        onChange={handleTextChange}
+                        placeholder={t.address.replace(" *", "")}
+                        rows={3}
+                        autoFocus
+                      />
                     </div>
                   </Field>
+
                   <Field label={t.city}>
-                    <input name="city" value={formData.city} onChange={handleTextChange} placeholder={t.city} />
+                    <input
+                      name="city"
+                      value={formData.city}
+                      onChange={handleTextChange}
+                      placeholder={t.city}
+                    />
                   </Field>
+
                   <Field label={t.state}>
-                    <input name="state" value={formData.state} onChange={handleTextChange} placeholder={t.state} />
+                    <input
+                      name="state"
+                      value={formData.state}
+                      onChange={handleTextChange}
+                      placeholder={t.state}
+                    />
                   </Field>
+
                   <Field label={t.pincode}>
-                    <input name="pincode" inputMode="numeric" value={formData.pincode} onChange={(e) => { setFormData(p => ({ ...p, pincode: e.target.value.replace(/\D/g, "").slice(0, 6) })); setError(""); }} maxLength={6} placeholder="000000" autoComplete="postal-code" />
+                    <input
+                      name="pincode"
+                      inputMode="numeric"
+                      value={formData.pincode}
+                      onChange={(event) => {
+                        setFormData((previous) => ({
+                          ...previous,
+                          pincode: event.target.value
+                            .replace(/\D/g, "")
+                            .slice(0, 6),
+                        }));
+                        setError("");
+                      }}
+                      maxLength={6}
+                      placeholder="000000"
+                      autoComplete="postal-code"
+                    />
                   </Field>
+
                   <Field label={t.coverage} full>
-                    <input name="deliveryCoverage" value={formData.deliveryCoverage} onChange={handleTextChange} placeholder={t.coverageHint} />
+                    <input
+                      name="deliveryCoverage"
+                      value={formData.deliveryCoverage}
+                      onChange={handleTextChange}
+                      placeholder={t.coverageHint}
+                    />
                   </Field>
+
                   <Field label={t.dispatch}>
-                    <select name="dispatchTime" value={formData.dispatchTime} onChange={handleTextChange}>
+                    <select
+                      name="dispatchTime"
+                      value={formData.dispatchTime}
+                      onChange={handleTextChange}
+                    >
                       <option value="">{t.chooseDispatch}</option>
                       <option value="same-day">{t.sameDay}</option>
                       <option value="1-2-days">{t.oneTwo}</option>
@@ -1127,21 +1420,35 @@ function PartnerRegisterPage() {
                       <option value="over-5-days">{t.overFive}</option>
                     </select>
                   </Field>
+
                   <Field label={t.inventory}>
-                    <select name="inventory" value={formData.inventory} onChange={handleTextChange}>
+                    <select
+                      name="inventory"
+                      value={formData.inventory}
+                      onChange={handleTextChange}
+                    >
                       <option value="">{t.chooseInventory}</option>
                       <option value="ready-stock">{t.ready}</option>
                       <option value="order-based">{t.orderBased}</option>
                       <option value="mixed">{t.mixed}</option>
                     </select>
                   </Field>
+
                   <Field label={t.returns} full>
-                    <select name="returnPolicy" value={formData.returnPolicy} onChange={handleTextChange}>
+                    <select
+                      name="returnPolicy"
+                      value={formData.returnPolicy}
+                      onChange={handleTextChange}
+                    >
                       <option value="">{t.chooseReturns}</option>
                       <option value="7-days">{t.sevenDays}</option>
                       <option value="15-days">{t.fifteenDays}</option>
-                      <option value="replacement-only">{t.replacement}</option>
-                      <option value="manufacturer-policy">{t.manufacturerPolicy}</option>
+                      <option value="replacement-only">
+                        {t.replacement}
+                      </option>
+                      <option value="manufacturer-policy">
+                        {t.manufacturerPolicy}
+                      </option>
                       <option value="no-returns">{t.noReturns}</option>
                     </select>
                   </Field>
@@ -1150,18 +1457,75 @@ function PartnerRegisterPage() {
             )}
 
             {currentStep === 4 && (
-              <FormStep number="05" title={t.documentsTitle} description={t.documentsDesc}>
+              <FormStep
+                number="05"
+                title={t.documentsTitle}
+                description={t.documentsDesc}
+              >
                 <div className="partner-form-grid">
                   <Field label={t.pan}>
-                    <input name="panNumber" value={formData.panNumber} onChange={handleTextChange} placeholder="ABCDE1234F" autoFocus style={{ textTransform: "uppercase" }} maxLength={10} />
+                    <input
+                      name="panNumber"
+                      value={formData.panNumber}
+                      onChange={handleTextChange}
+                      placeholder="ABCDE1234F"
+                      autoFocus
+                      style={{ textTransform: "uppercase" }}
+                      maxLength={10}
+                    />
                   </Field>
+
                   <Field label={t.gst}>
-                    <input name="gstNumber" value={formData.gstNumber} onChange={handleTextChange} placeholder="15-character GSTIN" style={{ textTransform: "uppercase" }} maxLength={15} />
+                    <input
+                      name="gstNumber"
+                      value={formData.gstNumber}
+                      onChange={handleTextChange}
+                      placeholder="15-character GSTIN"
+                      style={{ textTransform: "uppercase" }}
+                      maxLength={15}
+                    />
                   </Field>
-                  <FileUpload label={`${t.registration} (${businessRegistrationRequired(formData.businessType) ? t.required : t.conditional})`} file={formData.businessRegistration} onChange={(e) => handleFileChange(e, "businessRegistration")} t={t} />
-                  <FileUpload label={t.panDoc} file={formData.panDocument} onChange={(e) => handleFileChange(e, "panDocument")} t={t} />
-                  <FileUpload label={`${t.gstDoc} (${t.conditional})`} file={formData.gstDocument} onChange={(e) => handleFileChange(e, "gstDocument")} t={t} />
-                  <FileUpload label={t.addressProof} file={formData.addressProof} onChange={(e) => handleFileChange(e, "addressProof")} t={t} />
+
+                  <FileUpload
+                    label={`${t.registration} (${
+                      businessRegistrationRequired(formData.businessType)
+                        ? t.required
+                        : t.conditional
+                    })`}
+                    file={formData.businessRegistration}
+                    onChange={(event) =>
+                      handleFileChange(event, "businessRegistration")
+                    }
+                    t={t}
+                  />
+
+                  <FileUpload
+                    label={t.panDoc}
+                    file={formData.panDocument}
+                    onChange={(event) =>
+                      handleFileChange(event, "panDocument")
+                    }
+                    t={t}
+                  />
+
+                  <FileUpload
+                    label={`${t.gstDoc} (${t.conditional})`}
+                    file={formData.gstDocument}
+                    onChange={(event) =>
+                      handleFileChange(event, "gstDocument")
+                    }
+                    t={t}
+                  />
+
+                  <FileUpload
+                    label={t.addressProof}
+                    file={formData.addressProof}
+                    onChange={(event) =>
+                      handleFileChange(event, "addressProof")
+                    }
+                    t={t}
+                  />
+
                   {formData.authorizedSeller === "yes" && (
                     <div className="partner-review-summary partner-field-full">
                       <ShieldCheck size={20} />
@@ -1173,43 +1537,116 @@ function PartnerRegisterPage() {
             )}
 
             {currentStep === 5 && (
-              <FormStep number="06" title={t.securityTitle} description={t.securityDesc}>
+              <FormStep
+                number="06"
+                title={t.securityTitle}
+                description={t.securityDesc}
+              >
                 <div className="partner-form-grid">
                   <Field label={t.password}>
                     <div className="partner-input-wrap">
                       <LockKeyhole size={16} />
-                      <input type={showPassword ? "text" : "password"} name="password" value={formData.password} onChange={handleTextChange} placeholder={t.passwordHint} autoComplete="new-password" autoFocus />
-                      <button type="button" className="partner-password-button" aria-label={showPassword ? "Hide password" : "Show password"} onClick={() => setShowPassword(v => !v)}>
-                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        name="password"
+                        value={formData.password}
+                        onChange={handleTextChange}
+                        placeholder={t.passwordHint}
+                        autoComplete="new-password"
+                        autoFocus
+                      />
+                      <button
+                        type="button"
+                        className="partner-password-button"
+                        aria-label={
+                          showPassword ? "Hide password" : "Show password"
+                        }
+                        onClick={() =>
+                          setShowPassword((visible) => !visible)
+                        }
+                      >
+                        {showPassword ? (
+                          <EyeOff size={16} />
+                        ) : (
+                          <Eye size={16} />
+                        )}
                       </button>
                     </div>
                   </Field>
+
                   <Field label={t.confirmPassword}>
                     <div className="partner-input-wrap">
                       <LockKeyhole size={16} />
-                      <input type={showConfirmPassword ? "text" : "password"} name="confirmPassword" value={formData.confirmPassword} onChange={handleTextChange} placeholder={t.confirmHint} autoComplete="new-password" />
-                      <button type="button" className="partner-password-button" aria-label={showConfirmPassword ? "Hide password" : "Show password"} onClick={() => setShowConfirmPassword(v => !v)}>
-                        {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      <input
+                        type={showConfirmPassword ? "text" : "password"}
+                        name="confirmPassword"
+                        value={formData.confirmPassword}
+                        onChange={handleTextChange}
+                        placeholder={t.confirmHint}
+                        autoComplete="new-password"
+                      />
+                      <button
+                        type="button"
+                        className="partner-password-button"
+                        aria-label={
+                          showConfirmPassword
+                            ? "Hide password"
+                            : "Show password"
+                        }
+                        onClick={() =>
+                          setShowConfirmPassword((visible) => !visible)
+                        }
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOff size={16} />
+                        ) : (
+                          <Eye size={16} />
+                        )}
                       </button>
                     </div>
                   </Field>
 
                   <div className="partner-review-summary partner-field-full">
-                    <span className="partner-review-icon"><FileText size={18} /></span>
-                    <div><strong>{t.reviewTitle}</strong><p>{t.reviewDesc}</p></div>
+                    <span className="partner-review-icon">
+                      <FileText size={18} />
+                    </span>
+                    <div>
+                      <strong>{t.reviewTitle}</strong>
+                      <p>{t.reviewDesc}</p>
+                    </div>
                   </div>
 
                   <div className="partner-consent-section partner-field-full">
                     <label className="partner-check-row">
-                      <input type="checkbox" name="terms" checked={formData.terms} onChange={handleCheckboxChange} />
-                      <span>{t.terms} <Link to="/terms">{t.termsLink}</Link> and <Link to="/privacy">{t.privacy}</Link>.</span>
+                      <input
+                        type="checkbox"
+                        name="terms"
+                        checked={formData.terms}
+                        onChange={handleCheckboxChange}
+                      />
+                      <span>
+                        {t.terms} <Link to="/terms">{t.termsLink}</Link> and{" "}
+                        <Link to="/privacy">{t.privacy}</Link>.
+                      </span>
                     </label>
+
                     <label className="partner-check-row">
-                      <input type="checkbox" name="verificationConsent" checked={formData.verificationConsent} onChange={handleCheckboxChange} />
+                      <input
+                        type="checkbox"
+                        name="verificationConsent"
+                        checked={formData.verificationConsent}
+                        onChange={handleCheckboxChange}
+                      />
                       <span>{t.verification}</span>
                     </label>
+
                     <label className="partner-check-row">
-                      <input type="checkbox" name="productAuthenticityConsent" checked={formData.productAuthenticityConsent} onChange={handleCheckboxChange} />
+                      <input
+                        type="checkbox"
+                        name="productAuthenticityConsent"
+                        checked={formData.productAuthenticityConsent}
+                        onChange={handleCheckboxChange}
+                      />
                       <span>{t.authenticity}</span>
                     </label>
                   </div>
@@ -1218,16 +1655,36 @@ function PartnerRegisterPage() {
             )}
 
             <footer className="partner-wizard-footer">
-              <button type="button" className="partner-back-button" onClick={() => goToStep(currentStep - 1)} disabled={currentStep === 0 || isSubmitting}>
-                <ArrowLeft size={16} />{t.back}
+              <button
+                type="button"
+                className="partner-back-button"
+                onClick={() => goToStep(currentStep - 1)}
+                disabled={currentStep === 0 || isSubmitting}
+              >
+                <ArrowLeft size={16} />
+                {t.back}
               </button>
-              <span className="partner-footer-hint"><LockKeyhole size={13} />{t.safe}</span>
+
+              <span className="partner-footer-hint">
+                <LockKeyhole size={13} />
+                {t.safe}
+              </span>
+
               {currentStep < t.steps.length - 1 ? (
-                <button type="button" className="partner-submit-button" onClick={handleNext}>
-                  {t.save}<ArrowRight size={16} />
+                <button
+                  type="button"
+                  className="partner-submit-button"
+                  onClick={handleNext}
+                >
+                  {t.save}
+                  <ArrowRight size={16} />
                 </button>
               ) : (
-                <button type="submit" className="partner-submit-button" disabled={isSubmitting}>
+                <button
+                  type="submit"
+                  className="partner-submit-button"
+                  disabled={isSubmitting}
+                >
                   {isSubmitting ? t.submitting : t.submit}
                   {!isSubmitting && <Check size={17} />}
                 </button>
@@ -1251,12 +1708,20 @@ type FormStepProps = {
   children: ReactNode;
 };
 
-function FormStep({ number, title, description, children }: FormStepProps) {
+function FormStep({
+  number,
+  title,
+  description,
+  children,
+}: FormStepProps) {
   return (
     <section className="partner-form-section">
       <div className="partner-form-heading">
         <span className="partner-form-number">{number}</span>
-        <div><h3>{title}</h3><p>{description}</p></div>
+        <div>
+          <h3>{title}</h3>
+          <p>{description}</p>
+        </div>
       </div>
       {children}
     </section>
@@ -1272,7 +1737,8 @@ type FieldProps = {
 function Field({ label, full = false, children }: FieldProps) {
   return (
     <label className={`partner-field ${full ? "partner-field-full" : ""}`}>
-      <span>{label}</span>{children}
+      <span>{label}</span>
+      {children}
     </label>
   );
 }
@@ -1292,10 +1758,20 @@ function FileUpload({ label, file, onChange, t }: FileUploadProps) {
         <Upload size={18} />
         <span className="partner-file-copy">
           <strong>{file ? file.name : t.fileChoose}</strong>
-          <small>{file ? `${Math.max(1, Math.round(file.size / 1024))} KB` : t.maxSize}</small>
+          <small>
+            {file
+              ? `${Math.max(1, Math.round(file.size / 1024))} KB`
+              : t.maxSize}
+          </small>
         </span>
-        <span className="partner-file-action">{file ? t.change : t.browse}</span>
-        <input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={onChange} />
+        <span className="partner-file-action">
+          {file ? t.change : t.browse}
+        </span>
+        <input
+          type="file"
+          accept=".pdf,.jpg,.jpeg,.png"
+          onChange={onChange}
+        />
       </span>
     </label>
   );

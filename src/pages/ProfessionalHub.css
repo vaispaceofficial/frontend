@@ -1958,3 +1958,216 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+
+/* =========================================
+   REMOVE PROFESSIONAL ACCOUNT
+   ========================================= */
+
+.ph-remove-account-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 15px;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  background: #fff;
+  color: #dc2626;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.ph-remove-account-button:hover {
+  background: #fef2f2;
+  border-color: #f87171;
+}
+
+.ph-remove-account-button:focus-visible,
+.ph-remove-confirm-button:focus-visible {
+  outline: 3px solid #fca5a5;
+  outline-offset: 3px;
+}
+
+.ph-remove-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgb(15 23 42 / 55%);
+  backdrop-filter: blur(4px);
+}
+
+.ph-remove-dialog {
+  position: relative;
+  width: 100%;
+  max-width: 460px;
+  padding: 30px;
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 24px 70px rgb(15 23 42 / 22%);
+  animation: ph-remove-dialog-in 0.18s ease-out;
+}
+
+.ph-remove-dialog-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  margin-bottom: 20px;
+  border-radius: 15px;
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.ph-remove-dialog-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+}
+
+.ph-remove-dialog-close:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.ph-remove-dialog h2 {
+  margin: 0 0 12px;
+  color: #172033;
+  font-size: 21px;
+  line-height: 1.35;
+}
+
+.ph-remove-dialog > p {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.75;
+}
+
+.ph-remove-error {
+  margin-top: 16px !important;
+  padding: 11px 13px;
+  border: 1px solid #fecaca;
+  border-radius: 9px;
+  background: #fef2f2;
+  color: #b91c1c !important;
+}
+
+.ph-remove-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 25px;
+}
+
+.ph-remove-dialog-actions .ph-secondary-button,
+.ph-remove-confirm-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 10px 15px;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ph-remove-dialog-actions .ph-secondary-button {
+  border: 1px solid #dbe2ea;
+  background: #fff;
+  color: #334155;
+}
+
+.ph-remove-dialog-actions .ph-secondary-button:hover {
+  background: #f8fafc;
+}
+
+.ph-remove-confirm-button {
+  border: 1px solid #dc2626;
+  background: #dc2626;
+  color: #fff;
+}
+
+.ph-remove-confirm-button:hover:not(:disabled) {
+  border-color: #b91c1c;
+  background: #b91c1c;
+}
+
+.ph-remove-confirm-button:disabled,
+.ph-remove-dialog-close:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.ph-remove-dialog-note {
+  display: block;
+  margin-top: 17px;
+  color: #94a3b8;
+  font-size: 11px;
+  text-align: center;
+}
+
+@keyframes ph-remove-dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 640px) {
+  .ph-footer {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .ph-remove-account-button {
+    width: 100%;
+  }
+
+  .ph-remove-dialog {
+    padding: 24px 20px;
+  }
+
+  .ph-remove-dialog-actions {
+    flex-direction: column-reverse;
+  }
+
+  .ph-remove-dialog-actions .ph-secondary-button,
+  .ph-remove-confirm-button {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ph-remove-dialog {
+    animation: none;
+  }
+}

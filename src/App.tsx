@@ -43,6 +43,7 @@ import LoginPage from "./pages/LoginPage";
 import ProfilePage from "./pages/ProfilePage";
 
 import ProfessionalHubPage from "./pages/ProfessionalHub";
+import SellerHub from "./pages/SellerHub";
 
 import HomeAppliancesPage from "./pages/HomeAppliancesPage";
 import HomeServicesPage from "./pages/HomeServicesPage";
@@ -53,8 +54,6 @@ import ProfessionalServicesPage from "./pages/ProfessionalServicesPage";
 
 import AMCPage from "./pages/AMCPage";
 import AccessoriesSalesPage from "./pages/Marketplace";
-
-
 
 import CityListingsPage from "./pages/CityListingsPage";
 import CityListingsBrowsePage from "./pages/CityListingsBrowsePage";
@@ -218,7 +217,6 @@ const homeServiceCards = [
   },
 ];
 
-
 /* =========================================================
    WORKSPACE ROLE DETECTION
 ========================================================= */
@@ -297,7 +295,7 @@ function readWorkspaceRole(): WorkspaceInfo | null {
     // Invalid saved data is ignored.
   }
 
-  // Detect other registrations if they use these storage keys.
+  // Detect other registrations using existing storage keys.
   const registrationKeys: {
     key: string;
     role: WorkspaceRole;
@@ -342,9 +340,6 @@ function readWorkspaceRole(): WorkspaceInfo | null {
 
   return null;
 }
-
-
-
 
 /* =========================================================
    NAVBAR
@@ -420,10 +415,10 @@ function Navbar() {
       description: "Provide trusted home services",
     },
     {
-      path: "/register-partner",
-      icon: "🛠️",
-      title: "Products & Spares",
-      description: "Explore and sell products and spare parts",
+      path: "/register-seller",
+      icon: "🛍️",
+      title: "Join as a Seller",
+      description: "Register your business and sell products",
     },
     {
       path: "/register-vendor",
@@ -585,8 +580,6 @@ function Navbar() {
     </header>
   );
 }
-
-
 
 /* =========================================================
    GSAP SERVICE CARD STACK
@@ -755,8 +748,7 @@ function ServiceCardStack() {
           return (
             <Link
               to={service.path}
-              className={`stack-service-card stack-card-${index + 1
-                }`}
+              className={`stack-service-card stack-card-${index + 1}`}
               key={service.title}
               style={
                 {
@@ -852,9 +844,7 @@ function HomePage() {
   const [currentImage, setCurrentImage] = useState(0);
   const location = useLocation();
 
-  /*
-   * Scroll to the services section when navigating to /#services.
-   */
+  // Scroll to the services section when navigating to /#services.
   useEffect(() => {
     if (location.hash !== "#services") return;
 
@@ -870,9 +860,7 @@ function HomePage() {
     };
   }, [location]);
 
-  /*
-   * Hero image autoplay.
-   */
+  // Hero image autoplay.
   useEffect(() => {
     const timer = window.setInterval(() => {
       setCurrentImage(
@@ -912,8 +900,9 @@ function HomePage() {
                 key={image}
                 src={image}
                 alt="NEED ONE SERVICE home service"
-                className={`hero-bg-image ${index === currentImage ? "active" : ""
-                  }`}
+                className={`hero-bg-image ${
+                  index === currentImage ? "active" : ""
+                }`}
               />
             ))}
 
@@ -1191,7 +1180,10 @@ function AppContent() {
           element={<CityListingsBrowsePage />}
         />
 
-        <Route path="/find-my-property" element={<FindMyPropertyPage />} />
+        <Route
+          path="/find-my-property"
+          element={<FindMyPropertyPage />}
+        />
 
         {/* MARKETPLACE */}
         <Route
@@ -1264,9 +1256,21 @@ function AppContent() {
           element={<ProfessionalRegisterPage />}
         />
 
+        {/* New Seller Registration URL */}
+        <Route
+          path="/register-seller"
+          element={<PartnerRegisterPage />}
+        />
+
+        {/* Redirect the previous Partner URL */}
         <Route
           path="/register-partner"
-          element={<PartnerRegisterPage />}
+          element={
+            <Navigate
+              to="/register-seller"
+              replace
+            />
+          }
         />
 
         <Route
@@ -1295,13 +1299,23 @@ function AppContent() {
           element={<LoginPage />}
         />
 
-        <Route path="/profile" element={<ProfilePage />} />
+        {/* PROFILE */}
+        <Route
+          path="/profile"
+          element={<ProfilePage />}
+        />
 
+        {/* PROFESSIONAL HUB */}
         <Route
           path="/profile/professional-hub"
           element={<ProfessionalHubPage />}
         />
 
+        {/* SELLER HUB — existing route preserved */}
+        <Route
+          path="/seller-hub"
+          element={<SellerHub />}
+        />
 
         {/* ADMIN LOGIN */}
         <Route
