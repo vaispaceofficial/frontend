@@ -313,6 +313,8 @@ const workTypeValues = [
 
 
 const emergencyValues = [
+  
+  "24/7",
 
   "Yes",
 
