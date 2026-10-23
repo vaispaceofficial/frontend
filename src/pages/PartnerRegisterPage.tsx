@@ -91,7 +91,7 @@ const translations = {
     fullName: "Owner / contact person's full name *",
     designation: "Designation",
     mobile: "Mobile number *",
-    whatsapp: "WhatsApp number",
+    whatsapp: "WhatsApp number *",
     email: "Business email address *",
     businessTitle: "Business and seller profile",
     businessDesc: "Tell us who you are and how your business operates.",
@@ -206,6 +206,9 @@ const translations = {
     invalidYear: "Enter a valid year of establishment.",
     invalidWebsite: "Enter a valid website URL beginning with https:// or http://.",
     requiredContact: "Enter the contact person's name.",
+    requiredWhatsapp: "Enter a valid 10-digit WhatsApp number.",
+    requiredCatalogue: "Upload your product catalogue or product images.",
+    requiredGSTDoc: "Upload your GST certificate because you provided a GSTIN.",
     requiredSeller: "Select your seller type.",
     requiredBusiness: "Enter your business name.",
     requiredLegalType: "Select your legal business structure.",
@@ -277,7 +280,7 @@ const translations = {
     fullName: "యజమాని / సంప్రదింపు వ్యక్తి పూర్తి పేరు *",
     designation: "హోదా",
     mobile: "మొబైల్ నంబర్ *",
-    whatsapp: "వాట్సాప్ నంబర్",
+    whatsapp: "వాట్సాప్ నంబర్ *",
     email: "వ్యాపార ఇమెయిల్ *",
     businessTitle: "వ్యాపారం మరియు విక్రేత వివరాలు",
     businessDesc: "మీ వ్యాపారం గురించి వివరాలు నమోదు చేయండి.",
@@ -392,6 +395,9 @@ const translations = {
     invalidYear: "సరైన ప్రారంభ సంవత్సరం నమోదు చేయండి.",
     invalidWebsite: "https:// లేదా http:// తో ప్రారంభమయ్యే సరైన వెబ్‌సైట్ నమోదు చేయండి.",
     requiredContact: "సంప్రదింపు వ్యక్తి పేరు నమోదు చేయండి.",
+    requiredWhatsapp: "సరైన 10 అంకెల వాట్సాప్ నంబర్ నమోదు చేయండి.",
+    requiredCatalogue: "ఉత్పత్తుల కేటలాగ్ లేదా ఉత్పత్తుల చిత్రాలను అప్‌లోడ్ చేయండి.",
+    requiredGSTDoc: "GSTIN నమోదు చేసినందున GST సర్టిఫికేట్ అప్‌లోడ్ చేయండి.",
     requiredSeller: "విక్రేత రకాన్ని ఎంచుకోండి.",
     requiredBusiness: "వ్యాపార పేరు నమోదు చేయండి.",
     requiredLegalType: "వ్యాపార నిర్మాణాన్ని ఎంచుకోండి.",
@@ -463,7 +469,7 @@ const translations = {
     fullName: "मालिक / संपर्क व्यक्ति का पूरा नाम *",
     designation: "पद",
     mobile: "मोबाइल नंबर *",
-    whatsapp: "व्हाट्सऐप नंबर",
+    whatsapp: "व्हाट्सऐप नंबर *",
     email: "व्यावसायिक ईमेल *",
     businessTitle: "व्यवसाय और विक्रेता प्रोफ़ाइल",
     businessDesc: "अपने व्यवसाय और उसके प्रकार के बारे में बताएँ।",
@@ -578,6 +584,9 @@ const translations = {
     invalidYear: "मान्य स्थापना वर्ष दर्ज करें।",
     invalidWebsite: "https:// या http:// से शुरू होने वाला मान्य URL दर्ज करें।",
     requiredContact: "संपर्क व्यक्ति का नाम दर्ज करें।",
+    requiredWhatsapp: "मान्य 10 अंकों का WhatsApp नंबर दर्ज करें।",
+    requiredCatalogue: "उत्पाद कैटलॉग या उत्पाद की तस्वीरें अपलोड करें।",
+    requiredGSTDoc: "GSTIN दर्ज किया है, इसलिए GST प्रमाणपत्र अपलोड करें।",
     requiredSeller: "विक्रेता का प्रकार चुनें।",
     requiredBusiness: "व्यवसाय का नाम दर्ज करें।",
     requiredLegalType: "व्यवसाय का कानूनी ढाँचा चुनें।",
@@ -733,8 +742,8 @@ function PartnerRegisterPage() {
       case 0:
         if (!formData.contactName.trim()) return t.requiredContact;
         if (!/^[6-9]\d{9}$/.test(formData.mobile)) return t.invalidMobile;
-        if (formData.whatsapp && !/^[6-9]\d{9}$/.test(formData.whatsapp))
-          return t.invalidMobile;
+        if (!/^[6-9]\d{9}$/.test(formData.whatsapp))
+          return t.requiredWhatsapp;
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim()))
           return t.invalidEmail;
         return "";
@@ -771,6 +780,7 @@ function PartnerRegisterPage() {
         ) {
           return t.requiredBrandDoc;
         }
+        if (!formData.productCatalogue) return t.requiredCatalogue;
         return "";
 
       case 3:
@@ -805,6 +815,9 @@ function PartnerRegisterPage() {
           !formData.businessRegistration
         ) {
           return t.requiredRegistration;
+        }
+        if (formData.gstNumber.trim() && !formData.gstDocument) {
+          return t.requiredGSTDoc;
         }
         return "";
 
@@ -1328,7 +1341,7 @@ function PartnerRegisterPage() {
                   )}
 
                   <FileUpload
-                    label={`${t.catalogue} (${t.optional})`}
+                    label={`${t.catalogue} *`}
                     file={formData.productCatalogue}
                     onChange={(event) =>
                       handleFileChange(event, "productCatalogue")
@@ -1509,7 +1522,7 @@ function PartnerRegisterPage() {
                   />
 
                   <FileUpload
-                    label={`${t.gstDoc} (${t.conditional})`}
+                    label={`${t.gstDoc} (${formData.gstNumber.trim() ? t.required : t.conditional})`}
                     file={formData.gstDocument}
                     onChange={(event) =>
                       handleFileChange(event, "gstDocument")

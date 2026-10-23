@@ -1,5 +1,6 @@
 
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import type { FormEvent } from "react";
 import {
   AlertTriangle,
@@ -21,6 +22,9 @@ import {
   Save,
   Pencil,
   RefreshCw,
+  Star,
+  MessageSquareText,
+  BadgeCheck,
 } from "lucide-react";
 import "./SellerHub.css";
 
@@ -43,6 +47,26 @@ type ProductForm = {
 };
 
 type ModalMode = "add" | "edit" | "restock" | null;
+
+
+type SellerProfileDetails = {
+  businessName: string;
+  contactPerson: string;
+  email: string;
+  phone: string;
+  address: string;
+  gstin: string;
+};
+
+const defaultSellerProfile: SellerProfileDetails = {
+  businessName: "Rahul Traders",
+  contactPerson: "Rahul",
+  email: "",
+  phone: "",
+  address: "",
+  gstin: "",
+};
+
 
 const initialProducts: Product[] = [
   {
@@ -128,7 +152,6 @@ export default function SellerHub() {
   const [inventorySearch, setInventorySearch] = useState("");
   const [globalSearch, setGlobalSearch] = useState("");
   const [notificationOpen, setNotificationOpen] = useState(false);
-  const [profileOpen, setProfileOpen] = useState(false);
   const [modalMode, setModalMode] = useState<ModalMode>(null);
   const [activeProductId, setActiveProductId] = useState<number | null>(null);
   const [form, setForm] = useState<ProductForm>(emptyForm);
@@ -136,7 +159,40 @@ export default function SellerHub() {
   const [menuProductId, setMenuProductId] = useState<number | null>(null);
   const [activeSummary, setActiveSummary] = useState<string | null>(null);
   const [showOrders, setShowOrders] = useState(false);
+  const [showAllReviews, setShowAllReviews] = useState(false);
   const [feedback, setFeedback] = useState("");
+  const [profileOpen, setProfileOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const [sellerProfile, setSellerProfile] =
+    useState<SellerProfileDetails>(() => {
+      try {
+        const saved = localStorage.getItem("oneservice-seller-profile");
+
+        if (saved) {
+          return {
+            ...defaultSellerProfile,
+            ...JSON.parse(saved),
+          };
+        }
+      } catch (error) {
+        console.error("Could not load seller profile:", error);
+      }
+
+      return { ...defaultSellerProfile };
+    });
+
+  const [draftSellerProfile, setDraftSellerProfile] =
+    useState<SellerProfileDetails>(() => ({
+      ...sellerProfile,
+    }));
+
+  const [isEditingSellerProfile, setIsEditingSellerProfile] =
+    useState(false);
+
+  const [sellerProfileSaveMessage, setSellerProfileSaveMessage] =
+    useState("");
+
 
   const filteredProducts = useMemo(() => {
     const query = inventorySearch.trim().toLowerCase();
@@ -186,13 +242,6 @@ export default function SellerHub() {
     setFormError("");
   };
 
-  const openAddModal = () => {
-    setForm(emptyForm);
-    setActiveProductId(null);
-    setFormError("");
-    setMenuProductId(null);
-    setModalMode("add");
-  };
 
   const openProductModal = (
     product: Product,
@@ -417,45 +466,275 @@ export default function SellerHub() {
                 )}
               </div>
 
+
               <div className="seller-utility-popover-wrap">
                 <button
                   className="seller-profile-button"
                   type="button"
                   aria-expanded={profileOpen}
                   onClick={() => {
-                    setProfileOpen((current) => !current);
+                    setProfileOpen((current) => {
+                      const next = !current;
+
+                      if (next) {
+                        setDraftSellerProfile({ ...sellerProfile });
+                        setIsEditingSellerProfile(false);
+                        setSellerProfileSaveMessage("");
+                      }
+
+                      return next;
+                    });
                     setNotificationOpen(false);
                   }}
                 >
                   <span className="seller-profile-avatar">
                     <UserRound size={20} />
                   </span>
+
                   <span className="seller-profile-name">
-                    <strong>Rahul Traders</strong>
+                    <strong>{sellerProfile.businessName || "Seller Account"}</strong>
                     <small>Seller account</small>
                   </span>
-                  <ChevronDown size={16} />
+
+                  <ChevronDown
+                    size={16}
+                    className={profileOpen ? "seller-profile-chevron-open" : ""}
+                  />
                 </button>
 
                 {profileOpen && (
-                  <div className="seller-utility-popover seller-profile-popover">
-                    <strong>Rahul Traders</strong>
-                    <span>Seller account</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setProfileOpen(false);
-                        setFeedback(
-                          "Seller profile settings can be connected in the next step.",
-                        );
-                      }}
-                    >
-                      <UserRound size={15} />
-                      View seller profile
-                    </button>
+                  <div
+                    className="seller-profile-details-popover"
+                    role="dialog"
+                    aria-label="Seller profile details"
+                  >
+                    <div className="seller-profile-popup-header">
+                      <span className="seller-profile-popup-avatar">
+                        <UserRound size={23} />
+                      </span>
+
+                      <div>
+                        <strong>
+                          {draftSellerProfile.businessName || "Seller Profile"}
+                        </strong>
+                        <span>Manage your seller account details</span>
+                      </div>
+
+                      <button
+                        className="seller-profile-close"
+                        type="button"
+                        aria-label="Close seller profile"
+                        onClick={() => {
+                          setProfileOpen(false);
+                          setIsEditingSellerProfile(false);
+                          setSellerProfileSaveMessage("");
+                        }}
+                      >
+                        <X size={17} />
+                      </button>
+                    </div>
+
+                    <div className="seller-profile-popup-body">
+                      <div className="seller-profile-section-title">
+                        <strong>Business &amp; Contact Information</strong>
+                        <span>{isEditingSellerProfile ? "Editing profile" : "Seller account"}</span>
+                      </div>
+
+                      <div className="seller-profile-fields">
+                        <label className="seller-profile-field-full">
+                          Business name *
+                          <input
+                            type="text"
+                            value={draftSellerProfile.businessName}
+                            readOnly={!isEditingSellerProfile}
+                            required
+                            placeholder="Enter business name"
+                            onChange={(event) =>
+                              setDraftSellerProfile((current) => ({
+                                ...current,
+                                businessName: event.target.value,
+                              }))
+                            }
+                          />
+                        </label>
+
+                        <label>
+                          Contact person *
+                          <input
+                            type="text"
+                            value={draftSellerProfile.contactPerson}
+                            readOnly={!isEditingSellerProfile}
+                            required
+                            placeholder="Contact person's name"
+                            onChange={(event) =>
+                              setDraftSellerProfile((current) => ({
+                                ...current,
+                                contactPerson: event.target.value,
+                              }))
+                            }
+                          />
+                        </label>
+
+                        <label>
+                          Login email
+                          <input
+                            type="email"
+                            value={draftSellerProfile.email}
+                            readOnly={!isEditingSellerProfile}
+                            placeholder="Enter email address"
+                            onChange={(event) =>
+                              setDraftSellerProfile((current) => ({
+                                ...current,
+                                email: event.target.value,
+                              }))
+                            }
+                          />
+                        </label>
+
+                        <label>
+                          Registered mobile
+                          <input
+                            type="tel"
+                            value={draftSellerProfile.phone}
+                            readOnly={!isEditingSellerProfile}
+                            placeholder="Enter mobile number"
+                            maxLength={10}
+                            onChange={(event) =>
+                              setDraftSellerProfile((current) => ({
+                                ...current,
+                                phone: event.target.value.replace(/\D/g, "").slice(0, 10),
+                              }))
+                            }
+                          />
+                        </label>
+
+                        <label>
+                          GSTIN
+                          <input
+                            type="text"
+                            value={draftSellerProfile.gstin}
+                            readOnly={!isEditingSellerProfile}
+                            placeholder="Optional"
+                            maxLength={15}
+                            onChange={(event) =>
+                              setDraftSellerProfile((current) => ({
+                                ...current,
+                                gstin: event.target.value.toUpperCase().slice(0, 15),
+                              }))
+                            }
+                          />
+                        </label>
+
+                        <label className="seller-profile-field-full">
+                          Business address
+                          <textarea
+                            value={draftSellerProfile.address}
+                            readOnly={!isEditingSellerProfile}
+                            placeholder="Enter your business address"
+                            onChange={(event) =>
+                              setDraftSellerProfile((current) => ({
+                                ...current,
+                                address: event.target.value,
+                              }))
+                            }
+                          />
+                        </label>
+                      </div>
+
+                      <p className="seller-profile-security-note">
+                        <AlertTriangle size={14} />
+                        Passwords and authentication secrets are not displayed here.
+                      </p>
+
+                      {sellerProfileSaveMessage && (
+                        <p className="seller-profile-save-message" role="status">
+                          <Check size={15} />
+                          {sellerProfileSaveMessage}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="seller-profile-popup-actions">
+                      {isEditingSellerProfile ? (
+                        <>
+                          <button
+                            className="seller-profile-cancel"
+                            type="button"
+                            onClick={() => {
+                              setDraftSellerProfile({ ...sellerProfile });
+                              setIsEditingSellerProfile(false);
+                              setSellerProfileSaveMessage("");
+                            }}
+                          >
+                            Cancel
+                          </button>
+
+                          <button
+                            className="seller-profile-save"
+                            type="button"
+                            onClick={() => {
+                              const businessName = draftSellerProfile.businessName.trim();
+                              const contactPerson = draftSellerProfile.contactPerson.trim();
+
+                              if (!businessName || !contactPerson) {
+                                setSellerProfileSaveMessage(
+                                  "Business name and contact person are required.",
+                                );
+                                return;
+                              }
+
+                              try {
+                                const updatedProfile: SellerProfileDetails = {
+                                  ...draftSellerProfile,
+                                  businessName,
+                                  contactPerson,
+                                  email: draftSellerProfile.email.trim(),
+                                  address: draftSellerProfile.address.trim(),
+                                  gstin: draftSellerProfile.gstin.trim().toUpperCase(),
+                                };
+
+                                localStorage.setItem(
+                                  "oneservice-seller-profile",
+                                  JSON.stringify(updatedProfile),
+                                );
+
+                                setSellerProfile(updatedProfile);
+                                setDraftSellerProfile({ ...updatedProfile });
+                                setIsEditingSellerProfile(false);
+                                setSellerProfileSaveMessage(
+                                  "Profile changes saved successfully.",
+                                );
+                                setFeedback("Seller profile updated successfully.");
+                              } catch {
+                                setSellerProfileSaveMessage(
+                                  "Could not save your profile. Please check browser storage.",
+                                );
+                              }
+                            }}
+                          >
+                            <Save size={15} />
+                            Save Changes
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          className="seller-profile-save"
+                          type="button"
+                          onClick={() => {
+                            setDraftSellerProfile({ ...sellerProfile });
+                            setIsEditingSellerProfile(true);
+                            setSellerProfileSaveMessage("");
+                          }}
+                        >
+                          <Pencil size={15} />
+                          Edit Profile
+                        </button>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
+
             </div>
           </div>
         </div>
@@ -474,10 +753,10 @@ export default function SellerHub() {
           <button
             className="seller-add-product-button"
             type="button"
-            onClick={openAddModal}
+            onClick={() => navigate("/seller/products")}
           >
             <Plus size={18} />
-            <span>Add New Product / Spare</span>
+            <span>View All Products / Spares</span>
           </button>
         </header>
 
@@ -501,9 +780,8 @@ export default function SellerHub() {
           aria-label="Seller business summary"
         >
           <button
-            className={`seller-summary-card seller-summary-blue ${
-              activeSummary === "products" ? "is-selected" : ""
-            }`}
+            className={`seller-summary-card seller-summary-blue ${activeSummary === "products" ? "is-selected" : ""
+              }`}
             type="button"
             onClick={() => openSummary("products")}
           >
@@ -519,9 +797,8 @@ export default function SellerHub() {
           </button>
 
           <button
-            className={`seller-summary-card seller-summary-orange ${
-              activeSummary === "orders" ? "is-selected" : ""
-            }`}
+            className={`seller-summary-card seller-summary-orange ${activeSummary === "orders" ? "is-selected" : ""
+              }`}
             type="button"
             onClick={() => openSummary("orders")}
           >
@@ -537,9 +814,8 @@ export default function SellerHub() {
           </button>
 
           <button
-            className={`seller-summary-card seller-summary-green ${
-              activeSummary === "sales" ? "is-selected" : ""
-            }`}
+            className={`seller-summary-card seller-summary-green ${activeSummary === "sales" ? "is-selected" : ""
+              }`}
             type="button"
             onClick={() => openSummary("sales")}
           >
@@ -555,9 +831,8 @@ export default function SellerHub() {
           </button>
 
           <button
-            className={`seller-summary-card seller-summary-red ${
-              activeSummary === "stock" ? "is-selected" : ""
-            }`}
+            className={`seller-summary-card seller-summary-red ${activeSummary === "stock" ? "is-selected" : ""
+              }`}
             type="button"
             onClick={() => openSummary("stock")}
           >
@@ -675,13 +950,12 @@ export default function SellerHub() {
 
                       <td>
                         <span
-                          className={`seller-stock ${
-                            product.stock === 0
-                              ? "seller-stock-low"
-                              : product.stock <= 5
-                                ? "seller-stock-warning"
-                                : ""
-                          }`}
+                          className={`seller-stock ${product.stock === 0
+                            ? "seller-stock-low"
+                            : product.stock <= 5
+                              ? "seller-stock-warning"
+                              : ""
+                            }`}
                         >
                           <span className="seller-stock-dot" />
                           {product.stock === 0
@@ -770,16 +1044,22 @@ export default function SellerHub() {
               </table>
             </div>
 
+
             <div className="seller-inventory-footer">
               <span>
                 Showing <strong>{filteredProducts.length}</strong> of{" "}
                 <strong>{products.length}</strong> products
               </span>
-              <button type="button" onClick={openAddModal}>
+
+              <button
+                type="button"
+                onClick={() => navigate("/seller/products")}
+              >
                 <Plus size={15} />
                 Add product
               </button>
             </div>
+
           </div>
 
           <div className="seller-panel seller-sales-panel">
@@ -882,6 +1162,271 @@ export default function SellerHub() {
             <ArrowRight size={17} />
           </button>
         </section>
+
+
+
+        {/* Customer Feedback & Reviews */}
+        <section className="seller-reviews-section">
+          <div className="seller-reviews-header">
+            <div>
+              <span className="seller-hub-eyebrow">CUSTOMER EXPERIENCE</span>
+              <h2>Customer Feedback &amp; Reviews</h2>
+              <p>See what customers say about your products and service.</p>
+            </div>
+
+            <div className="seller-reviews-total">
+              <MessageSquareText size={17} />
+              <span>4 customer reviews</span>
+            </div>
+          </div>
+
+          {/* Compact rating summary */}
+          <div className="seller-reviews-overview">
+            <div className="seller-rating-summary">
+              <strong className="seller-rating-number">4.5</strong>
+
+              <div className="seller-rating-stars" aria-label="4.5 out of 5 stars">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star
+                    key={star}
+                    size={16}
+                    fill={star <= 4 ? "currentColor" : "none"}
+                  />
+                ))}
+              </div>
+
+              <span>Based on 4 sample reviews</span>
+            </div>
+
+            <div className="seller-rating-breakdown">
+              {[
+                { stars: 5, count: 2, percentage: 50 },
+                { stars: 4, count: 1, percentage: 25 },
+                { stars: 3, count: 1, percentage: 25 },
+                { stars: 2, count: 0, percentage: 0 },
+                { stars: 1, count: 0, percentage: 0 },
+              ].map((rating) => (
+                <div className="seller-rating-row" key={rating.stars}>
+                  <span>{rating.stars} star</span>
+                  <div className="seller-rating-track">
+                    <span style={{ width: `${rating.percentage}%` }} />
+                  </div>
+                  <span className="seller-rating-count">{rating.count}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Recent reviews heading */}
+          <div className="seller-reviews-list-heading">
+            <div>
+              <h3>Recent Reviews</h3>
+              <span>Feedback from your customers</span>
+            </div>
+
+            <span className="seller-reviews-latest">
+              Latest first
+              <ChevronDown size={14} />
+            </span>
+          </div>
+
+          {/* Review list */}
+          <div className="seller-reviews-list">
+            {/* Review 1 */}
+            <article className="seller-review-card">
+              <div className="seller-review-avatar seller-review-avatar-blue">
+                RK
+              </div>
+
+              <div className="seller-review-content">
+                <div className="seller-review-customer-row">
+                  <div>
+                    <h4>Ravi Kumar</h4>
+                    <span className="seller-review-date">
+                      18 Oct 2026 · RO Purifier Filter
+                    </span>
+                  </div>
+
+                  <span className="seller-verified-review">
+                    <BadgeCheck size={14} />
+                    Verified purchase
+                  </span>
+                </div>
+
+                <div className="seller-review-stars" aria-label="5 out of 5 stars">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star key={star} size={14} fill="currentColor" />
+                  ))}
+                  <span>5.0</span>
+                </div>
+
+                <p>
+                  Excellent product quality. The filter fits perfectly and
+                  the delivery was quick. Very satisfied with the purchase.
+                </p>
+
+                <div className="seller-review-product-tag">
+                  <Package size={13} />
+                  RO Purifier Copper Filter Cartridge
+                </div>
+              </div>
+            </article>
+
+            {/* Review 2 */}
+            <article className="seller-review-card">
+              <div className="seller-review-avatar seller-review-avatar-purple">
+                SP
+              </div>
+
+              <div className="seller-review-content">
+                <div className="seller-review-customer-row">
+                  <div>
+                    <h4>Sai Prasad</h4>
+                    <span className="seller-review-date">
+                      16 Oct 2026 · AC Capacitor
+                    </span>
+                  </div>
+
+                  <span className="seller-verified-review">
+                    <BadgeCheck size={14} />
+                    Verified purchase
+                  </span>
+                </div>
+
+                <div className="seller-review-stars" aria-label="4 out of 5 stars">
+                  {[1, 2, 3, 4].map((star) => (
+                    <Star key={star} size={14} fill="currentColor" />
+                  ))}
+                  <Star size={14} />
+                  <span>4.0</span>
+                </div>
+
+                <p>
+                  Good quality capacitor at a reasonable price. The product
+                  works well. Would appreciate even faster delivery next time.
+                </p>
+
+                <div className="seller-review-product-tag">
+                  <Package size={13} />
+                  1.5 Ton AC Capacitor 45 MFD
+                </div>
+              </div>
+            </article>
+
+            {/* Remaining reviews appear only when expanded */}
+            {showAllReviews && (
+              <>
+                {/* Review 3 */}
+                <article className="seller-review-card">
+                  <div className="seller-review-avatar seller-review-avatar-green">
+                    AM
+                  </div>
+
+                  <div className="seller-review-content">
+                    <div className="seller-review-customer-row">
+                      <div>
+                        <h4>Anil Mehta</h4>
+                        <span className="seller-review-date">
+                          14 Oct 2026 · Electrical Fitting
+                        </span>
+                      </div>
+
+                      <span className="seller-verified-review">
+                        <BadgeCheck size={14} />
+                        Verified purchase
+                      </span>
+                    </div>
+
+                    <div className="seller-review-stars" aria-label="5 out of 5 stars">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star key={star} size={14} fill="currentColor" />
+                      ))}
+                      <span>5.0</span>
+                    </div>
+
+                    <p>
+                      The product was well packed and arrived in good condition.
+                      Great value for money. I would order from this seller again.
+                    </p>
+
+                    <div className="seller-review-product-tag">
+                      <Package size={13} />
+                      Modular 16A Heavy Socket Switch
+                    </div>
+                  </div>
+                </article>
+
+                {/* Review 4 */}
+                <article className="seller-review-card">
+                  <div className="seller-review-avatar seller-review-avatar-orange">
+                    VK
+                  </div>
+
+                  <div className="seller-review-content">
+                    <div className="seller-review-customer-row">
+                      <div>
+                        <h4>Vijay Kumar</h4>
+                        <span className="seller-review-date">
+                          12 Oct 2026 · Overall Shopping Experience
+                        </span>
+                      </div>
+
+                      <span className="seller-verified-review">
+                        <BadgeCheck size={14} />
+                        Verified purchase
+                      </span>
+                    </div>
+
+                    <div className="seller-review-stars" aria-label="3 out of 5 stars">
+                      {[1, 2, 3].map((star) => (
+                        <Star key={star} size={14} fill="currentColor" />
+                      ))}
+                      <Star size={14} />
+                      <Star size={14} />
+                      <span>3.0</span>
+                    </div>
+
+                    <p>
+                      The item was as described and the quality was acceptable.
+                      Better delivery updates would improve the overall experience.
+                    </p>
+
+                    <div className="seller-review-product-tag">
+                      <ShoppingBag size={13} />
+                      General seller feedback
+                    </div>
+                  </div>
+                </article>
+              </>
+            )}
+          </div>
+
+          {/* Expand and collapse */}
+          <div className="seller-reviews-view-all">
+            <button
+              type="button"
+              onClick={() => setShowAllReviews((current) => !current)}
+              aria-expanded={showAllReviews}
+            >
+              {showAllReviews ? "Show Less" : "View All Reviews"}
+              <ChevronDown
+                size={15}
+                className={showAllReviews ? "seller-reviews-chevron-open" : ""}
+              />
+            </button>
+          </div>
+
+          <div className="seller-reviews-footer">
+            <span>
+              <Check size={14} />
+              Customer feedback helps improve your seller reputation.
+            </span>
+            <span className="seller-reviews-demo-note">
+              Sample reviews · Not live customer data
+            </span>
+          </div>
+        </section>
+
       </div>
 
       {/* Add, edit and restock modal */}

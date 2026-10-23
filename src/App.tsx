@@ -44,6 +44,7 @@ import ProfilePage from "./pages/ProfilePage";
 
 import ProfessionalHubPage from "./pages/ProfessionalHub";
 import SellerHub from "./pages/SellerHub";
+import SellerProductsPage from "./pages/SellerProductsPage";
 
 import HomeAppliancesPage from "./pages/HomeAppliancesPage";
 import HomeServicesPage from "./pages/HomeServicesPage";
@@ -234,6 +235,15 @@ type WorkspaceInfo = {
   path: string;
 };
 
+/*
+ * Seller Hub already exists at /seller-hub.
+ * Professional Hub already exists at /profile/professional-hub.
+ *
+ * Vendor, Student and Tutor routes are included in the role
+ * configuration but require their own dashboard components
+ * before their pages can be opened successfully.
+ */
+
 const WORKSPACE_ROUTES: Record<WorkspaceRole, WorkspaceInfo> = {
   professional: {
     role: "professional",
@@ -243,7 +253,7 @@ const WORKSPACE_ROUTES: Record<WorkspaceRole, WorkspaceInfo> = {
   seller: {
     role: "seller",
     label: "Seller Hub",
-    path: "/profile/seller-hub",
+    path: "/seller-hub",
   },
   vendor: {
     role: "vendor",
@@ -262,80 +272,99 @@ const WORKSPACE_ROUTES: Record<WorkspaceRole, WorkspaceInfo> = {
   },
 };
 
-function readWorkspaceRole(): WorkspaceInfo | null {
-  const savedRole = localStorage
-    .getItem("oneservice_workspace_role")
-    ?.toLowerCase()
-    .trim();
+const REGISTRATION_KEYS: {
+  key: string;
+  role: WorkspaceRole;
+}[] = [
+  {
+    key: "oneservice_professional_application",
+    role: "professional",
+  },
+  {
+    key: "oneservice_seller_application",
+    role: "seller",
+  },
+  {
+    key: "oneservice_partner_application",
+    role: "seller",
+  },
+  {
+    key: "oneservice_vendor_application",
+    role: "vendor",
+  },
+  {
+    key: "oneservice_student_application",
+    role: "student",
+  },
+  {
+    key: "oneservice_tutor_application",
+    role: "tutor",
+  },
+];
 
-  if (
-    savedRole &&
-    Object.prototype.hasOwnProperty.call(
-      WORKSPACE_ROUTES,
-      savedRole,
-    )
-  ) {
-    return WORKSPACE_ROUTES[savedRole as WorkspaceRole];
-  }
-
-  // Backward compatibility with existing professional registrations.
+/**
+ * Returns true when a registration key contains a non-empty
+ * JSON object. Invalid JSON and empty objects are ignored.
+ */
+function hasSavedApplication(key: string): boolean {
   try {
-    const raw = localStorage.getItem(
-      "oneservice_professional_application",
+    const raw = localStorage.getItem(key);
+
+    if (!raw) return false;
+
+    const application: unknown = JSON.parse(raw);
+
+    return (
+      application !== null &&
+      typeof application === "object" &&
+      !Array.isArray(application) &&
+      Object.keys(application).length > 0
     );
+  } catch {
+    return false;
+  }
+}
 
-    if (raw) {
-      const application = JSON.parse(raw);
+/**
+ * Workspace selection priority:
+ *
+ * 1. Explicitly saved oneservice_workspace_role.
+ * 2. Existing registration keys for backward compatibility.
+ *
+ * When an existing registration is detected, save the role
+ * so future visits use the same workspace.
+ */
+function readWorkspaceRole(): WorkspaceInfo | null {
+  try {
+    const savedRole = localStorage
+      .getItem("oneservice_workspace_role")
+      ?.toLowerCase()
+      .trim();
 
-      if (application?.id && application?.fullName) {
-        return WORKSPACE_ROUTES.professional;
+    if (
+      savedRole &&
+      Object.prototype.hasOwnProperty.call(
+        WORKSPACE_ROUTES,
+        savedRole,
+      )
+    ) {
+      return WORKSPACE_ROUTES[savedRole as WorkspaceRole];
+    }
+
+    for (const registration of REGISTRATION_KEYS) {
+      if (!hasSavedApplication(registration.key)) {
+        continue;
       }
+
+      localStorage.setItem(
+        "oneservice_workspace_role",
+        registration.role,
+      );
+
+      return WORKSPACE_ROUTES[registration.role];
     }
   } catch {
-    // Invalid saved data is ignored.
-  }
-
-  // Detect other registrations using existing storage keys.
-  const registrationKeys: {
-    key: string;
-    role: WorkspaceRole;
-  }[] = [
-    {
-      key: "oneservice_partner_application",
-      role: "seller",
-    },
-    {
-      key: "oneservice_seller_application",
-      role: "seller",
-    },
-    {
-      key: "oneservice_vendor_application",
-      role: "vendor",
-    },
-    {
-      key: "oneservice_student_application",
-      role: "student",
-    },
-    {
-      key: "oneservice_tutor_application",
-      role: "tutor",
-    },
-  ];
-
-  for (const registration of registrationKeys) {
-    const raw = localStorage.getItem(registration.key);
-
-    if (!raw) continue;
-
-    try {
-      const application = JSON.parse(raw);
-
-      if (application && typeof application === "object") {
-        return WORKSPACE_ROUTES[registration.role];
-      }
-    } catch {
-      // Continue checking other registration keys.
-    }
+    // Do not crash if browser storage is unavailable.
   }
 
   return null;
@@ -343,7 +372,6 @@ function readWorkspaceRole(): WorkspaceInfo | null {
 
 /* =========================================================
    NAVBAR
-   Logged-in registered users see My Workspace.
 ========================================================= */
 
 function Navbar() {
@@ -358,7 +386,10 @@ function Navbar() {
 
   const networkRef = useRef<HTMLDivElement>(null);
 
-  // Keep authentication and workspace in sync.
+  /*
+   * Update authentication and workspace state when a user
+   * logs in, registers, changes workspace or logs out.
+   */
   useEffect(() => {
     const updateNavbar = () => {
       setIsLoggedIn(
@@ -368,22 +399,46 @@ function Navbar() {
       setWorkspace(readWorkspaceRole());
     };
 
-    window.addEventListener("oneservice-auth-change", updateNavbar);
-    window.addEventListener("oneservice-workspace-change", updateNavbar);
-    window.addEventListener("oneservice-professional-change", updateNavbar);
+    window.addEventListener(
+      "oneservice-auth-change",
+      updateNavbar,
+    );
+
+    window.addEventListener(
+      "oneservice-workspace-change",
+      updateNavbar,
+    );
+
+    window.addEventListener(
+      "oneservice-professional-change",
+      updateNavbar,
+    );
+
     window.addEventListener("storage", updateNavbar);
 
     updateNavbar();
 
     return () => {
-      window.removeEventListener("oneservice-auth-change", updateNavbar);
-      window.removeEventListener("oneservice-workspace-change", updateNavbar);
-      window.removeEventListener("oneservice-professional-change", updateNavbar);
+      window.removeEventListener(
+        "oneservice-auth-change",
+        updateNavbar,
+      );
+
+      window.removeEventListener(
+        "oneservice-workspace-change",
+        updateNavbar,
+      );
+
+      window.removeEventListener(
+        "oneservice-professional-change",
+        updateNavbar,
+      );
+
       window.removeEventListener("storage", updateNavbar);
     };
   }, []);
 
-  // Close dropdown when clicking outside.
+  /* Close dropdown when clicking outside. */
   useEffect(() => {
     const handleOutsideClick = (event: MouseEvent) => {
       const target = event.target as Node;
@@ -396,10 +451,16 @@ function Navbar() {
       }
     };
 
-    document.addEventListener("mousedown", handleOutsideClick);
+    document.addEventListener(
+      "mousedown",
+      handleOutsideClick,
+    );
 
     return () => {
-      document.removeEventListener("mousedown", handleOutsideClick);
+      document.removeEventListener(
+        "mousedown",
+        handleOutsideClick,
+      );
     };
   }, []);
 
@@ -748,7 +809,9 @@ function ServiceCardStack() {
           return (
             <Link
               to={service.path}
-              className={`stack-service-card stack-card-${index + 1}`}
+              className={`stack-service-card stack-card-${
+                index + 1
+              }`}
               key={service.title}
               style={
                 {
@@ -844,7 +907,7 @@ function HomePage() {
   const [currentImage, setCurrentImage] = useState(0);
   const location = useLocation();
 
-  // Scroll to the services section when navigating to /#services.
+  /* Scroll to services when navigating to /#services. */
   useEffect(() => {
     if (location.hash !== "#services") return;
 
@@ -860,7 +923,7 @@ function HomePage() {
     };
   }, [location]);
 
-  // Hero image autoplay.
+  /* Hero image autoplay. */
   useEffect(() => {
     const timer = window.setInterval(() => {
       setCurrentImage(
@@ -1108,19 +1171,15 @@ function AppContent() {
 
   return (
     <>
-      {/* Hide the public navbar on admin pages */}
+      {/* Hide public navbar on admin pages. */}
       {!isAdminRoute && <Navbar />}
 
-      {/* Scroll to the top when the route changes */}
+      {/* Scroll to top when the route changes. */}
       <ScrollToTop />
 
-      {/* APPLICATION ROUTES */}
       <Routes>
         {/* HOME */}
-        <Route
-          path="/"
-          element={<HomePage />}
-        />
+        <Route path="/" element={<HomePage />} />
 
         {/* SERVICES */}
         <Route
@@ -1164,10 +1223,7 @@ function AppContent() {
         />
 
         {/* AMC */}
-        <Route
-          path="/amc"
-          element={<AMCPage />}
-        />
+        <Route path="/amc" element={<AMCPage />} />
 
         {/* CITY LISTINGS */}
         <Route
@@ -1191,14 +1247,10 @@ function AppContent() {
           element={<AccessoriesSalesPage />}
         />
 
-        {/* Redirect the old Marketplace URL */}
         <Route
           path="/accessories-sales"
           element={
-            <Navigate
-              to="/marketplace"
-              replace
-            />
+            <Navigate to="/marketplace" replace />
           }
         />
 
@@ -1206,10 +1258,7 @@ function AppContent() {
         <Route
           path="/accessories"
           element={
-            <Navigate
-              to="/accessories/all"
-              replace
-            />
+            <Navigate to="/accessories/all" replace />
           }
         />
 
@@ -1228,7 +1277,7 @@ function AppContent() {
           element={<AccessoriesProductsPage />}
         />
 
-        {/* PRODUCT LISTING & DETAILS */}
+        {/* PRODUCT LISTING AND DETAILS */}
         <Route
           path="/accessories-sales/products"
           element={<AccessoriesProductsPage />}
@@ -1240,10 +1289,7 @@ function AppContent() {
         />
 
         {/* CART */}
-        <Route
-          path="/cart"
-          element={<CartPage />}
-        />
+        <Route path="/cart" element={<CartPage />} />
 
         {/* REGISTRATION */}
         <Route
@@ -1256,20 +1302,15 @@ function AppContent() {
           element={<ProfessionalRegisterPage />}
         />
 
-        {/* New Seller Registration URL */}
         <Route
           path="/register-seller"
           element={<PartnerRegisterPage />}
         />
 
-        {/* Redirect the previous Partner URL */}
         <Route
           path="/register-partner"
           element={
-            <Navigate
-              to="/register-seller"
-              replace
-            />
+            <Navigate to="/register-seller" replace />
           }
         />
 
@@ -1288,7 +1329,7 @@ function AppContent() {
           element={<TutorRegisterPage />}
         />
 
-        {/* CONTACT & LOGIN */}
+        {/* CONTACT AND LOGIN */}
         <Route
           path="/contact"
           element={<ContactPage />}
@@ -1311,10 +1352,15 @@ function AppContent() {
           element={<ProfessionalHubPage />}
         />
 
-        {/* SELLER HUB — existing route preserved */}
+        {/* SELLER HUB */}
         <Route
           path="/seller-hub"
           element={<SellerHub />}
+        />
+
+        <Route
+          path="/seller/products"
+          element={<SellerProductsPage />}
         />
 
         {/* ADMIN LOGIN */}
@@ -1367,7 +1413,7 @@ function AppContent() {
         </Route>
       </Routes>
 
-      {/* Hide the public footer on admin pages */}
+      {/* Hide public footer on admin pages. */}
       {!isAdminRoute && <Footer />}
     </>
   );
