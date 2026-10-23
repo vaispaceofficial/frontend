@@ -45,6 +45,7 @@ import ProfilePage from "./pages/ProfilePage";
 import ProfessionalHubPage from "./pages/ProfessionalHub";
 import SellerHub from "./pages/SellerHub";
 import SellerProductsPage from "./pages/SellerProductsPage";
+import VendorHub from "./pages/VendorHub";
 
 import HomeAppliancesPage from "./pages/HomeAppliancesPage";
 import HomeServicesPage from "./pages/HomeServicesPage";
@@ -1357,6 +1358,9 @@ function AppContent() {
           path="/seller-hub"
           element={<SellerHub />}
         />
+
+        {/* VENDOR HUB */}
+        <Route path="/vendor-hub" element={<VendorHub />} />
 
         <Route
           path="/seller/products"

@@ -1,6 +1,5 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import {
     AlertCircle,
     Archive,
@@ -298,12 +297,6 @@ export default function SellerProductsPage() {
     const [stockDrafts, setStockDrafts] = useState<Record<string, string>>({});
     const [page, setPage] = useState(1);
 
-    const navigate = useNavigate();
-
-    const [accountPassword, setAccountPassword] = useState("");
-    const [accountRemovalError, setAccountRemovalError] = useState("");
-    const [isRemovingAccount, setIsRemovingAccount] = useState(false);
-
     const pageSize = 5;
 
     useEffect(() => {
@@ -398,71 +391,6 @@ export default function SellerProductsPage() {
         setSelectedProduct(null);
         setFormError("");
         setImageError("");
-    };
-
-    const openRemoveAccountModal = () => {
-        setAccountPassword("");
-        setAccountRemovalError("");
-        setIsRemovingAccount(false);
-        setModal("remove-account");
-    };
-
-    const removeSellerAccount = async (
-        event: React.FormEvent<HTMLFormElement>,
-    ) => {
-        event.preventDefault();
-        setAccountRemovalError("");
-
-        if (!accountPassword.trim()) {
-            setAccountRemovalError("Please enter your registration password.");
-            return;
-        }
-
-        setIsRemovingAccount(true);
-
-        try {
-            const response = await fetch(
-                "/api/seller/account/verify-password-and-delete",
-                {
-                    method: "POST",
-                    credentials: "include",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({ password: accountPassword }),
-                },
-            );
-
-            const result: { message?: string } = await response
-                .json()
-                .catch(() => ({}));
-
-            if (!response.ok) {
-                setAccountRemovalError(
-                    result.message ||
-                    "Password verification failed or the account could not be removed.",
-                );
-                return;
-            }
-
-            localStorage.removeItem("oneservice_seller_products");
-            localStorage.removeItem("oneservice_partner_application");
-            localStorage.removeItem("oneservice_seller_application");
-            localStorage.removeItem("oneservice-seller-profile");
-
-            setProducts([]);
-            setSelectedIds([]);
-            setAccountPassword("");
-            closeModal();
-            setToast("Seller account removal confirmed.");
-            navigate("/profile", { replace: true });
-        } catch {
-            setAccountRemovalError(
-                "Unable to connect to the server. Your account has not been removed.",
-            );
-        } finally {
-            setIsRemovingAccount(false);
-        }
     };
 
     const openAddModal = () => {
@@ -916,20 +844,9 @@ export default function SellerProductsPage() {
         <main className="seller-products-page">
             <div className="sp-container">
                 <header className="sp-page-heading">
-                    <div className="sp-heading-content">
-                        <button
-                            type="button"
-                            className="sp-back-button"
-                            onClick={() => navigate("/seller-hub")}
-                        >
-                            <ArrowRight size={17} className="sp-back-arrow" />
-                            <span>Back to Seller Hub</span>
-                        </button>
-
+                    <div>
                         <div className="sp-eyebrow">SELLER CENTRE / CATALOGUE</div>
-
                         <h1>Seller Products</h1>
-
                         <p>
                             Manage your listings, update stock, and keep your OneService
                             Marketplace catalogue up to date.
@@ -1471,14 +1388,6 @@ export default function SellerProductsPage() {
                                     onClick={() => setModal("help")}
                                 >
                                     Contact Seller Support
-                                </button>
-                                <button
-                                    type="button"
-                                    className="sp-remove-account-button"
-                                    onClick={openRemoveAccountModal}
-                                >
-                                    <Trash2 size={16} />
-                                    Remove Seller Account
                                 </button>
                             </div>
                         </section>
@@ -2451,127 +2360,6 @@ export default function SellerProductsPage() {
                                 Close
                             </button>
                         </footer>
-                    </section>
-                </div>
-            )}
-
-            {/* Remove seller account popup */}
-            {modal === "remove-account" && (
-                <div
-                    className="sp-modal-backdrop"
-                    onMouseDown={() => {
-                        if (!isRemovingAccount) closeModal();
-                    }}
-                >
-                    <section
-                        className="sp-modal sp-remove-account-modal"
-                        role="dialog"
-                        aria-modal="true"
-                        aria-labelledby="sp-remove-account-title"
-                        onMouseDown={(event) => event.stopPropagation()}
-                    >
-                        <header className="sp-modal-header">
-                            <div>
-                                <span className="sp-modal-eyebrow">
-                                    SELLER ACCOUNT SECURITY
-                                </span>
-                                <h2 id="sp-remove-account-title">
-                                    Remove Seller Account
-                                </h2>
-                                <p>Confirm your identity before requesting account removal.</p>
-                            </div>
-
-                            <button
-                                type="button"
-                                className="sp-modal-close"
-                                aria-label="Close"
-                                disabled={isRemovingAccount}
-                                onClick={closeModal}
-                            >
-                                <X size={19} />
-                            </button>
-                        </header>
-
-                        <div className="sp-remove-account-warning">
-                            <AlertCircle size={22} />
-                            <div>
-                                <strong>Are you sure you want to continue?</strong>
-                                <p>
-                                    Removing your seller account may make your profile and
-                                    product listings unavailable. Resolve pending orders,
-                                    payments, and disputes before proceeding.
-                                </p>
-                            </div>
-                        </div>
-
-                        <form
-                            className="sp-remove-account-form"
-                            onSubmit={removeSellerAccount}
-                        >
-                            <label className="sp-field">
-                                <span>
-                                    Partner Registration password <b>*</b>
-                                </span>
-
-                                <input
-                                    type="password"
-                                    value={accountPassword}
-                                    onChange={(event) => {
-                                        setAccountPassword(event.target.value);
-                                        setAccountRemovalError("");
-                                    }}
-                                    placeholder="Enter your registration password"
-                                    autoComplete="current-password"
-                                    required
-                                    disabled={isRemovingAccount}
-                                />
-
-                                <small>
-                                    Your password must be verified securely by the server.
-                                </small>
-                            </label>
-
-                            {accountRemovalError && (
-                                <p className="sp-form-error" role="alert">
-                                    <AlertCircle size={15} />
-                                    {accountRemovalError}
-                                </p>
-                            )}
-
-                            <div className="sp-remove-account-check">
-                                <ShieldCheck size={17} />
-                                <span>
-                                    Your account should only be removed after successful
-                                    server-side password verification.
-                                </span>
-                            </div>
-
-                            <footer className="sp-modal-footer">
-                                <button
-                                    type="button"
-                                    className="sp-outline-button"
-                                    onClick={closeModal}
-                                    disabled={isRemovingAccount}
-                                >
-                                    Keep My Account
-                                </button>
-
-                                <button
-                                    type="submit"
-                                    className="sp-danger-button"
-                                    disabled={isRemovingAccount || !accountPassword.trim()}
-                                >
-                                    {isRemovingAccount ? (
-                                        "Verifying..."
-                                    ) : (
-                                        <>
-                                            <Trash2 size={15} />
-                                            Confirm Removal
-                                        </>
-                                    )}
-                                </button>
-                            </footer>
-                        </form>
                     </section>
                 </div>
             )}
