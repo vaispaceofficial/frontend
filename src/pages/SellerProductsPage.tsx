@@ -1602,6 +1602,21 @@ export default function SellerProductsPage() {
                                         {formProduct.description.length}/2000 characters
                                     </small>
                                 </label>
+                                                                <label className="sp-field sp-field-full">
+                                    <span>Technical Specifications</span>
+                                    <textarea
+                                        value={formProduct.description}
+                                        onChange={(event) =>
+                                            updateForm("description", event.target.value)
+                                        }
+                                        placeholder="Specifications, compatibility, warranty, and included accessories..."
+                                        maxLength={2000}
+                                        rows={4}
+                                    />
+                                    <small>
+                                        {formProduct.description.length}/2000 characters
+                                    </small>
+                                </label>
                             </div>
 
                             <div className="sp-form-section-title sp-image-section-title">
