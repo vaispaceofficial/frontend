@@ -30,11 +30,16 @@ import {
 import "./ProfilePage.css";
 
 type ServiceUser = {
+    id?: string;
     mobile: string;
     loggedIn: boolean;
     mobileVerified?: boolean;
     name?: string;
+    fullName?: string;
     email?: string;
+    role?: string;
+    accountType?: string;
+    [key: string]: unknown;
 };
 
 type AccountSettings = {
@@ -47,18 +52,18 @@ type AccountSettings = {
 type ProfessionalApplication = {
     id: string;
     fullName: string;
-    mobile: string;
-    email: string;
-    city: string;
-    state: string;
-    category: string;
-    services: string[];
-    experience: string;
-    workType: string;
-    workingDays: string[];
-    serviceArea: string;
-    submittedAt: string;
-    status: string;
+    mobile?: string;
+    email?: string;
+    city?: string;
+    state?: string;
+    category?: string;
+    services?: string[];
+    experience?: string;
+    workType?: string;
+    workingDays?: string[];
+    serviceArea?: string;
+    submittedAt?: string;
+    status?: string;
 };
 
 type SellerApplication = {
@@ -83,6 +88,41 @@ type SellerApplication = {
     submittedAt?: string;
 };
 
+type VendorApplication = {
+    id?: string;
+    vendorId?: string;
+    fullName?: string;
+    name?: string;
+    mobile?: string;
+    phone?: string;
+    email?: string;
+    businessName?: string;
+    businessType?: string;
+    businessCategory?: string;
+    businessAddress?: string;
+    city?: string;
+    state?: string;
+    status?: string;
+    registeredAt?: string;
+};
+
+type StudentApplication = {
+    id?: string;
+    studentId?: string;
+    applicationId?: string;
+    fullName?: string;
+    name?: string;
+    mobile?: string;
+    phone?: string;
+    email?: string;
+    city?: string;
+    state?: string;
+    status?: string;
+    registeredAt?: string;
+    submittedAt?: string;
+    [key: string]: unknown;
+};
+
 type OrderHistoryItem = {
     id: string;
     type?: string;
@@ -105,6 +145,11 @@ const DEFAULT_SETTINGS: AccountSettings = {
 
 const PROFESSIONAL_APPLICATION_KEY = "oneservice_professional_application";
 const SELLER_APPLICATION_KEY = "oneservice_seller_application";
+const VENDOR_APPLICATION_KEY = "oneservice_vendor";
+const STUDENT_APPLICATION_KEYS = [
+    "oneservice_student_application",
+    "oneservice_student",
+];
 const PROFESSIONAL_NOTICE_KEY = "oneservice_professional_notice";
 const ORDER_HISTORY_KEY = "oneservice_order_history";
 
@@ -163,7 +208,6 @@ function readSettings(): AccountSettings {
 function readProfessionalApplication(): ProfessionalApplication | null {
     try {
         const saved = localStorage.getItem(PROFESSIONAL_APPLICATION_KEY);
-
         if (!saved) return null;
 
         const application = JSON.parse(saved) as ProfessionalApplication;
@@ -188,22 +232,19 @@ function readProfessionalApplication(): ProfessionalApplication | null {
 function readSellerApplication(): SellerApplication | null {
     try {
         const saved = localStorage.getItem(SELLER_APPLICATION_KEY);
-
         if (!saved) return null;
 
         const application = JSON.parse(saved) as SellerApplication;
 
-        if (!application || typeof application !== "object") {
-            return null;
-        }
+        if (!application || typeof application !== "object") return null;
 
         const hasSellerDetails = Boolean(
             application.businessName?.trim() ||
-                application.storeName?.trim() ||
-                application.companyName?.trim() ||
-                application.ownerName?.trim() ||
-                application.fullName?.trim() ||
-                application.name?.trim(),
+            application.storeName?.trim() ||
+            application.companyName?.trim() ||
+            application.ownerName?.trim() ||
+            application.fullName?.trim() ||
+            application.name?.trim(),
         );
 
         return hasSellerDetails ? application : null;
@@ -212,14 +253,63 @@ function readSellerApplication(): SellerApplication | null {
     }
 }
 
+function readVendorApplication(): VendorApplication | null {
+    try {
+        const saved = localStorage.getItem(VENDOR_APPLICATION_KEY);
+        if (!saved) return null;
+
+        const application = JSON.parse(saved) as VendorApplication;
+
+        if (!application || typeof application !== "object") return null;
+
+        const hasVendorDetails = Boolean(
+            application.businessName?.trim() ||
+            application.fullName?.trim() ||
+            application.name?.trim() ||
+            application.mobile?.trim() ||
+            application.phone?.trim(),
+        );
+
+        return hasVendorDetails ? application : null;
+    } catch {
+        return null;
+    }
+}
+
+function readStudentApplication(): StudentApplication | null {
+    try {
+        for (const key of STUDENT_APPLICATION_KEYS) {
+            const saved = localStorage.getItem(key);
+            if (!saved) continue;
+
+            const application = JSON.parse(saved) as StudentApplication;
+
+            if (!application || typeof application !== "object") continue;
+
+            const hasStudentDetails = Boolean(
+                application.fullName?.trim() ||
+                application.name?.trim() ||
+                application.studentId?.trim() ||
+                application.applicationId?.trim() ||
+                application.mobile?.trim() ||
+                application.phone?.trim(),
+            );
+
+            if (hasStudentDetails) return application;
+        }
+
+        return null;
+    } catch {
+        return null;
+    }
+}
+
 function readOrderHistory(): OrderHistoryItem[] {
     try {
         const saved = localStorage.getItem(ORDER_HISTORY_KEY);
-
         if (!saved) return [];
 
         const parsed: unknown = JSON.parse(saved);
-
         if (!Array.isArray(parsed)) return [];
 
         return parsed.filter(
@@ -250,9 +340,7 @@ function getApplicationStatus(status?: string): string {
         return "Approved";
     }
 
-    if (normalized === "rejected") {
-        return "Rejected";
-    }
+    if (normalized === "rejected") return "Rejected";
 
     if (normalized === "suspended" || normalized === "blocked") {
         return "Suspended";
@@ -296,7 +384,8 @@ function ProfilePage() {
     const navigate = useNavigate();
 
     const [user, setUser] = useState<ServiceUser | null>(null);
-    const [settings, setSettings] = useState<AccountSettings>(DEFAULT_SETTINGS);
+    const [settings, setSettings] =
+        useState<AccountSettings>(DEFAULT_SETTINGS);
 
     const [activeModal, setActiveModal] = useState<ProfileModal>(null);
 
@@ -312,6 +401,12 @@ function ProfilePage() {
     const [sellerApplication, setSellerApplication] =
         useState<SellerApplication | null>(null);
 
+    const [vendorApplication, setVendorApplication] =
+        useState<VendorApplication | null>(null);
+
+    const [studentApplication, setStudentApplication] =
+        useState<StudentApplication | null>(null);
+
     const [orderHistory, setOrderHistory] = useState<OrderHistoryItem[]>([]);
     const [showAllOrders, setShowAllOrders] = useState(false);
 
@@ -319,7 +414,8 @@ function ProfilePage() {
         useState<OrderTypeFilter>("all");
     const [orderStatusFilter, setOrderStatusFilter] = useState("all");
     const [orderSearch, setOrderSearch] = useState("");
-    const [orderDateSort, setOrderDateSort] = useState<OrderDateSort>("newest");
+    const [orderDateSort, setOrderDateSort] =
+        useState<OrderDateSort>("newest");
 
     useEffect(() => {
         const storedUser = localStorage.getItem("oneservice_user");
@@ -338,7 +434,7 @@ function ProfilePage() {
             }
 
             setUser(parsed);
-            setDisplayName(parsed.name ?? "");
+            setDisplayName(parsed.name ?? parsed.fullName ?? "");
             setEmail(parsed.email ?? "");
             setSettings(readSettings());
 
@@ -350,6 +446,8 @@ function ProfilePage() {
 
             setProfessionalApplication(readProfessionalApplication());
             setSellerApplication(readSellerApplication());
+            setVendorApplication(readVendorApplication());
+            setStudentApplication(readStudentApplication());
             setOrderHistory(readOrderHistory());
 
             const shouldShowProfessionalNotice =
@@ -376,27 +474,54 @@ function ProfilePage() {
             setSellerApplication(readSellerApplication());
         };
 
+        const refreshVendorApplication = () => {
+            setVendorApplication(readVendorApplication());
+        };
+
+        const refreshStudentApplication = () => {
+            setStudentApplication(readStudentApplication());
+        };
+
         const refreshOrderHistory = () => {
             setOrderHistory(readOrderHistory());
+        };
+
+        const refreshWorkspaceData = () => {
+            refreshProfessionalApplication();
+            refreshSellerApplication();
+            refreshVendorApplication();
+            refreshStudentApplication();
         };
 
         window.addEventListener(
             "oneservice-professional-change",
             refreshProfessionalApplication,
         );
-
         window.addEventListener(
             "oneservice-seller-change",
             refreshSellerApplication,
         );
-
+        window.addEventListener(
+            "oneservice-vendor-change",
+            refreshVendorApplication,
+        );
+        window.addEventListener(
+            "oneservice-student-change",
+            refreshStudentApplication,
+        );
         window.addEventListener(
             "oneservice-order-change",
             refreshOrderHistory,
         );
+        window.addEventListener(
+            "oneservice-workspace-change",
+            refreshWorkspaceData,
+        );
 
         window.addEventListener("storage", refreshProfessionalApplication);
         window.addEventListener("storage", refreshSellerApplication);
+        window.addEventListener("storage", refreshVendorApplication);
+        window.addEventListener("storage", refreshStudentApplication);
         window.addEventListener("storage", refreshOrderHistory);
 
         return () => {
@@ -404,26 +529,41 @@ function ProfilePage() {
                 "oneservice-professional-change",
                 refreshProfessionalApplication,
             );
-
             window.removeEventListener(
                 "oneservice-seller-change",
                 refreshSellerApplication,
             );
-
+            window.removeEventListener(
+                "oneservice-vendor-change",
+                refreshVendorApplication,
+            );
+            window.removeEventListener(
+                "oneservice-student-change",
+                refreshStudentApplication,
+            );
             window.removeEventListener(
                 "oneservice-order-change",
                 refreshOrderHistory,
             );
+            window.removeEventListener(
+                "oneservice-workspace-change",
+                refreshWorkspaceData,
+            );
 
             window.removeEventListener("storage", refreshProfessionalApplication);
             window.removeEventListener("storage", refreshSellerApplication);
+            window.removeEventListener("storage", refreshVendorApplication);
+            window.removeEventListener("storage", refreshStudentApplication);
             window.removeEventListener("storage", refreshOrderHistory);
         };
     }, []);
 
     const updateSettings = (next: AccountSettings) => {
         setSettings(next);
-        localStorage.setItem("oneservice_profile_settings", JSON.stringify(next));
+        localStorage.setItem(
+            "oneservice_profile_settings",
+            JSON.stringify(next),
+        );
         setNotice("Your preferences have been saved.");
         window.setTimeout(() => setNotice(""), 2600);
     };
@@ -499,7 +639,9 @@ function ProfilePage() {
                 const difference =
                     getOrderTimestamp(a.date) - getOrderTimestamp(b.date);
 
-                return orderDateSort === "newest" ? -difference : difference;
+                return orderDateSort === "newest"
+                    ? -difference
+                    : difference;
             });
     }, [
         orderHistory,
@@ -527,9 +669,13 @@ function ProfilePage() {
 
     const application = professionalApplication;
     const seller = sellerApplication;
+    const vendor = vendorApplication;
+    const student = studentApplication;
 
     const applicationStatus = getApplicationStatus(application?.status);
     const sellerStatus = getApplicationStatus(seller?.status);
+    const vendorStatus = getApplicationStatus(vendor?.status);
+    const studentStatus = getApplicationStatus(student?.status);
 
     const sellerName =
         seller?.businessName ||
@@ -545,6 +691,30 @@ function ProfilePage() {
 
     const sellerReference =
         seller?.sellerId || seller?.applicationId || seller?.id || "Submitted";
+
+    const vendorName =
+        vendor?.businessName ||
+        vendor?.fullName ||
+        vendor?.name ||
+        "Vendor Account";
+
+    const vendorReference =
+        vendor?.vendorId || vendor?.id || "Submitted";
+
+    const studentName =
+        student?.fullName ||
+        student?.name ||
+        "Student Account";
+
+    const studentReference =
+        student?.studentId ||
+        student?.applicationId ||
+        student?.id ||
+        "Submitted";
+
+    const hasApplications = Boolean(
+        application || seller || vendor || student,
+    );
 
     return (
         <main className="profile-page">
@@ -574,7 +744,6 @@ function ProfilePage() {
                     </div>
                 )}
 
-                {/* Main dashboard */}
                 <div className="profile-dashboard-top">
                     <section className="profile-welcome-card">
                         <div className="profile-welcome-decoration" />
@@ -591,9 +760,9 @@ function ProfilePage() {
                             Welcome to <span>NEED ONE SERVICE</span>
                         </h2>
 
-                        {(displayName || user.name) && (
+                        {(displayName || user.name || user.fullName) && (
                             <p className="profile-greeting-name">
-                                Hello, {displayName || user.name}
+                                Hello, {displayName || user.name || user.fullName}
                             </p>
                         )}
 
@@ -633,204 +802,288 @@ function ProfilePage() {
                     </section>
 
                     <section className="profile-network-section">
-                        {/* Seller Hub has priority, then Professional Hub, then registration cards. */}
-                        {seller ? (
-                            <div className="professional-hub seller-hub">
-                                <div className="professional-hub-heading">
-                                    <div className="profile-section-heading">
-                                        <span className="profile-section-eyebrow">
-                                            YOUR SELLER ACCOUNT
-                                        </span>
-                                        <h2>Seller Hub</h2>
-                                        <p>
-                                            Your business registration and seller account
-                                            status.
-                                        </p>
-                                    </div>
-
-                                    <Link
-                                        to="/profile/seller-hub"
-                                        className="professional-hub-view-button"
-                                        aria-label="View your Seller Hub"
-                                        title="View your Seller Hub"
-                                    >
-                                        <Eye size={17} />
-                                    </Link>
+                        {hasApplications ? (
+                            <div className="profile-registered-accounts">
+                                <div className="profile-section-heading">
+                                    <span className="profile-section-eyebrow">
+                                        YOUR ONESERVICE NETWORK
+                                    </span>
+                                    <h2>Your Registered Accounts</h2>
+                                    <p>
+                                        View all the roles and applications linked to your account.
+                                    </p>
                                 </div>
 
-                                <div className="professional-hub-summary">
-                                    <div className="professional-hub-summary-main">
-                                        <div className="professional-hub-avatar">
-                                            <ShoppingBag size={24} />
-                                        </div>
+                                <div className="profile-network-grid">
+                                    {application && (
+                                        <article className="professional-hub" key="professional">
+                                            <div className="professional-hub-heading">
+                                                <div className="profile-section-heading">
+                                                    <span className="profile-section-eyebrow">
+                                                        YOUR PROFESSIONAL ACCOUNT
+                                                    </span>
+                                                    <h2>Professional Hub</h2>
+                                                    <p>Your professional application status.</p>
+                                                </div>
+                                                <Link
+                                                    to="/profile/professional-hub"
+                                                    className="professional-hub-view-button"
+                                                    aria-label="View your Professional Hub"
+                                                    title="View your Professional Hub"
+                                                >
+                                                    <Eye size={17} />
+                                                </Link>
+                                            </div>
 
-                                        <div className="professional-hub-identity">
-                                            <h3>{sellerName}</h3>
-                                            <p>
-                                                {seller.category ||
-                                                    seller.businessType ||
-                                                    "Registered Seller"}
-                                            </p>
+                                            <div className="professional-hub-summary">
+                                                <div className="professional-hub-summary-main">
+                                                    <div className="professional-hub-avatar">
+                                                        <Wrench size={24} />
+                                                    </div>
+                                                    <div className="professional-hub-identity">
+                                                        <h3>{application.fullName}</h3>
+                                                        <p>{application.category || "Professional applicant"}</p>
+                                                    </div>
+                                                    <span className={`professional-status professional-status-${applicationStatus.toLowerCase().replace(/\s+/g, "-")}`}>
+                                                        <span className="professional-status-dot" />
+                                                        {applicationStatus}
+                                                    </span>
+                                                </div>
 
-                                            {sellerOwnerName &&
-                                                sellerOwnerName !== sellerName && (
-                                                    <p>Owner: {sellerOwnerName}</p>
-                                                )}
-                                        </div>
+                                                <div className="professional-hub-reference">
+                                                    <span>Application ID</span>
+                                                    <strong>{application.id}</strong>
+                                                </div>
 
-                                        <span
-                                            className={`professional-status professional-status-${sellerStatus
-                                                .toLowerCase()
-                                                .replace(/\s+/g, "-")}`}
-                                        >
-                                            <span className="professional-status-dot" />
-                                            {sellerStatus}
-                                        </span>
-                                    </div>
+                                                <div className="professional-hub-summary-details">
+                                                    <div><Phone size={16} /><span>{application.mobile || "Not provided"}</span></div>
+                                                    <div><Mail size={16} /><span>{application.email || "Not provided"}</span></div>
+                                                    <div><MapPin size={16} /><span>{[application.city, application.state].filter(Boolean).join(", ") || "Location not provided"}</span></div>
+                                                </div>
 
-                                    <div className="professional-hub-reference">
-                                        <span>Seller Reference</span>
-                                        <strong>{sellerReference}</strong>
-                                    </div>
+                                                <Link to="/profile/professional-hub" className="professional-hub-open-link">
+                                                    <LayoutDashboard size={16} />
+                                                    View Your Account
+                                                    <ArrowRight size={16} />
+                                                </Link>
+                                            </div>
+                                        </article>
+                                    )}
 
-                                    <div className="professional-hub-summary-details">
-                                        <div>
-                                            <Phone size={16} />
-                                            <span>
-                                                {seller.mobile ||
-                                                    seller.phone ||
-                                                    "Not provided"}
-                                            </span>
-                                        </div>
+                                    {seller && (
+                                        <article className="professional-hub seller-hub" key="seller">
+                                            <div className="professional-hub-heading">
+                                                <div className="profile-section-heading">
+                                                    <span className="profile-section-eyebrow">
+                                                        YOUR SELLER ACCOUNT
+                                                    </span>
+                                                    <h2>Seller Hub</h2>
+                                                    <p>Your seller application status.</p>
+                                                </div>
+                                                <Link
+                                                    to="/profile/seller-hub"
+                                                    className="professional-hub-view-button"
+                                                    aria-label="View your Seller Hub"
+                                                    title="View your Seller Hub"
+                                                >
+                                                    <Eye size={17} />
+                                                </Link>
+                                            </div>
 
-                                        <div>
-                                            <Mail size={16} />
-                                            <span>
-                                                {seller.email || "Not provided"}
-                                            </span>
-                                        </div>
+                                            <div className="professional-hub-summary">
+                                                <div className="professional-hub-summary-main">
+                                                    <div className="professional-hub-avatar">
+                                                        <ShoppingBag size={24} />
+                                                    </div>
+                                                    <div className="professional-hub-identity">
+                                                        <h3>{sellerName}</h3>
+                                                        <p>{seller.category || seller.businessType || "Registered Seller"}</p>
+                                                        {sellerOwnerName && sellerOwnerName !== sellerName && (
+                                                            <p>Owner: {sellerOwnerName}</p>
+                                                        )}
+                                                    </div>
+                                                    <span className={`professional-status professional-status-${sellerStatus.toLowerCase().replace(/\s+/g, "-")}`}>
+                                                        <span className="professional-status-dot" />
+                                                        {sellerStatus}
+                                                    </span>
+                                                </div>
 
-                                        <div>
-                                            <MapPin size={16} />
-                                            <span>
-                                                {[seller.city, seller.state]
-                                                    .filter(Boolean)
-                                                    .join(", ") ||
-                                                    seller.address ||
-                                                    "Location not provided"}
-                                            </span>
-                                        </div>
-                                    </div>
+                                                <div className="professional-hub-reference">
+                                                    <span>Seller Reference</span>
+                                                    <strong>{sellerReference}</strong>
+                                                </div>
 
-                                    <Link
-                                        to="/seller-hub"
-                                        className="professional-hub-open-link"
-                                    >
-                                        <LayoutDashboard size={16} />
-                                        View Your Seller Account
-                                        <ArrowRight size={16} />
-                                    </Link>
+                                                <div className="professional-hub-summary-details">
+                                                    <div><Phone size={16} /><span>{seller.mobile || seller.phone || "Not provided"}</span></div>
+                                                    <div><Mail size={16} /><span>{seller.email || "Not provided"}</span></div>
+                                                    <div><MapPin size={16} /><span>{[seller.city, seller.state].filter(Boolean).join(", ") || seller.address || "Location not provided"}</span></div>
+                                                </div>
+
+                                                <Link to="/seller-hub" className="professional-hub-open-link">
+                                                    <LayoutDashboard size={16} />
+                                                    View Your Seller Account
+                                                    <ArrowRight size={16} />
+                                                </Link>
+                                            </div>
+                                        </article>
+                                    )}
+
+                                    {vendor && (
+                                        <article className="professional-hub" key="vendor">
+                                            <div className="professional-hub-heading">
+                                                <div className="profile-section-heading">
+                                                    <span className="profile-section-eyebrow">
+                                                        YOUR VENDOR ACCOUNT
+                                                    </span>
+                                                    <h2>Vendor Hub</h2>
+                                                    <p>Your vendor application status.</p>
+                                                </div>
+                                                <Link
+                                                    to="/vendor-hub"
+                                                    className="professional-hub-view-button"
+                                                    aria-label="View your Vendor Hub"
+                                                    title="View your Vendor Hub"
+                                                >
+                                                    <Eye size={17} />
+                                                </Link>
+                                            </div>
+
+                                            <div className="professional-hub-summary">
+                                                <div className="professional-hub-summary-main">
+                                                    <div className="professional-hub-avatar">
+                                                        <Store size={24} />
+                                                    </div>
+                                                    <div className="professional-hub-identity">
+                                                        <h3>{vendorName}</h3>
+                                                        <p>{vendor.businessCategory || vendor.businessType || "Registered Vendor"}</p>
+                                                    </div>
+                                                    <span className={`professional-status professional-status-${vendorStatus.toLowerCase().replace(/\s+/g, "-")}`}>
+                                                        <span className="professional-status-dot" />
+                                                        {vendorStatus}
+                                                    </span>
+                                                </div>
+
+                                                <div className="professional-hub-reference">
+                                                    <span>Vendor Reference</span>
+                                                    <strong>{vendorReference}</strong>
+                                                </div>
+
+                                                <div className="professional-hub-summary-details">
+                                                    <div><Phone size={16} /><span>{vendor.mobile || vendor.phone || "Not provided"}</span></div>
+                                                    <div><Mail size={16} /><span>{vendor.email || "Not provided"}</span></div>
+                                                    <div><MapPin size={16} /><span>{[vendor.city, vendor.state].filter(Boolean).join(", ") || vendor.businessAddress || "Location not provided"}</span></div>
+                                                </div>
+
+                                                <Link to="/vendor-hub" className="professional-hub-open-link">
+                                                    <LayoutDashboard size={16} />
+                                                    View Your Vendor Account
+                                                    <ArrowRight size={16} />
+                                                </Link>
+                                            </div>
+                                        </article>
+                                    )}
+
+                                    {student && (
+                                        <article className="professional-hub" key="student">
+                                            <div className="professional-hub-heading">
+                                                <div className="profile-section-heading">
+                                                    <span className="profile-section-eyebrow">
+                                                        YOUR STUDENT ACCOUNT
+                                                    </span>
+                                                    <h2>Student Hub</h2>
+                                                    <p>Your student registration status.</p>
+                                                </div>
+                                                <Link
+                                                    to="/student-hub"
+                                                    className="professional-hub-view-button"
+                                                    aria-label="View your Student Hub"
+                                                    title="View your Student Hub"
+                                                >
+                                                    <Eye size={17} />
+                                                </Link>
+                                            </div>
+
+                                            <div className="professional-hub-summary">
+                                                <div className="professional-hub-summary-main">
+                                                    <div className="professional-hub-avatar">
+                                                        <GraduationCap size={24} />
+                                                    </div>
+                                                    <div className="professional-hub-identity">
+                                                        <h3>{studentName}</h3>
+                                                        <p>Registered Student</p>
+                                                    </div>
+                                                    <span className={`professional-status professional-status-${studentStatus.toLowerCase().replace(/\s+/g, "-")}`}>
+                                                        <span className="professional-status-dot" />
+                                                        {studentStatus}
+                                                    </span>
+                                                </div>
+
+                                                <div className="professional-hub-reference">
+                                                    <span>Student Reference</span>
+                                                    <strong>{studentReference}</strong>
+                                                </div>
+
+                                                <div className="professional-hub-summary-details">
+                                                    <div><Phone size={16} /><span>{student.mobile || student.phone || "Not provided"}</span></div>
+                                                    <div><Mail size={16} /><span>{student.email || "Not provided"}</span></div>
+                                                    <div><MapPin size={16} /><span>{[student.city, student.state].filter(Boolean).join(", ") || "Location not provided"}</span></div>
+                                                </div>
+
+                                                <Link to="/student-hub" className="professional-hub-open-link">
+                                                    <LayoutDashboard size={16} />
+                                                    View Your Student Account
+                                                    <ArrowRight size={16} />
+                                                </Link>
+                                            </div>
+                                        </article>
+                                    )}
                                 </div>
-                            </div>
-                        ) : application ? (
-                            <div className="professional-hub">
-                                <div className="professional-hub-heading">
-                                    <div className="profile-section-heading">
-                                        <span className="profile-section-eyebrow">
-                                            YOUR PROFESSIONAL ACCOUNT
-                                        </span>
-                                        <h2>Professional Hub</h2>
-                                        <p>
-                                            Your professional account and application
-                                            status.
-                                        </p>
-                                    </div>
 
-                                    <Link
-                                        to="/profile/professional-hub"
-                                        className="professional-hub-view-button"
-                                        aria-label="View your Professional Hub"
-                                        title="View your Professional Hub"
-                                    >
-                                        <Eye size={17} />
-                                    </Link>
+                                <div className="profile-section-heading profile-add-another-role">
+                                    <h2>Join in another role</h2>
+                                    <p>You can register for more than one OneService opportunity.</p>
                                 </div>
 
-                                <div className="professional-hub-summary">
-                                    <div className="professional-hub-summary-main">
-                                        <div className="professional-hub-avatar">
-                                            <Wrench size={24} />
-                                        </div>
+                                <div className="profile-network-grid">
+                                    {NETWORK_OPTIONS.filter((option) => {
+                                        const title = option.title.toLowerCase();
+                                        return !(
+                                            (title === "professional" && application) ||
+                                            (title === "seller" && seller) ||
+                                            (title === "vendor" && vendor) ||
+                                            (title === "student" && student)
+                                        );
+                                    }).map((option) => {
+                                        const Icon = option.icon;
 
-                                        <div className="professional-hub-identity">
-                                            <h3>{application.fullName}</h3>
-                                            <p>
-                                                {application.category ||
-                                                    "Professional applicant"}
-                                            </p>
-                                        </div>
-
-                                        <span
-                                            className={`professional-status professional-status-${applicationStatus
-                                                .toLowerCase()
-                                                .replace(/\s+/g, "-")}`}
-                                        >
-                                            <span className="professional-status-dot" />
-                                            {applicationStatus}
-                                        </span>
-                                    </div>
-
-                                    <div className="professional-hub-reference">
-                                        <span>Application ID</span>
-                                        <strong>{application.id}</strong>
-                                    </div>
-
-                                    <div className="professional-hub-summary-details">
-                                        <div>
-                                            <Phone size={16} />
-                                            <span>
-                                                {application.mobile || "Not provided"}
-                                            </span>
-                                        </div>
-
-                                        <div>
-                                            <Mail size={16} />
-                                            <span>
-                                                {application.email || "Not provided"}
-                                            </span>
-                                        </div>
-
-                                        <div>
-                                            <MapPin size={16} />
-                                            <span>
-                                                {[application.city, application.state]
-                                                    .filter(Boolean)
-                                                    .join(", ") ||
-                                                    "Location not provided"}
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    <Link
-                                        to="/profile/professional-hub"
-                                        className="professional-hub-open-link"
-                                    >
-                                        <LayoutDashboard size={16} />
-                                        View Your Account
-                                        <ArrowRight size={16} />
-                                    </Link>
+                                        return (
+                                            <Link
+                                                to={option.path}
+                                                className="profile-network-card"
+                                                key={option.title}
+                                            >
+                                                <div className="profile-network-card-top">
+                                                    <span className="profile-network-icon">
+                                                        <Icon size={20} strokeWidth={1.8} />
+                                                    </span>
+                                                    <ArrowRight className="profile-network-arrow" size={17} />
+                                                </div>
+                                                <h3>Join as a {option.title}</h3>
+                                                <p>{option.description}</p>
+                                                <span className="profile-network-link">
+                                                    Get started <ArrowRight size={14} />
+                                                </span>
+                                            </Link>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         ) : (
                             <>
                                 <div className="profile-section-heading">
-                                    <span className="profile-section-eyebrow">
-                                        GROW WITH US
-                                    </span>
+                                    <span className="profile-section-eyebrow">GROW WITH US</span>
                                     <h2>Join the OneService Network</h2>
-                                    <p>
-                                        Choose how you want to be part of our community.
-                                    </p>
+                                    <p>Choose how you want to be part of our community.</p>
                                 </div>
 
                                 <div className="profile-network-grid">
@@ -845,21 +1098,12 @@ function ProfilePage() {
                                             >
                                                 <div className="profile-network-card-top">
                                                     <span className="profile-network-icon">
-                                                        <Icon
-                                                            size={20}
-                                                            strokeWidth={1.8}
-                                                        />
+                                                        <Icon size={20} strokeWidth={1.8} />
                                                     </span>
-
-                                                    <ArrowRight
-                                                        className="profile-network-arrow"
-                                                        size={17}
-                                                    />
+                                                    <ArrowRight className="profile-network-arrow" size={17} />
                                                 </div>
-
                                                 <h3>Join as a {option.title}</h3>
                                                 <p>{option.description}</p>
-
                                                 <span className="profile-network-link">
                                                     Get started <ArrowRight size={14} />
                                                 </span>
@@ -873,11 +1117,7 @@ function ProfilePage() {
                 </div>
 
                 {/* Order History */}
-                <section
-                    className={`profile-content-section profile-order-section ${
-                        showAllOrders ? "profile-order-section-expanded" : ""
-                    }`}
-                >
+                <section className={`profile-content-section profile-order-section ${showAllOrders ? "profile-order-section-expanded" : ""}`}>
                     <div className="profile-order-heading-row">
                         <div className="profile-content-heading">
                             <div className="profile-heading-icon">
@@ -885,9 +1125,7 @@ function ProfilePage() {
                             </div>
                             <div>
                                 <h2>Order History</h2>
-                                <p>
-                                    Keep track of your service bookings and product orders.
-                                </p>
+                                <p>Keep track of your service bookings and product orders.</p>
                             </div>
                         </div>
 
@@ -897,36 +1135,23 @@ function ProfilePage() {
                                 <input
                                     type="search"
                                     value={orderSearch}
-                                    onChange={(event) =>
-                                        setOrderSearch(event.target.value)
-                                    }
+                                    onChange={(event) => setOrderSearch(event.target.value)}
                                     placeholder="Search orders..."
                                     aria-label="Search orders by name or ID"
                                 />
-
                                 {orderSearch && (
-                                    <button
-                                        type="button"
-                                        onClick={() => setOrderSearch("")}
-                                        aria-label="Clear search"
-                                    >
+                                    <button type="button" onClick={() => setOrderSearch("")} aria-label="Clear search">
                                         <X size={15} />
                                     </button>
                                 )}
                             </div>
 
                             <div className="profile-order-filter-field">
-                                <label htmlFor="profile-order-type">
-                                    Order type
-                                </label>
+                                <label htmlFor="profile-order-type">Order type</label>
                                 <select
                                     id="profile-order-type"
                                     value={orderTypeFilter}
-                                    onChange={(event) =>
-                                        setOrderTypeFilter(
-                                            event.target.value as OrderTypeFilter
-                                        )
-                                    }
+                                    onChange={(event) => setOrderTypeFilter(event.target.value as OrderTypeFilter)}
                                 >
                                     <option value="all">All orders</option>
                                     <option value="service">Service bookings</option>
@@ -939,15 +1164,10 @@ function ProfilePage() {
                                 <select
                                     id="profile-order-status"
                                     value={orderStatusFilter}
-                                    onChange={(event) =>
-                                        setOrderStatusFilter(event.target.value)
-                                    }
+                                    onChange={(event) => setOrderStatusFilter(event.target.value)}
                                 >
                                     {ORDER_STATUS_OPTIONS.map((option) => (
-                                        <option
-                                            key={option.value}
-                                            value={option.value}
-                                        >
+                                        <option key={option.value} value={option.value}>
                                             {option.label}
                                         </option>
                                     ))}
@@ -955,17 +1175,11 @@ function ProfilePage() {
                             </div>
 
                             <div className="profile-order-filter-field">
-                                <label htmlFor="profile-order-sort">
-                                    Sort by date
-                                </label>
+                                <label htmlFor="profile-order-sort">Sort by date</label>
                                 <select
                                     id="profile-order-sort"
                                     value={orderDateSort}
-                                    onChange={(event) =>
-                                        setOrderDateSort(
-                                            event.target.value as OrderDateSort
-                                        )
-                                    }
+                                    onChange={(event) => setOrderDateSort(event.target.value as OrderDateSort)}
                                 >
                                     <option value="newest">Newest first</option>
                                     <option value="oldest">Oldest first</option>
@@ -988,9 +1202,7 @@ function ProfilePage() {
                             <span>
                                 Showing <strong>{visibleOrders.length}</strong> of{" "}
                                 <strong>{filteredOrders.length}</strong>{" "}
-                                {filteredOrders.length === 1
-                                    ? "matching order"
-                                    : "matching orders"}
+                                {filteredOrders.length === 1 ? "matching order" : "matching orders"}
                             </span>
 
                             {orderHistory.length > 0 && (
@@ -1008,9 +1220,8 @@ function ProfilePage() {
                                 <div className="profile-order-empty-copy">
                                     <h3>Your orders will appear here</h3>
                                     <p>
-                                        Once you book a service or place a product
-                                        order, you can view its details and track
-                                        its status here.
+                                        Once you book a service or place a product order,
+                                        you can view its details and track its status here.
                                     </p>
                                 </div>
                             </div>
@@ -1020,15 +1231,8 @@ function ProfilePage() {
                                     <Search size={25} />
                                 </div>
                                 <h3>No matching orders</h3>
-                                <p>
-                                    Try changing your search or selecting different
-                                    filters.
-                                </p>
-                                <button
-                                    type="button"
-                                    className="profile-outline-button"
-                                    onClick={clearOrderFilters}
-                                >
+                                <p>Try changing your search or selecting different filters.</p>
+                                <button type="button" className="profile-outline-button" onClick={clearOrderFilters}>
                                     Clear filters
                                 </button>
                             </div>
@@ -1036,52 +1240,24 @@ function ProfilePage() {
                             <div className="profile-order-list">
                                 <div className="profile-order-items">
                                     {visibleOrders.map((order) => {
-                                        const isService = [
-                                            "service",
-                                            "booking",
-                                        ].includes(
-                                            (order.type ?? "").toLowerCase()
+                                        const isService = ["service", "booking"].includes(
+                                            (order.type ?? "").toLowerCase(),
                                         );
-
-                                        const amount =
-                                            order.amount === undefined
-                                                ? ""
-                                                : formatOrderAmount(order.amount);
+                                        const amount = order.amount === undefined ? "" : formatOrderAmount(order.amount);
 
                                         return (
-                                            <article
-                                                className="profile-order-item"
-                                                key={order.id}
-                                            >
+                                            <article className="profile-order-item" key={order.id}>
                                                 <div className="profile-order-item-icon">
-                                                    {isService ? (
-                                                        <Wrench size={21} />
-                                                    ) : (
-                                                        <Package size={21} />
-                                                    )}
+                                                    {isService ? <Wrench size={21} /> : <Package size={21} />}
                                                 </div>
-
                                                 <div className="profile-order-item-details">
                                                     <h4>{order.title}</h4>
                                                     <p>Order ID: {order.id}</p>
-
-                                                    {order.date && (
-                                                        <p>
-                                                            {formatOrderDate(order.date)}
-                                                        </p>
-                                                    )}
-
-                                                    <p>
-                                                        {isService
-                                                            ? "Service booking"
-                                                            : "Product order"}
-                                                    </p>
+                                                    {order.date && <p>{formatOrderDate(order.date)}</p>}
+                                                    <p>{isService ? "Service booking" : "Product order"}</p>
                                                 </div>
-
                                                 <div className="profile-order-item-meta">
-                                                    <span className="profile-order-status">
-                                                        {order.status}
-                                                    </span>
+                                                    <span className="profile-order-status">{order.status}</span>
                                                     {amount && <strong>{amount}</strong>}
                                                 </div>
                                             </article>
@@ -1097,7 +1273,6 @@ function ProfilePage() {
                             Showing {visibleOrders.length} of {filteredOrders.length}{" "}
                             {filteredOrders.length === 1 ? "order" : "orders"}
                         </span>
-
                         <button
                             type="button"
                             className="profile-outline-button profile-view-all-orders"
@@ -1106,14 +1281,7 @@ function ProfilePage() {
                             disabled={filteredOrders.length === 0}
                         >
                             {showAllOrders ? "Show Less" : "View All"}
-                            <ChevronRight
-                                size={17}
-                                className={
-                                    showAllOrders
-                                        ? "profile-orders-chevron-open"
-                                        : ""
-                                }
-                            />
+                            <ChevronRight size={17} className={showAllOrders ? "profile-orders-chevron-open" : ""} />
                         </button>
                     </div>
                 </section>
@@ -1126,9 +1294,7 @@ function ProfilePage() {
                         </div>
                         <div>
                             <h2>Settings</h2>
-                            <p>
-                                Personalise your account and manage your preferences.
-                            </p>
+                            <p>Personalise your account and manage your preferences.</p>
                         </div>
                     </div>
 
@@ -1136,14 +1302,8 @@ function ProfilePage() {
                         <div className="profile-settings-group">
                             <h3>Account</h3>
 
-                            <button
-                                type="button"
-                                className="profile-setting-row"
-                                onClick={() => setActiveModal("personal")}
-                            >
-                                <span className="profile-setting-icon">
-                                    <UserCog size={19} />
-                                </span>
+                            <button type="button" className="profile-setting-row" onClick={() => setActiveModal("personal")}>
+                                <span className="profile-setting-icon"><UserCog size={19} /></span>
                                 <span className="profile-setting-copy">
                                     <strong>Personal details</strong>
                                     <small>Update your name and email address</small>
@@ -1151,37 +1311,20 @@ function ProfilePage() {
                                 <ChevronRight size={18} />
                             </button>
 
-                            <button
-                                type="button"
-                                className="profile-setting-row"
-                                onClick={() => setActiveModal("address")}
-                            >
-                                <span className="profile-setting-icon">
-                                    <MapPin size={19} />
-                                </span>
+                            <button type="button" className="profile-setting-row" onClick={() => setActiveModal("address")}>
+                                <span className="profile-setting-icon"><MapPin size={19} /></span>
                                 <span className="profile-setting-copy">
                                     <strong>Saved address</strong>
-                                    <small>
-                                        {savedAddress ||
-                                            "Add your preferred service address"}
-                                    </small>
+                                    <small>{savedAddress || "Add your preferred service address"}</small>
                                 </span>
                                 <ChevronRight size={18} />
                             </button>
 
-                            <button
-                                type="button"
-                                className="profile-setting-row"
-                                onClick={() => setActiveModal("privacy")}
-                            >
-                                <span className="profile-setting-icon">
-                                    <LockKeyhole size={19} />
-                                </span>
+                            <button type="button" className="profile-setting-row" onClick={() => setActiveModal("privacy")}>
+                                <span className="profile-setting-icon"><LockKeyhole size={19} /></span>
                                 <span className="profile-setting-copy">
                                     <strong>Privacy and security</strong>
-                                    <small>
-                                        Review account and privacy information
-                                    </small>
+                                    <small>Review account and privacy information</small>
                                 </span>
                                 <ChevronRight size={18} />
                             </button>
@@ -1191,89 +1334,34 @@ function ProfilePage() {
                             <h3>Preferences</h3>
 
                             <div className="profile-setting-row">
-                                <span className="profile-setting-icon">
-                                    <Bell size={19} />
-                                </span>
+                                <span className="profile-setting-icon"><Bell size={19} /></span>
                                 <span className="profile-setting-copy">
                                     <strong>Service updates</strong>
-                                    <small>
-                                        Receive important service notifications
-                                    </small>
+                                    <small>Receive important service notifications</small>
                                 </span>
-                                <button
-                                    type="button"
-                                    role="switch"
-                                    aria-checked={settings.serviceUpdates}
-                                    aria-label="Service updates"
-                                    className={`profile-toggle ${
-                                        settings.serviceUpdates ? "is-on" : ""
-                                    }`}
-                                    onClick={() =>
-                                        updateSettings({
-                                            ...settings,
-                                            serviceUpdates: !settings.serviceUpdates,
-                                        })
-                                    }
-                                >
+                                <button type="button" role="switch" aria-checked={settings.serviceUpdates} aria-label="Service updates" className={`profile-toggle ${settings.serviceUpdates ? "is-on" : ""}`} onClick={() => updateSettings({ ...settings, serviceUpdates: !settings.serviceUpdates })}>
                                     <span />
                                 </button>
                             </div>
 
                             <div className="profile-setting-row">
-                                <span className="profile-setting-icon">
-                                    <Package size={19} />
-                                </span>
+                                <span className="profile-setting-icon"><Package size={19} /></span>
                                 <span className="profile-setting-copy">
                                     <strong>Order notifications</strong>
-                                    <small>
-                                        Updates about bookings and product orders
-                                    </small>
+                                    <small>Updates about bookings and product orders</small>
                                 </span>
-                                <button
-                                    type="button"
-                                    role="switch"
-                                    aria-checked={settings.orderUpdates}
-                                    aria-label="Order notifications"
-                                    className={`profile-toggle ${
-                                        settings.orderUpdates ? "is-on" : ""
-                                    }`}
-                                    onClick={() =>
-                                        updateSettings({
-                                            ...settings,
-                                            orderUpdates: !settings.orderUpdates,
-                                        })
-                                    }
-                                >
+                                <button type="button" role="switch" aria-checked={settings.orderUpdates} aria-label="Order notifications" className={`profile-toggle ${settings.orderUpdates ? "is-on" : ""}`} onClick={() => updateSettings({ ...settings, orderUpdates: !settings.orderUpdates })}>
                                     <span />
                                 </button>
                             </div>
 
                             <div className="profile-setting-row">
-                                <span className="profile-setting-icon">
-                                    <Bell size={19} />
-                                </span>
+                                <span className="profile-setting-icon"><Bell size={19} /></span>
                                 <span className="profile-setting-copy">
                                     <strong>Offers and promotions</strong>
-                                    <small>
-                                        Hear about offers and new services
-                                    </small>
+                                    <small>Hear about offers and new services</small>
                                 </span>
-                                <button
-                                    type="button"
-                                    role="switch"
-                                    aria-checked={settings.promotionalUpdates}
-                                    aria-label="Offers and promotions"
-                                    className={`profile-toggle ${
-                                        settings.promotionalUpdates ? "is-on" : ""
-                                    }`}
-                                    onClick={() =>
-                                        updateSettings({
-                                            ...settings,
-                                            promotionalUpdates:
-                                                !settings.promotionalUpdates,
-                                        })
-                                    }
-                                >
+                                <button type="button" role="switch" aria-checked={settings.promotionalUpdates} aria-label="Offers and promotions" className={`profile-toggle ${settings.promotionalUpdates ? "is-on" : ""}`} onClick={() => updateSettings({ ...settings, promotionalUpdates: !settings.promotionalUpdates })}>
                                     <span />
                                 </button>
                             </div>
@@ -1282,36 +1370,20 @@ function ProfilePage() {
                         <div className="profile-settings-group profile-support-group">
                             <h3>Support</h3>
 
-                            <button
-                                type="button"
-                                className="profile-setting-row"
-                                onClick={() => setActiveModal("help")}
-                            >
-                                <span className="profile-setting-icon">
-                                    <CircleHelp size={19} />
-                                </span>
+                            <button type="button" className="profile-setting-row" onClick={() => setActiveModal("help")}>
+                                <span className="profile-setting-icon"><CircleHelp size={19} /></span>
                                 <span className="profile-setting-copy">
                                     <strong>Help and support</strong>
-                                    <small>
-                                        Get help with your OneService account
-                                    </small>
+                                    <small>Get help with your OneService account</small>
                                 </span>
                                 <ChevronRight size={18} />
                             </button>
 
-                            <button
-                                type="button"
-                                className="profile-setting-row profile-logout-row"
-                                onClick={handleLogout}
-                            >
-                                <span className="profile-setting-icon">
-                                    <LogOut size={19} />
-                                </span>
+                            <button type="button" className="profile-setting-row profile-logout-row" onClick={handleLogout}>
+                                <span className="profile-setting-icon"><LogOut size={19} /></span>
                                 <span className="profile-setting-copy">
                                     <strong>Logout</strong>
-                                    <small>
-                                        Sign out of your OneService account
-                                    </small>
+                                    <small>Sign out of your OneService account</small>
                                 </span>
                                 <ChevronRight size={18} />
                             </button>
@@ -1335,89 +1407,34 @@ function ProfilePage() {
                         }
                     }}
                 >
-                    <section
-                        className="profile-modal"
-                        role="dialog"
-                        aria-modal="true"
-                        aria-labelledby="profile-modal-title"
-                    >
+                    <section className="profile-modal" role="dialog" aria-modal="true" aria-labelledby="profile-modal-title">
                         <div className="profile-modal-header">
                             <div>
-                                <span className="profile-section-eyebrow">
-                                    ACCOUNT SETTINGS
-                                </span>
+                                <span className="profile-section-eyebrow">ACCOUNT SETTINGS</span>
                                 <h2 id="profile-modal-title">
                                     {activeModal === "personal" && "Personal details"}
                                     {activeModal === "address" && "Saved address"}
-                                    {activeModal === "privacy" &&
-                                        "Privacy and security"}
+                                    {activeModal === "privacy" && "Privacy and security"}
                                     {activeModal === "help" && "Help and support"}
                                 </h2>
                             </div>
-
-                            <button
-                                type="button"
-                                className="profile-modal-close"
-                                aria-label="Close dialog"
-                                onClick={() => setActiveModal(null)}
-                            >
+                            <button type="button" className="profile-modal-close" aria-label="Close dialog" onClick={() => setActiveModal(null)}>
                                 <X size={20} />
                             </button>
                         </div>
 
                         {activeModal === "personal" && (
                             <div className="profile-modal-body">
-                                <label
-                                    className="profile-form-label"
-                                    htmlFor="profile-name"
-                                >
-                                    Full name
-                                </label>
-                                <input
-                                    id="profile-name"
-                                    className="profile-form-input"
-                                    value={displayName}
-                                    onChange={(event) =>
-                                        setDisplayName(event.target.value)
-                                    }
-                                    placeholder="Enter your full name"
-                                />
+                                <label className="profile-form-label" htmlFor="profile-name">Full name</label>
+                                <input id="profile-name" className="profile-form-input" value={displayName} onChange={(event) => setDisplayName(event.target.value)} placeholder="Enter your full name" />
 
-                                <label
-                                    className="profile-form-label"
-                                    htmlFor="profile-email"
-                                >
-                                    Email address
-                                </label>
-                                <input
-                                    id="profile-email"
-                                    type="email"
-                                    className="profile-form-input"
-                                    value={email}
-                                    onChange={(event) =>
-                                        setEmail(event.target.value)
-                                    }
-                                    placeholder="Enter your email address"
-                                />
+                                <label className="profile-form-label" htmlFor="profile-email">Email address</label>
+                                <input id="profile-email" type="email" className="profile-form-input" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="Enter your email address" />
 
-                                <label
-                                    className="profile-form-label"
-                                    htmlFor="profile-mobile"
-                                >
-                                    Registered mobile number
-                                </label>
-                                <input
-                                    id="profile-mobile"
-                                    className="profile-form-input is-readonly"
-                                    value={`+91 ${user.mobile}`}
-                                    readOnly
-                                />
+                                <label className="profile-form-label" htmlFor="profile-mobile">Registered mobile number</label>
+                                <input id="profile-mobile" className="profile-form-input is-readonly" value={`+91 ${user.mobile}`} readOnly />
 
-                                <button
-                                    type="button"
-                                    className="profile-primary-button profile-modal-submit"
-                                    onClick={handlePersonalSave}
-                                >
+                                <button type="button" className="profile-primary-button profile-modal-submit" onClick={handlePersonalSave}>
                                     Save details <Check size={17} />
                                 </button>
                             </div>
@@ -1426,33 +1443,11 @@ function ProfilePage() {
                         {activeModal === "address" && (
                             <div className="profile-modal-body">
                                 <p className="profile-modal-description">
-                                    Add the address you usually use for home services
-                                    and deliveries.
+                                    Add the address you usually use for home services and deliveries.
                                 </p>
-
-                                <label
-                                    className="profile-form-label"
-                                    htmlFor="profile-address"
-                                >
-                                    Complete address
-                                </label>
-                                <textarea
-                                    id="profile-address"
-                                    className="profile-form-input profile-address-input"
-                                    value={address}
-                                    onChange={(event) =>
-                                        setAddress(event.target.value)
-                                    }
-                                    placeholder="House/flat, street, area, city and PIN code"
-                                    rows={4}
-                                />
-
-                                <button
-                                    type="button"
-                                    className="profile-primary-button profile-modal-submit"
-                                    disabled={!address.trim()}
-                                    onClick={handleAddressSave}
-                                >
+                                <label className="profile-form-label" htmlFor="profile-address">Complete address</label>
+                                <textarea id="profile-address" className="profile-form-input profile-address-input" value={address} onChange={(event) => setAddress(event.target.value)} placeholder="House/flat, street, area, city and PIN code" rows={4} />
+                                <button type="button" className="profile-primary-button profile-modal-submit" disabled={!address.trim()} onClick={handleAddressSave}>
                                     Save address <Check size={17} />
                                 </button>
                             </div>
@@ -1465,13 +1460,10 @@ function ProfilePage() {
                                     <div>
                                         <strong>Account protection</strong>
                                         <p>
-                                            Your account is currently signed in on this
-                                            device. Keep your login details private and
-                                            sign out when using a shared device.
+                                            Your account is currently signed in on this device. Keep your login details private and sign out when using a shared device.
                                         </p>
                                     </div>
                                 </div>
-
                                 <div className="profile-info-panel">
                                     <Phone size={22} />
                                     <div>
@@ -1484,10 +1476,8 @@ function ProfilePage() {
                                         </small>
                                     </div>
                                 </div>
-
                                 <p className="profile-modal-description">
-                                    This frontend page does not change server-side
-                                    security, password, or authentication settings.
+                                    This frontend page does not change server-side security, password, or authentication settings.
                                 </p>
                             </div>
                         )}
@@ -1498,28 +1488,17 @@ function ProfilePage() {
                                     <CircleHelp size={23} />
                                     <div>
                                         <strong>Need help with OneService?</strong>
-                                        <p>
-                                            For booking, order or account assistance,
-                                            visit our Contact page.
-                                        </p>
-                                        <Link
-                                            to="/contact"
-                                            className="profile-modal-text-link"
-                                            onClick={() => setActiveModal(null)}
-                                        >
+                                        <p>For booking, order or account assistance, visit our Contact page.</p>
+                                        <Link to="/contact" className="profile-modal-text-link" onClick={() => setActiveModal(null)}>
                                             Contact OneService <ArrowRight size={15} />
                                         </Link>
                                     </div>
                                 </div>
-
                                 <div className="profile-info-panel">
                                     <MapPin size={22} />
                                     <div>
                                         <strong>Before booking</strong>
-                                        <p>
-                                            Keep your contact number and service address
-                                            up to date so providers can reach you.
-                                        </p>
+                                        <p>Keep your contact number and service address up to date so providers can reach you.</p>
                                     </div>
                                 </div>
                             </div>

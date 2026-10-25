@@ -1,4 +1,3 @@
-
 import {
   useEffect,
   useLayoutEffect,
@@ -46,6 +45,7 @@ import ProfessionalHubPage from "./pages/ProfessionalHub";
 import SellerHub from "./pages/SellerHub";
 import SellerProductsPage from "./pages/SellerProductsPage";
 import VendorHub from "./pages/VendorHub";
+import StudentHub from "./pages/StudentHub";
 
 import HomeAppliancesPage from "./pages/HomeAppliancesPage";
 import HomeServicesPage from "./pages/HomeServicesPage";
@@ -220,159 +220,8 @@ const homeServiceCards = [
 ];
 
 /* =========================================================
-   WORKSPACE ROLE DETECTION
-========================================================= */
-
-type WorkspaceRole =
-  | "professional"
-  | "seller"
-  | "vendor"
-  | "student"
-  | "tutor";
-
-type WorkspaceInfo = {
-  role: WorkspaceRole;
-  label: string;
-  path: string;
-};
-
-/*
- * Seller Hub already exists at /seller-hub.
- * Professional Hub already exists at /profile/professional-hub.
- *
- * Vendor, Student and Tutor routes are included in the role
- * configuration but require their own dashboard components
- * before their pages can be opened successfully.
- */
-
-const WORKSPACE_ROUTES: Record<WorkspaceRole, WorkspaceInfo> = {
-  professional: {
-    role: "professional",
-    label: "Professional Hub",
-    path: "/profile/professional-hub",
-  },
-  seller: {
-    role: "seller",
-    label: "Seller Hub",
-    path: "/seller-hub",
-  },
-  vendor: {
-    role: "vendor",
-    label: "Vendor Hub",
-    path: "/profile/vendor-hub",
-  },
-  student: {
-    role: "student",
-    label: "Student Hub",
-    path: "/profile/student-hub",
-  },
-  tutor: {
-    role: "tutor",
-    label: "Tutor Hub",
-    path: "/profile/tutor-hub",
-  },
-};
-
-const REGISTRATION_KEYS: {
-  key: string;
-  role: WorkspaceRole;
-}[] = [
-  {
-    key: "oneservice_professional_application",
-    role: "professional",
-  },
-  {
-    key: "oneservice_seller_application",
-    role: "seller",
-  },
-  {
-    key: "oneservice_partner_application",
-    role: "seller",
-  },
-  {
-    key: "oneservice_vendor_application",
-    role: "vendor",
-  },
-  {
-    key: "oneservice_student_application",
-    role: "student",
-  },
-  {
-    key: "oneservice_tutor_application",
-    role: "tutor",
-  },
-];
-
-/**
- * Returns true when a registration key contains a non-empty
- * JSON object. Invalid JSON and empty objects are ignored.
- */
-function hasSavedApplication(key: string): boolean {
-  try {
-    const raw = localStorage.getItem(key);
-
-    if (!raw) return false;
-
-    const application: unknown = JSON.parse(raw);
-
-    return (
-      application !== null &&
-      typeof application === "object" &&
-      !Array.isArray(application) &&
-      Object.keys(application).length > 0
-    );
-  } catch {
-    return false;
-  }
-}
-
-/**
- * Workspace selection priority:
- *
- * 1. Explicitly saved oneservice_workspace_role.
- * 2. Existing registration keys for backward compatibility.
- *
- * When an existing registration is detected, save the role
- * so future visits use the same workspace.
- */
-function readWorkspaceRole(): WorkspaceInfo | null {
-  try {
-    const savedRole = localStorage
-      .getItem("oneservice_workspace_role")
-      ?.toLowerCase()
-      .trim();
-
-    if (
-      savedRole &&
-      Object.prototype.hasOwnProperty.call(
-        WORKSPACE_ROUTES,
-        savedRole,
-      )
-    ) {
-      return WORKSPACE_ROUTES[savedRole as WorkspaceRole];
-    }
-
-    for (const registration of REGISTRATION_KEYS) {
-      if (!hasSavedApplication(registration.key)) {
-        continue;
-      }
-
-      localStorage.setItem(
-        "oneservice_workspace_role",
-        registration.role,
-      );
-
-      return WORKSPACE_ROUTES[registration.role];
-    }
-  } catch {
-    // Do not crash if browser storage is unavailable.
-  }
-
-  return null;
-}
-
-/* =========================================================
    NAVBAR
+   Join Our Network is always visible, including after login.
 ========================================================= */
 
 function Navbar() {
@@ -382,58 +231,41 @@ function Navbar() {
     Boolean(localStorage.getItem("oneservice_user")),
   );
 
-  const [workspace, setWorkspace] =
-    useState<WorkspaceInfo | null>(() => readWorkspaceRole());
-
   const networkRef = useRef<HTMLDivElement>(null);
 
   /*
-   * Update authentication and workspace state when a user
-   * logs in, registers, changes workspace or logs out.
+   * Refresh login state after login/logout events.
+   * Workspace role does not affect the navbar anymore.
    */
   useEffect(() => {
     const updateNavbar = () => {
       setIsLoggedIn(
         Boolean(localStorage.getItem("oneservice_user")),
       );
-
-      setWorkspace(readWorkspaceRole());
     };
 
-    window.addEventListener(
+    const eventNames = [
       "oneservice-auth-change",
-      updateNavbar,
-    );
-
-    window.addEventListener(
       "oneservice-workspace-change",
-      updateNavbar,
-    );
-
-    window.addEventListener(
       "oneservice-professional-change",
-      updateNavbar,
-    );
+      "oneservice-seller-change",
+      "oneservice-vendor-change",
+      "oneservice-student-change",
+      "oneservice-tutor-change",
+    ];
+
+    eventNames.forEach((eventName) => {
+      window.addEventListener(eventName, updateNavbar);
+    });
 
     window.addEventListener("storage", updateNavbar);
 
     updateNavbar();
 
     return () => {
-      window.removeEventListener(
-        "oneservice-auth-change",
-        updateNavbar,
-      );
-
-      window.removeEventListener(
-        "oneservice-workspace-change",
-        updateNavbar,
-      );
-
-      window.removeEventListener(
-        "oneservice-professional-change",
-        updateNavbar,
-      );
+      eventNames.forEach((eventName) => {
+        window.removeEventListener(eventName, updateNavbar);
+      });
 
       window.removeEventListener("storage", updateNavbar);
     };
@@ -465,6 +297,7 @@ function Navbar() {
     };
   }, []);
 
+  /* Close the dropdown when navigating. */
   const closeDropdowns = () => {
     setNetworkOpen(false);
   };
@@ -534,75 +367,62 @@ function Navbar() {
             Contact
           </Link>
 
+          {/* Always show Join Our Network */}
           <div
             className="network-nav-wrapper"
             ref={networkRef}
           >
-            {isLoggedIn && workspace ? (
-              <Link
-                to={workspace.path}
-                className="network-nav-button my-workspace-button"
-                onClick={closeDropdowns}
-                title={`Open ${workspace.label}`}
-              >
-                <BriefcaseBusiness size={17} />
-                <span>My Workspace</span>
-                <ChevronDown size={14} />
-              </Link>
-            ) : (
-              <>
-                <button
-                  type="button"
-                  className={`network-nav-button ${
-                    networkOpen ? "active" : ""
-                  }`}
-                  onClick={() =>
-                    setNetworkOpen((current) => !current)
-                  }
-                  aria-expanded={networkOpen}
-                  aria-haspopup="true"
-                >
-                  <span>Join Our Network</span>
+            <button
+              type="button"
+              className={`network-nav-button ${
+                networkOpen ? "active" : ""
+              }`}
+              onClick={() =>
+                setNetworkOpen((current) => !current)
+              }
+              aria-expanded={networkOpen}
+              aria-haspopup="true"
+            >
+              <span>Join Our Network</span>
 
-                  <ChevronDown
-                    size={14}
-                    className={networkOpen ? "open" : ""}
-                  />
-                </button>
+              <ChevronDown
+                size={14}
+                className={networkOpen ? "open" : ""}
+              />
+            </button>
 
-                {networkOpen && (
-                  <div className="network-dropdown">
-                    <div className="network-dropdown-header">
-                      <span>JOIN OUR NETWORK</span>
-                      <strong>
-                        Choose how you want to grow with us
-                      </strong>
-                    </div>
+            {networkOpen && (
+              <div className="network-dropdown">
+                <div className="network-dropdown-header">
+                  <span>JOIN OUR NETWORK</span>
 
-                    <div className="network-dropdown-items">
-                      {networkItems.map((item) => (
-                        <Link
-                          key={item.path}
-                          to={item.path}
-                          className="network-dropdown-item"
-                          onClick={closeDropdowns}
-                        >
-                          <div className="network-item-icon">
-                            {item.icon}
-                          </div>
+                  <strong>
+                    Choose how you want to grow with us
+                  </strong>
+                </div>
 
-                          <div className="network-item-content">
-                            <strong>{item.title}</strong>
-                            <span>{item.description}</span>
-                          </div>
+                <div className="network-dropdown-items">
+                  {networkItems.map((item) => (
+                    <Link
+                      key={item.path}
+                      to={item.path}
+                      className="network-dropdown-item"
+                      onClick={closeDropdowns}
+                    >
+                      <div className="network-item-icon">
+                        {item.icon}
+                      </div>
 
-                          <ArrowRight size={15} />
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </>
+                      <div className="network-item-content">
+                        <strong>{item.title}</strong>
+                        <span>{item.description}</span>
+                      </div>
+
+                      <ArrowRight size={15} />
+                    </Link>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
         </nav>
@@ -625,7 +445,10 @@ function Navbar() {
               title="My Profile"
               onClick={closeDropdowns}
             >
-              <UserRound size={21} strokeWidth={1.8} />
+              <UserRound
+                size={21}
+                strokeWidth={1.8}
+              />
             </Link>
           ) : (
             <Link
@@ -645,10 +468,6 @@ function Navbar() {
 
 /* =========================================================
    GSAP SERVICE CARD STACK
-   - Auto rotates every 3 seconds
-   - Pauses on hover
-   - Clicking a card opens its category
-   - Respects reduced-motion preferences
 ========================================================= */
 
 function ServiceCardStack() {
@@ -956,7 +775,6 @@ function HomePage() {
   return (
     <div className="app">
       <main>
-        {/* HERO */}
         <section className="hero">
           <div className="hero-background">
             {heroImages.map((image, index) => (
@@ -1172,10 +990,8 @@ function AppContent() {
 
   return (
     <>
-      {/* Hide public navbar on admin pages. */}
       {!isAdminRoute && <Navbar />}
 
-      {/* Scroll to top when the route changes. */}
       <ScrollToTop />
 
       <Routes>
@@ -1360,12 +1176,17 @@ function AppContent() {
         />
 
         {/* VENDOR HUB */}
-        <Route path="/vendor-hub" element={<VendorHub />} />
+        <Route
+          path="/vendor-hub"
+          element={<VendorHub />}
+        />
 
         <Route
           path="/seller/products"
           element={<SellerProductsPage />}
         />
+
+        <Route path="/student-hub" element={<StudentHub />} />
 
         {/* ADMIN LOGIN */}
         <Route
@@ -1417,7 +1238,6 @@ function AppContent() {
         </Route>
       </Routes>
 
-      {/* Hide public footer on admin pages. */}
       {!isAdminRoute && <Footer />}
     </>
   );

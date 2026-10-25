@@ -1,1898 +1,2201 @@
 
-import { useState } from "react";
-import type { ChangeEvent, FormEvent } from "react";
-import { Link } from "react-router-dom";
+import { useMemo, useState } from "react";
+import type { ChangeEvent, FormEvent, ReactNode } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
-  ArrowLeft,
-  ArrowRight,
-  Check,
-  CheckCircle2,
-  Eye,
-  EyeOff,
-  GraduationCap,
-  Languages,
-  LockKeyhole,
-  ShieldCheck,
-  Upload,
+    ArrowLeft,
+    ArrowRight,
+    Check,
+    CheckCircle2,
+    Eye,
+    EyeOff,
+    GraduationCap,
+    Languages,
+    LockKeyhole,
+    ShieldCheck,
+    Upload,
 } from "lucide-react";
 import "./StudentRegisterPage.css";
 
 type Language = "en" | "te" | "hi";
 
 type StudentFormData = {
-  fullName: string;
-  mobile: string;
-  whatsapp: string;
-  email: string;
-  dob: string;
-  gender: string;
-  address: string;
-  city: string;
-  state: string;
-  pincode: string;
-  educationLevel: string;
-  course: string;
-  institution: string;
-  specialization: string;
-  graduationYear: string;
-  skills: string;
-  experienceLevel: string;
-  interestedAreas: string[];
-  learningFormat: string;
-  preferredMode: string;
-  preferredDays: string[];
-  preferredTime: string;
-  availability: string;
-  learningGoals: string[];
-  careerGoal: string;
-  certificationInterest: string;
-  profilePhoto: File | null;
-  educationProof: File | null;
-  password: string;
-  confirmPassword: string;
-  terms: boolean;
-  consent: boolean;
+    // Step 1: Personal information
+    fullName: string;
+    dateOfBirth: string;
+    gender: string;
+    mobile: string;
+    alternateMobile: string;
+    email: string;
+
+    // Step 2: Address
+    address: string;
+    city: string;
+    state: string;
+    pincode: string;
+    country: string;
+
+    // Step 3: Education
+    educationLevel: string;
+    institution: string;
+    course: string;
+    fieldOfStudy: string;
+    currentYear: string;
+    graduationYear: string;
+    studentId: string;
+
+    // Step 4: Skills
+    interestedAreas: string[];
+    skills: string;
+    experienceLevel: string;
+    preferredLanguage: string;
+
+    // Step 5: Learning preferences
+    learningGoals: string[];
+    learningMode: string;
+    availability: string;
+    weeklyHours: string;
+    additionalDetails: string;
+
+    // Step 6: Account and consent
+    password: string;
+    confirmPassword: string;
+    termsAccepted: boolean;
+    consentAccepted: boolean;
 };
 
 type ErrorMap = Partial<Record<keyof StudentFormData, string>>;
 
-const initialForm: StudentFormData = {
-  fullName: "",
-  mobile: "",
-  whatsapp: "",
-  email: "",
-  dob: "",
-  gender: "",
-  address: "",
-  city: "",
-  state: "",
-  pincode: "",
-  educationLevel: "",
-  course: "",
-  institution: "",
-  specialization: "",
-  graduationYear: "",
-  skills: "",
-  experienceLevel: "",
-  interestedAreas: [],
-  learningFormat: "",
-  preferredMode: "",
-  preferredDays: [],
-  preferredTime: "",
-  availability: "",
-  learningGoals: [],
-  careerGoal: "",
-  certificationInterest: "",
-  profilePhoto: null,
-  educationProof: null,
-  password: "",
-  confirmPassword: "",
-  terms: false,
-  consent: false,
+type StringField = Exclude<
+    keyof StudentFormData,
+    "interestedAreas" | "learningGoals" | "termsAccepted" | "consentAccepted"
+>;
+
+type Translation = {
+    [key: string]: string | string[];
 };
 
-const interestOptions = [
-  "AC & Cooling",
-  "Electrical",
-  "Plumbing",
-  "Carpentry",
-  "Home Appliances",
-  "Cleaning",
-  "Water Purification",
-  "Refrigeration",
-  "Washing Machine Repair",
-  "TV Repair",
-  "Home Maintenance",
-  "Other",
-];
+const initialForm: StudentFormData = {
+    fullName: "",
+    dateOfBirth: "",
+    gender: "",
+    mobile: "",
+    alternateMobile: "",
+    email: "",
 
-const goalOptions = [
-  "Learn a new skill",
-  "Improve existing skills",
-  "Get certified",
-  "Become a technician",
-  "Find employment",
-  "Start a service business",
-  "Work as a freelancer",
-  "Build practical experience",
-];
+    address: "",
+    city: "",
+    state: "",
+    pincode: "",
+    country: "India",
 
-const dayOptions = [
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-  "Sunday",
-];
+    educationLevel: "",
+    institution: "",
+    course: "",
+    fieldOfStudy: "",
+    currentYear: "",
+    graduationYear: "",
+    studentId: "",
 
-const translations = {
-  en: {
-    language: "Language",
-    english: "English",
-    telugu: "Telugu",
-    hindi: "Hindi",
-    signIn: "Already registered?",
-    login: "Sign in",
-    network: "ONESERVICE LEARNING NETWORK",
-    eyebrow: "STUDENT REGISTRATION",
-    heading: "Learn skills.",
-    brand: "Build your future.",
-    intro:
-      "Join the NeedOneService learning network to develop practical skills, gain experience, get trained and explore career opportunities.",
-    secure: "Secure student registration",
-    step: "STEP",
-    of: "OF",
-    completed: "completed",
-    stepNames: [
-      ["Personal information", "Your identity and contact details"],
-      ["Address & location", "Where you are based"],
-      ["Education", "Your current or most recent education"],
-      ["Skills & interests", "Skills you have and areas you want to learn"],
-      ["Learning & goals", "Your preferred schedule and career goals"],
-      ["Account & consent", "Secure your account and confirm your consent"],
-    ],
-    personalTitle: "Personal information",
-    personalDesc:
-      "Tell us a little about yourself so the NeedOneService team can identify and contact you.",
-    addressTitle: "Address & location",
-    addressDesc:
-      "Provide your location so relevant learning and training opportunities can be shared with you.",
-    educationTitle: "Education",
-    educationDesc:
-      "Tell us about your current or most recent education and add optional supporting proof.",
-    skillsTitle: "Skills & interests",
-    skillsDesc:
-      "Choose the service areas you want to learn or develop and describe your current experience.",
-    learningTitle: "Learning preferences & goals",
-    learningDesc:
-      "Help us understand how and when you prefer to learn, and what you want to achieve.",
-    securityTitle: "Account & consent",
-    securityDesc:
-      "Create secure login details and review the required consent statements.",
-    fullName: "Full name",
-    fullNameHint: "Enter your full name",
-    mobile: "Mobile number",
-    mobileHint: "10-digit mobile number",
-    whatsapp: "WhatsApp number",
-    whatsappHint: "WhatsApp number, if different",
-    email: "Email address",
-    emailHint: "student@example.com",
-    dob: "Date of birth",
-    gender: "Gender",
-    choose: "Select an option",
-    address: "Full address",
-    addressHint: "House / street, area and landmark",
-    city: "City",
-    cityHint: "Enter your city",
-    state: "State",
-    stateHint: "Enter your state",
-    pincode: "PIN code",
-    pincodeHint: "6-digit PIN code",
-    educationLevel: "Education level",
-    course: "Course / program",
-    courseHint: "e.g. Diploma in Electrical",
-    institution: "Institution",
-    institutionHint: "College / school / institute",
-    specialization: "Specialization",
-    specializationHint: "Your specialization",
-    graduationYear: "Graduation / completion year",
-    graduationHint: "e.g. 2027",
-    educationProof: "Education proof",
-    educationProofHint: "Optional — PDF, JPG or PNG",
-    experienceLevel: "Experience level",
-    skills: "Current skills",
-    skillsHint: "e.g. basic wiring, tools",
-    interestedAreas: "Areas you are interested in",
-    learningFormat: "Learning format",
-    preferredMode: "Preferred mode",
-    preferredDays: "Preferred learning days",
-    preferredTime: "Preferred time",
-    availability: "Availability",
-    availabilityHint: "e.g. 6 PM to 9 PM on weekdays",
-    learningGoals: "What do you want to achieve?",
-    careerGoal: "Career goal",
-    careerGoalHint: "Tell us what kind of career or work you want to build...",
-    certificationInterest: "Certification interest",
-    profilePhoto: "Profile photo",
-    profilePhotoHint: "Optional — JPG or PNG",
-    password: "Create password",
-    passwordHint: "Minimum 8 characters",
-    confirmPassword: "Confirm password",
-    confirmHint: "Re-enter your password",
-    termsStart: "I agree to the",
-    termsLink: "Terms & Conditions",
-    and: "and",
-    privacyLink: "Privacy Policy",
-    termsEnd: ".",
-    consent:
-      "I consent to NeedOneService reviewing my registration information for learning, training and career opportunities.",
-    securityNote:
-      "Use a strong password and upload only documents you are authorized to share. Your details should be handled securely.",
-    back: "Back",
-    next: "Save & Continue",
-    submit: "Create Student Profile",
-    safe: "Your details should be handled securely",
-    help: "Need help with registration?",
-    contact: "Contact our team",
-    successEyebrow: "REGISTRATION SUBMITTED",
-    successTitle: "Your learning journey starts here.",
-    successDesc:
-      "Your student registration has been captured in this form. Your profile can be reviewed when registration is connected to the NeedOneService backend.",
-    summary: "Registration summary",
-    student: "Student",
-    interest: "Interest",
-    goal: "Goal",
-    frontendNote:
-      "This confirms completion in the frontend only; your details have not been sent to a server.",
-    home: "Back to Home",
-    chooseFile: "Choose a document",
-    selected: "File selected",
-    required: "This field is required.",
-    invalidMobile: "Enter a valid 10-digit Indian mobile number.",
-    invalidEmail: "Enter a valid email address.",
-    invalidPincode: "Enter a valid 6-digit PIN code.",
-    passwordShort: "Use at least 8 characters.",
-    passwordMismatch: "Passwords do not match.",
-    acceptTerms: "You must accept the Terms & Conditions.",
-    acceptConsent: "Please provide consent for your information to be reviewed.",
-    uploadImage: "Choose a JPG, PNG or WEBP image.",
-    uploadDoc: "Choose a PDF, JPG or PNG document.",
-    fileSize: "File size must be 5 MB or less.",
-    invalidDob: "Enter a valid date that is not in the future.",
-    invalidYear: "Enter a valid completion year.",
-    genderOptions: ["Male", "Female", "Other", "Prefer not to say"],
-    genderValues: ["male", "female", "other", "prefer_not_to_say"],
-    educationOptions: [
-      "School",
-      "Intermediate / 12th",
-      "ITI",
-      "Diploma",
-      "Undergraduate",
-      "Postgraduate",
-      "Vocational Training",
-      "Other",
-    ],
-    educationValues: [
-      "school",
-      "intermediate",
-      "iti",
-      "diploma",
-      "undergraduate",
-      "postgraduate",
-      "vocational",
-      "other",
-    ],
-    experienceOptions: [
-      "Beginner",
-      "Basic knowledge",
-      "Intermediate",
-      "Experienced",
-    ],
-    experienceValues: ["beginner", "basic", "intermediate", "experienced"],
-    formatOptions: ["Online", "Offline", "Online & Offline"],
-    formatValues: ["online", "offline", "hybrid"],
-    modeOptions: [
-      "Live classes",
-      "Self-paced learning",
-      "Practical training",
-      "Mixed learning",
-    ],
-    modeValues: ["live", "self_paced", "practical", "mixed"],
-    timeOptions: ["Morning", "Afternoon", "Evening", "Weekends"],
-    timeValues: ["morning", "afternoon", "evening", "weekends"],
-    certificationOptions: [
-      "Yes, I want certification",
-      "Maybe, depending on the course",
-      "No, skills are my priority",
-    ],
-    certificationValues: ["yes", "maybe", "no"],
-    interests: interestOptions,
-    interestValues: [
-      "ac_cooling",
-      "electrical",
-      "plumbing",
-      "carpentry",
-      "home_appliances",
-      "cleaning",
-      "water_purification",
-      "refrigeration",
-      "washing_machine_repair",
-      "tv_repair",
-      "home_maintenance",
-      "other",
-    ],
-    goals: goalOptions,
-    goalValues: [
-      "learn_skill",
-      "improve_skills",
-      "get_certified",
-      "become_technician",
-      "find_employment",
-      "start_business",
-      "freelancer",
-      "practical_experience",
-    ],
-    days: dayOptions,
-    dayValues: [
-      "monday",
-      "tuesday",
-      "wednesday",
-      "thursday",
-      "friday",
-      "saturday",
-      "sunday",
-    ],
-  },
-  te: {
-    language: "భాష",
-    english: "ఇంగ్లీష్",
-    telugu: "తెలుగు",
-    hindi: "హిందీ",
-    signIn: "ఇప్పటికే నమోదు చేసుకున్నారా?",
-    login: "సైన్ ఇన్",
-    network: "వన్‌సర్వీస్ లెర్నింగ్ నెట్‌వర్క్",
-    eyebrow: "విద్యార్థి నమోదు",
-    heading: "నైపుణ్యాలు నేర్చుకోండి.",
-    brand: "మీ భవిష్యత్తును నిర్మించుకోండి.",
-    intro:
-      "ప్రాయోగిక నైపుణ్యాలు అభివృద్ధి చేసుకోవడానికి, అనుభవం పొందడానికి, శిక్షణ పొందడానికి మరియు కెరీర్ అవకాశాలను అన్వేషించడానికి NeedOneService లెర్నింగ్ నెట్‌వర్క్‌లో చేరండి.",
-    secure: "సురక్షిత విద్యార్థి నమోదు",
-    step: "దశ",
-    of: "లో",
-    completed: "పూర్తి",
-    stepNames: [
-      ["వ్యక్తిగత సమాచారం", "మీ గుర్తింపు మరియు సంప్రదింపు వివరాలు"],
-      ["చిరునామా & ప్రాంతం", "మీరు నివసించే ప్రాంతం"],
-      ["విద్య", "మీ ప్రస్తుత లేదా ఇటీవలి విద్య"],
-      ["నైపుణ్యాలు & ఆసక్తులు", "మీ నైపుణ్యాలు మరియు నేర్చుకోవాలనుకునే అంశాలు"],
-      ["అభ్యాసం & లక్ష్యాలు", "మీ షెడ్యూల్ మరియు కెరీర్ లక్ష్యాలు"],
-      ["ఖాతా & సమ్మతి", "ఖాతాను సురక్షితం చేసి సమ్మతిని నిర్ధారించండి"],
-    ],
-    personalTitle: "వ్యక్తిగత సమాచారం",
-    personalDesc:
-      "NeedOneService బృందం మిమ్మల్ని గుర్తించి సంప్రదించేందుకు మీ వివరాలను నమోదు చేయండి.",
-    addressTitle: "చిరునామా & ప్రాంతం",
-    addressDesc:
-      "మీకు తగిన అభ్యాసం మరియు శిక్షణ అవకాశాలను అందించేందుకు మీ ప్రాంతాన్ని నమోదు చేయండి.",
-    educationTitle: "విద్య",
-    educationDesc:
-      "మీ ప్రస్తుత లేదా ఇటీవలి విద్య వివరాలను నమోదు చేసి, అవసరమైతే ఆధార పత్రాన్ని జోడించండి.",
-    skillsTitle: "నైపుణ్యాలు & ఆసక్తులు",
-    skillsDesc:
-      "మీరు నేర్చుకోవాలనుకునే సేవా రంగాలను ఎంచుకుని, ప్రస్తుత అనుభవాన్ని వివరించండి.",
-    learningTitle: "అభ్యాస ప్రాధాన్యతలు & లక్ష్యాలు",
-    learningDesc:
-      "మీరు ఎప్పుడు, ఎలా నేర్చుకోవాలనుకుంటున్నారో మరియు ఏమి సాధించాలనుకుంటున్నారో తెలియజేయండి.",
-    securityTitle: "ఖాతా & సమ్మతి",
-    securityDesc:
-      "సురక్షిత లాగిన్ వివరాలను సృష్టించి అవసరమైన సమ్మతులను నిర్ధారించండి.",
-    fullName: "పూర్తి పేరు",
-    fullNameHint: "మీ పూర్తి పేరు నమోదు చేయండి",
-    mobile: "మొబైల్ నంబర్",
-    mobileHint: "10 అంకెల మొబైల్ నంబర్",
-    whatsapp: "వాట్సాప్ నంబర్",
-    whatsappHint: "వేరుగా ఉంటే వాట్సాప్ నంబర్",
-    email: "ఈమెయిల్ చిరునామా",
-    emailHint: "student@example.com",
-    dob: "పుట్టిన తేదీ",
-    gender: "లింగం",
-    choose: "ఎంచుకోండి",
-    address: "పూర్తి చిరునామా",
-    addressHint: "ఇల్లు / వీధి, ప్రాంతం మరియు గుర్తింపు స్థలం",
-    city: "నగరం",
-    cityHint: "నగరం నమోదు చేయండి",
-    state: "రాష్ట్రం",
-    stateHint: "రాష్ట్రం నమోదు చేయండి",
-    pincode: "పిన్ కోడ్",
-    pincodeHint: "6 అంకెల పిన్ కోడ్",
-    educationLevel: "విద్యా స్థాయి",
-    course: "కోర్సు / ప్రోగ్రామ్",
-    courseHint: "ఉదా. ఎలక్ట్రికల్ డిప్లొమా",
-    institution: "విద్యాసంస్థ",
-    institutionHint: "కళాశాల / పాఠశాల / సంస్థ",
-    specialization: "ప్రత్యేకత",
-    specializationHint: "మీ ప్రత్యేకత",
-    graduationYear: "పూర్తి చేసిన సంవత్సరం",
-    graduationHint: "ఉదా. 2027",
-    educationProof: "విద్యా ఆధారం",
-    educationProofHint: "ఐచ్ఛికం — PDF, JPG లేదా PNG",
-    experienceLevel: "అనుభవ స్థాయి",
-    skills: "ప్రస్తుత నైపుణ్యాలు",
-    skillsHint: "ఉదా. ప్రాథమిక వైరింగ్, పరికరాలు",
-    interestedAreas: "మీ ఆసక్తి రంగాలు",
-    learningFormat: "అభ్యాస విధానం",
-    preferredMode: "ప్రాధాన్య అభ్యాస పద్ధతి",
-    preferredDays: "అభ్యాస రోజులు",
-    preferredTime: "ప్రాధాన్య సమయం",
-    availability: "అందుబాటు",
-    availabilityHint: "ఉదా. వారపు రోజుల్లో సాయంత్రం 6–9",
-    learningGoals: "మీరు ఏమి సాధించాలనుకుంటున్నారు?",
-    careerGoal: "కెరీర్ లక్ష్యం",
-    careerGoalHint: "మీరు నిర్మించాలనుకునే కెరీర్ లేదా పనిని వివరించండి...",
-    certificationInterest: "సర్టిఫికేషన్ ఆసక్తి",
-    profilePhoto: "ప్రొఫైల్ ఫోటో",
-    profilePhotoHint: "ఐచ్ఛికం — JPG లేదా PNG",
-    password: "పాస్‌వర్డ్ సృష్టించండి",
-    passwordHint: "కనీసం 8 అక్షరాలు",
-    confirmPassword: "పాస్‌వర్డ్ నిర్ధారించండి",
-    confirmHint: "మళ్లీ పాస్‌వర్డ్ నమోదు చేయండి",
-    termsStart: "నేను అంగీకరిస్తున్నాను:",
-    termsLink: "నిబంధనలు",
-    and: "మరియు",
-    privacyLink: "గోప్యతా విధానం",
-    termsEnd: ".",
-    consent:
-      "అభ్యాసం, శిక్షణ మరియు కెరీర్ అవకాశాల కోసం నా నమోదు వివరాలను NeedOneService పరిశీలించడానికి నేను సమ్మతిస్తున్నాను.",
-    securityNote:
-      "బలమైన పాస్‌వర్డ్ ఉపయోగించండి. మీరు పంచుకోవడానికి అనుమతి ఉన్న పత్రాలను మాత్రమే అప్‌లోడ్ చేయండి. మీ వివరాలను సురక్షితంగా నిర్వహించాలి.",
-    back: "వెనక్కి",
-    next: "సేవ్ చేసి కొనసాగించండి",
-    submit: "విద్యార్థి ప్రొఫైల్ సృష్టించండి",
-    safe: "మీ వివరాలు సురక్షితంగా నిర్వహించబడతాయి",
-    help: "నమోదులో సహాయం కావాలా?",
-    contact: "మా బృందాన్ని సంప్రదించండి",
-    successEyebrow: "నమోదు సమర్పించబడింది",
-    successTitle: "మీ అభ్యాస ప్రయాణం ఇక్కడ ప్రారంభమవుతుంది.",
-    successDesc:
-      "ఈ ఫారమ్‌లో మీ విద్యార్థి నమోదు వివరాలు నమోదు చేయబడ్డాయి. NeedOneService బ్యాక్‌ఎండ్‌తో అనుసంధానించిన తర్వాత మీ ప్రొఫైల్‌ను సమీక్షించవచ్చు.",
-    summary: "నమోదు సారాంశం",
-    student: "విద్యార్థి",
-    interest: "ఆసక్తి",
-    goal: "లక్ష్యం",
-    frontendNote:
-      "ఇది ఫ్రంట్‌ఎండ్‌లో మాత్రమే పూర్తయినట్లు చూపిస్తుంది; మీ వివరాలు సర్వర్‌కు పంపబడలేదు.",
-    home: "హోమ్‌కు తిరిగి వెళ్లండి",
-    chooseFile: "పత్రాన్ని ఎంచుకోండి",
-    selected: "ఫైల్ ఎంచుకోబడింది",
-    required: "ఈ ఫీల్డ్ తప్పనిసరి.",
-    invalidMobile: "చెల్లుబాటు అయ్యే 10 అంకెల భారతీయ మొబైల్ నంబర్ నమోదు చేయండి.",
-    invalidEmail: "చెల్లుబాటు అయ్యే ఈమెయిల్ చిరునామా నమోదు చేయండి.",
-    invalidPincode: "చెల్లుబాటు అయ్యే 6 అంకెల పిన్ కోడ్ నమోదు చేయండి.",
-    passwordShort: "కనీసం 8 అక్షరాలు ఉపయోగించండి.",
-    passwordMismatch: "పాస్‌వర్డ్‌లు సరిపోలడం లేదు.",
-    acceptTerms: "నిబంధనలకు అంగీకరించాలి.",
-    acceptConsent: "మీ వివరాలను సమీక్షించడానికి సమ్మతి ఇవ్వండి.",
-    uploadImage: "JPG, PNG లేదా WEBP చిత్రాన్ని ఎంచుకోండి.",
-    uploadDoc: "PDF, JPG లేదా PNG పత్రాన్ని ఎంచుకోండి.",
-    fileSize: "ఫైల్ పరిమాణం 5 MB లేదా అంతకంటే తక్కువ ఉండాలి.",
-    invalidDob: "భవిష్యత్తు తేదీ కాకుండా సరైన తేదీని నమోదు చేయండి.",
-    invalidYear: "సరైన విద్య పూర్తి చేసిన సంవత్సరాన్ని నమోదు చేయండి.",
-    genderOptions: ["పురుషుడు", "స్త్రీ", "ఇతరులు", "చెప్పదలచుకోలేదు"],
-    genderValues: ["male", "female", "other", "prefer_not_to_say"],
-    educationOptions: [
-      "పాఠశాల",
-      "ఇంటర్మీడియట్ / 12వ తరగతి",
-      "ITI",
-      "డిప్లొమా",
-      "అండర్‌గ్రాడ్యుయేట్",
-      "పోస్ట్‌గ్రాడ్యుయేట్",
-      "వృత్తి శిక్షణ",
-      "ఇతరులు",
-    ],
-    educationValues: [
-      "school",
-      "intermediate",
-      "iti",
-      "diploma",
-      "undergraduate",
-      "postgraduate",
-      "vocational",
-      "other",
-    ],
-    experienceOptions: [
-      "ప్రారంభ స్థాయి",
-      "కొంత పరిజ్ఞానం",
-      "మధ్యస్థం",
-      "అనుభవం ఉంది",
-    ],
-    experienceValues: ["beginner", "basic", "intermediate", "experienced"],
-    formatOptions: ["ఆన్‌లైన్", "ఆఫ్‌లైన్", "ఆన్‌లైన్ & ఆఫ్‌లైన్"],
-    formatValues: ["online", "offline", "hybrid"],
-    modeOptions: [
-      "ప్రత్యక్ష తరగతులు",
-      "స్వీయ అభ్యాసం",
-      "ప్రాయోగిక శిక్షణ",
-      "మిశ్రమ అభ్యాసం",
-    ],
-    modeValues: ["live", "self_paced", "practical", "mixed"],
-    timeOptions: ["ఉదయం", "మధ్యాహ్నం", "సాయంత్రం", "వారాంతాలు"],
-    timeValues: ["morning", "afternoon", "evening", "weekends"],
-    certificationOptions: [
-      "అవును, సర్టిఫికేషన్ కావాలి",
-      "కోర్సును బట్టి ఉండవచ్చు",
-      "లేదు, నైపుణ్యాలే ముఖ్యం",
-    ],
-    certificationValues: ["yes", "maybe", "no"],
-    interests: [
-      "ఏసీ & కూలింగ్",
-      "ఎలక్ట్రికల్",
-      "ప్లంబింగ్",
-      "కార్పెంట్రీ",
-      "గృహోపకరణాలు",
-      "క్లీనింగ్",
-      "నీటి శుద్ధి",
-      "రిఫ్రిజరేషన్",
-      "వాషింగ్ మెషీన్ రిపేర్",
-      "టీవీ రిపేర్",
-      "గృహ నిర్వహణ",
-      "ఇతరులు",
-    ],
-    interestValues: [
-      "ac_cooling",
-      "electrical",
-      "plumbing",
-      "carpentry",
-      "home_appliances",
-      "cleaning",
-      "water_purification",
-      "refrigeration",
-      "washing_machine_repair",
-      "tv_repair",
-      "home_maintenance",
-      "other",
-    ],
-    goals: [
-      "కొత్త నైపుణ్యం నేర్చుకోవడం",
-      "ప్రస్తుత నైపుణ్యాలను మెరుగుపరచడం",
-      "సర్టిఫికేషన్ పొందడం",
-      "టెక్నీషియన్ కావడం",
-      "ఉద్యోగం పొందడం",
-      "సేవా వ్యాపారం ప్రారంభించడం",
-      "ఫ్రీలాన్సర్‌గా పని చేయడం",
-      "ప్రాయోగిక అనుభవం పొందడం",
-    ],
-    goalValues: [
-      "learn_skill",
-      "improve_skills",
-      "get_certified",
-      "become_technician",
-      "find_employment",
-      "start_business",
-      "freelancer",
-      "practical_experience",
-    ],
-    days: ["సోమవారం", "మంగళవారం", "బుధవారం", "గురువారం", "శుక్రవారం", "శనివారం", "ఆదివారం"],
-    dayValues: [
-      "monday",
-      "tuesday",
-      "wednesday",
-      "thursday",
-      "friday",
-      "saturday",
-      "sunday",
-    ],
-  },
-  hi: {
-    language: "भाषा",
-    english: "अंग्रेज़ी",
-    telugu: "तेलुगु",
-    hindi: "हिन्दी",
-    signIn: "पहले से पंजीकृत हैं?",
-    login: "साइन इन",
-    network: "ONESERVICE लर्निंग नेटवर्क",
-    eyebrow: "विद्यार्थी पंजीकरण",
-    heading: "कौशल सीखें।",
-    brand: "अपना भविष्य बनाएं।",
-    intro:
-      "व्यावहारिक कौशल विकसित करने, अनुभव प्राप्त करने, प्रशिक्षण लेने और करियर के अवसर खोजने के लिए NeedOneService लर्निंग नेटवर्क से जुड़ें।",
-    secure: "सुरक्षित विद्यार्थी पंजीकरण",
-    step: "चरण",
-    of: "में से",
-    completed: "पूर्ण",
-    stepNames: [
-      ["व्यक्तिगत जानकारी", "आपकी पहचान और संपर्क विवरण"],
-      ["पता और स्थान", "आपका निवास स्थान"],
-      ["शिक्षा", "आपकी वर्तमान या पिछली शिक्षा"],
-      ["कौशल और रुचियां", "आपके कौशल और सीखने के क्षेत्र"],
-      ["सीखना और लक्ष्य", "आपकी समय-सारणी और करियर लक्ष्य"],
-      ["खाता और सहमति", "खाता सुरक्षित करें और सहमति दें"],
-    ],
-    personalTitle: "व्यक्तिगत जानकारी",
-    personalDesc:
-      "NeedOneService टीम को आपकी पहचान और संपर्क करने में मदद के लिए विवरण दें।",
-    addressTitle: "पता और स्थान",
-    addressDesc:
-      "उपयुक्त सीखने और प्रशिक्षण के अवसर साझा करने के लिए अपना स्थान बताएं।",
-    educationTitle: "शिक्षा",
-    educationDesc:
-      "अपनी वर्तमान या पिछली शिक्षा बताएं और चाहें तो प्रमाण-पत्र जोड़ें।",
-    skillsTitle: "कौशल और रुचियां",
-    skillsDesc:
-      "वे सेवा क्षेत्र चुनें जिन्हें आप सीखना या विकसित करना चाहते हैं।",
-    learningTitle: "सीखने की पसंद और लक्ष्य",
-    learningDesc:
-      "बताएं कि आप कब और कैसे सीखना चाहते हैं और क्या हासिल करना चाहते हैं।",
-    securityTitle: "खाता और सहमति",
-    securityDesc:
-      "सुरक्षित लॉगिन विवरण बनाएं और आवश्यक सहमति की पुष्टि करें।",
-    fullName: "पूरा नाम",
-    fullNameHint: "अपना पूरा नाम दर्ज करें",
-    mobile: "मोबाइल नंबर",
-    mobileHint: "10 अंकों का मोबाइल नंबर",
-    whatsapp: "व्हाट्सऐप नंबर",
-    whatsappHint: "अलग होने पर व्हाट्सऐप नंबर",
-    email: "ईमेल पता",
-    emailHint: "student@example.com",
-    dob: "जन्म तिथि",
-    gender: "लिंग",
-    choose: "विकल्प चुनें",
-    address: "पूरा पता",
-    addressHint: "मकान / सड़क, क्षेत्र और पहचान-चिह्न",
-    city: "शहर",
-    cityHint: "शहर दर्ज करें",
-    state: "राज्य",
-    stateHint: "राज्य दर्ज करें",
-    pincode: "पिन कोड",
-    pincodeHint: "6 अंकों का पिन कोड",
-    educationLevel: "शिक्षा का स्तर",
-    course: "कोर्स / कार्यक्रम",
-    courseHint: "जैसे इलेक्ट्रिकल में डिप्लोमा",
-    institution: "संस्थान",
-    institutionHint: "कॉलेज / स्कूल / संस्थान",
-    specialization: "विशेषज्ञता",
-    specializationHint: "अपनी विशेषज्ञता",
-    graduationYear: "पूरा करने का वर्ष",
-    graduationHint: "जैसे 2027",
-    educationProof: "शिक्षा प्रमाण",
-    educationProofHint: "वैकल्पिक — PDF, JPG या PNG",
-    experienceLevel: "अनुभव का स्तर",
-    skills: "वर्तमान कौशल",
-    skillsHint: "जैसे बुनियादी वायरिंग, उपकरण",
-    interestedAreas: "आपकी रुचि के क्षेत्र",
-    learningFormat: "सीखने का प्रारूप",
-    preferredMode: "पसंदीदा तरीका",
-    preferredDays: "पसंदीदा दिन",
-    preferredTime: "पसंदीदा समय",
-    availability: "उपलब्धता",
-    availabilityHint: "जैसे कार्यदिवसों में शाम 6 से 9 बजे",
-    learningGoals: "आप क्या हासिल करना चाहते हैं?",
-    careerGoal: "करियर लक्ष्य",
-    careerGoalHint: "बताएं कि आप किस तरह का करियर या काम बनाना चाहते हैं...",
-    certificationInterest: "प्रमाणपत्र में रुचि",
-    profilePhoto: "प्रोफ़ाइल फोटो",
-    profilePhotoHint: "वैकल्पिक — JPG या PNG",
-    password: "पासवर्ड बनाएं",
-    passwordHint: "कम से कम 8 अक्षर",
-    confirmPassword: "पासवर्ड की पुष्टि करें",
-    confirmHint: "पासवर्ड दोबारा दर्ज करें",
-    termsStart: "मैं सहमत हूं:",
-    termsLink: "नियम और शर्तें",
-    and: "और",
-    privacyLink: "गोपनीयता नीति",
-    termsEnd: "।",
-    consent:
-      "मैं सीखने, प्रशिक्षण और करियर अवसरों के लिए NeedOneService को मेरी पंजीकरण जानकारी की समीक्षा करने की सहमति देता/देती हूं।",
-    securityNote:
-      "मजबूत पासवर्ड इस्तेमाल करें और केवल वही दस्तावेज़ अपलोड करें जिन्हें साझा करने की अनुमति है। आपके विवरण सुरक्षित रखे जाने चाहिए।",
-    back: "वापस",
-    next: "सहेजें और जारी रखें",
-    submit: "विद्यार्थी प्रोफ़ाइल बनाएं",
-    safe: "आपके विवरण सुरक्षित रखे जाने चाहिए",
-    help: "पंजीकरण में सहायता चाहिए?",
-    contact: "हमारी टीम से संपर्क करें",
-    successEyebrow: "पंजीकरण जमा हुआ",
-    successTitle: "आपकी सीखने की यात्रा यहीं से शुरू होती है।",
-    successDesc:
-      "इस फ़ॉर्म में आपका विद्यार्थी पंजीकरण दर्ज किया गया है। NeedOneService बैकएंड से जुड़ने के बाद प्रोफ़ाइल की समीक्षा की जा सकती है।",
-    summary: "पंजीकरण सारांश",
-    student: "विद्यार्थी",
-    interest: "रुचि",
-    goal: "लक्ष्य",
-    frontendNote:
-      "यह केवल फ्रंटएंड में पूर्णता दिखाता है; विवरण सर्वर पर नहीं भेजे गए हैं।",
-    home: "होम पर वापस जाएं",
-    chooseFile: "दस्तावेज़ चुनें",
-    selected: "फ़ाइल चुनी गई",
-    required: "यह फ़ील्ड आवश्यक है।",
-    invalidMobile: "मान्य 10 अंकों का भारतीय मोबाइल नंबर दर्ज करें।",
-    invalidEmail: "मान्य ईमेल पता दर्ज करें।",
-    invalidPincode: "मान्य 6 अंकों का पिन कोड दर्ज करें।",
-    passwordShort: "कम से कम 8 अक्षर इस्तेमाल करें।",
-    passwordMismatch: "पासवर्ड मेल नहीं खाते।",
-    acceptTerms: "नियम और शर्तें स्वीकार करें।",
-    acceptConsent: "जानकारी की समीक्षा के लिए सहमति दें।",
-    uploadImage: "JPG, PNG या WEBP छवि चुनें।",
-    uploadDoc: "PDF, JPG या PNG दस्तावेज़ चुनें।",
-    fileSize: "फ़ाइल का आकार 5 MB या कम होना चाहिए।",
-    invalidDob: "भविष्य की तारीख के बजाय एक मान्य तारीख दर्ज करें।",
-    invalidYear: "मान्य शिक्षा पूर्णता वर्ष दर्ज करें।",
-    genderOptions: ["पुरुष", "महिला", "अन्य", "बताना नहीं चाहते"],
-    genderValues: ["male", "female", "other", "prefer_not_to_say"],
-    educationOptions: [
-      "स्कूल",
-      "इंटरमीडिएट / 12वीं",
-      "ITI",
-      "डिप्लोमा",
-      "स्नातक",
-      "स्नातकोत्तर",
-      "व्यावसायिक प्रशिक्षण",
-      "अन्य",
-    ],
-    educationValues: [
-      "school",
-      "intermediate",
-      "iti",
-      "diploma",
-      "undergraduate",
-      "postgraduate",
-      "vocational",
-      "other",
-    ],
-    experienceOptions: [
-      "शुरुआती",
-      "कुछ जानकारी",
-      "मध्यम स्तर",
-      "अनुभवी",
-    ],
-    experienceValues: ["beginner", "basic", "intermediate", "experienced"],
-    formatOptions: ["ऑनलाइन", "ऑफ़लाइन", "ऑनलाइन और ऑफ़लाइन"],
-    formatValues: ["online", "offline", "hybrid"],
-    modeOptions: [
-      "लाइव कक्षाएं",
-      "अपनी गति से सीखना",
-      "व्यावहारिक प्रशिक्षण",
-      "मिश्रित सीखना",
-    ],
-    modeValues: ["live", "self_paced", "practical", "mixed"],
-    timeOptions: ["सुबह", "दोपहर", "शाम", "सप्ताहांत"],
-    timeValues: ["morning", "afternoon", "evening", "weekends"],
-    certificationOptions: [
-      "हां, प्रमाणपत्र चाहिए",
-      "कोर्स पर निर्भर करेगा",
-      "नहीं, कौशल प्राथमिकता है",
-    ],
-    certificationValues: ["yes", "maybe", "no"],
-    interests: [
-      "एसी और कूलिंग",
-      "इलेक्ट्रिकल",
-      "प्लंबिंग",
-      "बढ़ईगीरी",
-      "घरेलू उपकरण",
-      "सफाई",
-      "जल शुद्धिकरण",
-      "रेफ्रिजरेशन",
-      "वॉशिंग मशीन मरम्मत",
-      "टीवी मरम्मत",
-      "घर का रखरखाव",
-      "अन्य",
-    ],
-    interestValues: [
-      "ac_cooling",
-      "electrical",
-      "plumbing",
-      "carpentry",
-      "home_appliances",
-      "cleaning",
-      "water_purification",
-      "refrigeration",
-      "washing_machine_repair",
-      "tv_repair",
-      "home_maintenance",
-      "other",
-    ],
-    goals: [
-      "नया कौशल सीखना",
-      "मौजूदा कौशल सुधारना",
-      "प्रमाणपत्र प्राप्त करना",
-      "तकनीशियन बनना",
-      "रोज़गार पाना",
-      "सेवा व्यवसाय शुरू करना",
-      "फ्रीलांसर के रूप में काम करना",
-      "व्यावहारिक अनुभव बनाना",
-    ],
-    goalValues: [
-      "learn_skill",
-      "improve_skills",
-      "get_certified",
-      "become_technician",
-      "find_employment",
-      "start_business",
-      "freelancer",
-      "practical_experience",
-    ],
-    days: [
-      "सोमवार",
-      "मंगलवार",
-      "बुधवार",
-      "गुरुवार",
-      "शुक्रवार",
-      "शनिवार",
-      "रविवार",
-    ],
-    dayValues: [
-      "monday",
-      "tuesday",
-      "wednesday",
-      "thursday",
-      "friday",
-      "saturday",
-      "sunday",
-    ],
-  },
-} as const;
+    interestedAreas: [],
+    skills: "",
+    experienceLevel: "",
+    preferredLanguage: "English",
 
-type StringField = {
-  [K in keyof StudentFormData]: StudentFormData[K] extends string ? K : never;
-}[keyof StudentFormData];
+    learningGoals: [],
+    learningMode: "",
+    availability: "",
+    weeklyHours: "",
+    additionalDetails: "",
 
-type Translation = (typeof translations)[Language];
+    password: "",
+    confirmPassword: "",
+    termsAccepted: false,
+    consentAccepted: false,
+};
 
 const STEP_FIELDS: (keyof StudentFormData)[][] = [
-  ["fullName", "mobile", "whatsapp", "email", "dob", "gender"],
-  ["address", "city", "state", "pincode"],
-  [
-    "educationLevel",
-    "course",
-    "institution",
-    "specialization",
-    "graduationYear",
-    "educationProof",
-  ],
-  ["experienceLevel", "skills", "interestedAreas"],
-  [
-    "learningFormat",
-    "preferredMode",
-    "preferredDays",
-    "preferredTime",
-    "availability",
-    "learningGoals",
-    "careerGoal",
-    "certificationInterest",
-    "profilePhoto",
-  ],
-  ["password", "confirmPassword", "terms", "consent"],
+    [
+        "fullName",
+        "dateOfBirth",
+        "gender",
+        "mobile",
+        "email",
+    ],
+    [
+        "address",
+        "city",
+        "state",
+        "pincode",
+        "country",
+    ],
+    [
+        "educationLevel",
+        "institution",
+        "course",
+        "fieldOfStudy",
+        "currentYear",
+    ],
+    [
+        "interestedAreas",
+        "experienceLevel",
+        "preferredLanguage",
+    ],
+    [
+        "learningGoals",
+        "learningMode",
+        "availability",
+    ],
+    [
+        "password",
+        "confirmPassword",
+        "termsAccepted",
+        "consentAccepted",
+    ],
 ];
 
-function StudentRegisterPage() {
-  const [language, setLanguage] = useState<Language>("en");
-  const t = translations[language];
-  const [form, setForm] = useState<StudentFormData>(initialForm);
-  const [step, setStep] = useState(0);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [errors, setErrors] = useState<ErrorMap>({});
-  const [submitted, setSubmitted] = useState(false);
-
-  const progress = Math.round(((step + 1) / 6) * 100);
-
-  const update = (
-    name: keyof StudentFormData,
-    value: StudentFormData[keyof StudentFormData],
-  ) => {
-    setForm((previous) => {
-      const next = { ...previous, [name]: value };
-
-      setErrors((previousErrors) => {
-        const updated = { ...previousErrors };
-        delete updated[name];
-
-        if (name === "password" || name === "confirmPassword") {
-          delete updated.confirmPassword;
-
-          if (
-            next.confirmPassword &&
-            next.password !== next.confirmPassword
-          ) {
-            updated.confirmPassword = t.passwordMismatch;
-          }
-        }
-
-        return updated;
-      });
-
-      return next;
-    });
-  };
-
-  const handleChange = (
-    event: ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >,
-  ) => {
-    const target = event.currentTarget;
-
-    if (target instanceof HTMLInputElement && target.type === "checkbox") {
-      update(
-        target.name as keyof StudentFormData,
-        target.checked,
-      );
-      return;
-    }
-
-    update(
-      target.name as keyof StudentFormData,
-      target.value,
-    );
-  };
-
-  const handleFile = (
-    event: ChangeEvent<HTMLInputElement>,
-    name: "profilePhoto" | "educationProof",
-  ) => {
-    const input = event.currentTarget;
-    const file = input.files?.[0] ?? null;
-
-    if (!file) {
-      update(name, null);
-      return;
-    }
-
-    let error: string | undefined;
-
-    if (file.size > 5 * 1024 * 1024) {
-      error = t.fileSize;
-    } else if (
-      name === "profilePhoto" &&
-      !["image/jpeg", "image/png", "image/webp"].includes(file.type)
-    ) {
-      error = t.uploadImage;
-    } else if (
-      name === "educationProof" &&
-      !["application/pdf", "image/jpeg", "image/png"].includes(file.type)
-    ) {
-      error = t.uploadDoc;
-    }
-
-    if (error) {
-      input.value = "";
-      setForm((previous) => ({ ...previous, [name]: null }));
-      setErrors((previous) => ({ ...previous, [name]: error }));
-      return;
-    }
-
-    update(name, file);
-  };
-
-  const toggleArray = (
-    name: "interestedAreas" | "preferredDays" | "learningGoals",
-    value: string,
-  ) => {
-    const current = form[name];
-
-    update(
-      name,
-      current.includes(value)
-        ? current.filter((item) => item !== value)
-        : [...current, value],
-    );
-  };
-
-  const validateStep = (index: number) => {
-    const nextErrors: ErrorMap = {};
-
-    const required = (
-      key: keyof StudentFormData,
-      condition: boolean,
-    ) => {
-      if (condition) nextErrors[key] = t.required;
-    };
-
-    if (index === 0) {
-      required("fullName", !form.fullName.trim());
-
-      if (!/^[6-9]\d{9}$/.test(form.mobile.trim())) {
-        nextErrors.mobile = t.invalidMobile;
-      }
-
-      if (
-        form.whatsapp.trim() &&
-        !/^[6-9]\d{9}$/.test(form.whatsapp.trim())
-      ) {
-        nextErrors.whatsapp = t.invalidMobile;
-      }
-
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
-        nextErrors.email = t.invalidEmail;
-      }
-
-      required("dob", !form.dob);
-      required("gender", !form.gender);
-
-      if (form.dob) {
-        const birthDate = new Date(`${form.dob}T00:00:00`);
-        const today = new Date();
-        today.setHours(23, 59, 59, 999);
-
-        if (
-          Number.isNaN(birthDate.getTime()) ||
-          birthDate > today
-        ) {
-          nextErrors.dob = t.invalidDob;
-        }
-      }
-    }
-
-    if (index === 1) {
-      required("address", !form.address.trim());
-      required("city", !form.city.trim());
-      required("state", !form.state.trim());
-
-      if (!/^\d{6}$/.test(form.pincode.trim())) {
-        nextErrors.pincode = t.invalidPincode;
-      }
-    }
-
-    if (index === 2) {
-      required("educationLevel", !form.educationLevel);
-      required("course", !form.course.trim());
-      required("institution", !form.institution.trim());
-
-      if (form.graduationYear) {
-        const year = Number(form.graduationYear);
-        const currentYear = new Date().getFullYear();
-
-        if (
-          !/^\d{4}$/.test(form.graduationYear) ||
-          year < 1900 ||
-          year > currentYear + 10
-        ) {
-          nextErrors.graduationYear = t.invalidYear;
-        }
-      }
-    }
-
-    if (index === 3) {
-      required("experienceLevel", !form.experienceLevel);
-      required("interestedAreas", form.interestedAreas.length === 0);
-    }
-
-    if (index === 4) {
-      required("learningFormat", !form.learningFormat);
-      required("preferredMode", !form.preferredMode);
-      required("preferredDays", form.preferredDays.length === 0);
-      required("preferredTime", !form.preferredTime);
-      required("availability", !form.availability.trim());
-      required("learningGoals", form.learningGoals.length === 0);
-      required("careerGoal", !form.careerGoal.trim());
-      required("certificationInterest", !form.certificationInterest);
-    }
-
-    if (index === 5) {
-      if (form.password.length < 8) {
-        nextErrors.password = t.passwordShort;
-      }
-
-      if (form.password !== form.confirmPassword) {
-        nextErrors.confirmPassword = t.passwordMismatch;
-      }
-
-      if (!form.terms) {
-        nextErrors.terms = t.acceptTerms;
-      }
-
-      if (!form.consent) {
-        nextErrors.consent = t.acceptConsent;
-      }
-    }
-
-    setErrors((previous) => {
-      const updated = { ...previous };
-
-      STEP_FIELDS[index].forEach((key) => {
-        delete updated[key];
-      });
-
-      return { ...updated, ...nextErrors };
-    });
-
-    return Object.keys(nextErrors).length === 0;
-  };
-
-  const goNext = () => {
-    if (!validateStep(step)) return;
-
-    setStep((current) => Math.min(5, current + 1));
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  const goBack = () => {
-    setStep((current) => Math.max(0, current - 1));
-    setErrors({});
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    if (!validateStep(5)) return;
-
-    setSubmitted(true);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  const field = (
-    name: StringField,
-    label: string,
-    placeholder = "",
-    type = "text",
-    options?: readonly string[],
-    full = false,
-    isRequired = false,
-    optionValues?: readonly string[],
-  ) => (
-    <label
-      className={`partner-field${full ? " partner-field-full" : ""}`}
-      key={name}
-    >
-      <span>
-        {label}
-        {isRequired && <b className="partner-required"> *</b>}
-      </span>
-
-      {options ? (
-        <select
-          id={name}
-          name={name}
-          value={form[name] as string}
-          onChange={handleChange}
-          aria-invalid={Boolean(errors[name])}
-          aria-describedby={errors[name] ? `${name}-error` : undefined}
-        >
-          <option value="">{t.choose}</option>
-          {options.map((option, index) => (
-            <option
-              key={optionValues?.[index] ?? option}
-              value={optionValues?.[index] ?? option}
-            >
-              {option}
-            </option>
-          ))}
-        </select>
-      ) : (
-        <input
-          id={name}
-          name={name}
-          type={type}
-          value={form[name] as string}
-          onChange={handleChange}
-          placeholder={placeholder}
-          aria-invalid={Boolean(errors[name])}
-          aria-describedby={errors[name] ? `${name}-error` : undefined}
-          maxLength={
-            name === "mobile" || name === "whatsapp"
-              ? 10
-              : name === "pincode"
-                ? 6
-                : name === "graduationYear"
-                  ? 4
-                  : undefined
-          }
-          autoComplete={
-            name === "password" || name === "confirmPassword"
-              ? "new-password"
-              : name === "fullName"
-                ? "name"
-                : name === "mobile" || name === "whatsapp"
-                  ? "tel"
-                  : name === "email"
-                    ? "email"
-                    : undefined
-          }
-        />
-      )}
-
-      {errors[name] && (
-        <small
-          id={`${name}-error`}
-          className="partner-form-error"
-          role="alert"
-        >
-          {errors[name]}
-        </small>
-      )}
-    </label>
-  );
-
-  const textarea = (
-    name: "address" | "careerGoal",
-    label: string,
-    placeholder: string,
-    full = false,
-  ) => (
-    <label
-      className={`partner-field${full ? " partner-field-full" : ""}`}
-      key={name}
-    >
-      <span>
-        {label}
-        <b className="partner-required"> *</b>
-      </span>
-
-      <textarea
-        id={name}
-        name={name}
-        value={form[name]}
-        onChange={handleChange}
-        placeholder={placeholder}
-        rows={4}
-        aria-invalid={Boolean(errors[name])}
-        aria-describedby={errors[name] ? `${name}-error` : undefined}
-      />
-
-      {errors[name] && (
-        <small
-          id={`${name}-error`}
-          className="partner-form-error"
-          role="alert"
-        >
-          {errors[name]}
-        </small>
-      )}
-    </label>
-  );
-
-  const fileField = (
-    name: "profilePhoto" | "educationProof",
-    label: string,
-    hint: string,
-  ) => (
-    <label className="partner-field" key={name}>
-      <span>{label}</span>
-
-      <input
-        className="partner-file-input"
-        id={name}
-        type="file"
-        accept={
-          name === "profilePhoto"
-            ? ".jpg,.jpeg,.png,.webp"
-            : ".pdf,.jpg,.jpeg,.png"
-        }
-        onChange={(event) => handleFile(event, name)}
-        aria-invalid={Boolean(errors[name])}
-        aria-describedby={errors[name] ? `${name}-error` : undefined}
-      />
-
-      <span className="partner-upload-box">
-        <Upload size={19} />
-        <strong>{form[name]?.name ?? t.chooseFile}</strong>
-        <small>
-          {form[name]
-            ? `${Math.max(1, Math.round(form[name]!.size / 1024))} KB`
-            : hint}
-        </small>
-      </span>
-
-      {errors[name] && (
-        <small
-          id={`${name}-error`}
-          className="partner-form-error"
-          role="alert"
-        >
-          {errors[name]}
-        </small>
-      )}
-    </label>
-  );
-
-  const passwordField = (
-    name: "password" | "confirmPassword",
-    label: string,
-    visible: boolean,
-    toggle: () => void,
-    placeholder: string,
-  ) => (
-    <label className="partner-field" key={name}>
-      <span>
-        {label}
-        <b className="partner-required"> *</b>
-      </span>
-
-      <span className="partner-input-wrap">
-        <input
-          id={name}
-          name={name}
-          type={visible ? "text" : "password"}
-          value={form[name]}
-          onChange={handleChange}
-          placeholder={placeholder}
-          autoComplete="new-password"
-          aria-invalid={Boolean(errors[name])}
-          aria-describedby={errors[name] ? `${name}-error` : undefined}
-        />
-
-        <button
-          type="button"
-          className="partner-password-toggle"
-          onClick={toggle}
-          aria-label={visible ? "Hide password" : "Show password"}
-        >
-          {visible ? <EyeOff size={17} /> : <Eye size={17} />}
-        </button>
-      </span>
-
-      {errors[name] && (
-        <small
-          id={`${name}-error`}
-          className="partner-form-error"
-          role="alert"
-        >
-          {errors[name]}
-        </small>
-      )}
-    </label>
-  );
-
-  const chips = (
-    name: "interestedAreas" | "preferredDays" | "learningGoals",
-    label: string,
-    options: readonly string[],
-    values: readonly string[],
-    full = true,
-  ) => (
-    <div
-      className={`partner-field${full ? " partner-field-full" : ""}`}
-      key={name}
-    >
-      <span className="partner-field-label">
-        {label}
-        <b className="partner-required"> *</b>
-      </span>
-
-      <div className="partner-choice-grid">
-        {options.map((option, index) => {
-          const value = values[index] ?? option;
-          const selected = form[name].includes(value);
-
-          return (
-            <button
-              type="button"
-              key={value}
-              className={`partner-choice-chip${selected ? " selected" : ""}`}
-              onClick={() => toggleArray(name, value)}
-              aria-pressed={selected}
-            >
-              {selected && <Check size={14} />}
-              {option}
-            </button>
-          );
-        })}
-      </div>
-
-      {errors[name] && (
-        <small className="partner-form-error" role="alert">
-          {errors[name]}
-        </small>
-      )}
-    </div>
-  );
-
-  const stepContent = [
-    <div className="partner-form-grid" key="personal">
-      {field("fullName", t.fullName, t.fullNameHint, "text", undefined, true, true)}
-      {field("mobile", t.mobile, t.mobileHint, "tel", undefined, false, true)}
-      {field("whatsapp", t.whatsapp, t.whatsappHint, "tel")}
-      {field("email", t.email, t.emailHint, "email", undefined, true, true)}
-      {field("dob", t.dob, "", "date", undefined, false, true)}
-      {field(
-        "gender",
-        t.gender,
-        "",
-        "text",
-        t.genderOptions,
-        false,
-        true,
-        t.genderValues,
-      )}
-    </div>,
-
-    <div className="partner-form-grid" key="address">
-      {textarea("address", t.address, t.addressHint, true)}
-      {field("city", t.city, t.cityHint, "text", undefined, false, true)}
-      {field("state", t.state, t.stateHint, "text", undefined, false, true)}
-      {field("pincode", t.pincode, t.pincodeHint, "text", undefined, false, true)}
-    </div>,
-
-    <div className="partner-form-grid" key="education">
-      {field(
-        "educationLevel",
-        t.educationLevel,
-        "",
-        "text",
-        t.educationOptions,
-        false,
-        true,
-        t.educationValues,
-      )}
-      {field("course", t.course, t.courseHint, "text", undefined, false, true)}
-      {field(
-        "institution",
-        t.institution,
-        t.institutionHint,
-        "text",
-        undefined,
-        false,
-        true,
-      )}
-      {field("specialization", t.specialization, t.specializationHint)}
-      {field("graduationYear", t.graduationYear, t.graduationHint)}
-      {fileField("educationProof", t.educationProof, t.educationProofHint)}
-    </div>,
-
-    <div className="partner-form-grid" key="skills">
-      {field(
-        "experienceLevel",
-        t.experienceLevel,
-        "",
-        "text",
-        t.experienceOptions,
-        false,
-        true,
-        t.experienceValues,
-      )}
-      {field("skills", t.skills, t.skillsHint)}
-      {chips(
-        "interestedAreas",
-        t.interestedAreas,
-        t.interests,
-        t.interestValues,
-      )}
-    </div>,
-
-    <div className="partner-form-grid" key="learning">
-      {field(
-        "learningFormat",
-        t.learningFormat,
-        "",
-        "text",
-        t.formatOptions,
-        false,
-        true,
-        t.formatValues,
-      )}
-      {field(
-        "preferredMode",
-        t.preferredMode,
-        "",
-        "text",
-        t.modeOptions,
-        false,
-        true,
-        t.modeValues,
-      )}
-      {chips("preferredDays", t.preferredDays, t.days, t.dayValues)}
-      {field(
-        "preferredTime",
-        t.preferredTime,
-        "",
-        "text",
-        t.timeOptions,
-        false,
-        true,
-        t.timeValues,
-      )}
-      {field(
-        "availability",
-        t.availability,
-        t.availabilityHint,
-        "text",
-        undefined,
-        false,
-        true,
-      )}
-      {chips("learningGoals", t.learningGoals, t.goals, t.goalValues)}
-      {textarea("careerGoal", t.careerGoal, t.careerGoalHint, true)}
-      {field(
-        "certificationInterest",
-        t.certificationInterest,
-        "",
-        "text",
-        t.certificationOptions,
-        false,
-        true,
-        t.certificationValues,
-      )}
-      {fileField("profilePhoto", t.profilePhoto, t.profilePhotoHint)}
-    </div>,
-
-    <div className="partner-form-grid" key="security">
-      <div className="partner-field-full partner-form-grid">
-        {passwordField(
-          "password",
-          t.password,
-          showPassword,
-          () => setShowPassword((value) => !value),
-          t.passwordHint,
-        )}
-        {passwordField(
-          "confirmPassword",
-          t.confirmPassword,
-          showConfirmPassword,
-          () => setShowConfirmPassword((value) => !value),
-          t.confirmHint,
-        )}
-      </div>
-
-      <div className="partner-field-full partner-consent-list">
-        <label className="partner-consent">
-          <input
-            type="checkbox"
-            name="terms"
-            checked={form.terms}
-            onChange={handleChange}
-            aria-invalid={Boolean(errors.terms)}
-            aria-describedby={errors.terms ? "terms-error" : undefined}
-          />
-          <span>
-            {t.termsStart}{" "}
-            <Link to="/terms" target="_blank" rel="noreferrer">
-              {t.termsLink}
-            </Link>{" "}
-            {t.and}{" "}
-            <Link to="/privacy" target="_blank" rel="noreferrer">
-              {t.privacyLink}
-            </Link>
-            {t.termsEnd}
-            <b className="partner-required"> *</b>
-            {errors.terms && (
-              <small
-                id="terms-error"
-                className="partner-form-error"
-                role="alert"
-              >
-                {errors.terms}
-              </small>
-            )}
-          </span>
-        </label>
-
-        <label className="partner-consent">
-          <input
-            type="checkbox"
-            name="consent"
-            checked={form.consent}
-            onChange={handleChange}
-            aria-invalid={Boolean(errors.consent)}
-            aria-describedby={errors.consent ? "consent-error" : undefined}
-          />
-          <span>
-            {t.consent}
-            <b className="partner-required"> *</b>
-            {errors.consent && (
-              <small
-                id="consent-error"
-                className="partner-form-error"
-                role="alert"
-              >
-                {errors.consent}
-              </small>
-            )}
-          </span>
-        </label>
-      </div>
-
-      <div className="partner-field-full partner-secure-note">
-        <ShieldCheck size={17} />
-        <span>{t.securityNote}</span>
-      </div>
-    </div>,
-  ];
-
-  const titles = [
-    t.personalTitle,
-    t.addressTitle,
-    t.educationTitle,
-    t.skillsTitle,
-    t.learningTitle,
-    t.securityTitle,
-  ];
-
-  const descriptions = [
-    t.personalDesc,
-    t.addressDesc,
-    t.educationDesc,
-    t.skillsDesc,
-    t.learningDesc,
-    t.securityDesc,
-  ];
-
-  if (submitted) {
-    return (
-      <main className="partner-register-page">
-        <section className="partner-wizard">
-          <header className="partner-wizard-header">
-            <Link to="/" className="partner-brand">
-              <span className="partner-brand-mark">
-                <GraduationCap size={20} />
-              </span>
-              <span>
-                <strong>NeedOneService</strong>
-                <small>{t.network}</small>
-              </span>
-            </Link>
-
-            <LanguagePicker
-              language={language}
-              setLanguage={setLanguage}
-              t={t}
-            />
-          </header>
-
-          <section className="partner-wizard-card partner-success-card">
-            <div className="partner-success-icon">
-              <CheckCircle2 size={34} />
-            </div>
-
-            <span className="partner-eyebrow">{t.successEyebrow}</span>
-            <h1>{t.successTitle}</h1>
-            <p>{t.successDesc}</p>
-
-            <div className="partner-review-summary">
-              <h3>{t.summary}</h3>
-              <p>
-                <strong>{t.student}</strong>
-                <span>{form.fullName}</span>
-              </p>
-              <p>
-                <strong>{t.email}</strong>
-                <span>{form.email}</span>
-              </p>
-              <p>
-                <strong>{t.interest}</strong>
-                <span>
-                  {form.interestedAreas
-                    .map((value) => {
-                      const optionIndex = t.interestValues.indexOf(
-                        value as (typeof t.interestValues)[number],
-                      );
-                      return optionIndex >= 0
-                        ? t.interests[optionIndex]
-                        : value;
-                    })
-                    .join(", ") || "—"}
-                </span>
-              </p>
-              <p>
-                <strong>{t.goal}</strong>
-                <span>
-                  {form.learningGoals
-                    .map((value) => {
-                      const optionIndex = t.goalValues.indexOf(
-                        value as (typeof t.goalValues)[number],
-                      );
-                      return optionIndex >= 0
-                        ? t.goals[optionIndex]
-                        : value;
-                    })
-                    .join(", ") || "—"}
-                </span>
-              </p>
-            </div>
-
-            <p>{t.frontendNote}</p>
-
-            <Link to="/" className="partner-submit-button">
-              {t.home}
-              <ArrowRight size={16} />
-            </Link>
-          </section>
-        </section>
-      </main>
-    );
-  }
-
-  return (
-    <main className="partner-register-page">
-      <section className="partner-wizard">
-        <header className="partner-wizard-header">
-          <div className="partner-header-actions">
-            <LanguagePicker
-              language={language}
-              setLanguage={setLanguage}
-              t={t}
-            />
-
-            <div className="partner-login-note">
-              {t.signIn}
-              <Link to="/login">{t.login}</Link>
-            </div>
-          </div>
-        </header>
-
-        <div className="partner-wizard-intro">
-          <div>
-            <span className="partner-eyebrow">{t.eyebrow}</span>
-            <h1>
-              {t.heading} <span>{t.brand}</span>
-            </h1>
-            <p>{t.intro}</p>
-          </div>
-
-          <div className="partner-secure-note">
-            <LockKeyhole size={16} />
-            <span>{t.secure}</span>
-          </div>
-        </div>
-
-        <div className="partner-wizard-card">
-          <div className="partner-progress-header">
-            <div>
-              <span className="partner-step-count">
-                {t.step} {String(step + 1).padStart(2, "0")} {t.of} 06
-              </span>
-              <h2>{t.stepNames[step][0]}</h2>
-              <p>{t.stepNames[step][1]}</p>
-            </div>
-
-            <div className="partner-progress-percent">
-              {progress}% <span>{t.completed}</span>
-            </div>
-          </div>
-
-          <div
-            className="partner-progress-track"
-            role="progressbar"
-            aria-valuemin={0}
-            aria-valuemax={6}
-            aria-valuenow={step + 1}
-            aria-label={t.intro}
-          >
-            <div
-              className="partner-progress-fill"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-
-          <nav
-            className="partner-step-navigation"
-            aria-label="Registration steps"
-          >
-            {t.stepNames.map((item, index) => {
-              const stepLabels = [
-                "Personal",
-                "Address",
-                "Education",
-                "Skills",
-                "Learning",
-                "Account",
-              ];
-
-              return (
-                <button
-                  type="button"
-                  key={index}
-                  className={`partner-step-indicator${
-                    index === step ? " active" : ""
-                  }${index < step ? " completed" : ""}`}
-                  onClick={() => {
-                    if (index < step) {
-                      setStep(index);
-                      setErrors({});
-                      window.scrollTo({
-                        top: 0,
-                        behavior: "smooth",
-                      });
-                    }
-                  }}
-                  disabled={index >= step}
-                  aria-current={index === step ? "step" : undefined}
-                  aria-label={item[0]}
-                >
-                  <span className="partner-step-icon">
-                    {index < step ? (
-                      <Check size={15} />
-                    ) : (
-                      String(index + 1).padStart(2, "0")
-                    )}
-                  </span>
-                  <span className="partner-step-label">
-                    {stepLabels[index]}
-                  </span>
-                </button>
-              );
-            })}
-          </nav>
-
-          <form
-            className="partner-form-content"
-            onSubmit={handleSubmit}
-            noValidate
-          >
-            <section className="partner-form-section">
-              <div className="partner-form-heading">
-                <span className="partner-form-number">
-                  {String(step + 1).padStart(2, "0")}
-                </span>
-                <div>
-                  <h3>{titles[step]}</h3>
-                  <p>{descriptions[step]}</p>
-                </div>
-              </div>
-
-              {stepContent[step]}
-            </section>
-
-            <footer className="partner-form-footer">
-              <button
-                type="button"
-                className="partner-back-button"
-                onClick={goBack}
-                disabled={step === 0}
-              >
-                <ArrowLeft size={16} />
-                {t.back}
-              </button>
-
-              <span className="partner-footer-hint">
-                <LockKeyhole size={13} />
-                {t.safe}
-              </span>
-
-              {step < 5 ? (
-                <button
-                  type="button"
-                  className="partner-submit-button"
-                  onClick={goNext}
-                >
-                  {t.next}
-                  <ArrowRight size={16} />
-                </button>
-              ) : (
-                <button type="submit" className="partner-submit-button">
-                  {t.submit}
-                  <Check size={17} />
-                </button>
-              )}
-            </footer>
-          </form>
-        </div>
-
-        <p className="partner-wizard-bottom-note">
-          {t.help} <Link to="/contact">{t.contact}</Link>
-        </p>
-      </section>
-    </main>
-  );
+const translations: Record<Language, Translation> = {
+    en: {
+        pageTitle: "Student Registration",
+        pageSubtitle:
+            "Build your future with NeedOneService. Complete your profile to get started.",
+        brand: "NeedOneService",
+        step: "STEP",
+        of: "OF",
+        personal: "Personal",
+        addressStep: "Address",
+        education: "Education",
+        skillsStep: "Skills",
+        learning: "Learning",
+        account: "Account",
+        personalTitle: "Personal Information",
+        personalDescription:
+            "Tell us a little about yourself so we can create your student profile.",
+        fullName: "Full Name",
+        fullNamePlaceholder: "Enter your full name",
+        dateOfBirth: "Date of Birth",
+        gender: "Gender",
+        selectGender: "Select gender",
+        male: "Male",
+        female: "Female",
+        other: "Other",
+        preferNotToSay: "Prefer not to say",
+        mobile: "Mobile Number",
+        mobilePlaceholder: "10-digit mobile number",
+        alternateMobile: "Alternate Mobile Number",
+        alternateMobilePlaceholder: "Optional alternate number",
+        email: "Email Address",
+        emailPlaceholder: "you@example.com",
+
+        addressTitle: "Address Details",
+        addressDescription:
+            "Add your current address so we can provide relevant opportunities near you.",
+        address: "Street Address",
+        addressPlaceholder: "House number, street, area",
+        city: "City",
+        cityPlaceholder: "Enter your city",
+        state: "State",
+        statePlaceholder: "Enter your state",
+        pincode: "PIN Code",
+        pincodePlaceholder: "6-digit PIN code",
+        country: "Country",
+        countryPlaceholder: "Enter your country",
+
+        educationTitle: "Education Details",
+        educationDescription:
+            "Tell us about your current education and academic background.",
+        educationLevel: "Education Level",
+        selectEducationLevel: "Select education level",
+        school: "School",
+        intermediate: "Intermediate / 12th",
+        diploma: "Diploma",
+        undergraduate: "Undergraduate",
+        postgraduate: "Postgraduate",
+        doctorate: "Doctorate",
+        otherEducation: "Other",
+        institution: "Institution / College Name",
+        institutionPlaceholder: "Enter school or college name",
+        course: "Course / Qualification",
+        coursePlaceholder: "e.g. B.Tech, B.Com, Diploma",
+        fieldOfStudy: "Field of Study",
+        fieldOfStudyPlaceholder: "e.g. Computer Science",
+        currentYear: "Current Year / Semester",
+        currentYearPlaceholder: "e.g. 2nd Year",
+        graduationYear: "Expected Graduation Year",
+        graduationYearPlaceholder: "e.g. 2027",
+        studentId: "Student ID",
+        studentIdPlaceholder: "Optional student ID",
+
+        skillsTitle: "Skills & Interests",
+        skillsDescription:
+            "Choose the areas you are interested in and tell us about your skills.",
+        interestedAreas: "Areas of Interest",
+        selectInterests: "Select one or more areas",
+        technology: "Technology & IT",
+        design: "Design & Creative",
+        business: "Business & Management",
+        marketing: "Marketing & Communication",
+        finance: "Finance & Accounting",
+        educationInterest: "Education & Teaching",
+        engineering: "Engineering",
+        healthcare: "Healthcare",
+        customerService: "Customer Service",
+        dataAnalytics: "Data & Analytics",
+        entrepreneurship: "Entrepreneurship",
+        otherInterest: "Other",
+        skills: "Skills",
+        skillsPlaceholder:
+            "List your skills, separated by commas",
+        experienceLevel: "Experience Level",
+        selectExperience: "Select experience level",
+        beginner: "Beginner",
+        intermediateLevel: "Intermediate",
+        advanced: "Advanced",
+        experienced: "Experienced",
+        preferredLanguage: "Preferred Language",
+        selectLanguage: "Select preferred language",
+
+        learningTitle: "Learning Preferences",
+        learningDescription:
+            "Help us understand your goals and how you prefer to learn.",
+        learningGoals: "Learning Goals",
+        selectGoals: "Select one or more goals",
+        improveSkills: "Improve my skills",
+        careerGrowth: "Career development",
+        internship: "Find an internship",
+        jobReadiness: "Prepare for a job",
+        certification: "Earn certifications",
+        academicSupport: "Academic support",
+        practicalExperience: "Gain practical experience",
+        networking: "Build a professional network",
+        learningMode: "Preferred Learning Mode",
+        selectLearningMode: "Select learning mode",
+        online: "Online",
+        offline: "In person",
+        hybrid: "Hybrid",
+        selfPaced: "Self-paced",
+        availability: "Availability",
+        selectAvailability: "Select availability",
+        weekdays: "Weekdays",
+        weekends: "Weekends",
+        mornings: "Mornings",
+        evenings: "Evenings",
+        flexible: "Flexible",
+        weeklyHours: "Hours Available Per Week",
+        selectWeeklyHours: "Select weekly hours",
+        hours1to5: "1–5 hours",
+        hours6to10: "6–10 hours",
+        hours11to20: "11–20 hours",
+        hours20plus: "20+ hours",
+        additionalDetails: "Additional Information",
+        additionalDetailsPlaceholder:
+            "Share any learning goals or requirements you would like us to know about.",
+
+        accountTitle: "Create Your Account",
+        accountDescription:
+            "Set a secure password and review the consent statements to complete registration.",
+        password: "Password",
+        passwordPlaceholder: "Create a strong password",
+        confirmPassword: "Confirm Password",
+        confirmPasswordPlaceholder: "Enter your password again",
+        showPassword: "Show password",
+        hidePassword: "Hide password",
+        passwordHint:
+            "Use at least 8 characters, including a letter and a number.",
+        termsPrefix: "I agree to the",
+        termsLink: "Terms and Conditions",
+        and: "and",
+        privacyLink: "Privacy Policy",
+        consentText:
+            "I consent to NeedOneService using the information I provide to manage my student registration and contact me about relevant services and opportunities.",
+        securityTitle: "Your information matters",
+        securityDescription:
+            "Your password is not saved in this browser-based registration record.",
+        back: "Back",
+        next: "Continue",
+        submit: "Complete Registration",
+        required: "This field is required.",
+        invalidEmail: "Enter a valid email address.",
+        invalidMobile: "Enter a valid 10-digit mobile number.",
+        invalidPincode: "Enter a valid 6-digit PIN code.",
+        invalidDate: "Enter a valid date of birth.",
+        futureDate: "Date of birth cannot be in the future.",
+        invalidGraduationYear: "Enter a valid graduation year.",
+        passwordLength: "Password must contain at least 8 characters.",
+        passwordLetterNumber:
+            "Password must contain at least one letter and one number.",
+        passwordMismatch: "Passwords do not match.",
+        acceptTerms: "Please accept the Terms and Conditions.",
+        acceptConsent: "Please confirm your consent to continue.",
+        selectAtLeastOne: "Select at least one option.",
+        fixErrors: "Please correct the highlighted fields before continuing.",
+        upload: "Upload Document",
+        optional: "Optional",
+        uploadHint:
+            "Supported formats: PDF, JPG, PNG. Maximum file size: 5 MB.",
+        resume: "Resume / CV",
+        studentProof: "Student ID / Enrollment Proof",
+        removeFile: "Remove file",
+        successTitle: "Registration Details Saved!",
+        successDescription:
+            "Your student registration details have been saved in this browser.",
+        successNote:
+            "This is a frontend-only confirmation. Your registration has not been sent to a server.",
+        goToProfile: "Go to Profile",
+        returnToHome: "Return to Home",
+        alreadyAccount: "Already have an account?",
+        login: "Log in",
+        language: "Language",
+        english: "English",
+        telugu: "Telugu",
+        hindi: "Hindi",
+        selected: "selected",
+        chooseOption: "Choose an option",
+        noFile: "No file selected",
+        accountNextSteps:
+            "You can review your submitted information from your profile if the profile page is configured to read student registration data.",
+    },
+
+    te: {
+        pageTitle: "విద్యార్థి నమోదు",
+        pageSubtitle:
+            "NeedOneService తో మీ భవిష్యత్తును నిర్మించుకోండి. ప్రారంభించడానికి మీ వివరాలను నమోదు చేయండి.",
+        brand: "NeedOneService",
+        step: "దశ",
+        of: "లో",
+        personal: "వ్యక్తిగతం",
+        addressStep: "చిరునామా",
+        education: "విద్య",
+        skillsStep: "నైపుణ్యాలు",
+        learning: "అభ్యాసం",
+        account: "ఖాతా",
+        personalTitle: "వ్యక్తిగత సమాచారం",
+        personalDescription:
+            "మీ విద్యార్థి ప్రొఫైల్‌ను రూపొందించడానికి మీ వివరాలను నమోదు చేయండి.",
+        fullName: "పూర్తి పేరు",
+        fullNamePlaceholder: "మీ పూర్తి పేరు నమోదు చేయండి",
+        dateOfBirth: "పుట్టిన తేదీ",
+        gender: "లింగం",
+        selectGender: "లింగాన్ని ఎంచుకోండి",
+        male: "పురుషుడు",
+        female: "స్త్రీ",
+        other: "ఇతర",
+        preferNotToSay: "తెలపకూడదని అనుకుంటున్నాను",
+        mobile: "మొబైల్ నంబర్",
+        mobilePlaceholder: "10 అంకెల మొబైల్ నంబర్",
+        alternateMobile: "ప్రత్యామ్నాయ మొబైల్ నంబర్",
+        alternateMobilePlaceholder: "ఐచ్ఛిక ప్రత్యామ్నాయ నంబర్",
+        email: "ఈమెయిల్ చిరునామా",
+        emailPlaceholder: "you@example.com",
+
+        addressTitle: "చిరునామా వివరాలు",
+        addressDescription:
+            "మీకు సమీపంలోని అవకాశాలను అందించడానికి ప్రస్తుత చిరునామాను నమోదు చేయండి.",
+        address: "వీధి చిరునామా",
+        addressPlaceholder: "ఇంటి నంబర్, వీధి, ప్రాంతం",
+        city: "నగరం",
+        cityPlaceholder: "మీ నగరాన్ని నమోదు చేయండి",
+        state: "రాష్ట్రం",
+        statePlaceholder: "మీ రాష్ట్రాన్ని నమోదు చేయండి",
+        pincode: "పిన్ కోడ్",
+        pincodePlaceholder: "6 అంకెల పిన్ కోడ్",
+        country: "దేశం",
+        countryPlaceholder: "మీ దేశాన్ని నమోదు చేయండి",
+
+        educationTitle: "విద్యా వివరాలు",
+        educationDescription:
+            "మీ ప్రస్తుత విద్య మరియు విద్యా నేపథ్యాన్ని నమోదు చేయండి.",
+        educationLevel: "విద్యా స్థాయి",
+        selectEducationLevel: "విద్యా స్థాయిని ఎంచుకోండి",
+        school: "పాఠశాల",
+        intermediate: "ఇంటర్మీడియట్ / 12వ తరగతి",
+        diploma: "డిప్లొమా",
+        undergraduate: "అండర్ గ్రాడ్యుయేట్",
+        postgraduate: "పోస్ట్ గ్రాడ్యుయేట్",
+        doctorate: "డాక్టరేట్",
+        otherEducation: "ఇతర",
+        institution: "సంస్థ / కళాశాల పేరు",
+        institutionPlaceholder: "పాఠశాల లేదా కళాశాల పేరు నమోదు చేయండి",
+        course: "కోర్సు / అర్హత",
+        coursePlaceholder: "ఉదా. B.Tech, B.Com, Diploma",
+        fieldOfStudy: "అధ్యయన విభాగం",
+        fieldOfStudyPlaceholder: "ఉదా. కంప్యూటర్ సైన్స్",
+        currentYear: "ప్రస్తుత సంవత్సరం / సెమిస్టర్",
+        currentYearPlaceholder: "ఉదా. 2వ సంవత్సరం",
+        graduationYear: "గ్రాడ్యుయేషన్ సంవత్సరం",
+        graduationYearPlaceholder: "ఉదా. 2027",
+        studentId: "విద్యార్థి ఐడి",
+        studentIdPlaceholder: "ఐచ్ఛిక విద్యార్థి ఐడి",
+
+        skillsTitle: "నైపుణ్యాలు మరియు ఆసక్తులు",
+        skillsDescription:
+            "మీకు ఆసక్తి ఉన్న రంగాలను ఎంచుకుని, మీ నైపుణ్యాలను తెలియజేయండి.",
+        interestedAreas: "ఆసక్తి ఉన్న రంగాలు",
+        selectInterests: "ఒకటి లేదా అంతకంటే ఎక్కువ రంగాలను ఎంచుకోండి",
+        technology: "టెక్నాలజీ మరియు ఐటీ",
+        design: "డిజైన్ మరియు సృజనాత్మకత",
+        business: "వ్యాపారం మరియు నిర్వహణ",
+        marketing: "మార్కెటింగ్ మరియు కమ్యూనికేషన్",
+        finance: "ఫైనాన్స్ మరియు అకౌంటింగ్",
+        educationInterest: "విద్య మరియు బోధన",
+        engineering: "ఇంజినీరింగ్",
+        healthcare: "ఆరోగ్య సంరక్షణ",
+        customerService: "కస్టమర్ సర్వీస్",
+        dataAnalytics: "డేటా మరియు అనలిటిక్స్",
+        entrepreneurship: "వ్యాపారారంభం",
+        otherInterest: "ఇతర",
+        skills: "నైపుణ్యాలు",
+        skillsPlaceholder: "కామాలతో వేరు చేసి నైపుణ్యాలను నమోదు చేయండి",
+        experienceLevel: "అనుభవ స్థాయి",
+        selectExperience: "అనుభవ స్థాయిని ఎంచుకోండి",
+        beginner: "ప్రారంభ స్థాయి",
+        intermediateLevel: "మధ్యస్థ స్థాయి",
+        advanced: "ఉన్నత స్థాయి",
+        experienced: "అనుభవం ఉంది",
+        preferredLanguage: "ప్రాధాన్య భాష",
+        selectLanguage: "భాషను ఎంచుకోండి",
+
+        learningTitle: "అభ్యాస ప్రాధాన్యతలు",
+        learningDescription:
+            "మీ లక్ష్యాలు మరియు మీరు నేర్చుకోవాలనుకునే విధానాన్ని తెలియజేయండి.",
+        learningGoals: "అభ్యాస లక్ష్యాలు",
+        selectGoals: "ఒకటి లేదా అంతకంటే ఎక్కువ లక్ష్యాలను ఎంచుకోండి",
+        improveSkills: "నా నైపుణ్యాలను మెరుగుపరచుకోవడం",
+        careerGrowth: "వృత్తి అభివృద్ధి",
+        internship: "ఇంటర్న్‌షిప్ పొందడం",
+        jobReadiness: "ఉద్యోగానికి సిద్ధం కావడం",
+        certification: "సర్టిఫికేషన్లు పొందడం",
+        academicSupport: "విద్యా సహాయం",
+        practicalExperience: "ప్రాక్టికల్ అనుభవం పొందడం",
+        networking: "వృత్తిపరమైన పరిచయాలు పెంచుకోవడం",
+        learningMode: "అభ్యాస విధానం",
+        selectLearningMode: "అభ్యాస విధానాన్ని ఎంచుకోండి",
+        online: "ఆన్‌లైన్",
+        offline: "ప్రత్యక్షంగా",
+        hybrid: "హైబ్రిడ్",
+        selfPaced: "స్వీయ వేగంతో",
+        availability: "అందుబాటు సమయం",
+        selectAvailability: "అందుబాటు సమయాన్ని ఎంచుకోండి",
+        weekdays: "వారపు రోజులు",
+        weekends: "వారాంతాలు",
+        mornings: "ఉదయం",
+        evenings: "సాయంత్రం",
+        flexible: "అనువైన సమయం",
+        weeklyHours: "వారానికి అందుబాటులో ఉన్న గంటలు",
+        selectWeeklyHours: "గంటలను ఎంచుకోండి",
+        hours1to5: "1–5 గంటలు",
+        hours6to10: "6–10 గంటలు",
+        hours11to20: "11–20 గంటలు",
+        hours20plus: "20+ గంటలు",
+        additionalDetails: "అదనపు సమాచారం",
+        additionalDetailsPlaceholder:
+            "మీ అభ్యాస లక్ష్యాలు లేదా ఇతర అవసరాలను తెలియజేయండి.",
+
+        accountTitle: "మీ ఖాతాను సృష్టించండి",
+        accountDescription:
+            "సురక్షిత పాస్‌వర్డ్‌ను సెట్ చేసి, నమోదు పూర్తి చేయడానికి సమ్మతి వివరాలను పరిశీలించండి.",
+        password: "పాస్‌వర్డ్",
+        passwordPlaceholder: "బలమైన పాస్‌వర్డ్ సృష్టించండి",
+        confirmPassword: "పాస్‌వర్డ్‌ను నిర్ధారించండి",
+        confirmPasswordPlaceholder: "పాస్‌వర్డ్‌ను మళ్లీ నమోదు చేయండి",
+        showPassword: "పాస్‌వర్డ్ చూపించండి",
+        hidePassword: "పాస్‌వర్డ్ దాచండి",
+        passwordHint:
+            "కనీసం 8 అక్షరాలు, ఒక అక్షరం మరియు ఒక సంఖ్య ఉపయోగించండి.",
+        termsPrefix: "నేను అంగీకరిస్తున్నాను:",
+        termsLink: "నిబంధనలు",
+        and: "మరియు",
+        privacyLink: "గోప్యతా విధానం",
+        consentText:
+            "నా విద్యార్థి నమోదును నిర్వహించడానికి మరియు సంబంధిత సేవలు, అవకాశాల గురించి నన్ను సంప్రదించడానికి NeedOneService నా సమాచారాన్ని ఉపయోగించేందుకు నేను సమ్మతిస్తున్నాను.",
+        securityTitle: "మీ సమాచారం ముఖ్యం",
+        securityDescription:
+            "ఈ బ్రౌజర్ ఆధారిత నమోదు రికార్డులో మీ పాస్‌వర్డ్ సేవ్ చేయబడదు.",
+        back: "వెనక్కి",
+        next: "కొనసాగించండి",
+        submit: "నమోదు పూర్తి చేయండి",
+        required: "ఈ వివరాన్ని నమోదు చేయాలి.",
+        invalidEmail: "సరైన ఈమెయిల్ చిరునామాను నమోదు చేయండి.",
+        invalidMobile: "సరైన 10 అంకెల మొబైల్ నంబర్ నమోదు చేయండి.",
+        invalidPincode: "సరైన 6 అంకెల పిన్ కోడ్ నమోదు చేయండి.",
+        invalidDate: "సరైన పుట్టిన తేదీ నమోదు చేయండి.",
+        futureDate: "పుట్టిన తేదీ భవిష్యత్తులో ఉండకూడదు.",
+        invalidGraduationYear: "సరైన గ్రాడ్యుయేషన్ సంవత్సరాన్ని నమోదు చేయండి.",
+        passwordLength: "పాస్‌వర్డ్‌లో కనీసం 8 అక్షరాలు ఉండాలి.",
+        passwordLetterNumber:
+            "పాస్‌వర్డ్‌లో కనీసం ఒక అక్షరం మరియు ఒక సంఖ్య ఉండాలి.",
+        passwordMismatch: "పాస్‌వర్డ్‌లు సరిపోలడం లేదు.",
+        acceptTerms: "దయచేసి నిబంధనలను అంగీకరించండి.",
+        acceptConsent: "కొనసాగించడానికి మీ సమ్మతిని నిర్ధారించండి.",
+        selectAtLeastOne: "కనీసం ఒక ఎంపికను ఎంచుకోండి.",
+        fixErrors: "కొనసాగించే ముందు గుర్తించిన వివరాలను సరిచేయండి.",
+        upload: "పత్రాన్ని అప్‌లోడ్ చేయండి",
+        optional: "ఐచ్ఛికం",
+        uploadHint:
+            "అనుమతించబడిన ఫార్మాట్‌లు: PDF, JPG, PNG. గరిష్ఠ పరిమాణం: 5 MB.",
+        resume: "రెజ్యూమే / CV",
+        studentProof: "విద్యార్థి ఐడి / నమోదు రుజువు",
+        removeFile: "ఫైల్ తొలగించండి",
+        successTitle: "నమోదు వివరాలు సేవ్ అయ్యాయి!",
+        successDescription:
+            "మీ విద్యార్థి నమోదు వివరాలు ఈ బ్రౌజర్‌లో సేవ్ చేయబడ్డాయి.",
+        successNote:
+            "ఇది ఫ్రంట్‌ఎండ్ నిర్ధారణ మాత్రమే. మీ నమోదు సర్వర్‌కు పంపబడలేదు.",
+        goToProfile: "ప్రొఫైల్‌కు వెళ్లండి",
+        returnToHome: "హోమ్‌కు తిరిగి వెళ్లండి",
+        alreadyAccount: "ఇప్పటికే ఖాతా ఉందా?",
+        login: "లాగిన్",
+        language: "భాష",
+        english: "ఆంగ్లం",
+        telugu: "తెలుగు",
+        hindi: "హిందీ",
+        selected: "ఎంచుకున్నారు",
+        chooseOption: "ఒక ఎంపికను ఎంచుకోండి",
+        noFile: "ఫైల్ ఎంచుకోలేదు",
+        accountNextSteps:
+            "విద్యార్థి నమోదు వివరాలను చదివేలా ప్రొఫైల్ పేజీ అమర్చబడి ఉంటే, అక్కడ మీ వివరాలను పరిశీలించవచ్చు.",
+    },
+
+    hi: {
+        pageTitle: "छात्र पंजीकरण",
+        pageSubtitle:
+            "NeedOneService के साथ अपना भविष्य बनाएं। शुरुआत करने के लिए अपनी जानकारी भरें।",
+        brand: "NeedOneService",
+        step: "चरण",
+        of: "में से",
+        personal: "व्यक्तिगत",
+        addressStep: "पता",
+        education: "शिक्षा",
+        skillsStep: "कौशल",
+        learning: "सीखना",
+        account: "खाता",
+        personalTitle: "व्यक्तिगत जानकारी",
+        personalDescription:
+            "अपनी छात्र प्रोफ़ाइल बनाने के लिए अपनी जानकारी भरें।",
+        fullName: "पूरा नाम",
+        fullNamePlaceholder: "अपना पूरा नाम दर्ज करें",
+        dateOfBirth: "जन्म तिथि",
+        gender: "लिंग",
+        selectGender: "लिंग चुनें",
+        male: "पुरुष",
+        female: "महिला",
+        other: "अन्य",
+        preferNotToSay: "बताना नहीं चाहते",
+        mobile: "मोबाइल नंबर",
+        mobilePlaceholder: "10 अंकों का मोबाइल नंबर",
+        alternateMobile: "वैकल्पिक मोबाइल नंबर",
+        alternateMobilePlaceholder: "वैकल्पिक नंबर (ज़रूरी नहीं)",
+        email: "ईमेल पता",
+        emailPlaceholder: "you@example.com",
+
+        addressTitle: "पते का विवरण",
+        addressDescription:
+            "अपने आस-पास के अवसरों के लिए अपना वर्तमान पता दर्ज करें।",
+        address: "सड़क का पता",
+        addressPlaceholder: "मकान नंबर, सड़क, क्षेत्र",
+        city: "शहर",
+        cityPlaceholder: "अपना शहर दर्ज करें",
+        state: "राज्य",
+        statePlaceholder: "अपना राज्य दर्ज करें",
+        pincode: "पिन कोड",
+        pincodePlaceholder: "6 अंकों का पिन कोड",
+        country: "देश",
+        countryPlaceholder: "अपना देश दर्ज करें",
+
+        educationTitle: "शिक्षा का विवरण",
+        educationDescription:
+            "अपनी वर्तमान शिक्षा और शैक्षणिक पृष्ठभूमि की जानकारी दें।",
+        educationLevel: "शिक्षा का स्तर",
+        selectEducationLevel: "शिक्षा का स्तर चुनें",
+        school: "स्कूल",
+        intermediate: "इंटरमीडिएट / 12वीं",
+        diploma: "डिप्लोमा",
+        undergraduate: "स्नातक",
+        postgraduate: "स्नातकोत्तर",
+        doctorate: "डॉक्टरेट",
+        otherEducation: "अन्य",
+        institution: "संस्थान / कॉलेज का नाम",
+        institutionPlaceholder: "स्कूल या कॉलेज का नाम दर्ज करें",
+        course: "कोर्स / योग्यता",
+        coursePlaceholder: "जैसे B.Tech, B.Com, Diploma",
+        fieldOfStudy: "अध्ययन का विषय",
+        fieldOfStudyPlaceholder: "जैसे कंप्यूटर साइंस",
+        currentYear: "वर्तमान वर्ष / सेमेस्टर",
+        currentYearPlaceholder: "जैसे दूसरा वर्ष",
+        graduationYear: "स्नातक पूरा होने का वर्ष",
+        graduationYearPlaceholder: "जैसे 2027",
+        studentId: "छात्र आईडी",
+        studentIdPlaceholder: "वैकल्पिक छात्र आईडी",
+
+        skillsTitle: "कौशल और रुचियां",
+        skillsDescription:
+            "अपनी रुचि के क्षेत्रों को चुनें और अपने कौशल के बारे में बताएं।",
+        interestedAreas: "रुचि के क्षेत्र",
+        selectInterests: "एक या अधिक क्षेत्र चुनें",
+        technology: "टेक्नोलॉजी और आईटी",
+        design: "डिज़ाइन और रचनात्मकता",
+        business: "व्यवसाय और प्रबंधन",
+        marketing: "मार्केटिंग और संचार",
+        finance: "वित्त और लेखांकन",
+        educationInterest: "शिक्षा और अध्यापन",
+        engineering: "इंजीनियरिंग",
+        healthcare: "स्वास्थ्य सेवा",
+        customerService: "ग्राहक सेवा",
+        dataAnalytics: "डेटा और एनालिटिक्स",
+        entrepreneurship: "उद्यमिता",
+        otherInterest: "अन्य",
+        skills: "कौशल",
+        skillsPlaceholder: "अल्पविराम से अलग करके अपने कौशल लिखें",
+        experienceLevel: "अनुभव का स्तर",
+        selectExperience: "अनुभव का स्तर चुनें",
+        beginner: "शुरुआती",
+        intermediateLevel: "मध्यम",
+        advanced: "उन्नत",
+        experienced: "अनुभवी",
+        preferredLanguage: "पसंदीदा भाषा",
+        selectLanguage: "पसंदीदा भाषा चुनें",
+
+        learningTitle: "सीखने की प्राथमिकताएं",
+        learningDescription:
+            "अपने लक्ष्यों और पसंदीदा सीखने के तरीके के बारे में बताएं।",
+        learningGoals: "सीखने के लक्ष्य",
+        selectGoals: "एक या अधिक लक्ष्य चुनें",
+        improveSkills: "अपने कौशल में सुधार",
+        careerGrowth: "करियर विकास",
+        internship: "इंटर्नशिप ढूंढना",
+        jobReadiness: "नौकरी की तैयारी",
+        certification: "प्रमाणपत्र प्राप्त करना",
+        academicSupport: "शैक्षणिक सहायता",
+        practicalExperience: "व्यावहारिक अनुभव प्राप्त करना",
+        networking: "पेशेवर संपर्क बनाना",
+        learningMode: "सीखने का पसंदीदा तरीका",
+        selectLearningMode: "सीखने का तरीका चुनें",
+        online: "ऑनलाइन",
+        offline: "व्यक्तिगत रूप से",
+        hybrid: "हाइब्रिड",
+        selfPaced: "अपनी गति से",
+        availability: "उपलब्ध समय",
+        selectAvailability: "उपलब्ध समय चुनें",
+        weekdays: "कार्यदिवस",
+        weekends: "सप्ताहांत",
+        mornings: "सुबह",
+        evenings: "शाम",
+        flexible: "लचीला समय",
+        weeklyHours: "प्रति सप्ताह उपलब्ध घंटे",
+        selectWeeklyHours: "घंटे चुनें",
+        hours1to5: "1–5 घंटे",
+        hours6to10: "6–10 घंटे",
+        hours11to20: "11–20 घंटे",
+        hours20plus: "20+ घंटे",
+        additionalDetails: "अतिरिक्त जानकारी",
+        additionalDetailsPlaceholder:
+            "अपने सीखने के लक्ष्यों या अन्य आवश्यकताओं के बारे में बताएं।",
+
+        accountTitle: "अपना खाता बनाएं",
+        accountDescription:
+            "एक सुरक्षित पासवर्ड बनाएं और पंजीकरण पूरा करने के लिए सहमति की पुष्टि करें।",
+        password: "पासवर्ड",
+        passwordPlaceholder: "मजबूत पासवर्ड बनाएं",
+        confirmPassword: "पासवर्ड की पुष्टि करें",
+        confirmPasswordPlaceholder: "पासवर्ड दोबारा दर्ज करें",
+        showPassword: "पासवर्ड दिखाएं",
+        hidePassword: "पासवर्ड छिपाएं",
+        passwordHint:
+            "कम से कम 8 अक्षर, एक अक्षर और एक संख्या का उपयोग करें।",
+        termsPrefix: "मैं सहमत हूं:",
+        termsLink: "नियम और शर्तें",
+        and: "और",
+        privacyLink: "गोपनीयता नीति",
+        consentText:
+            "मैं NeedOneService को अपने छात्र पंजीकरण के प्रबंधन और संबंधित सेवाओं तथा अवसरों के बारे में मुझसे संपर्क करने के लिए मेरी दी गई जानकारी का उपयोग करने की सहमति देता/देती हूं।",
+        securityTitle: "आपकी जानकारी महत्वपूर्ण है",
+        securityDescription:
+            "इस ब्राउज़र-आधारित पंजीकरण रिकॉर्ड में आपका पासवर्ड सेव नहीं किया जाएगा।",
+        back: "वापस",
+        next: "जारी रखें",
+        submit: "पंजीकरण पूरा करें",
+        required: "यह जानकारी आवश्यक है।",
+        invalidEmail: "एक मान्य ईमेल पता दर्ज करें।",
+        invalidMobile: "10 अंकों का मान्य मोबाइल नंबर दर्ज करें।",
+        invalidPincode: "6 अंकों का मान्य पिन कोड दर्ज करें।",
+        invalidDate: "मान्य जन्म तिथि दर्ज करें।",
+        futureDate: "जन्म तिथि भविष्य की नहीं हो सकती।",
+        invalidGraduationYear: "मान्य स्नातक वर्ष दर्ज करें।",
+        passwordLength: "पासवर्ड में कम से कम 8 अक्षर होने चाहिए।",
+        passwordLetterNumber:
+            "पासवर्ड में कम से कम एक अक्षर और एक संख्या होनी चाहिए।",
+        passwordMismatch: "दोनों पासवर्ड मेल नहीं खाते।",
+        acceptTerms: "कृपया नियम और शर्तें स्वीकार करें।",
+        acceptConsent: "जारी रखने के लिए अपनी सहमति की पुष्टि करें।",
+        selectAtLeastOne: "कम से कम एक विकल्प चुनें।",
+        fixErrors: "जारी रखने से पहले चिह्नित जानकारी ठीक करें।",
+        upload: "दस्तावेज़ अपलोड करें",
+        optional: "वैकल्पिक",
+        uploadHint:
+            "समर्थित फ़ॉर्मेट: PDF, JPG, PNG। अधिकतम फ़ाइल आकार: 5 MB।",
+        resume: "रिज़्यूमे / CV",
+        studentProof: "छात्र आईडी / नामांकन प्रमाण",
+        removeFile: "फ़ाइल हटाएं",
+        successTitle: "पंजीकरण विवरण सेव हो गया!",
+        successDescription:
+            "आपके छात्र पंजीकरण का विवरण इस ब्राउज़र में सेव हो गया है।",
+        successNote:
+            "यह केवल फ्रंटएंड पुष्टि है। आपका पंजीकरण सर्वर पर नहीं भेजा गया है।",
+        goToProfile: "प्रोफ़ाइल पर जाएं",
+        returnToHome: "होम पर लौटें",
+        alreadyAccount: "पहले से खाता है?",
+        login: "लॉग इन",
+        language: "भाषा",
+        english: "अंग्रेज़ी",
+        telugu: "तेलुगु",
+        hindi: "हिंदी",
+        selected: "चयनित",
+        chooseOption: "एक विकल्प चुनें",
+        noFile: "कोई फ़ाइल नहीं चुनी गई",
+        accountNextSteps:
+            "यदि आपकी प्रोफ़ाइल छात्र पंजीकरण डेटा पढ़ने के लिए कॉन्फ़िगर की गई है, तो आप वहां अपने विवरण देख सकते हैं।",
+    },
+};
+
+const INTEREST_OPTIONS = [
+    { value: "Technology & IT", key: "technology" },
+    { value: "Design & Creative", key: "design" },
+    { value: "Business & Management", key: "business" },
+    { value: "Marketing & Communication", key: "marketing" },
+    { value: "Finance & Accounting", key: "finance" },
+    { value: "Education & Teaching", key: "educationInterest" },
+    { value: "Engineering", key: "engineering" },
+    { value: "Healthcare", key: "healthcare" },
+    { value: "Customer Service", key: "customerService" },
+    { value: "Data & Analytics", key: "dataAnalytics" },
+    { value: "Entrepreneurship", key: "entrepreneurship" },
+    { value: "Other", key: "otherInterest" },
+] as const;
+
+const LEARNING_GOAL_OPTIONS = [
+    { value: "Improve my skills", key: "improveSkills" },
+    { value: "Career development", key: "careerGrowth" },
+    { value: "Find an internship", key: "internship" },
+    { value: "Prepare for a job", key: "jobReadiness" },
+    { value: "Earn certifications", key: "certification" },
+    { value: "Academic support", key: "academicSupport" },
+    { value: "Gain practical experience", key: "practicalExperience" },
+    { value: "Build a professional network", key: "networking" },
+] as const;
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const ALLOWED_FILE_TYPES = [
+    "application/pdf",
+    "image/jpeg",
+    "image/png",
+];
+const ALLOWED_FILE_EXTENSIONS = [".pdf", ".jpg", ".jpeg", ".png"];
+
+function isString(value: unknown): value is string {
+    return typeof value === "string";
 }
 
-function LanguagePicker({
-  language,
-  setLanguage,
-  t,
-}: {
-  language: Language;
-  setLanguage: (language: Language) => void;
-  t: Translation;
-}) {
-  return (
-    <label className="partner-language-picker">
-      <Languages size={16} />
-      <span>{t.language}</span>
-      <select
-        aria-label={t.language}
-        value={language}
-        onChange={(event) =>
-          setLanguage(event.currentTarget.value as Language)
+function getText(
+    dictionary: Translation,
+    key: string,
+    fallback = key,
+): string {
+    const value = dictionary[key];
+    return isString(value) ? value : fallback;
+}
+
+function cleanMobile(value: string): string {
+    return value.replace(/\D/g, "").slice(0, 10);
+}
+
+function cleanPincode(value: string): string {
+    return value.replace(/\D/g, "").slice(0, 6);
+}
+
+function validateFile(file: File): string | null {
+    const extension = file.name
+        .slice(file.name.lastIndexOf("."))
+        .toLowerCase();
+
+    const hasAllowedExtension = ALLOWED_FILE_EXTENSIONS.includes(extension);
+    const hasAllowedType =
+        ALLOWED_FILE_TYPES.includes(file.type) ||
+        file.type === "";
+
+    if (!hasAllowedExtension || !hasAllowedType) {
+        return "Please choose a PDF, JPG, JPEG, or PNG file.";
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+        return "The file size must not exceed 5 MB.";
+    }
+
+    return null;
+}
+
+function StudentRegisterPage() {
+    const navigate = useNavigate();
+
+    const [language, setLanguage] = useState<Language>("en");
+    const [form, setForm] = useState<StudentFormData>(initialForm);
+    const [errors, setErrors] = useState<ErrorMap>({});
+    const [step, setStep] = useState(0);
+    const [submitted, setSubmitted] = useState(false);
+
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+    const [resumeFile, setResumeFile] = useState<File | null>(null);
+    const [studentProofFile, setStudentProofFile] = useState<File | null>(null);
+    const [fileErrors, setFileErrors] = useState<{
+        resume?: string;
+        studentProof?: string;
+    }>({});
+
+    const [formError, setFormError] = useState("");
+
+    const t = translations[language];
+
+    const stepNames = useMemo(
+        () => [
+            getText(t, "personal"),
+            getText(t, "addressStep"),
+            getText(t, "education"),
+            getText(t, "skillsStep"),
+            getText(t, "learning"),
+            getText(t, "account"),
+        ],
+        [t],
+    );
+
+    const updateField = <K extends keyof StudentFormData>(
+        field: K,
+        value: StudentFormData[K],
+    ) => {
+        setForm((previous) => ({
+            ...previous,
+            [field]: value,
+        }));
+
+        setErrors((previous) => {
+            if (!(field in previous)) return previous;
+
+            const next = { ...previous };
+            delete next[field];
+            return next;
+        });
+
+        setFormError("");
+    };
+
+    const handleTextChange = (
+        field: StringField,
+        event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
+    ) => {
+        let value = event.target.value;
+
+        if (field === "mobile" || field === "alternateMobile") {
+            value = cleanMobile(value);
         }
-      >
-        <option value="en">{t.english}</option>
-        <option value="te">{t.telugu}</option>
-        <option value="hi">{t.hindi}</option>
-      </select>
-    </label>
-  );
+
+        if (field === "pincode") {
+            value = cleanPincode(value);
+        }
+
+        updateField(field, value);
+    };
+
+    const toggleArrayOption = (
+        field: "interestedAreas" | "learningGoals",
+        value: string,
+    ) => {
+        const current = form[field];
+
+        const next = current.includes(value)
+            ? current.filter((item) => item !== value)
+            : [...current, value];
+
+        updateField(field, next);
+    };
+
+    const handleFile = (
+        event: ChangeEvent<HTMLInputElement>,
+        field: "resume" | "studentProof",
+    ) => {
+        const file = event.target.files?.[0];
+
+        if (!file) return;
+
+        const error = validateFile(file);
+
+        if (error) {
+            setFileErrors((previous) => ({
+                ...previous,
+                [field]: error,
+            }));
+            event.target.value = "";
+            return;
+        }
+
+        setFileErrors((previous) => ({
+            ...previous,
+            [field]: undefined,
+        }));
+
+        if (field === "resume") {
+            setResumeFile(file);
+        } else {
+            setStudentProofFile(file);
+        }
+    };
+
+    const removeFile = (field: "resume" | "studentProof") => {
+        if (field === "resume") {
+            setResumeFile(null);
+        } else {
+            setStudentProofFile(null);
+        }
+
+        setFileErrors((previous) => ({
+            ...previous,
+            [field]: undefined,
+        }));
+    };
+
+    const validateStep = (stepIndex: number): boolean => {
+        const nextErrors: ErrorMap = {};
+        const fields = STEP_FIELDS[stepIndex] ?? [];
+
+        fields.forEach((field) => {
+            const value = form[field];
+
+            if (field === "interestedAreas" || field === "learningGoals") {
+                if (Array.isArray(value) && value.length === 0) {
+                    nextErrors[field] = getText(t, "selectAtLeastOne");
+                }
+                return;
+            }
+
+            if (field === "termsAccepted") {
+                if (value !== true) {
+                    nextErrors.termsAccepted = getText(t, "acceptTerms");
+                }
+                return;
+            }
+
+            if (field === "consentAccepted") {
+                if (value !== true) {
+                    nextErrors.consentAccepted = getText(t, "acceptConsent");
+                }
+                return;
+            }
+
+            if (typeof value === "string" && value.trim() === "") {
+                nextErrors[field] = getText(t, "required");
+            }
+        });
+
+        if (stepIndex === 0) {
+            const email = form.email.trim();
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+            if (email && !emailRegex.test(email)) {
+                nextErrors.email = getText(t, "invalidEmail");
+            }
+
+            if (form.mobile && !/^[6-9]\d{9}$/.test(form.mobile)) {
+                nextErrors.mobile = getText(t, "invalidMobile");
+            }
+
+            if (
+                form.alternateMobile &&
+                !/^[6-9]\d{9}$/.test(form.alternateMobile)
+            ) {
+                nextErrors.alternateMobile = getText(t, "invalidMobile");
+            }
+
+            if (form.dateOfBirth) {
+                const date = new Date(`${form.dateOfBirth}T00:00:00`);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                if (Number.isNaN(date.getTime())) {
+                    nextErrors.dateOfBirth = getText(t, "invalidDate");
+                } else if (date > today) {
+                    nextErrors.dateOfBirth = getText(t, "futureDate");
+                }
+            }
+        }
+
+        if (stepIndex === 1) {
+            if (form.pincode && !/^\d{6}$/.test(form.pincode)) {
+                nextErrors.pincode = getText(t, "invalidPincode");
+            }
+        }
+
+        if (stepIndex === 2 && form.graduationYear) {
+            const year = Number(form.graduationYear);
+            const currentYear = new Date().getFullYear();
+
+            if (
+                !Number.isInteger(year) ||
+                year < 1950 ||
+                year > currentYear + 15
+            ) {
+                nextErrors.graduationYear = getText(
+                    t,
+                    "invalidGraduationYear",
+                );
+            }
+        }
+
+        if (stepIndex === 5) {
+            if (form.password.length < 8) {
+                nextErrors.password = getText(t, "passwordLength");
+            } else if (
+                !/[A-Za-z]/.test(form.password) ||
+                !/\d/.test(form.password)
+            ) {
+                nextErrors.password = getText(t, "passwordLetterNumber");
+            }
+
+            if (form.confirmPassword !== form.password) {
+                nextErrors.confirmPassword = getText(t, "passwordMismatch");
+            }
+        }
+
+        if (stepIndex === 5) {
+            if (fileErrors.resume || fileErrors.studentProof) {
+                setFormError(getText(t, "fixErrors"));
+                setErrors(nextErrors);
+                return false;
+            }
+        }
+
+        setErrors(nextErrors);
+
+        if (Object.keys(nextErrors).length > 0) {
+            setFormError(getText(t, "fixErrors"));
+            return false;
+        }
+
+        setFormError("");
+        return true;
+    };
+
+    const goToStep = (nextStep: number) => {
+        if (nextStep < 0 || nextStep >= STEP_FIELDS.length) return;
+
+        if (nextStep > step) {
+            for (let currentStep = step; currentStep < nextStep; currentStep += 1) {
+                if (!validateStep(currentStep)) {
+                    setStep(currentStep);
+                    return;
+                }
+            }
+        }
+
+        setStep(nextStep);
+        setFormError("");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+
+    const handleNext = () => {
+        if (!validateStep(step)) return;
+
+        if (step < STEP_FIELDS.length - 1) {
+            setStep((previous) => previous + 1);
+            setFormError("");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+    };
+
+    const handleBack = () => {
+        if (step === 0) return;
+
+        setStep((previous) => previous - 1);
+        setFormError("");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+
+    const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+
+        if (!validateStep(step)) return;
+
+        // Revalidate every step before saving.
+        for (let index = 0; index < STEP_FIELDS.length; index += 1) {
+            if (!validateStep(index)) {
+                setStep(index);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+                return;
+            }
+        }
+
+        /*
+         * Do not store the password or confirmPassword.
+         * File objects are not serialized into localStorage.
+         * Save only their names as metadata.
+         *
+         * Keep the profile fields flat for compatibility with existing
+         * code that reads oneservice_student_application / oneservice_student.
+         */
+        const {
+            password: _password,
+            confirmPassword: _confirmPassword,
+            termsAccepted: _termsAccepted,
+            consentAccepted: _consentAccepted,
+            ...studentDetails
+        } = form;
+
+        const now = new Date().toISOString();
+
+        const studentApplication = {
+            ...studentDetails,
+            fullName: form.fullName.trim(),
+            email: form.email.trim().toLowerCase(),
+            mobile: form.mobile,
+            alternateMobile: form.alternateMobile || "",
+            address: form.address.trim(),
+            city: form.city.trim(),
+            state: form.state.trim(),
+            pincode: form.pincode,
+            country: form.country.trim(),
+            interestedAreas: [...form.interestedAreas],
+            learningGoals: [...form.learningGoals],
+            resumeFileName: resumeFile?.name ?? "",
+            studentProofFileName: studentProofFile?.name ?? "",
+            role: "student",
+            applicationStatus: "submitted",
+            createdAt: now,
+            updatedAt: now,
+        };
+
+        try {
+            localStorage.setItem(
+                "oneservice_student_application",
+                JSON.stringify(studentApplication),
+            );
+
+            // Compatibility key for existing profile/dashboard code.
+            localStorage.setItem(
+                "oneservice_student",
+                JSON.stringify(studentApplication),
+            );
+
+            window.dispatchEvent(
+                new CustomEvent("oneservice-student-change", {
+                    detail: studentApplication,
+                }),
+            );
+
+            setFormError("");
+            setSubmitted(true);
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        } catch (error) {
+            console.error("Unable to save student registration:", error);
+            setFormError(
+                "Unable to save your details in this browser. Check available storage and try again.",
+            );
+        }
+    };
+
+    const fieldError = (field: keyof StudentFormData) => errors[field];
+
+    const renderInput = (
+        field: StringField,
+        label: string,
+        options?: {
+            type?: string;
+            placeholder?: string;
+            required?: boolean;
+            autoComplete?: string;
+            maxLength?: number;
+            min?: string;
+            max?: string;
+        },
+    ) => {
+        const error = fieldError(field);
+
+        return (
+            <div className={`partner-form-group ${error ? "has-error" : ""}`} key={field}>
+                <label htmlFor={`student-${field}`} className="partner-label">
+                    {label}
+                    {options?.required !== false && (
+                        <span className="partner-required"> *</span>
+                    )}
+                </label>
+
+                <input
+                    id={`student-${field}`}
+                    name={field}
+                    className="partner-input"
+                    type={options?.type ?? "text"}
+                    value={form[field] as string}
+                    onChange={(event) => handleTextChange(field, event)}
+                    placeholder={options?.placeholder ?? ""}
+                    required={options?.required !== false}
+                    autoComplete={options?.autoComplete}
+                    maxLength={options?.maxLength}
+                    min={options?.min}
+                    max={options?.max}
+                    aria-invalid={Boolean(error)}
+                    aria-describedby={error ? `student-${field}-error` : undefined}
+                />
+
+                {error && (
+                    <p
+                        className="partner-field-error"
+                        id={`student-${field}-error`}
+                        role="alert"
+                    >
+                        {error}
+                    </p>
+                )}
+            </div>
+        );
+    };
+
+    const renderSelect = (
+        field: StringField,
+        label: string,
+        placeholder: string,
+        options: { value: string; label: string }[],
+        required = true,
+    ) => {
+        const error = fieldError(field);
+
+        return (
+            <div className={`partner-form-group ${error ? "has-error" : ""}`} key={field}>
+                <label htmlFor={`student-${field}`} className="partner-label">
+                    {label}
+                    {required && <span className="partner-required"> *</span>}
+                </label>
+
+                <select
+                    id={`student-${field}`}
+                    name={field}
+                    className="partner-input partner-select"
+                    value={form[field] as string}
+                    onChange={(event) => handleTextChange(field, event)}
+                    required={required}
+                    aria-invalid={Boolean(error)}
+                    aria-describedby={error ? `student-${field}-error` : undefined}
+                >
+                    <option value="">{placeholder}</option>
+                    {options.map((option) => (
+                        <option key={option.value} value={option.value}>
+                            {option.label}
+                        </option>
+                    ))}
+                </select>
+
+                {error && (
+                    <p
+                        className="partner-field-error"
+                        id={`student-${field}-error`}
+                        role="alert"
+                    >
+                        {error}
+                    </p>
+                )}
+            </div>
+        );
+    };
+
+    const renderTextarea = (
+        field: "skills" | "additionalDetails",
+        label: string,
+        placeholder: string,
+        required = false,
+    ) => {
+        const error = fieldError(field);
+
+        return (
+            <div className={`partner-form-group ${error ? "has-error" : ""}`} key={field}>
+                <label htmlFor={`student-${field}`} className="partner-label">
+                    {label}
+                    {required && <span className="partner-required"> *</span>}
+                </label>
+
+                <textarea
+                    id={`student-${field}`}
+                    name={field}
+                    className="partner-input partner-textarea"
+                    value={form[field]}
+                    onChange={(event) => handleTextChange(field, event)}
+                    placeholder={placeholder}
+                    rows={4}
+                    required={required}
+                    aria-invalid={Boolean(error)}
+                    aria-describedby={error ? `student-${field}-error` : undefined}
+                />
+
+                {error && (
+                    <p
+                        className="partner-field-error"
+                        id={`student-${field}-error`}
+                        role="alert"
+                    >
+                        {error}
+                    </p>
+                )}
+            </div>
+        );
+    };
+
+    const renderChipGroup = (
+        field: "interestedAreas" | "learningGoals",
+        label: string,
+        hint: string,
+        options: readonly { value: string; key: string }[],
+    ) => {
+        const selected = form[field];
+        const error = fieldError(field);
+
+        return (
+            <div className={`partner-form-group ${error ? "has-error" : ""}`} key={field}>
+                <div className="partner-label">{label} *</div>
+                <p className="partner-field-hint">{hint}</p>
+
+                <div className="partner-choice-grid">
+                    {options.map((option) => {
+                        const active = selected.includes(option.value);
+
+                        return (
+                            <button
+                                key={option.value}
+                                type="button"
+                                className={`partner-choice-chip ${active ? "active" : ""}`}
+                                aria-pressed={active}
+                                onClick={() =>
+                                    toggleArrayOption(field, option.value)
+                                }
+                            >
+                                {active && <Check size={15} aria-hidden="true" />}
+                                {getText(t, option.key)}
+                            </button>
+                        );
+                    })}
+                </div>
+
+                <p className="partner-field-hint">
+                    {selected.length} {getText(t, "selected")}
+                </p>
+
+                {error && (
+                    <p className="partner-field-error" role="alert">
+                        {error}
+                    </p>
+                )}
+            </div>
+        );
+    };
+
+    const renderPasswordInput = (
+        field: "password" | "confirmPassword",
+        label: string,
+        placeholder: string,
+        visible: boolean,
+        toggleVisible: () => void,
+    ) => {
+        const error = fieldError(field);
+
+        return (
+            <div className={`partner-form-group ${error ? "has-error" : ""}`} key={field}>
+                <label htmlFor={`student-${field}`} className="partner-label">
+                    {label} <span className="partner-required">*</span>
+                </label>
+
+                <div className="partner-password-wrap">
+                    <LockKeyhole
+                        size={18}
+                        className="partner-password-icon"
+                        aria-hidden="true"
+                    />
+
+                    <input
+                        id={`student-${field}`}
+                        name={field}
+                        type={visible ? "text" : "password"}
+                        className="partner-input partner-password-input"
+                        value={form[field]}
+                        onChange={(event) => handleTextChange(field, event)}
+                        placeholder={placeholder}
+                        autoComplete={
+                            field === "password" ? "new-password" : "new-password"
+                        }
+                        required
+                        aria-invalid={Boolean(error)}
+                        aria-describedby={error ? `student-${field}-error` : undefined}
+                    />
+
+                    <button
+                        type="button"
+                        className="partner-password-toggle"
+                        onClick={toggleVisible}
+                        aria-label={getText(
+                            t,
+                            visible ? "hidePassword" : "showPassword",
+                        )}
+                        title={getText(
+                            t,
+                            visible ? "hidePassword" : "showPassword",
+                        )}
+                    >
+                        {visible ? (
+                            <EyeOff size={18} aria-hidden="true" />
+                        ) : (
+                            <Eye size={18} aria-hidden="true" />
+                        )}
+                    </button>
+                </div>
+
+                {field === "password" && (
+                    <p className="partner-field-hint">
+                        {getText(t, "passwordHint")}
+                    </p>
+                )}
+
+                {error && (
+                    <p
+                        className="partner-field-error"
+                        id={`student-${field}-error`}
+                        role="alert"
+                    >
+                        {error}
+                    </p>
+                )}
+            </div>
+        );
+    };
+
+    const renderUpload = (
+        field: "resume" | "studentProof",
+        label: string,
+        file: File | null,
+    ) => {
+        const error = fileErrors[field];
+        const inputId = `student-${field}`;
+
+        return (
+            <div className={`partner-form-group ${error ? "has-error" : ""}`} key={field}>
+                <label htmlFor={inputId} className="partner-label">
+                    {label}
+                    <span className="partner-optional">
+                        {" "}
+                        ({getText(t, "optional")})
+                    </span>
+                </label>
+
+                <div className="partner-upload-box">
+                    <input
+                        id={inputId}
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+                        onChange={(event) => handleFile(event, field)}
+                        className="partner-upload-input"
+                    />
+
+                    <label htmlFor={inputId} className="partner-upload-label">
+                        <Upload size={22} aria-hidden="true" />
+                        <span>{getText(t, "upload")}</span>
+                    </label>
+
+                    {file ? (
+                        <div className="partner-upload-selected">
+                            <span className="partner-upload-filename">
+                                {file.name}
+                            </span>
+
+                            <button
+                                type="button"
+                                className="partner-upload-remove"
+                                onClick={() => removeFile(field)}
+                            >
+                                {getText(t, "removeFile")}
+                            </button>
+                        </div>
+                    ) : (
+                        <p className="partner-field-hint">
+                            {getText(t, "noFile")}
+                        </p>
+                    )}
+                </div>
+
+                <p className="partner-field-hint">
+                    {getText(t, "uploadHint")}
+                </p>
+
+                {error && (
+                    <p className="partner-field-error" role="alert">
+                        {error}
+                    </p>
+                )}
+            </div>
+        );
+    };
+
+    const renderConsentCheckbox = (
+        field: "termsAccepted" | "consentAccepted",
+        label: ReactNode,
+    ) => {
+        const error = fieldError(field);
+
+        return (
+            <div className={`partner-consent-row ${error ? "has-error" : ""}`}>
+                <label className="partner-checkbox-label">
+                    <input
+                        type="checkbox"
+                        checked={form[field]}
+                        onChange={(event) =>
+                            updateField(field, event.target.checked)
+                        }
+                    />
+                    <span>{label}</span>
+                </label>
+
+                {error && (
+                    <p className="partner-field-error" role="alert">
+                        {error}
+                    </p>
+                )}
+            </div>
+        );
+    };
+
+    const renderStepContent = () => {
+        switch (step) {
+            case 0:
+                return (
+                    <>
+                        <div className="partner-section-heading">
+                            <h2>{getText(t, "personalTitle")}</h2>
+                            <p>{getText(t, "personalDescription")}</p>
+                        </div>
+
+                        <div className="partner-form-grid">
+                            {renderInput("fullName", getText(t, "fullName"), {
+                                placeholder: getText(t, "fullNamePlaceholder"),
+                                autoComplete: "name",
+                            })}
+
+                            {renderInput("dateOfBirth", getText(t, "dateOfBirth"), {
+                                type: "date",
+                                required: true,
+                            })}
+
+                            {renderSelect(
+                                "gender",
+                                getText(t, "gender"),
+                                getText(t, "selectGender"),
+                                [
+                                    { value: "Male", label: getText(t, "male") },
+                                    { value: "Female", label: getText(t, "female") },
+                                    { value: "Other", label: getText(t, "other") },
+                                    {
+                                        value: "Prefer not to say",
+                                        label: getText(t, "preferNotToSay"),
+                                    },
+                                ],
+                            )}
+
+                            {renderInput("mobile", getText(t, "mobile"), {
+                                type: "tel",
+                                placeholder: getText(t, "mobilePlaceholder"),
+                                autoComplete: "tel-national",
+                                maxLength: 10,
+                            })}
+
+                            {renderInput(
+                                "alternateMobile",
+                                getText(t, "alternateMobile"),
+                                {
+                                    type: "tel",
+                                    placeholder: getText(
+                                        t,
+                                        "alternateMobilePlaceholder",
+                                    ),
+                                    required: false,
+                                    maxLength: 10,
+                                },
+                            )}
+
+                            {renderInput("email", getText(t, "email"), {
+                                type: "email",
+                                placeholder: getText(t, "emailPlaceholder"),
+                                autoComplete: "email",
+                            })}
+                        </div>
+                    </>
+                );
+
+            case 1:
+                return (
+                    <>
+                        <div className="partner-section-heading">
+                            <h2>{getText(t, "addressTitle")}</h2>
+                            <p>{getText(t, "addressDescription")}</p>
+                        </div>
+
+                        <div className="partner-form-grid">
+                            <div className="partner-form-full">
+                                {renderInput("address", getText(t, "address"), {
+                                    placeholder: getText(t, "addressPlaceholder"),
+                                    autoComplete: "street-address",
+                                })}
+                            </div>
+
+                            {renderInput("city", getText(t, "city"), {
+                                placeholder: getText(t, "cityPlaceholder"),
+                                autoComplete: "address-level2",
+                            })}
+
+                            {renderInput("state", getText(t, "state"), {
+                                placeholder: getText(t, "statePlaceholder"),
+                                autoComplete: "address-level1",
+                            })}
+
+                            {renderInput("pincode", getText(t, "pincode"), {
+                                placeholder: getText(t, "pincodePlaceholder"),
+                                autoComplete: "postal-code",
+                                maxLength: 6,
+                            })}
+
+                            {renderInput("country", getText(t, "country"), {
+                                placeholder: getText(t, "countryPlaceholder"),
+                                autoComplete: "country-name",
+                            })}
+                        </div>
+                    </>
+                );
+
+            case 2:
+                return (
+                    <>
+                        <div className="partner-section-heading">
+                            <h2>{getText(t, "educationTitle")}</h2>
+                            <p>{getText(t, "educationDescription")}</p>
+                        </div>
+
+                        <div className="partner-form-grid">
+                            {renderSelect(
+                                "educationLevel",
+                                getText(t, "educationLevel"),
+                                getText(t, "selectEducationLevel"),
+                                [
+                                    { value: "School", label: getText(t, "school") },
+                                    {
+                                        value: "Intermediate / 12th",
+                                        label: getText(t, "intermediate"),
+                                    },
+                                    {
+                                        value: "Diploma",
+                                        label: getText(t, "diploma"),
+                                    },
+                                    {
+                                        value: "Undergraduate",
+                                        label: getText(t, "undergraduate"),
+                                    },
+                                    {
+                                        value: "Postgraduate",
+                                        label: getText(t, "postgraduate"),
+                                    },
+                                    {
+                                        value: "Doctorate",
+                                        label: getText(t, "doctorate"),
+                                    },
+                                    {
+                                        value: "Other",
+                                        label: getText(t, "otherEducation"),
+                                    },
+                                ],
+                            )}
+
+                            {renderInput("institution", getText(t, "institution"), {
+                                placeholder: getText(t, "institutionPlaceholder"),
+                            })}
+
+                            {renderInput("course", getText(t, "course"), {
+                                placeholder: getText(t, "coursePlaceholder"),
+                            })}
+
+                            {renderInput("fieldOfStudy", getText(t, "fieldOfStudy"), {
+                                placeholder: getText(t, "fieldOfStudyPlaceholder"),
+                            })}
+
+                            {renderInput("currentYear", getText(t, "currentYear"), {
+                                placeholder: getText(t, "currentYearPlaceholder"),
+                            })}
+
+                            {renderInput(
+                                "graduationYear",
+                                getText(t, "graduationYear"),
+                                {
+                                    placeholder: getText(t, "graduationYearPlaceholder"),
+                                    required: false,
+                                    maxLength: 4,
+                                },
+                            )}
+
+                            {renderInput("studentId", getText(t, "studentId"), {
+                                placeholder: getText(t, "studentIdPlaceholder"),
+                                required: false,
+                            })}
+                        </div>
+                    </>
+                );
+
+            case 3:
+                return (
+                    <>
+                        <div className="partner-section-heading">
+                            <h2>{getText(t, "skillsTitle")}</h2>
+                            <p>{getText(t, "skillsDescription")}</p>
+                        </div>
+
+                        {renderChipGroup(
+                            "interestedAreas",
+                            getText(t, "interestedAreas"),
+                            getText(t, "selectInterests"),
+                            INTEREST_OPTIONS,
+                        )}
+
+                        <div className="partner-form-grid">
+                            <div className="partner-form-full">
+                                {renderTextarea(
+                                    "skills",
+                                    getText(t, "skills"),
+                                    getText(t, "skillsPlaceholder"),
+                                )}
+                            </div>
+
+                            {renderSelect(
+                                "experienceLevel",
+                                getText(t, "experienceLevel"),
+                                getText(t, "selectExperience"),
+                                [
+                                    {
+                                        value: "Beginner",
+                                        label: getText(t, "beginner"),
+                                    },
+                                    {
+                                        value: "Intermediate",
+                                        label: getText(t, "intermediateLevel"),
+                                    },
+                                    {
+                                        value: "Advanced",
+                                        label: getText(t, "advanced"),
+                                    },
+                                    {
+                                        value: "Experienced",
+                                        label: getText(t, "experienced"),
+                                    },
+                                ],
+                            )}
+
+                            {renderSelect(
+                                "preferredLanguage",
+                                getText(t, "preferredLanguage"),
+                                getText(t, "selectLanguage"),
+                                [
+                                    { value: "English", label: getText(t, "english") },
+                                    { value: "Telugu", label: getText(t, "telugu") },
+                                    { value: "Hindi", label: getText(t, "hindi") },
+                                ],
+                            )}
+                        </div>
+                    </>
+                );
+
+            case 4:
+                return (
+                    <>
+                        <div className="partner-section-heading">
+                            <h2>{getText(t, "learningTitle")}</h2>
+                            <p>{getText(t, "learningDescription")}</p>
+                        </div>
+
+                        {renderChipGroup(
+                            "learningGoals",
+                            getText(t, "learningGoals"),
+                            getText(t, "selectGoals"),
+                            LEARNING_GOAL_OPTIONS,
+                        )}
+
+                        <div className="partner-form-grid">
+                            {renderSelect(
+                                "learningMode",
+                                getText(t, "learningMode"),
+                                getText(t, "selectLearningMode"),
+                                [
+                                    { value: "Online", label: getText(t, "online") },
+                                    { value: "Offline", label: getText(t, "offline") },
+                                    { value: "Hybrid", label: getText(t, "hybrid") },
+                                    {
+                                        value: "Self-paced",
+                                        label: getText(t, "selfPaced"),
+                                    },
+                                ],
+                            )}
+
+                            {renderSelect(
+                                "availability",
+                                getText(t, "availability"),
+                                getText(t, "selectAvailability"),
+                                [
+                                    {
+                                        value: "Weekdays",
+                                        label: getText(t, "weekdays"),
+                                    },
+                                    {
+                                        value: "Weekends",
+                                        label: getText(t, "weekends"),
+                                    },
+                                    {
+                                        value: "Mornings",
+                                        label: getText(t, "mornings"),
+                                    },
+                                    {
+                                        value: "Evenings",
+                                        label: getText(t, "evenings"),
+                                    },
+                                    {
+                                        value: "Flexible",
+                                        label: getText(t, "flexible"),
+                                    },
+                                ],
+                            )}
+
+                            {renderSelect(
+                                "weeklyHours",
+                                getText(t, "weeklyHours"),
+                                getText(t, "selectWeeklyHours"),
+                                [
+                                    {
+                                        value: "1–5 hours",
+                                        label: getText(t, "hours1to5"),
+                                    },
+                                    {
+                                        value: "6–10 hours",
+                                        label: getText(t, "hours6to10"),
+                                    },
+                                    {
+                                        value: "11–20 hours",
+                                        label: getText(t, "hours11to20"),
+                                    },
+                                    {
+                                        value: "20+ hours",
+                                        label: getText(t, "hours20plus"),
+                                    },
+                                ],
+                                false,
+                            )}
+
+                            <div className="partner-form-full">
+                                {renderTextarea(
+                                    "additionalDetails",
+                                    getText(t, "additionalDetails"),
+                                    getText(t, "additionalDetailsPlaceholder"),
+                                )}
+                            </div>
+                        </div>
+                    </>
+                );
+
+            case 5:
+                return (
+                    <>
+                        <div className="partner-section-heading">
+                            <h2>{getText(t, "accountTitle")}</h2>
+                            <p>{getText(t, "accountDescription")}</p>
+                        </div>
+
+                        <div className="partner-form-grid">
+                            <div className="partner-form-full">
+                                {renderPasswordInput(
+                                    "password",
+                                    getText(t, "password"),
+                                    getText(t, "passwordPlaceholder"),
+                                    showPassword,
+                                    () => setShowPassword((previous) => !previous),
+                                )}
+                            </div>
+
+                            <div className="partner-form-full">
+                                {renderPasswordInput(
+                                    "confirmPassword",
+                                    getText(t, "confirmPassword"),
+                                    getText(t, "confirmPasswordPlaceholder"),
+                                    showConfirmPassword,
+                                    () =>
+                                        setShowConfirmPassword(
+                                            (previous) => !previous,
+                                        ),
+                                )}
+                            </div>
+
+                            <div className="partner-form-full">
+                                {renderUpload(
+                                    "resume",
+                                    getText(t, "resume"),
+                                    resumeFile,
+                                )}
+
+                                {renderUpload(
+                                    "studentProof",
+                                    getText(t, "studentProof"),
+                                    studentProofFile,
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="partner-security-note">
+                            <ShieldCheck size={22} aria-hidden="true" />
+                            <div>
+                                <strong>{getText(t, "securityTitle")}</strong>
+                                <p>{getText(t, "securityDescription")}</p>
+                            </div>
+                        </div>
+
+                        <div className="partner-consent-section">
+                            {renderConsentCheckbox(
+                                "termsAccepted",
+                                <>
+                                    {getText(t, "termsPrefix")}{" "}
+                                    <Link to="/terms">
+                                        {getText(t, "termsLink")}
+                                    </Link>{" "}
+                                    {getText(t, "and")}{" "}
+                                    <Link to="/privacy">
+                                        {getText(t, "privacyLink")}
+                                    </Link>
+                                    .
+                                </>,
+                            )}
+
+                            {renderConsentCheckbox(
+                                "consentAccepted",
+                                getText(t, "consentText"),
+                            )}
+                        </div>
+                    </>
+                );
+
+            default:
+                return null;
+        }
+    };
+
+    if (submitted) {
+        return (
+            <main className="tutor-register-page partner-register-page student-register-page">
+                <div className="partner-register-container">
+                    <section className="partner-success-card" role="status">
+                        <div className="partner-success-icon">
+                            <CheckCircle2 size={54} aria-hidden="true" />
+                        </div>
+
+                        <h1>{getText(t, "successTitle")}</h1>
+                        <p>{getText(t, "successDescription")}</p>
+
+                        <div className="partner-success-notice">
+                            <ShieldCheck size={20} aria-hidden="true" />
+                            <span>{getText(t, "successNote")}</span>
+                        </div>
+
+                        <p className="partner-field-hint">
+                            {getText(t, "accountNextSteps")}
+                        </p>
+
+                        <div className="partner-success-actions">
+                            <button
+                                type="button"
+                                className="partner-btn partner-btn-primary"
+                                onClick={() => navigate("/profile")}
+                            >
+                                {getText(t, "goToProfile")}
+                                <ArrowRight size={18} aria-hidden="true" />
+                            </button>
+
+                            <button
+                                type="button"
+                                className="partner-btn partner-btn-secondary"
+                                onClick={() => navigate("/")}
+                            >
+                                {getText(t, "returnToHome")}
+                            </button>
+                        </div>
+                    </section>
+                </div>
+            </main>
+        );
+    }
+
+    return (
+        <main className="tutor-register-page partner-register-page student-register-page">
+            <div className="partner-register-container">
+                <header className="partner-register-header">
+                    <Link to="/" className="partner-brand">
+                        <span className="partner-brand-icon">
+                            <GraduationCap size={28} aria-hidden="true" />
+                        </span>
+                        <span>{getText(t, "brand")}</span>
+                    </Link>
+
+                    <div className="partner-language-picker">
+                        <Languages size={18} aria-hidden="true" />
+                        <label htmlFor="student-language">
+                            {getText(t, "language")}
+                        </label>
+                        <select
+                            id="student-language"
+                            value={language}
+                            onChange={(event) =>
+                                setLanguage(event.target.value as Language)
+                            }
+                            aria-label={getText(t, "language")}
+                        >
+                            <option value="en">{getText(t, "english")}</option>
+                            <option value="te">{getText(t, "telugu")}</option>
+                            <option value="hi">{getText(t, "hindi")}</option>
+                        </select>
+                    </div>
+                </header>
+
+                <section className="partner-register-intro">
+                    <div className="partner-register-intro-icon">
+                        <GraduationCap size={32} aria-hidden="true" />
+                    </div>
+
+                    <h1>{getText(t, "pageTitle")}</h1>
+                    <p>{getText(t, "pageSubtitle")}</p>
+
+                    <p className="partner-login-prompt">
+                        {getText(t, "alreadyAccount")}{" "}
+                        <Link to="/login">{getText(t, "login")}</Link>
+                    </p>
+                </section>
+
+                <section className="partner-wizard-card">
+                    <nav
+                        className="partner-stepper"
+                        aria-label="Student registration progress"
+                    >
+                        {stepNames.map((name, index) => {
+                            const isComplete = index < step;
+                            const isCurrent = index === step;
+
+                            return (
+                                <button
+                                    type="button"
+                                    key={name}
+                                    className={[
+                                        "partner-step",
+                                        isCurrent ? "active" : "",
+                                        isComplete ? "completed" : "",
+                                    ]
+                                        .filter(Boolean)
+                                        .join(" ")}
+                                    onClick={() => goToStep(index)}
+                                    aria-current={isCurrent ? "step" : undefined}
+                                >
+                                    <span className="partner-step-circle">
+                                        {isComplete ? (
+                                            <Check size={16} aria-hidden="true" />
+                                        ) : (
+                                            index + 1
+                                        )}
+                                    </span>
+
+                                    <span className="partner-step-label">
+                                        {name}
+                                    </span>
+                                </button>
+                            );
+                        })}
+                    </nav>
+
+                    <div
+                        className="partner-progress-track"
+                        role="progressbar"
+                        aria-valuemin={1}
+                        aria-valuemax={STEP_FIELDS.length}
+                        aria-valuenow={step + 1}
+                        aria-label={`${getText(t, "step")} ${step + 1} ${getText(t, "of")} ${STEP_FIELDS.length}`}
+                    >
+                        <div
+                            className="partner-progress-fill"
+                            style={{
+                                width: `${((step + 1) / STEP_FIELDS.length) * 100}%`,
+                            }}
+                        />
+                    </div>
+
+                    <div className="partner-step-count">
+                        {getText(t, "step")} {step + 1} {getText(t, "of")}{" "}
+                        {STEP_FIELDS.length}
+                    </div>
+
+                    <form
+                        className="partner-register-form"
+                        onSubmit={
+                            step === STEP_FIELDS.length - 1
+                                ? handleSubmit
+                                : (event) => {
+                                      event.preventDefault();
+                                      handleNext();
+                                  }
+                        }
+                        noValidate
+                    >
+                        {renderStepContent()}
+
+                        {formError && (
+                            <div className="partner-form-alert" role="alert">
+                                {formError}
+                            </div>
+                        )}
+
+                        <div className="partner-wizard-actions">
+                            <button
+                                type="button"
+                                className="partner-btn partner-btn-secondary"
+                                onClick={handleBack}
+                                disabled={step === 0}
+                            >
+                                <ArrowLeft size={18} aria-hidden="true" />
+                                {getText(t, "back")}
+                            </button>
+
+                            {step < STEP_FIELDS.length - 1 ? (
+                                <button
+                                    type="submit"
+                                    className="partner-btn partner-btn-primary"
+                                >
+                                    {getText(t, "next")}
+                                    <ArrowRight size={18} aria-hidden="true" />
+                                </button>
+                            ) : (
+                                <button
+                                    type="submit"
+                                    className="partner-btn partner-btn-primary"
+                                >
+                                    {getText(t, "submit")}
+                                    <CheckCircle2 size={18} aria-hidden="true" />
+                                </button>
+                            )}
+                        </div>
+                    </form>
+                </section>
+
+                <footer className="partner-register-footer">
+                    <ShieldCheck size={16} aria-hidden="true" />
+                    <span>{getText(t, "securityTitle")}</span>
+                </footer>
+            </div>
+        </main>
+    );
 }
 
 export default StudentRegisterPage;

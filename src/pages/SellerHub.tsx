@@ -25,6 +25,7 @@ import {
   Star,
   MessageSquareText,
   BadgeCheck,
+  Trash2,
 } from "lucide-react";
 import "./SellerHub.css";
 
@@ -48,7 +49,6 @@ type ProductForm = {
 
 type ModalMode = "add" | "edit" | "restock" | null;
 
-
 type SellerProfileDetails = {
   businessName: string;
   contactPerson: string;
@@ -58,6 +58,8 @@ type SellerProfileDetails = {
   gstin: string;
 };
 
+const SELLER_PROFILE_KEY = "oneservice-seller-profile";
+
 const defaultSellerProfile: SellerProfileDetails = {
   businessName: "Rahul Traders",
   contactPerson: "Rahul",
@@ -66,7 +68,6 @@ const defaultSellerProfile: SellerProfileDetails = {
   address: "",
   gstin: "",
 };
-
 
 const initialProducts: Product[] = [
   {
@@ -148,6 +149,8 @@ function ProductThumbnail({ type }: { type: Product["icon"] }) {
 }
 
 export default function SellerHub() {
+  const navigate = useNavigate();
+
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [inventorySearch, setInventorySearch] = useState("");
   const [globalSearch, setGlobalSearch] = useState("");
@@ -162,12 +165,16 @@ export default function SellerHub() {
   const [showAllReviews, setShowAllReviews] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [profileOpen, setProfileOpen] = useState(false);
-  const navigate = useNavigate();
+
+  // Remove-account dialog state
+  const [showRemoveConfirmation, setShowRemoveConfirmation] = useState(false);
+  const [removingAccount, setRemovingAccount] = useState(false);
+  const [removeError, setRemoveError] = useState("");
 
   const [sellerProfile, setSellerProfile] =
     useState<SellerProfileDetails>(() => {
       try {
-        const saved = localStorage.getItem("oneservice-seller-profile");
+        const saved = localStorage.getItem(SELLER_PROFILE_KEY);
 
         if (saved) {
           return {
@@ -183,16 +190,10 @@ export default function SellerHub() {
     });
 
   const [draftSellerProfile, setDraftSellerProfile] =
-    useState<SellerProfileDetails>(() => ({
-      ...sellerProfile,
-    }));
+    useState<SellerProfileDetails>(() => ({ ...sellerProfile }));
 
-  const [isEditingSellerProfile, setIsEditingSellerProfile] =
-    useState(false);
-
-  const [sellerProfileSaveMessage, setSellerProfileSaveMessage] =
-    useState("");
-
+  const [isEditingSellerProfile, setIsEditingSellerProfile] = useState(false);
+  const [sellerProfileSaveMessage, setSellerProfileSaveMessage] = useState("");
 
   const filteredProducts = useMemo(() => {
     const query = inventorySearch.trim().toLowerCase();
@@ -242,7 +243,6 @@ export default function SellerHub() {
     setFormError("");
   };
 
-
   const openProductModal = (
     product: Product,
     mode: "edit" | "restock",
@@ -273,7 +273,9 @@ export default function SellerHub() {
         !Number.isInteger(quantity) ||
         quantity <= 0
       ) {
-        setFormError("Enter a whole-number restock quantity greater than zero.");
+        setFormError(
+          "Enter a whole-number restock quantity greater than zero.",
+        );
         return;
       }
 
@@ -370,6 +372,48 @@ export default function SellerHub() {
     setActiveSummary("products");
   };
 
+  // Seller account removal
+
+
+
+const removeAccount = () => {
+  setRemoveError("");
+
+  try {
+    setRemovingAccount(true);
+
+    // Remove seller account and application data.
+    const sellerKeys = [
+      "oneservice-seller-profile",
+      "oneservice_seller_application",
+      "oneservice_partner_application",
+    ];
+
+    sellerKeys.forEach((key) => localStorage.removeItem(key));
+
+    // Clear the saved workspace role.
+    localStorage.removeItem("oneservice_workspace_role");
+
+    // Notify components to refresh.
+    window.dispatchEvent(new Event("oneservice-seller-change"));
+    window.dispatchEvent(new Event("oneservice-workspace-change"));
+
+    // Close the confirmation dialog and return to ProfilePage.
+    setShowRemoveConfirmation(false);
+    navigate("/profile", { replace: true });
+  } catch {
+    setRemoveError(
+      "Unable to remove your seller account from this browser. Please try again."
+    );
+  } finally {
+    setRemovingAccount(false);
+  }
+};
+
+
+
+
+
   return (
     <main className="seller-hub-page">
       <div className="seller-hub-container">
@@ -391,6 +435,7 @@ export default function SellerHub() {
                   placeholder="Search products or SKU..."
                   aria-label="Search products or SKU"
                 />
+
                 {globalSearch && (
                   <button
                     type="button"
@@ -450,9 +495,7 @@ export default function SellerHub() {
                     <strong>Notifications</strong>
                     <p>
                       <AlertTriangle size={16} />
-                      <span>
-                        Check the out-of-stock item in your inventory.
-                      </span>
+                      <span>Check the out-of-stock item in your inventory.</span>
                     </p>
                     <p>
                       <Truck size={16} />
@@ -465,7 +508,6 @@ export default function SellerHub() {
                   </div>
                 )}
               </div>
-
 
               <div className="seller-utility-popover-wrap">
                 <button
@@ -484,6 +526,7 @@ export default function SellerHub() {
 
                       return next;
                     });
+
                     setNotificationOpen(false);
                   }}
                 >
@@ -492,13 +535,17 @@ export default function SellerHub() {
                   </span>
 
                   <span className="seller-profile-name">
-                    <strong>{sellerProfile.businessName || "Seller Account"}</strong>
+                    <strong>
+                      {sellerProfile.businessName || "Seller Account"}
+                    </strong>
                     <small>Seller account</small>
                   </span>
 
                   <ChevronDown
                     size={16}
-                    className={profileOpen ? "seller-profile-chevron-open" : ""}
+                    className={
+                      profileOpen ? "seller-profile-chevron-open" : ""
+                    }
                   />
                 </button>
 
@@ -537,7 +584,11 @@ export default function SellerHub() {
                     <div className="seller-profile-popup-body">
                       <div className="seller-profile-section-title">
                         <strong>Business &amp; Contact Information</strong>
-                        <span>{isEditingSellerProfile ? "Editing profile" : "Seller account"}</span>
+                        <span>
+                          {isEditingSellerProfile
+                            ? "Editing profile"
+                            : "Seller account"}
+                        </span>
                       </div>
 
                       <div className="seller-profile-fields">
@@ -602,7 +653,9 @@ export default function SellerHub() {
                             onChange={(event) =>
                               setDraftSellerProfile((current) => ({
                                 ...current,
-                                phone: event.target.value.replace(/\D/g, "").slice(0, 10),
+                                phone: event.target.value
+                                  .replace(/\D/g, "")
+                                  .slice(0, 10),
                               }))
                             }
                           />
@@ -619,7 +672,9 @@ export default function SellerHub() {
                             onChange={(event) =>
                               setDraftSellerProfile((current) => ({
                                 ...current,
-                                gstin: event.target.value.toUpperCase().slice(0, 15),
+                                gstin: event.target.value
+                                  .toUpperCase()
+                                  .slice(0, 15),
                               }))
                             }
                           />
@@ -643,11 +698,15 @@ export default function SellerHub() {
 
                       <p className="seller-profile-security-note">
                         <AlertTriangle size={14} />
-                        Passwords and authentication secrets are not displayed here.
+                        Passwords and authentication secrets are not displayed
+                        here.
                       </p>
 
                       {sellerProfileSaveMessage && (
-                        <p className="seller-profile-save-message" role="status">
+                        <p
+                          className="seller-profile-save-message"
+                          role="status"
+                        >
                           <Check size={15} />
                           {sellerProfileSaveMessage}
                         </p>
@@ -673,8 +732,10 @@ export default function SellerHub() {
                             className="seller-profile-save"
                             type="button"
                             onClick={() => {
-                              const businessName = draftSellerProfile.businessName.trim();
-                              const contactPerson = draftSellerProfile.contactPerson.trim();
+                              const businessName =
+                                draftSellerProfile.businessName.trim();
+                              const contactPerson =
+                                draftSellerProfile.contactPerson.trim();
 
                               if (!businessName || !contactPerson) {
                                 setSellerProfileSaveMessage(
@@ -690,11 +751,13 @@ export default function SellerHub() {
                                   contactPerson,
                                   email: draftSellerProfile.email.trim(),
                                   address: draftSellerProfile.address.trim(),
-                                  gstin: draftSellerProfile.gstin.trim().toUpperCase(),
+                                  gstin: draftSellerProfile.gstin
+                                    .trim()
+                                    .toUpperCase(),
                                 };
 
                                 localStorage.setItem(
-                                  "oneservice-seller-profile",
+                                  SELLER_PROFILE_KEY,
                                   JSON.stringify(updatedProfile),
                                 );
 
@@ -704,7 +767,12 @@ export default function SellerHub() {
                                 setSellerProfileSaveMessage(
                                   "Profile changes saved successfully.",
                                 );
-                                setFeedback("Seller profile updated successfully.");
+                                setFeedback(
+                                  "Seller profile updated successfully.",
+                                );
+                                window.dispatchEvent(
+                                  new Event("oneservice-seller-change"),
+                                );
                               } catch {
                                 setSellerProfileSaveMessage(
                                   "Could not save your profile. Please check browser storage.",
@@ -717,24 +785,37 @@ export default function SellerHub() {
                           </button>
                         </>
                       ) : (
-                        <button
-                          className="seller-profile-save"
-                          type="button"
-                          onClick={() => {
-                            setDraftSellerProfile({ ...sellerProfile });
-                            setIsEditingSellerProfile(true);
-                            setSellerProfileSaveMessage("");
-                          }}
-                        >
-                          <Pencil size={15} />
-                          Edit Profile
-                        </button>
+                        <>
+                          <button
+                            className="seller-profile-save"
+                            type="button"
+                            onClick={() => {
+                              setDraftSellerProfile({ ...sellerProfile });
+                              setIsEditingSellerProfile(true);
+                              setSellerProfileSaveMessage("");
+                            }}
+                          >
+                            <Pencil size={15} />
+                            Edit Profile
+                          </button>
+
+                          <button
+                            className="seller-remove-account-button"
+                            type="button"
+                            onClick={() => {
+                              setRemoveError("");
+                              setShowRemoveConfirmation(true);
+                            }}
+                          >
+                            <Trash2 size={15} />
+                            Remove Account
+                          </button>
+                        </>
                       )}
                     </div>
                   </div>
                 )}
               </div>
-
             </div>
           </div>
         </div>
@@ -1044,7 +1125,6 @@ export default function SellerHub() {
               </table>
             </div>
 
-
             <div className="seller-inventory-footer">
               <span>
                 Showing <strong>{filteredProducts.length}</strong> of{" "}
@@ -1059,7 +1139,6 @@ export default function SellerHub() {
                 Add product
               </button>
             </div>
-
           </div>
 
           <div className="seller-panel seller-sales-panel">
@@ -1163,8 +1242,6 @@ export default function SellerHub() {
           </button>
         </section>
 
-
-
         {/* Customer Feedback & Reviews */}
         <section className="seller-reviews-section">
           <div className="seller-reviews-header">
@@ -1180,11 +1257,9 @@ export default function SellerHub() {
             </div>
           </div>
 
-          {/* Compact rating summary */}
           <div className="seller-reviews-overview">
             <div className="seller-rating-summary">
               <strong className="seller-rating-number">4.5</strong>
-
               <div className="seller-rating-stars" aria-label="4.5 out of 5 stars">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <Star
@@ -1194,7 +1269,6 @@ export default function SellerHub() {
                   />
                 ))}
               </div>
-
               <span>Based on 4 sample reviews</span>
             </div>
 
@@ -1217,27 +1291,22 @@ export default function SellerHub() {
             </div>
           </div>
 
-          {/* Recent reviews heading */}
           <div className="seller-reviews-list-heading">
             <div>
               <h3>Recent Reviews</h3>
               <span>Feedback from your customers</span>
             </div>
-
             <span className="seller-reviews-latest">
               Latest first
               <ChevronDown size={14} />
             </span>
           </div>
 
-          {/* Review list */}
           <div className="seller-reviews-list">
-            {/* Review 1 */}
             <article className="seller-review-card">
               <div className="seller-review-avatar seller-review-avatar-blue">
                 RK
               </div>
-
               <div className="seller-review-content">
                 <div className="seller-review-customer-row">
                   <div>
@@ -1246,25 +1315,21 @@ export default function SellerHub() {
                       18 Oct 2026 · RO Purifier Filter
                     </span>
                   </div>
-
                   <span className="seller-verified-review">
                     <BadgeCheck size={14} />
                     Verified purchase
                   </span>
                 </div>
-
                 <div className="seller-review-stars" aria-label="5 out of 5 stars">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <Star key={star} size={14} fill="currentColor" />
                   ))}
                   <span>5.0</span>
                 </div>
-
                 <p>
-                  Excellent product quality. The filter fits perfectly and
-                  the delivery was quick. Very satisfied with the purchase.
+                  Excellent product quality. The filter fits perfectly and the
+                  delivery was quick. Very satisfied with the purchase.
                 </p>
-
                 <div className="seller-review-product-tag">
                   <Package size={13} />
                   RO Purifier Copper Filter Cartridge
@@ -1272,12 +1337,10 @@ export default function SellerHub() {
               </div>
             </article>
 
-            {/* Review 2 */}
             <article className="seller-review-card">
               <div className="seller-review-avatar seller-review-avatar-purple">
                 SP
               </div>
-
               <div className="seller-review-content">
                 <div className="seller-review-customer-row">
                   <div>
@@ -1286,13 +1349,11 @@ export default function SellerHub() {
                       16 Oct 2026 · AC Capacitor
                     </span>
                   </div>
-
                   <span className="seller-verified-review">
                     <BadgeCheck size={14} />
                     Verified purchase
                   </span>
                 </div>
-
                 <div className="seller-review-stars" aria-label="4 out of 5 stars">
                   {[1, 2, 3, 4].map((star) => (
                     <Star key={star} size={14} fill="currentColor" />
@@ -1300,12 +1361,10 @@ export default function SellerHub() {
                   <Star size={14} />
                   <span>4.0</span>
                 </div>
-
                 <p>
                   Good quality capacitor at a reasonable price. The product
                   works well. Would appreciate even faster delivery next time.
                 </p>
-
                 <div className="seller-review-product-tag">
                   <Package size={13} />
                   1.5 Ton AC Capacitor 45 MFD
@@ -1313,15 +1372,12 @@ export default function SellerHub() {
               </div>
             </article>
 
-            {/* Remaining reviews appear only when expanded */}
             {showAllReviews && (
               <>
-                {/* Review 3 */}
                 <article className="seller-review-card">
                   <div className="seller-review-avatar seller-review-avatar-green">
                     AM
                   </div>
-
                   <div className="seller-review-content">
                     <div className="seller-review-customer-row">
                       <div>
@@ -1330,25 +1386,21 @@ export default function SellerHub() {
                           14 Oct 2026 · Electrical Fitting
                         </span>
                       </div>
-
                       <span className="seller-verified-review">
                         <BadgeCheck size={14} />
                         Verified purchase
                       </span>
                     </div>
-
                     <div className="seller-review-stars" aria-label="5 out of 5 stars">
                       {[1, 2, 3, 4, 5].map((star) => (
                         <Star key={star} size={14} fill="currentColor" />
                       ))}
                       <span>5.0</span>
                     </div>
-
                     <p>
                       The product was well packed and arrived in good condition.
                       Great value for money. I would order from this seller again.
                     </p>
-
                     <div className="seller-review-product-tag">
                       <Package size={13} />
                       Modular 16A Heavy Socket Switch
@@ -1356,12 +1408,10 @@ export default function SellerHub() {
                   </div>
                 </article>
 
-                {/* Review 4 */}
                 <article className="seller-review-card">
                   <div className="seller-review-avatar seller-review-avatar-orange">
                     VK
                   </div>
-
                   <div className="seller-review-content">
                     <div className="seller-review-customer-row">
                       <div>
@@ -1370,13 +1420,11 @@ export default function SellerHub() {
                           12 Oct 2026 · Overall Shopping Experience
                         </span>
                       </div>
-
                       <span className="seller-verified-review">
                         <BadgeCheck size={14} />
                         Verified purchase
                       </span>
                     </div>
-
                     <div className="seller-review-stars" aria-label="3 out of 5 stars">
                       {[1, 2, 3].map((star) => (
                         <Star key={star} size={14} fill="currentColor" />
@@ -1385,12 +1433,10 @@ export default function SellerHub() {
                       <Star size={14} />
                       <span>3.0</span>
                     </div>
-
                     <p>
                       The item was as described and the quality was acceptable.
                       Better delivery updates would improve the overall experience.
                     </p>
-
                     <div className="seller-review-product-tag">
                       <ShoppingBag size={13} />
                       General seller feedback
@@ -1401,7 +1447,6 @@ export default function SellerHub() {
             )}
           </div>
 
-          {/* Expand and collapse */}
           <div className="seller-reviews-view-all">
             <button
               type="button"
@@ -1411,7 +1456,9 @@ export default function SellerHub() {
               {showAllReviews ? "Show Less" : "View All Reviews"}
               <ChevronDown
                 size={15}
-                className={showAllReviews ? "seller-reviews-chevron-open" : ""}
+                className={
+                  showAllReviews ? "seller-reviews-chevron-open" : ""
+                }
               />
             </button>
           </div>
@@ -1426,7 +1473,6 @@ export default function SellerHub() {
             </span>
           </div>
         </section>
-
       </div>
 
       {/* Add, edit and restock modal */}
@@ -1518,7 +1564,9 @@ export default function SellerHub() {
 
               <div className="seller-form-two-columns">
                 <label>
-                  {modalMode === "restock" ? "Quantity to add" : "Stock quantity"}
+                  {modalMode === "restock"
+                    ? "Quantity to add"
+                    : "Stock quantity"}
                   <input
                     type="number"
                     min={modalMode === "restock" ? 1 : 0}
@@ -1592,6 +1640,91 @@ export default function SellerHub() {
                 </button>
               </div>
             </form>
+          </section>
+        </div>
+      )}
+
+      {/* Remove seller account confirmation */}
+      {showRemoveConfirmation && (
+        <div
+          className="seller-remove-overlay"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (
+              event.target === event.currentTarget &&
+              !removingAccount
+            ) {
+              setShowRemoveConfirmation(false);
+              setRemoveError("");
+            }
+          }}
+        >
+          <section
+            className="seller-remove-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="seller-remove-title"
+            aria-describedby="seller-remove-description"
+          >
+            <div className="seller-remove-dialog-icon">
+              <Trash2 size={24} />
+            </div>
+
+            <button
+              type="button"
+              className="seller-remove-dialog-close"
+              aria-label="Close confirmation"
+              disabled={removingAccount}
+              onClick={() => {
+                setShowRemoveConfirmation(false);
+                setRemoveError("");
+              }}
+            >
+              <X size={19} />
+            </button>
+
+            <h2 id="seller-remove-title">Remove Seller Account?</h2>
+
+            <p id="seller-remove-description">
+              Are you sure you want to remove your seller account? Your saved
+              seller profile will be removed from this browser. You can return
+              to the profile page and join again. Your other OneService
+              account types will not be affected.
+            </p>
+
+            {removeError && (
+              <p className="seller-remove-error" role="alert">
+                {removeError}
+              </p>
+            )}
+
+            <div className="seller-remove-dialog-actions">
+              <button
+                type="button"
+                className="seller-remove-cancel"
+                disabled={removingAccount}
+                onClick={() => {
+                  setShowRemoveConfirmation(false);
+                  setRemoveError("");
+                }}
+              >
+                Keep Account
+              </button>
+
+              <button
+                type="button"
+                className="seller-remove-confirm"
+                disabled={removingAccount}
+                onClick={removeAccount}
+              >
+                <Trash2 size={16} />
+                {removingAccount ? "Removing..." : "Remove Account"}
+              </button>
+            </div>
+
+            <small className="seller-remove-note">
+              This action cannot be undone from this browser.
+            </small>
           </section>
         </div>
       )}

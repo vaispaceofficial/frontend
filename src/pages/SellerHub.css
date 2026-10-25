@@ -2749,3 +2749,185 @@
     padding: 12px 15px 15px;
   }
 }
+
+
+/* Seller profile remove-account button */
+.seller-remove-account-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 38px;
+  padding: 9px 12px;
+  border: 1px solid #fecaca;
+  border-radius: 9px;
+  background: #fff;
+  color: #dc2626;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.seller-remove-account-button:hover {
+  border-color: #dc2626;
+  background: #fef2f2;
+}
+
+/* Confirmation dialog */
+.seller-remove-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 12000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.58);
+  backdrop-filter: blur(5px);
+}
+
+.seller-remove-dialog {
+  position: relative;
+  width: 100%;
+  max-width: 460px;
+  padding: 30px;
+  border: 1px solid #e5eaf2;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 24px 80px rgba(15, 23, 42, 0.22);
+  animation: seller-remove-enter 0.2s ease-out;
+}
+
+.seller-remove-dialog-icon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  margin-bottom: 18px;
+  border-radius: 14px;
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.seller-remove-dialog-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: grid;
+  place-items: center;
+  width: 35px;
+  height: 35px;
+  border: 1px solid #e5e7eb;
+  border-radius: 9px;
+  background: #fff;
+  color: #64748b;
+  cursor: pointer;
+}
+
+.seller-remove-dialog h2 {
+  margin: 0 0 12px;
+  color: #172b4d;
+  font-size: 22px;
+  line-height: 1.4;
+}
+
+.seller-remove-dialog > p {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+  line-height: 1.75;
+}
+
+.seller-remove-dialog .seller-remove-error {
+  margin-top: 14px;
+  padding: 11px 12px;
+  border: 1px solid #fecaca;
+  border-radius: 9px;
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.seller-remove-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 25px;
+}
+
+.seller-remove-dialog-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 10px 14px;
+  border-radius: 9px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.seller-remove-cancel {
+  border: 1px solid #dbe3ef;
+  background: #fff;
+  color: #334155;
+}
+
+.seller-remove-cancel:hover:not(:disabled) {
+  background: #f8fafc;
+}
+
+.seller-remove-confirm {
+  border: 1px solid #dc2626;
+  background: #dc2626;
+  color: #fff;
+}
+
+.seller-remove-confirm:hover:not(:disabled) {
+  border-color: #b91c1c;
+  background: #b91c1c;
+}
+
+.seller-remove-dialog-actions button:disabled,
+.seller-remove-dialog-close:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.seller-remove-note {
+  display: block;
+  margin-top: 17px;
+  color: #94a3b8;
+  font-size: 11px;
+  text-align: center;
+}
+
+@keyframes seller-remove-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 480px) {
+  .seller-remove-dialog {
+    padding: 24px 19px;
+  }
+
+  .seller-remove-dialog-actions {
+    flex-direction: column-reverse;
+  }
+
+  .seller-remove-dialog-actions button {
+    width: 100%;
+  }
+}
+

@@ -92,6 +92,66 @@ type ProductItem = {
 type ServiceDraft = Omit<ServiceItem, "id">;
 type ProductDraft = Omit<ProductItem, "id" | "isLocal">;
 
+type StoredVendorProfile = {
+    id?: string;
+    vendorId?: string;
+    role?: string;
+    accountType?: string;
+    fullName?: string;
+    name?: string;
+    mobile?: string;
+    phone?: string;
+    email?: string;
+    businessName?: string;
+    businessType?: string;
+    businessCategory?: string;
+    businessAddress?: string;
+    city?: string;
+    state?: string;
+    pincode?: string;
+    productDescription?: string;
+    products?: string;
+    status?: string;
+    registeredAt?: string;
+};
+
+function readStoredVendorProfile(): StoredVendorProfile | null {
+    try {
+        const raw =
+            localStorage.getItem("oneservice_vendor") ??
+            localStorage.getItem("oneservice_user");
+        if (!raw) return null;
+        const parsed: unknown = JSON.parse(raw);
+        if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+            return null;
+        }
+        const profile = parsed as StoredVendorProfile;
+        return profile.role === "vendor" ? profile : null;
+    } catch {
+        return null;
+    }
+}
+
+function businessFromVendorProfile(
+    profile: StoredVendorProfile | null,
+): BusinessDetails {
+    if (!profile) return initialBusiness;
+    const location = [profile.businessAddress, profile.city, profile.state, profile.pincode]
+        .map((part) => part?.trim())
+        .filter(Boolean)
+        .join(", ");
+    return {
+        ...initialBusiness,
+        name: profile.businessName?.trim() || profile.name?.trim() || profile.fullName?.trim() || initialBusiness.name,
+        category: profile.businessCategory?.trim() || profile.businessType?.trim() || initialBusiness.category,
+        description: profile.productDescription?.trim() || profile.products?.trim() || initialBusiness.description,
+        address: location || initialBusiness.address,
+        phone: profile.mobile?.trim() || profile.phone?.trim() || "",
+        email: profile.email?.trim() || "",
+        verified: profile.status?.toLowerCase() === "verified",
+    };
+}
+
 const initialBusiness: BusinessDetails = {
     name: "Your Business Name",
     category: "Business & Professional Services",
@@ -235,8 +295,12 @@ function VendorHub() {
     const productEditImageRef = useRef<HTMLInputElement>(null);
 
     const [activeTab, setActiveTab] = useState<TabId>("overview");
-    const [business, setBusiness] =
-        useState<BusinessDetails>(initialBusiness);
+    const [vendorProfile, setVendorProfile] = useState<StoredVendorProfile | null>(
+        () => readStoredVendorProfile(),
+    );
+    const [business, setBusiness] = useState<BusinessDetails>(() =>
+        businessFromVendorProfile(readStoredVendorProfile()),
+    );
     const [hours, setHours] =
         useState<OperatingHour[]>(initialOperatingHours);
     const [highlights, setHighlights] = useState<string[]>(initialAmenities);
@@ -287,6 +351,63 @@ function VendorHub() {
             localObjectUrls.current.clear();
         };
     }, []);
+
+    // Keep the dashboard connected to the vendor profile created at registration.
+    useEffect(() => {
+        const refreshVendorProfile = () => {
+            const profile = readStoredVendorProfile();
+            setVendorProfile(profile);
+            if (profile) setBusiness(businessFromVendorProfile(profile));
+        };
+
+        window.addEventListener("oneservice-auth-change", refreshVendorProfile);
+        window.addEventListener("oneservice-vendor-change", refreshVendorProfile);
+        window.addEventListener("storage", refreshVendorProfile);
+
+        return () => {
+            window.removeEventListener("oneservice-auth-change", refreshVendorProfile);
+            window.removeEventListener("oneservice-vendor-change", refreshVendorProfile);
+            window.removeEventListener("storage", refreshVendorProfile);
+        };
+    }, []);
+
+    // Persist editable business fields to the same local prototype profile.
+    // Production persistence should be handled by an authenticated backend.
+    useEffect(() => {
+        if (!vendorProfile || vendorProfile.role !== "vendor") return;
+        try {
+            const updatedProfile: StoredVendorProfile = {
+                ...vendorProfile,
+                businessName: business.name,
+                name: vendorProfile.name || vendorProfile.fullName || business.name,
+                businessCategory: business.category,
+                productDescription: business.description,
+                businessAddress: business.address,
+                mobile: business.phone,
+                email: business.email,
+                status: business.verified ? "Verified" : "Pending Verification",
+            };
+            localStorage.setItem("oneservice_vendor", JSON.stringify(updatedProfile));
+            const currentUserRaw = localStorage.getItem("oneservice_user");
+            let currentUser: Record<string, unknown> = {};
+            if (currentUserRaw) {
+                try {
+                    const parsed: unknown = JSON.parse(currentUserRaw);
+                    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+                        currentUser = parsed as Record<string, unknown>;
+                    }
+                } catch { /* Recover from invalid demo profile data. */ }
+            }
+            if (currentUser.role === "vendor") {
+                localStorage.setItem(
+                    "oneservice_user",
+                    JSON.stringify({ ...currentUser, ...updatedProfile }),
+                );
+            }
+        } catch (error) {
+            console.error("Unable to save vendor profile preview:", error);
+        }
+    }, [business, vendorProfile]);
 
     const visibleProducts = useMemo(() => {
         const term = search.trim().toLowerCase();
@@ -589,13 +710,23 @@ function VendorHub() {
                 headers: { Accept: "application/json" },
             });
 
-            if (!response.ok) {
+            // A 404 means this frontend prototype has no delete endpoint yet.
+            // In that case, remove only the local demo account. A configured
+            // backend must perform real account deletion server-side.
+            if (!response.ok && response.status !== 404) {
                 const result = await response.json().catch(() => null);
                 throw new Error(
                     result?.message ||
                         "We couldn't delete your account. Please try again.",
                 );
             }
+
+            localStorage.removeItem("oneservice_vendor");
+            localStorage.removeItem("oneservice_user");
+            localStorage.removeItem("oneservice_workspace_role");
+            window.dispatchEvent(new Event("oneservice-auth-change"));
+            window.dispatchEvent(new Event("oneservice-vendor-change"));
+            window.dispatchEvent(new Event("oneservice-workspace-change"));
 
             setDeleteModalOpen(false);
             navigate("/profile", { replace: true });

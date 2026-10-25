@@ -856,7 +856,7 @@ export default function SellerProductsPage() {
                         <div className="sp-eyebrow">SELLER CENTRE / CATALOGUE</div>
                         <h1>Seller Products</h1>
                         <p>
-                            Manage your listings, update stock, and keep your OneService
+                            Manage your listings, update stock, and keep your NeedOneService
                             Marketplace catalogue up to date.
                         </p>
                     </div>
@@ -1747,7 +1747,7 @@ export default function SellerProductsPage() {
                                     <p>
                                         Use genuine images that show the actual product. The
                                         following are recommended listing standards; adjust them
-                                        if your OneService marketplace policy specifies different
+                                        if your NeedOneService marketplace policy specifies different
                                         limits.
                                     </p>
                                 </div>
@@ -1868,7 +1868,7 @@ export default function SellerProductsPage() {
                                         Do not list counterfeit or stolen goods, prohibited or
                                         unsafe items, misleading offers, unauthorised branded
                                         products, or products that violate applicable law or
-                                        OneService policy.
+                                        NeedOneService policy.
                                     </p>
                                 </div>
                             </div>

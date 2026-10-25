@@ -3038,3 +3038,38 @@
     }
 }
 
+
+.vh-delete-error {
+    margin-top: 16px;
+    padding: 12px 14px;
+    border: 1px solid #fecaca;
+    border-radius: 10px;
+    background: #fef2f2;
+    color: #b91c1c;
+    font-size: 13px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.vh-button-danger:disabled,
+.vh-button-outline:disabled,
+.vh-modal-close:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.vh-delete-spinner {
+    width: 15px;
+    height: 15px;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    display: inline-block;
+    animation: vh-delete-spin 0.7s linear infinite;
+}
+
+@keyframes vh-delete-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
