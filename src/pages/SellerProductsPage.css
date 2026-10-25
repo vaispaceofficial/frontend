@@ -2825,3 +2825,75 @@
   }
 }
 
+
+/* Heading: title on the left, actions on the right */
+.sp-page-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    width: 100%;
+}
+
+.sp-page-heading > div:first-child {
+    min-width: 0;
+}
+
+/* Keep both buttons together on the right */
+.sp-heading-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+/* Back button */
+.sp-back-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 43px;
+    padding: 10px 15px;
+    border: 1px solid #dbe3ef;
+    border-radius: 9px;
+    background: #ffffff;
+    color: #1e3a5f;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.sp-back-button:hover {
+    background: #eff6ff;
+    border-color: #2563eb;
+    color: #2563eb;
+}
+
+.sp-back-button svg {
+    flex-shrink: 0;
+    transition: transform 0.2s ease;
+}
+
+.sp-back-button:hover svg {
+    transform: translateX(-3px);
+}
+
+/* Responsive layout */
+@media (max-width: 760px) {
+    .sp-page-heading {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 18px;
+    }
+
+    .sp-heading-actions {
+        width: 100%;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+    }
+}

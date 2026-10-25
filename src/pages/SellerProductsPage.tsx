@@ -1,9 +1,11 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
     AlertCircle,
     Archive,
     ArrowDownToLine,
+    ArrowLeft,
     ArrowRight,
     BadgeCheck,
     Check,
@@ -164,7 +166,6 @@ type ModalName =
     | "bulk"
     | "rejected"
     | "help"
-    | "remove-account"
     | null;
 
 const tabs: TabName[] = [
@@ -274,6 +275,12 @@ const blankProduct = (): SellerProduct => ({
 });
 
 export default function SellerProductsPage() {
+
+    const navigate = useNavigate();
+
+    const handleBackToSellerHub = () => {
+        navigate("/seller-hub");
+    };
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const csvInputRef = useRef<HTMLInputElement>(null);
@@ -843,6 +850,7 @@ export default function SellerProductsPage() {
     return (
         <main className="seller-products-page">
             <div className="sp-container">
+
                 <header className="sp-page-heading">
                     <div>
                         <div className="sp-eyebrow">SELLER CENTRE / CATALOGUE</div>
@@ -853,15 +861,28 @@ export default function SellerProductsPage() {
                         </p>
                     </div>
 
-                    <button
-                        type="button"
-                        className="sp-primary-button sp-add-button"
-                        onClick={openAddModal}
-                    >
-                        <Plus size={18} />
-                        <span>Add New Product</span>
-                    </button>
+                    <div className="sp-heading-actions">
+                        <button
+                            type="button"
+                            className="sp-back-button"
+                            onClick={handleBackToSellerHub}
+                            aria-label="Back to Seller Hub"
+                        >
+                            <ArrowLeft size={18} />
+                            <span>Back to Seller Hub</span>
+                        </button>
+
+                        <button
+                            type="button"
+                            className="sp-primary-button sp-add-button"
+                            onClick={openAddModal}
+                        >
+                            <Plus size={18} />
+                            <span>Add New Product</span>
+                        </button>
+                    </div>
                 </header>
+
 
                 <section className="sp-stats-grid" aria-label="Product summary">
                     <article className="sp-stat-card">
