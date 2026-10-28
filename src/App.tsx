@@ -90,6 +90,8 @@ import SubscriptionsPage from "./admin/pages/Subscriptions";
 import CompliancePage from "./admin/pages/Compliance";
 import SettingsPage from "./admin/pages/Settings";
 import AdminLogin from "./admin/pages/AdminLogin";
+import UsersPage from "./admin/pages/Users";
+
 
 /* =========================================================
    GSAP SETUP
@@ -1215,6 +1217,8 @@ function AppContent() {
               path="book-services"
               element={<BookServicesPage />}
             />
+
+            <Route path="users" element={<UsersPage />} />
 
             <Route
               path="products"

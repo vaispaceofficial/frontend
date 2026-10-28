@@ -1,8 +1,10 @@
+
 import { NavLink, useNavigate } from "react-router-dom";
 
 import {
   LayoutDashboard,
   Wrench,
+  Users,
   ShoppingBag,
   Building2,
   CreditCard,
@@ -22,6 +24,11 @@ const menuItems = [
     label: "Professionals",
     path: "/admin/book-services",
     icon: Wrench,
+  },
+  {
+    label: "Users",
+    path: "/admin/users",
+    icon: Users,
   },
   {
     label: "Marketplace",
@@ -63,15 +70,9 @@ export default function AdminSidebar() {
 
   return (
     <aside className="admin-sidebar">
-
-      {/* =====================================================
-          BRAND
-      ===================================================== */}
-
+      {/* BRAND */}
       <div className="admin-sidebar-brand">
-        <div className="admin-brand-mark">
-          N
-        </div>
+        <div className="admin-brand-mark">N</div>
 
         <div className="admin-brand-text">
           <div className="admin-brand-name">
@@ -84,16 +85,10 @@ export default function AdminSidebar() {
         </div>
       </div>
 
-      {/* =====================================================
-          DIVIDER
-      ===================================================== */}
-
+      {/* DIVIDER */}
       <div className="admin-sidebar-divider" />
 
-      {/* =====================================================
-          NAVIGATION
-      ===================================================== */}
-
+      {/* NAVIGATION */}
       <nav className="admin-sidebar-nav">
         <div className="admin-nav-label">
           MAIN MENU
@@ -130,16 +125,10 @@ export default function AdminSidebar() {
         </div>
       </nav>
 
-      {/* =====================================================
-          BOTTOM AREA
-      ===================================================== */}
-
+      {/* BOTTOM AREA */}
       <div className="admin-sidebar-bottom">
-
         {/* WORKSPACE CARD */}
-
         <div className="admin-workspace-card">
-
           <div className="admin-workspace-top">
             <span className="admin-workspace-status" />
 
@@ -165,11 +154,9 @@ export default function AdminSidebar() {
               LIVE
             </span>
           </div>
-
         </div>
 
         {/* LOGOUT */}
-
         <button
           type="button"
           className="admin-logout-button"
@@ -186,7 +173,6 @@ export default function AdminSidebar() {
             Logout
           </span>
         </button>
-
       </div>
     </aside>
   );

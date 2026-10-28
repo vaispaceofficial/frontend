@@ -430,7 +430,7 @@ function ProfileActivityHistoryPage() {
                             <div>
                                 <h2>History</h2>
                                 <p>
-                                    Pages you have visited on OneService.
+                                    Pages you have visited on NeedOneService.
                                 </p>
                             </div>
                         </div>
