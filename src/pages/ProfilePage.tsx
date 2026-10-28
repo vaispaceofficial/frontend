@@ -26,6 +26,10 @@ import {
     Eye,
     LayoutDashboard,
     Search,
+    Activity,
+    History,
+    Clock3,
+    ExternalLink,
 } from "lucide-react";
 import "./ProfilePage.css";
 
@@ -123,6 +127,13 @@ type StudentApplication = {
     [key: string]: unknown;
 };
 
+type PageVisit = {
+    id: string;
+    path: string;
+    title: string;
+    visitedAt: string;
+};
+
 type OrderHistoryItem = {
     id: string;
     type?: string;
@@ -152,6 +163,7 @@ const STUDENT_APPLICATION_KEYS = [
 ];
 const PROFESSIONAL_NOTICE_KEY = "oneservice_professional_notice";
 const ORDER_HISTORY_KEY = "oneservice_order_history";
+const PAGE_HISTORY_KEY = "oneservice_page_history";
 
 const ORDER_STATUS_OPTIONS = [
     { value: "all", label: "All statuses" },
@@ -325,6 +337,82 @@ function readOrderHistory(): OrderHistoryItem[] {
     }
 }
 
+function readPageHistory(): PageVisit[] {
+    try {
+        const saved = localStorage.getItem(PAGE_HISTORY_KEY);
+        if (!saved) return [];
+        const parsed: unknown = JSON.parse(saved);
+        if (!Array.isArray(parsed)) return [];
+        return parsed.filter(
+            (visit): visit is PageVisit =>
+                visit !== null &&
+                typeof visit === "object" &&
+                typeof visit.id === "string" &&
+                typeof visit.path === "string" &&
+                typeof visit.title === "string" &&
+                typeof visit.visitedAt === "string",
+        );
+    } catch {
+        return [];
+    }
+}
+
+function formatVisitDate(date: string): string {
+    const timestamp = Date.parse(date);
+    if (Number.isNaN(timestamp)) return date;
+    return new Intl.DateTimeFormat("en-IN", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+    }).format(new Date(timestamp));
+}
+
+function getReadablePageTitle(
+    path: string,
+    fallback = "OneService",
+): string {
+    const normalizedPath =
+        path.split("?")[0].replace(/\/+$/, "") || "/";
+
+    const pageTitles: Record<string, string> = {
+        "/": "Home",
+        "/profile": "My Profile",
+        "/services": "Services",
+        "/marketplace": "Marketplace",
+        "/city-listings": "City Listings",
+        "/accessories/all": "Products & Accessories",
+        "/amc": "Annual Maintenance Plans",
+        "/contact": "Contact",
+        "/profile/activity-history": "Activity & History",
+        "/profile/professional-hub": "Professional Hub",
+        "/profile/seller-hub": "Seller Hub",
+        "/seller-hub": "Seller Dashboard",
+        "/vendor-hub": "Vendor Dashboard",
+        "/student-hub": "Student Dashboard",
+        "/register-professional": "Professional Registration",
+        "/register-seller": "Seller Registration",
+        "/register-vendor": "Vendor Registration",
+        "/register-student": "Student Registration",
+    };
+
+    if (pageTitles[normalizedPath]) {
+        return pageTitles[normalizedPath];
+    }
+
+    const lastSegment = normalizedPath
+        .split("/")
+        .filter(Boolean)
+        .pop();
+
+    if (!lastSegment) return fallback;
+
+    return lastSegment
+        .replace(/[-_]+/g, " ")
+        .replace(/\b\w/g, (character) => character.toUpperCase());
+}
+
 function normalizeStatus(status: string): string {
     return status
         .trim()
@@ -394,6 +482,7 @@ function ProfilePage() {
     const [address, setAddress] = useState("");
     const [savedAddress, setSavedAddress] = useState("");
     const [notice, setNotice] = useState("");
+    const [readNotificationIds, setReadNotificationIds] = useState<string[]>([]);
 
     const [professionalApplication, setProfessionalApplication] =
         useState<ProfessionalApplication | null>(null);
@@ -408,6 +497,7 @@ function ProfilePage() {
         useState<StudentApplication | null>(null);
 
     const [orderHistory, setOrderHistory] = useState<OrderHistoryItem[]>([]);
+    const [pageHistory, setPageHistory] = useState<PageVisit[]>([]);
     const [showAllOrders, setShowAllOrders] = useState(false);
 
     const [orderTypeFilter, setOrderTypeFilter] =
@@ -438,6 +528,24 @@ function ProfilePage() {
             setEmail(parsed.email ?? "");
             setSettings(readSettings());
 
+            try {
+                const savedReadNotifications = localStorage.getItem(
+                    "oneservice_profile_read_notifications",
+                );
+                if (savedReadNotifications) {
+                    const parsedReadNotifications: unknown = JSON.parse(savedReadNotifications);
+                    if (Array.isArray(parsedReadNotifications)) {
+                        setReadNotificationIds(
+                            parsedReadNotifications.filter(
+                                (item): item is string => typeof item === "string",
+                            ),
+                        );
+                    }
+                }
+            } catch {
+                localStorage.removeItem("oneservice_profile_read_notifications");
+            }
+
             const storedAddress =
                 localStorage.getItem("oneservice_saved_address") ?? "";
 
@@ -449,6 +557,7 @@ function ProfilePage() {
             setVendorApplication(readVendorApplication());
             setStudentApplication(readStudentApplication());
             setOrderHistory(readOrderHistory());
+            setPageHistory(readPageHistory());
 
             const shouldShowProfessionalNotice =
                 localStorage.getItem(PROFESSIONAL_NOTICE_KEY) === "true";
@@ -486,6 +595,10 @@ function ProfilePage() {
             setOrderHistory(readOrderHistory());
         };
 
+        const refreshPageHistory = () => {
+            setPageHistory(readPageHistory());
+        };
+
         const refreshWorkspaceData = () => {
             refreshProfessionalApplication();
             refreshSellerApplication();
@@ -513,6 +626,7 @@ function ProfilePage() {
             "oneservice-order-change",
             refreshOrderHistory,
         );
+        window.addEventListener("oneservice-page-visit", refreshPageHistory);
         window.addEventListener(
             "oneservice-workspace-change",
             refreshWorkspaceData,
@@ -520,6 +634,7 @@ function ProfilePage() {
 
         window.addEventListener("storage", refreshProfessionalApplication);
         window.addEventListener("storage", refreshSellerApplication);
+        window.addEventListener("storage", refreshPageHistory);
         window.addEventListener("storage", refreshVendorApplication);
         window.addEventListener("storage", refreshStudentApplication);
         window.addEventListener("storage", refreshOrderHistory);
@@ -545,6 +660,7 @@ function ProfilePage() {
                 "oneservice-order-change",
                 refreshOrderHistory,
             );
+            window.removeEventListener("oneservice-page-visit", refreshPageHistory);
             window.removeEventListener(
                 "oneservice-workspace-change",
                 refreshWorkspaceData,
@@ -552,6 +668,7 @@ function ProfilePage() {
 
             window.removeEventListener("storage", refreshProfessionalApplication);
             window.removeEventListener("storage", refreshSellerApplication);
+            window.removeEventListener("storage", refreshPageHistory);
             window.removeEventListener("storage", refreshVendorApplication);
             window.removeEventListener("storage", refreshStudentApplication);
             window.removeEventListener("storage", refreshOrderHistory);
@@ -626,7 +743,7 @@ function ProfilePage() {
                 const matchesStatus =
                     orderStatusFilter === "all" ||
                     normalizeStatus(order.status) ===
-                        normalizeStatus(orderStatusFilter);
+                    normalizeStatus(orderStatusFilter);
 
                 const matchesSearch =
                     !search ||
@@ -676,6 +793,54 @@ function ProfilePage() {
     const sellerStatus = getApplicationStatus(seller?.status);
     const vendorStatus = getApplicationStatus(vendor?.status);
     const studentStatus = getApplicationStatus(student?.status);
+
+    const profileNotifications = [
+        ...(application
+            ? [{
+                id: "professional",
+                role: "Professional",
+                status: applicationStatus,
+                detail: `Your professional application is ${applicationStatus.toLowerCase()}.`,
+            }]
+            : []),
+        ...(seller
+            ? [{
+                id: "seller",
+                role: "Seller",
+                status: sellerStatus,
+                detail: `Your seller account application is ${sellerStatus.toLowerCase()}.`,
+            }]
+            : []),
+        ...(vendor
+            ? [{
+                id: "vendor",
+                role: "Vendor",
+                status: vendorStatus,
+                detail: `Your vendor account application is ${vendorStatus.toLowerCase()}.`,
+            }]
+            : []),
+        ...(student
+            ? [{
+                id: "student",
+                role: "Student",
+                status: studentStatus,
+                detail: `Your student registration is ${studentStatus.toLowerCase()}.`,
+            }]
+            : []),
+    ];
+
+    const unreadNotificationCount = profileNotifications.filter(
+        (item) => !readNotificationIds.includes(item.id),
+    ).length;
+
+    const markAllNotificationsRead = () => {
+        const allReadIds = profileNotifications.map((item) => item.id);
+        setReadNotificationIds(allReadIds);
+        localStorage.setItem(
+            "oneservice_profile_read_notifications",
+            JSON.stringify(allReadIds),
+        );
+    };
 
     const sellerName =
         seller?.businessName ||
@@ -789,12 +954,91 @@ function ProfilePage() {
                                 <ShieldCheck size={21} />
                             </span>
                             <span>
-                                <strong>Your OneService account</strong>
+                                <strong>Your NeedOneService account</strong>
                                 <small>
                                     Explore services and manage your activity with ease.
                                 </small>
                             </span>
                         </div>
+
+                        <section
+                            className="profile-notifications-card"
+                            aria-labelledby="profile-notifications-title"
+                        >
+                            <div className="profile-notifications-heading">
+                                <div className="profile-notifications-title-wrap">
+                                    <span className="profile-notifications-icon">
+                                        <Bell size={19} />
+                                    </span>
+                                    <div>
+                                        <h3 id="profile-notifications-title">Notifications</h3>
+                                        <p>Updates about your NeedOneService accounts</p>
+                                    </div>
+                                </div>
+                                {unreadNotificationCount > 0 && (
+                                    <span className="profile-notifications-count" aria-label={`${unreadNotificationCount} unread notifications`}>
+                                        {unreadNotificationCount}
+                                    </span>
+                                )}
+                            </div>
+
+                            {profileNotifications.length > 0 ? (
+                                <>
+                                    <div className="profile-notifications-list">
+                                        {profileNotifications.map((item) => {
+                                            const isRead = readNotificationIds.includes(item.id);
+                                            const normalizedStatus = item.status.toLowerCase();
+                                            const statusClass = normalizedStatus.includes("approv")
+                                                ? "approved"
+                                                : normalizedStatus.includes("reject")
+                                                    ? "rejected"
+                                                    : "pending";
+
+                                            return (
+                                                <article
+                                                    className={`profile-notification-item ${isRead ? "is-read" : "is-unread"}`}
+                                                    key={item.id}
+                                                >
+                                                    <span className={`profile-notification-status-icon is-${statusClass}`}>
+                                                        {statusClass === "approved" ? (
+                                                            <Check size={16} />
+                                                        ) : statusClass === "rejected" ? (
+                                                            <X size={16} />
+                                                        ) : (
+                                                            <Bell size={15} />
+                                                        )}
+                                                    </span>
+                                                    <div className="profile-notification-copy">
+                                                        <div className="profile-notification-item-topline">
+                                                            <strong>{item.role} account</strong>
+                                                            <span className={`profile-notification-status is-${statusClass}`}>
+                                                                {item.status}
+                                                            </span>
+                                                        </div>
+                                                        <p>{item.detail}</p>
+                                                    </div>
+                                                    {!isRead && <span className="profile-notification-unread-dot" aria-label="Unread" />}
+                                                </article>
+                                            );
+                                        })}
+                                    </div>
+                                    {unreadNotificationCount > 0 && (
+                                        <button
+                                            type="button"
+                                            className="profile-notifications-mark-read"
+                                            onClick={markAllNotificationsRead}
+                                        >
+                                            Mark all as read
+                                        </button>
+                                    )}
+                                </>
+                            ) : (
+                                <div className="profile-notifications-empty">
+                                    <Check size={17} />
+                                    <span>You’re all caught up. New account updates will appear here.</span>
+                                </div>
+                            )}
+                        </section>
 
                         <Link to="/services" className="profile-primary-button">
                             View Services <ArrowRight size={18} />
@@ -1041,7 +1285,7 @@ function ProfilePage() {
 
                                 <div className="profile-section-heading profile-add-another-role">
                                     <h2>Join in another role</h2>
-                                    <p>You can register for more than one OneService opportunity.</p>
+                                    <p>You can register for more than one NeedOneService opportunity.</p>
                                 </div>
 
                                 <div className="profile-network-grid">
@@ -1082,7 +1326,7 @@ function ProfilePage() {
                             <>
                                 <div className="profile-section-heading">
                                     <span className="profile-section-eyebrow">GROW WITH US</span>
-                                    <h2>Join the OneService Network</h2>
+                                    <h2>Join the NeedOneService Network</h2>
                                     <p>Choose how you want to be part of our community.</p>
                                 </div>
 
@@ -1285,6 +1529,296 @@ function ProfilePage() {
                         </button>
                     </div>
                 </section>
+
+
+                {/* Recent Activity and Visited Page History */}
+                <div className="profile-activity-history-grid">
+                    {(() => {
+                        type ActivityItem = {
+                            id: string;
+                            title: string;
+                            detail: string;
+                            date: string;
+                            kind: "page" | "order" | "application";
+                            path?: string;
+                        };
+
+                        const applicationActivities: ActivityItem[] = [
+                            ...(application
+                                ? [
+                                    {
+                                        id: "application-professional",
+                                        title: "Professional application",
+                                        detail: `Professional Hub · ${applicationStatus}`,
+                                        date: application.submittedAt ?? "",
+                                        kind: "application" as const,
+                                        path: "/profile/professional-hub",
+                                    },
+                                ]
+                                : []),
+
+                            ...(seller
+                                ? [
+                                    {
+                                        id: "application-seller",
+                                        title: "Seller account",
+                                        detail: `Seller Hub · ${sellerStatus}`,
+                                        date: seller.submittedAt ?? "",
+                                        kind: "application" as const,
+                                        path: "/seller-hub",
+                                    },
+                                ]
+                                : []),
+
+                            ...(vendor
+                                ? [
+                                    {
+                                        id: "application-vendor",
+                                        title: "Vendor account",
+                                        detail: `Vendor Hub · ${vendorStatus}`,
+                                        date: vendor.registeredAt ?? "",
+                                        kind: "application" as const,
+                                        path: "/vendor-hub",
+                                    },
+                                ]
+                                : []),
+
+                            ...(student
+                                ? [
+                                    {
+                                        id: "application-student",
+                                        title: "Student registration",
+                                        detail: `Student Hub · ${studentStatus}`,
+                                        date:
+                                            student.submittedAt ??
+                                            student.registeredAt ??
+                                            "",
+                                        kind: "application" as const,
+                                        path: "/student-hub",
+                                    },
+                                ]
+                                : []),
+                        ];
+
+                        const activityItems: ActivityItem[] = [
+                            ...pageHistory.map((visit) => ({
+                                id: `visit-${visit.id}`,
+                                title: getReadablePageTitle(visit.path, visit.title),
+                                detail: "Page visited",
+                                date: visit.visitedAt,
+                                kind: "page" as const,
+                                path: visit.path,
+                            })),
+
+                            ...orderHistory.map((order) => {
+                                const orderType = (
+                                    order.type ?? "product"
+                                ).trim().toLowerCase();
+
+                                const isService =
+                                    orderType === "service" ||
+                                    orderType === "booking";
+
+                                return {
+                                    id: `order-${order.id}`,
+                                    title: order.title,
+                                    detail: `${isService ? "Service booking" : "Product order"} · ${order.status}`,
+                                    date: order.date ?? "",
+                                    kind: "order" as const,
+                                };
+                            }),
+
+                            ...applicationActivities,
+                        ];
+
+                        const sortedActivities = [...activityItems]
+                            .sort(
+                                (a, b) =>
+                                    getOrderTimestamp(b.date) -
+                                    getOrderTimestamp(a.date),
+                            )
+                            .slice(0, 3);
+
+                        const recentPages = [...pageHistory]
+                            .sort(
+                                (a, b) =>
+                                    getOrderTimestamp(b.visitedAt) -
+                                    getOrderTimestamp(a.visitedAt),
+                            )
+                            .slice(0, 3);
+
+                        return (
+                            <>
+                                {/* RECENT ACTIVITY */}
+                                <section className="profile-content-section profile-activity-panel profile-activity-card">
+                                    <div className="profile-content-heading">
+                                        <div className="profile-heading-icon">
+                                            <Activity size={21} />
+                                        </div>
+
+                                        <div>
+                                            <h2>Recent Activity</h2>
+                                            <p>
+                                                Your latest account, application and order activity.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {sortedActivities.length > 0 ? (
+                                        <div className="profile-timeline-list">
+                                            {sortedActivities.map((item) => (
+                                                <article
+                                                    className="profile-timeline-item"
+                                                    key={item.id}
+                                                >
+                                                    <span
+                                                        className={`profile-timeline-dot ${item.kind === "order"
+                                                                ? "is-order"
+                                                                : item.kind === "application"
+                                                                    ? "is-application"
+                                                                    : "is-page"
+                                                            }`}
+                                                    >
+                                                        {item.kind === "order" ? (
+                                                            <Package size={16} />
+                                                        ) : item.kind === "application" ? (
+                                                            <ShieldCheck size={16} />
+                                                        ) : (
+                                                            <Clock3 size={16} />
+                                                        )}
+                                                    </span>
+
+                                                    <div className="profile-timeline-copy">
+                                                        <strong>{item.title}</strong>
+                                                        <small>{item.detail}</small>
+
+                                                        {item.date && (
+                                                            <time dateTime={item.date}>
+                                                                {formatVisitDate(item.date)}
+                                                            </time>
+                                                        )}
+                                                    </div>
+
+                                                    {item.path && (
+                                                        <Link
+                                                            to={item.path}
+                                                            className="profile-history-open"
+                                                            aria-label={`Open ${item.title}`}
+                                                            title="Open"
+                                                        >
+                                                            <ExternalLink size={15} />
+                                                        </Link>
+                                                    )}
+                                                </article>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="profile-history-empty">
+                                            <Activity size={21} />
+                                            <p>
+                                                Your recent activity will appear here as you
+                                                browse NeedOneService, register for an opportunity
+                                                or place an order.
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    <div className="profile-activity-footer">
+                                        <span>
+                                            Showing {sortedActivities.length} latest{" "}
+                                            {sortedActivities.length === 1
+                                                ? "activity"
+                                                : "activities"}
+                                        </span>
+
+                                        <Link
+                                            to="/profile/activity-history"
+                                            className="profile-outline-button"
+                                        >
+                                            View All <ArrowRight size={16} />
+                                        </Link>
+                                    </div>
+                                </section>
+
+                                {/* VISITED PAGE HISTORY */}
+                                <section className="profile-content-section profile-page-history-panel profile-history-card">
+                                    <div className="profile-content-heading">
+                                        <div className="profile-heading-icon">
+                                            <History size={21} />
+                                        </div>
+
+                                        <div>
+                                            <h2>History</h2>
+                                            <p>Your recently visited NeedOneService pages.</p>
+                                        </div>
+                                    </div>
+
+                                    {recentPages.length > 0 ? (
+                                        <div className="profile-page-history-list">
+                                            {recentPages.map((visit) => (
+                                                <article
+                                                    className="profile-page-history-item"
+                                                    key={visit.id}
+                                                >
+                                                    <div className="profile-page-history-icon">
+                                                        <History size={17} />
+                                                    </div>
+
+                                                    <div className="profile-page-history-copy">
+                                                        <strong>
+                                                            {getReadablePageTitle(
+                                                                visit.path,
+                                                                visit.title,
+                                                            )}
+                                                        </strong>
+
+                                                        <small>Visited on OneService</small>
+
+                                                        <time dateTime={visit.visitedAt}>
+                                                            {formatVisitDate(visit.visitedAt)}
+                                                        </time>
+                                                    </div>
+
+                                                    <Link
+                                                        to={visit.path}
+                                                        className="profile-history-open"
+                                                        aria-label={`Reopen ${getReadablePageTitle(visit.path, visit.title)}`}
+                                                        title="Reopen page"
+                                                    >
+                                                        <ExternalLink size={15} />
+                                                    </Link>
+                                                </article>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="profile-history-empty">
+                                            <History size={21} />
+                                            <p>
+                                                Your visited pages will appear here when
+                                                page tracking records your activity.
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    <div className="profile-activity-footer">
+                                        <span>
+                                            Showing {recentPages.length} latest{" "}
+                                            {recentPages.length === 1 ? "page" : "pages"}
+                                        </span>
+
+                                        <Link
+                                            to="/profile/activity-history"
+                                            className="profile-outline-button"
+                                        >
+                                            View All <ArrowRight size={16} />
+                                        </Link>
+                                    </div>
+                                </section>
+                            </>
+                        );
+                    })()}
+                </div>
+
 
                 {/* Account Settings */}
                 <section className="profile-content-section profile-settings-section">

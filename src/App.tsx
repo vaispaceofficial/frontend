@@ -47,6 +47,9 @@ import SellerProductsPage from "./pages/SellerProductsPage";
 import VendorHub from "./pages/VendorHub";
 import StudentHub from "./pages/StudentHub";
 
+import PageVisitTracker from "./pages/PageVisitTracker";
+import ProfileActivityHistoryPage from "./pages/ProfileActivityHistoryPage";
+
 import HomeAppliancesPage from "./pages/HomeAppliancesPage";
 import HomeServicesPage from "./pages/HomeServicesPage";
 import PersonalServicesPage from "./pages/PersonalServicesPage";
@@ -374,9 +377,8 @@ function Navbar() {
           >
             <button
               type="button"
-              className={`network-nav-button ${
-                networkOpen ? "active" : ""
-              }`}
+              className={`network-nav-button ${networkOpen ? "active" : ""
+                }`}
               onClick={() =>
                 setNetworkOpen((current) => !current)
               }
@@ -629,9 +631,8 @@ function ServiceCardStack() {
           return (
             <Link
               to={service.path}
-              className={`stack-service-card stack-card-${
-                index + 1
-              }`}
+              className={`stack-service-card stack-card-${index + 1
+                }`}
               key={service.title}
               style={
                 {
@@ -782,9 +783,8 @@ function HomePage() {
                 key={image}
                 src={image}
                 alt="NEED ONE SERVICE home service"
-                className={`hero-bg-image ${
-                  index === currentImage ? "active" : ""
-                }`}
+                className={`hero-bg-image ${index === currentImage ? "active" : ""
+                  }`}
               />
             ))}
 
@@ -993,6 +993,7 @@ function AppContent() {
       {!isAdminRoute && <Navbar />}
 
       <ScrollToTop />
+      <PageVisitTracker />
 
       <Routes>
         {/* HOME */}
@@ -1161,6 +1162,11 @@ function AppContent() {
         <Route
           path="/profile"
           element={<ProfilePage />}
+        />
+
+        <Route
+          path="/profile/activity-history"
+          element={<ProfileActivityHistoryPage />}
         />
 
         {/* PROFESSIONAL HUB */}

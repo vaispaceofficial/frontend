@@ -1,0 +1,362 @@
+/* =========================================================
+   ONESERVICE — PROFILE ACTIVITY & HISTORY PAGE
+   File: ProfileActivityHistoryPage.css
+   Theme: Blue + White | Responsive
+========================================================= */
+
+.profile-activity-history-page {
+    min-height: 100vh;
+    padding: 32px 24px 56px;
+    background: #f5f8ff;
+    color: #172033;
+    font-family: "Neulis Sans", sans-serif;
+    box-sizing: border-box;
+}
+
+.profile-activity-history-page *,
+.profile-activity-history-page *::before,
+.profile-activity-history-page *::after {
+    box-sizing: border-box;
+}
+
+.profile-activity-history-container {
+    width: min(1440px, 100%);
+    margin: 0 auto;
+}
+
+.profile-activity-history-header {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 28px;
+}
+
+.profile-activity-back-link {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #2563eb;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 650;
+}
+
+.profile-activity-back-link:hover {
+    color: #1d4ed8;
+}
+
+.profile-activity-page-title {
+    padding-top: 38px;
+}
+
+.profile-activity-eyebrow {
+    display: inline-block;
+    margin-bottom: 9px;
+    color: #2563eb;
+    font-size: 11px;
+    font-weight: 750;
+    letter-spacing: 1.5px;
+}
+
+.profile-activity-page-title h1 {
+    margin: 0;
+    color: #172033;
+    font-size: clamp(28px, 3vw, 38px);
+    font-weight: 750;
+    letter-spacing: -1px;
+}
+
+.profile-activity-page-title p {
+    max-width: 650px;
+    margin: 10px 0 0;
+    color: #64748b;
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+.profile-activity-refresh-button {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 42px;
+    padding: 0 16px;
+    border: 1px solid #dbe5f5;
+    border-radius: 11px;
+    background: #fff;
+    color: #334155;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 650;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.profile-activity-refresh-button:hover {
+    border-color: #2563eb;
+    background: #eff6ff;
+}
+
+.profile-activity-history-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: stretch;
+    gap: 22px;
+}
+
+.profile-activity-history-page .profile-content-section {
+    min-width: 0;
+    padding: 24px;
+    border: 1px solid #e1e9f6;
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 8px 28px rgba(29, 65, 120, 0.045);
+}
+
+.profile-activity-history-page .profile-content-heading {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    margin-bottom: 23px;
+}
+
+.profile-activity-history-page .profile-heading-icon {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 45px;
+    height: 45px;
+    border-radius: 13px;
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+.profile-activity-history-page .profile-content-heading h2 {
+    margin: 0;
+    color: #172033;
+    font-size: 19px;
+    font-weight: 750;
+}
+
+.profile-activity-history-page .profile-content-heading p {
+    margin: 5px 0 0;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.profile-timeline-list,
+.profile-page-history-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.profile-timeline-item,
+.profile-page-history-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    min-width: 0;
+    padding: 17px 0;
+    border-bottom: 1px solid #edf1f7;
+}
+
+.profile-timeline-item:first-child,
+.profile-page-history-item:first-child {
+    padding-top: 4px;
+}
+
+.profile-timeline-item:last-child,
+.profile-page-history-item:last-child {
+    border-bottom: none;
+}
+
+.profile-timeline-dot {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 11px;
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+.profile-timeline-dot.is-order {
+    background: #f0fdf4;
+    color: #15803d;
+}
+
+.profile-timeline-dot.is-application {
+    background: #fff7ed;
+    color: #c2410c;
+}
+
+.profile-timeline-copy,
+.profile-page-history-copy {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-width: 0;
+    gap: 5px;
+}
+
+.profile-timeline-copy strong,
+.profile-page-history-copy strong {
+    overflow-wrap: anywhere;
+    color: #1e293b;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.5;
+}
+
+.profile-timeline-copy small {
+    overflow-wrap: anywhere;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.profile-timeline-copy time,
+.profile-page-history-copy time {
+    color: #94a3b8;
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+.profile-page-history-icon {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 11px;
+    background: #f1f5f9;
+    color: #475569;
+}
+
+.profile-history-open {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 1px solid #e2e8f0;
+    border-radius: 9px;
+    background: #fff;
+    color: #64748b;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.profile-history-open:hover {
+    border-color: #bfdbfe;
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+.profile-history-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 220px;
+    padding: 30px 20px;
+    color: #94a3b8;
+    text-align: center;
+}
+
+.profile-history-empty > svg {
+    margin-bottom: 12px;
+    color: #93b4f8;
+}
+
+.profile-history-empty h3 {
+    margin: 0 0 7px;
+    color: #334155;
+    font-size: 15px;
+}
+
+.profile-history-empty p {
+    max-width: 300px;
+    margin: 0;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.8;
+}
+
+.profile-activity-section-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 16px;
+    border-top: 1px solid #edf1f7;
+    color: #94a3b8;
+    font-size: 11px;
+}
+
+@media (max-width: 900px) {
+    .profile-activity-history-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .profile-activity-history-page .profile-content-section {
+        padding: 22px;
+    }
+}
+
+@media (max-width: 600px) {
+    .profile-activity-history-page {
+        padding: 24px 14px 36px;
+    }
+
+    .profile-activity-history-header {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .profile-activity-page-title {
+        padding-top: 42px;
+    }
+
+    .profile-activity-page-title h1 {
+        font-size: 28px;
+    }
+
+    .profile-activity-refresh-button {
+        align-self: flex-start;
+    }
+
+    .profile-activity-history-page .profile-content-section {
+        padding: 17px;
+        border-radius: 15px;
+    }
+
+    .profile-activity-history-page .profile-content-heading {
+        gap: 10px;
+    }
+
+    .profile-activity-history-page .profile-heading-icon {
+        width: 40px;
+        height: 40px;
+    }
+
+    .profile-activity-history-page .profile-content-heading h2 {
+        font-size: 17px;
+    }
+
+    .profile-timeline-item,
+    .profile-page-history-item {
+        gap: 9px;
+    }
+}

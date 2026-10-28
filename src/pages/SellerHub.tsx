@@ -58,16 +58,79 @@ type SellerProfileDetails = {
   gstin: string;
 };
 
-const SELLER_PROFILE_KEY = "oneservice-seller-profile";
+type LoggedInUser = {
+  name?: string;
+  fullName?: string;
+  businessName?: string;
+  email?: string;
+  mobile?: string;
+  phone?: string;
+};
 
-const defaultSellerProfile: SellerProfileDetails = {
-  businessName: "Rahul Traders",
-  contactPerson: "Rahul",
+const SELLER_PROFILE_KEY = "oneservice-seller-profile";
+const USER_KEY = "oneservice_user";
+
+const emptySellerProfile: SellerProfileDetails = {
+  businessName: "",
+  contactPerson: "",
   email: "",
   phone: "",
   address: "",
   gstin: "",
 };
+
+function getLoggedInUser(): LoggedInUser {
+  try {
+    const saved = localStorage.getItem(USER_KEY);
+    return saved ? (JSON.parse(saved) as LoggedInUser) : {};
+  } catch (error) {
+    console.error("Could not load logged-in user:", error);
+    return {};
+  }
+}
+
+function getDefaultSellerProfile(): SellerProfileDetails {
+  const user = getLoggedInUser();
+  const name =
+    user.name?.trim() ||
+    user.fullName?.trim() ||
+    user.mobile ||
+    user.phone ||
+    "";
+
+  return {
+    businessName: user.businessName?.trim() || name,
+    contactPerson: name,
+    email: user.email?.trim() || "",
+    phone: user.mobile || user.phone || "",
+    address: "",
+    gstin: "",
+  };
+}
+
+function getInitialSellerProfile(): SellerProfileDetails {
+  const defaults = getDefaultSellerProfile();
+
+  try {
+    const saved = localStorage.getItem(SELLER_PROFILE_KEY);
+
+    if (!saved) return defaults;
+
+    const parsed = JSON.parse(saved) as Partial<SellerProfileDetails>;
+
+    return {
+      ...defaults,
+      ...parsed,
+      // Keep the logged-in identity when it is available.
+      contactPerson: defaults.contactPerson || parsed.contactPerson || "",
+      email: defaults.email || parsed.email || "",
+      phone: defaults.phone || parsed.phone || "",
+    };
+  } catch (error) {
+    console.error("Could not load seller profile:", error);
+    return defaults;
+  }
+}
 
 const initialProducts: Product[] = [
   {
@@ -166,28 +229,12 @@ export default function SellerHub() {
   const [feedback, setFeedback] = useState("");
   const [profileOpen, setProfileOpen] = useState(false);
 
-  // Remove-account dialog state
   const [showRemoveConfirmation, setShowRemoveConfirmation] = useState(false);
   const [removingAccount, setRemovingAccount] = useState(false);
   const [removeError, setRemoveError] = useState("");
 
   const [sellerProfile, setSellerProfile] =
-    useState<SellerProfileDetails>(() => {
-      try {
-        const saved = localStorage.getItem(SELLER_PROFILE_KEY);
-
-        if (saved) {
-          return {
-            ...defaultSellerProfile,
-            ...JSON.parse(saved),
-          };
-        }
-      } catch (error) {
-        console.error("Could not load seller profile:", error);
-      }
-
-      return { ...defaultSellerProfile };
-    });
+    useState<SellerProfileDetails>(getInitialSellerProfile);
 
   const [draftSellerProfile, setDraftSellerProfile] =
     useState<SellerProfileDetails>(() => ({ ...sellerProfile }));
@@ -273,9 +320,7 @@ export default function SellerHub() {
         !Number.isInteger(quantity) ||
         quantity <= 0
       ) {
-        setFormError(
-          "Enter a whole-number restock quantity greater than zero.",
-        );
+        setFormError("Enter a whole-number restock quantity greater than zero.");
         return;
       }
 
@@ -344,7 +389,6 @@ export default function SellerHub() {
           icon: "other",
         },
       ]);
-
       setFeedback("Product added to your sample inventory.");
     } else if (modalMode === "edit" && activeProductId !== null) {
       setProducts((current) =>
@@ -354,7 +398,6 @@ export default function SellerHub() {
             : product,
         ),
       );
-
       setFeedback("Product details updated in this session.");
     }
 
@@ -372,52 +415,102 @@ export default function SellerHub() {
     setActiveSummary("products");
   };
 
-  // Seller account removal
+  const saveSellerProfile = () => {
+    const businessName = draftSellerProfile.businessName.trim();
+    const contactPerson = draftSellerProfile.contactPerson.trim();
 
+    if (!businessName || !contactPerson) {
+      setSellerProfileSaveMessage(
+        "Business name and contact person are required.",
+      );
+      return;
+    }
 
+    try {
+      const updatedProfile: SellerProfileDetails = {
+        ...draftSellerProfile,
+        businessName,
+        contactPerson,
+        email: draftSellerProfile.email.trim(),
+        phone: draftSellerProfile.phone.replace(/\D/g, "").slice(0, 10),
+        address: draftSellerProfile.address.trim(),
+        gstin: draftSellerProfile.gstin.trim().toUpperCase().slice(0, 15),
+      };
 
-const removeAccount = () => {
-  setRemoveError("");
+      localStorage.setItem(
+        SELLER_PROFILE_KEY,
+        JSON.stringify(updatedProfile),
+      );
 
-  try {
+      setSellerProfile(updatedProfile);
+      setDraftSellerProfile({ ...updatedProfile });
+      setIsEditingSellerProfile(false);
+      setSellerProfileSaveMessage("Profile changes saved successfully.");
+      setFeedback("Seller profile updated successfully.");
+
+      window.dispatchEvent(new Event("oneservice-seller-change"));
+    } catch (error) {
+      console.error("Could not save seller profile:", error);
+      setSellerProfileSaveMessage(
+        "Could not save your profile. Please check browser storage.",
+      );
+    }
+  };
+
+  // Removes seller-specific browser data. Server deletion requires a backend API.
+  const removeAccount = () => {
+    if (removingAccount) return;
+
+    setRemoveError("");
     setRemovingAccount(true);
 
-    // Remove seller account and application data.
-    const sellerKeys = [
-      "oneservice-seller-profile",
-      "oneservice_seller_application",
-      "oneservice_partner_application",
-    ];
+    try {
+      const sellerKeys = [
+        "oneservice-seller-profile",
+        "oneservice_seller_profile",
+        "oneservice_seller_application",
+        "oneservice_partner_application",
+        "oneservice_seller_products",
+        "oneservice-seller-products",
+        "oneservice_workspace_role",
+      ];
 
-    sellerKeys.forEach((key) => localStorage.removeItem(key));
+      sellerKeys.forEach((key) => localStorage.removeItem(key));
 
-    // Clear the saved workspace role.
-    localStorage.removeItem("oneservice_workspace_role");
+      window.dispatchEvent(new Event("oneservice-seller-change"));
+      window.dispatchEvent(new Event("oneservice-workspace-change"));
 
-    // Notify components to refresh.
-    window.dispatchEvent(new Event("oneservice-seller-change"));
-    window.dispatchEvent(new Event("oneservice-workspace-change"));
+      setSellerProfile({ ...emptySellerProfile });
+      setDraftSellerProfile({ ...emptySellerProfile });
+      setIsEditingSellerProfile(false);
+      setProfileOpen(false);
+      setShowRemoveConfirmation(false);
+      setFeedback("");
 
-    // Close the confirmation dialog and return to ProfilePage.
-    setShowRemoveConfirmation(false);
-    navigate("/profile", { replace: true });
-  } catch {
-    setRemoveError(
-      "Unable to remove your seller account from this browser. Please try again."
-    );
-  } finally {
-    setRemovingAccount(false);
-  }
-};
+      navigate("/seller/products", { replace: true });
+    } catch (error) {
+      console.error("Could not remove seller account:", error);
+      setRemoveError(
+        "Unable to remove seller account data from this browser. Please try again.",
+      );
+    } finally {
+      setRemovingAccount(false);
+    }
+  };
 
-
-
-
+  const updateDraft = (
+    field: keyof SellerProfileDetails,
+    value: string,
+  ) => {
+    setDraftSellerProfile((current) => ({
+      ...current,
+      [field]: value,
+    }));
+  };
 
   return (
     <main className="seller-hub-page">
       <div className="seller-hub-container">
-        {/* Top utility bar */}
         <div className="seller-hub-topbar">
           <div className="seller-hub-topbar-label">
             <span className="seller-hub-topbar-dot" />
@@ -435,7 +528,6 @@ const removeAccount = () => {
                   placeholder="Search products or SKU..."
                   aria-label="Search products or SKU"
                 />
-
                 {globalSearch && (
                   <button
                     type="button"
@@ -450,7 +542,6 @@ const removeAccount = () => {
               {globalSearch.trim() && (
                 <div className="seller-global-search-results">
                   <strong>Product matches</strong>
-
                   {globalMatches.map((product) => (
                     <button
                       key={product.id}
@@ -463,7 +554,6 @@ const removeAccount = () => {
                       </small>
                     </button>
                   ))}
-
                   {globalMatches.length === 0 && (
                     <p>
                       No product matches. Order search will be available when
@@ -526,26 +616,23 @@ const removeAccount = () => {
 
                       return next;
                     });
-
                     setNotificationOpen(false);
                   }}
                 >
                   <span className="seller-profile-avatar">
                     <UserRound size={20} />
                   </span>
-
                   <span className="seller-profile-name">
                     <strong>
-                      {sellerProfile.businessName || "Seller Account"}
+                      {sellerProfile.businessName ||
+                        sellerProfile.contactPerson ||
+                        "Seller Account"}
                     </strong>
                     <small>Seller account</small>
                   </span>
-
                   <ChevronDown
                     size={16}
-                    className={
-                      profileOpen ? "seller-profile-chevron-open" : ""
-                    }
+                    className={profileOpen ? "seller-profile-chevron-open" : ""}
                   />
                 </button>
 
@@ -559,14 +646,14 @@ const removeAccount = () => {
                       <span className="seller-profile-popup-avatar">
                         <UserRound size={23} />
                       </span>
-
                       <div>
                         <strong>
-                          {draftSellerProfile.businessName || "Seller Profile"}
+                          {draftSellerProfile.businessName ||
+                            draftSellerProfile.contactPerson ||
+                            "Seller Profile"}
                         </strong>
                         <span>Manage your seller account details</span>
                       </div>
-
                       <button
                         className="seller-profile-close"
                         type="button"
@@ -601,10 +688,7 @@ const removeAccount = () => {
                             required
                             placeholder="Enter business name"
                             onChange={(event) =>
-                              setDraftSellerProfile((current) => ({
-                                ...current,
-                                businessName: event.target.value,
-                              }))
+                              updateDraft("businessName", event.target.value)
                             }
                           />
                         </label>
@@ -618,10 +702,7 @@ const removeAccount = () => {
                             required
                             placeholder="Contact person's name"
                             onChange={(event) =>
-                              setDraftSellerProfile((current) => ({
-                                ...current,
-                                contactPerson: event.target.value,
-                              }))
+                              updateDraft("contactPerson", event.target.value)
                             }
                           />
                         </label>
@@ -634,10 +715,7 @@ const removeAccount = () => {
                             readOnly={!isEditingSellerProfile}
                             placeholder="Enter email address"
                             onChange={(event) =>
-                              setDraftSellerProfile((current) => ({
-                                ...current,
-                                email: event.target.value,
-                              }))
+                              updateDraft("email", event.target.value)
                             }
                           />
                         </label>
@@ -651,12 +729,10 @@ const removeAccount = () => {
                             placeholder="Enter mobile number"
                             maxLength={10}
                             onChange={(event) =>
-                              setDraftSellerProfile((current) => ({
-                                ...current,
-                                phone: event.target.value
-                                  .replace(/\D/g, "")
-                                  .slice(0, 10),
-                              }))
+                              updateDraft(
+                                "phone",
+                                event.target.value.replace(/\D/g, "").slice(0, 10),
+                              )
                             }
                           />
                         </label>
@@ -670,12 +746,10 @@ const removeAccount = () => {
                             placeholder="Optional"
                             maxLength={15}
                             onChange={(event) =>
-                              setDraftSellerProfile((current) => ({
-                                ...current,
-                                gstin: event.target.value
-                                  .toUpperCase()
-                                  .slice(0, 15),
-                              }))
+                              updateDraft(
+                                "gstin",
+                                event.target.value.toUpperCase().slice(0, 15),
+                              )
                             }
                           />
                         </label>
@@ -687,10 +761,7 @@ const removeAccount = () => {
                             readOnly={!isEditingSellerProfile}
                             placeholder="Enter your business address"
                             onChange={(event) =>
-                              setDraftSellerProfile((current) => ({
-                                ...current,
-                                address: event.target.value,
-                              }))
+                              updateDraft("address", event.target.value)
                             }
                           />
                         </label>
@@ -698,15 +769,12 @@ const removeAccount = () => {
 
                       <p className="seller-profile-security-note">
                         <AlertTriangle size={14} />
-                        Passwords and authentication secrets are not displayed
+                        Passwords and authentication secrets are never shown
                         here.
                       </p>
 
                       {sellerProfileSaveMessage && (
-                        <p
-                          className="seller-profile-save-message"
-                          role="status"
-                        >
+                        <p className="seller-profile-save-message" role="status">
                           <Check size={15} />
                           {sellerProfileSaveMessage}
                         </p>
@@ -727,58 +795,10 @@ const removeAccount = () => {
                           >
                             Cancel
                           </button>
-
                           <button
                             className="seller-profile-save"
                             type="button"
-                            onClick={() => {
-                              const businessName =
-                                draftSellerProfile.businessName.trim();
-                              const contactPerson =
-                                draftSellerProfile.contactPerson.trim();
-
-                              if (!businessName || !contactPerson) {
-                                setSellerProfileSaveMessage(
-                                  "Business name and contact person are required.",
-                                );
-                                return;
-                              }
-
-                              try {
-                                const updatedProfile: SellerProfileDetails = {
-                                  ...draftSellerProfile,
-                                  businessName,
-                                  contactPerson,
-                                  email: draftSellerProfile.email.trim(),
-                                  address: draftSellerProfile.address.trim(),
-                                  gstin: draftSellerProfile.gstin
-                                    .trim()
-                                    .toUpperCase(),
-                                };
-
-                                localStorage.setItem(
-                                  SELLER_PROFILE_KEY,
-                                  JSON.stringify(updatedProfile),
-                                );
-
-                                setSellerProfile(updatedProfile);
-                                setDraftSellerProfile({ ...updatedProfile });
-                                setIsEditingSellerProfile(false);
-                                setSellerProfileSaveMessage(
-                                  "Profile changes saved successfully.",
-                                );
-                                setFeedback(
-                                  "Seller profile updated successfully.",
-                                );
-                                window.dispatchEvent(
-                                  new Event("oneservice-seller-change"),
-                                );
-                              } catch {
-                                setSellerProfileSaveMessage(
-                                  "Could not save your profile. Please check browser storage.",
-                                );
-                              }
-                            }}
+                            onClick={saveSellerProfile}
                           >
                             <Save size={15} />
                             Save Changes
@@ -798,7 +818,6 @@ const removeAccount = () => {
                             <Pencil size={15} />
                             Edit Profile
                           </button>
-
                           <button
                             className="seller-remove-account-button"
                             type="button"
@@ -820,7 +839,6 @@ const removeAccount = () => {
           </div>
         </div>
 
-        {/* Page heading */}
         <header className="seller-hub-page-heading">
           <div>
             <span className="seller-hub-eyebrow">SELLER DASHBOARD</span>
@@ -830,7 +848,6 @@ const removeAccount = () => {
               customer orders.
             </p>
           </div>
-
           <button
             className="seller-add-product-button"
             type="button"
@@ -855,20 +872,14 @@ const removeAccount = () => {
           </div>
         )}
 
-        {/* Summary cards */}
-        <section
-          className="seller-summary-grid"
-          aria-label="Seller business summary"
-        >
+        <section className="seller-summary-grid" aria-label="Seller business summary">
           <button
             className={`seller-summary-card seller-summary-blue ${activeSummary === "products" ? "is-selected" : ""
               }`}
             type="button"
             onClick={() => openSummary("products")}
           >
-            <span className="seller-summary-icon">
-              <Package size={23} />
-            </span>
+            <span className="seller-summary-icon"><Package size={23} /></span>
             <span className="seller-summary-copy">
               <span className="seller-summary-label">Listed Products</span>
               <strong>{products.length}</strong>
@@ -883,9 +894,7 @@ const removeAccount = () => {
             type="button"
             onClick={() => openSummary("orders")}
           >
-            <span className="seller-summary-icon">
-              <Truck size={23} />
-            </span>
+            <span className="seller-summary-icon"><Truck size={23} /></span>
             <span className="seller-summary-copy">
               <span className="seller-summary-label">Pending Deliveries</span>
               <strong>7</strong>
@@ -900,9 +909,7 @@ const removeAccount = () => {
             type="button"
             onClick={() => openSummary("sales")}
           >
-            <span className="seller-summary-icon">
-              <IndianRupee size={23} />
-            </span>
+            <span className="seller-summary-icon"><IndianRupee size={23} /></span>
             <span className="seller-summary-copy">
               <span className="seller-summary-label">Monthly Sales</span>
               <strong>₹89,400</strong>
@@ -917,9 +924,7 @@ const removeAccount = () => {
             type="button"
             onClick={() => openSummary("stock")}
           >
-            <span className="seller-summary-icon">
-              <AlertTriangle size={23} />
-            </span>
+            <span className="seller-summary-icon"><AlertTriangle size={23} /></span>
             <span className="seller-summary-copy">
               <span className="seller-summary-label">Out of Stock</span>
               <strong>{outOfStockCount}</strong>
@@ -961,7 +966,6 @@ const removeAccount = () => {
           </section>
         )}
 
-        {/* Inventory and sales */}
         <section className="seller-main-grid">
           <div className="seller-panel seller-inventory-panel">
             <div className="seller-panel-heading">
@@ -971,7 +975,6 @@ const removeAccount = () => {
                   Manage products, prices and stock levels
                 </p>
               </div>
-
               <label className="seller-inventory-search">
                 <Search size={16} />
                 <input
@@ -1004,7 +1007,6 @@ const removeAccount = () => {
                     <th>Action</th>
                   </tr>
                 </thead>
-
                 <tbody>
                   {filteredProducts.map((product) => (
                     <tr key={product.id}>
@@ -1012,30 +1014,23 @@ const removeAccount = () => {
                         <div className="seller-product-cell">
                           <ProductThumbnail type={product.icon} />
                           <div className="seller-product-info">
-                            <strong title={product.name}>
-                              {product.name}
-                            </strong>
+                            <strong title={product.name}>{product.name}</strong>
                             <span>SKU: {product.sku}</span>
                           </div>
                         </div>
                       </td>
-
                       <td>
-                        <span
-                          className="seller-product-category"
-                          title={product.category}
-                        >
+                        <span className="seller-product-category" title={product.category}>
                           {product.category}
                         </span>
                       </td>
-
                       <td>
                         <span
                           className={`seller-stock ${product.stock === 0
-                            ? "seller-stock-low"
-                            : product.stock <= 5
-                              ? "seller-stock-warning"
-                              : ""
+                              ? "seller-stock-low"
+                              : product.stock <= 5
+                                ? "seller-stock-warning"
+                                : ""
                             }`}
                         >
                           <span className="seller-stock-dot" />
@@ -1044,11 +1039,9 @@ const removeAccount = () => {
                             : `${product.stock} units`}
                         </span>
                       </td>
-
                       <td className="seller-product-price">
                         {formatPrice(product.price)}
                       </td>
-
                       <td>
                         <div className="seller-product-actions">
                           <button
@@ -1063,7 +1056,6 @@ const removeAccount = () => {
                           >
                             {product.stock === 0 ? "Restock" : "Edit"}
                           </button>
-
                           <div className="seller-product-menu-wrap">
                             <button
                               className="seller-more-button"
@@ -1078,23 +1070,18 @@ const removeAccount = () => {
                             >
                               <MoreVertical size={17} />
                             </button>
-
                             {menuProductId === product.id && (
                               <div className="seller-product-menu">
                                 <button
                                   type="button"
-                                  onClick={() =>
-                                    openProductModal(product, "edit")
-                                  }
+                                  onClick={() => openProductModal(product, "edit")}
                                 >
                                   <Pencil size={14} />
                                   Edit details
                                 </button>
                                 <button
                                   type="button"
-                                  onClick={() =>
-                                    openProductModal(product, "restock")
-                                  }
+                                  onClick={() => openProductModal(product, "restock")}
                                 >
                                   <RefreshCw size={14} />
                                   Restock item
@@ -1106,7 +1093,6 @@ const removeAccount = () => {
                       </td>
                     </tr>
                   ))}
-
                   {filteredProducts.length === 0 && (
                     <tr>
                       <td colSpan={5}>
@@ -1114,8 +1100,7 @@ const removeAccount = () => {
                           <Search size={23} />
                           <strong>No matching products</strong>
                           <span>
-                            Try another name, SKU, category, stock value or
-                            price.
+                            Try another name, SKU, category, stock value or price.
                           </span>
                         </div>
                       </td>
@@ -1130,7 +1115,6 @@ const removeAccount = () => {
                 Showing <strong>{filteredProducts.length}</strong> of{" "}
                 <strong>{products.length}</strong> products
               </span>
-
               <button
                 type="button"
                 onClick={() => navigate("/seller/products")}
@@ -1147,7 +1131,6 @@ const removeAccount = () => {
               <h2>Weekly Parts Sales Trend</h2>
               <p>Sample fulfilled orders in Visakhapatnam</p>
             </div>
-
             <div
               className="seller-chart"
               role="img"
@@ -1158,14 +1141,12 @@ const removeAccount = () => {
                   <span key={value}>{value}</span>
                 ))}
               </div>
-
               <div className="seller-chart-plot">
                 <div className="seller-chart-grid-lines">
                   {[50, 40, 30, 20, 10, 0].map((value) => (
                     <span key={value} />
                   ))}
                 </div>
-
                 <div className="seller-chart-bars">
                   {weeklySales.map((week) => (
                     <div className="seller-chart-column" key={week.label}>
@@ -1180,7 +1161,6 @@ const removeAccount = () => {
                 </div>
               </div>
             </div>
-
             <div className="seller-chart-caption">
               <span>
                 <span className="seller-chart-legend-dot" />
@@ -1188,7 +1168,6 @@ const removeAccount = () => {
               </span>
               <span>Sample monthly trend</span>
             </div>
-
             <div className="seller-sales-footnote">
               <span>Highest week</span>
               <strong>Week 4 · 46 orders</strong>
@@ -1198,9 +1177,7 @@ const removeAccount = () => {
 
         {showOrders && (
           <section className="seller-orders-panel">
-            <div className="seller-orders-icon">
-              <ShoppingBag size={22} />
-            </div>
+            <div className="seller-orders-icon"><ShoppingBag size={22} /></div>
             <div className="seller-orders-copy">
               <h3>Order management</h3>
               <p>
@@ -1219,9 +1196,7 @@ const removeAccount = () => {
         )}
 
         <section className="seller-inventory-banner">
-          <div className="seller-banner-icon">
-            <Box size={26} />
-          </div>
+          <div className="seller-banner-icon"><Box size={26} /></div>
           <div className="seller-banner-copy">
             <h2>Keep Your Inventory Fresh</h2>
             <p>
@@ -1242,7 +1217,6 @@ const removeAccount = () => {
           </button>
         </section>
 
-        {/* Customer Feedback & Reviews */}
         <section className="seller-reviews-section">
           <div className="seller-reviews-header">
             <div>
@@ -1250,7 +1224,6 @@ const removeAccount = () => {
               <h2>Customer Feedback &amp; Reviews</h2>
               <p>See what customers say about your products and service.</p>
             </div>
-
             <div className="seller-reviews-total">
               <MessageSquareText size={17} />
               <span>4 customer reviews</span>
@@ -1271,7 +1244,6 @@ const removeAccount = () => {
               </div>
               <span>Based on 4 sample reviews</span>
             </div>
-
             <div className="seller-rating-breakdown">
               {[
                 { stars: 5, count: 2, percentage: 50 },
@@ -1297,16 +1269,13 @@ const removeAccount = () => {
               <span>Feedback from your customers</span>
             </div>
             <span className="seller-reviews-latest">
-              Latest first
-              <ChevronDown size={14} />
+              Latest first <ChevronDown size={14} />
             </span>
           </div>
 
           <div className="seller-reviews-list">
             <article className="seller-review-card">
-              <div className="seller-review-avatar seller-review-avatar-blue">
-                RK
-              </div>
+              <div className="seller-review-avatar seller-review-avatar-blue">RK</div>
               <div className="seller-review-content">
                 <div className="seller-review-customer-row">
                   <div>
@@ -1316,8 +1285,7 @@ const removeAccount = () => {
                     </span>
                   </div>
                   <span className="seller-verified-review">
-                    <BadgeCheck size={14} />
-                    Verified purchase
+                    <BadgeCheck size={14} /> Verified purchase
                   </span>
                 </div>
                 <div className="seller-review-stars" aria-label="5 out of 5 stars">
@@ -1331,16 +1299,13 @@ const removeAccount = () => {
                   delivery was quick. Very satisfied with the purchase.
                 </p>
                 <div className="seller-review-product-tag">
-                  <Package size={13} />
-                  RO Purifier Copper Filter Cartridge
+                  <Package size={13} /> RO Purifier Copper Filter Cartridge
                 </div>
               </div>
             </article>
 
             <article className="seller-review-card">
-              <div className="seller-review-avatar seller-review-avatar-purple">
-                SP
-              </div>
+              <div className="seller-review-avatar seller-review-avatar-purple">SP</div>
               <div className="seller-review-content">
                 <div className="seller-review-customer-row">
                   <div>
@@ -1350,8 +1315,7 @@ const removeAccount = () => {
                     </span>
                   </div>
                   <span className="seller-verified-review">
-                    <BadgeCheck size={14} />
-                    Verified purchase
+                    <BadgeCheck size={14} /> Verified purchase
                   </span>
                 </div>
                 <div className="seller-review-stars" aria-label="4 out of 5 stars">
@@ -1366,8 +1330,7 @@ const removeAccount = () => {
                   works well. Would appreciate even faster delivery next time.
                 </p>
                 <div className="seller-review-product-tag">
-                  <Package size={13} />
-                  1.5 Ton AC Capacitor 45 MFD
+                  <Package size={13} /> 1.5 Ton AC Capacitor 45 MFD
                 </div>
               </div>
             </article>
@@ -1375,9 +1338,7 @@ const removeAccount = () => {
             {showAllReviews && (
               <>
                 <article className="seller-review-card">
-                  <div className="seller-review-avatar seller-review-avatar-green">
-                    AM
-                  </div>
+                  <div className="seller-review-avatar seller-review-avatar-green">AM</div>
                   <div className="seller-review-content">
                     <div className="seller-review-customer-row">
                       <div>
@@ -1387,8 +1348,7 @@ const removeAccount = () => {
                         </span>
                       </div>
                       <span className="seller-verified-review">
-                        <BadgeCheck size={14} />
-                        Verified purchase
+                        <BadgeCheck size={14} /> Verified purchase
                       </span>
                     </div>
                     <div className="seller-review-stars" aria-label="5 out of 5 stars">
@@ -1402,16 +1362,13 @@ const removeAccount = () => {
                       Great value for money. I would order from this seller again.
                     </p>
                     <div className="seller-review-product-tag">
-                      <Package size={13} />
-                      Modular 16A Heavy Socket Switch
+                      <Package size={13} /> Modular 16A Heavy Socket Switch
                     </div>
                   </div>
                 </article>
 
                 <article className="seller-review-card">
-                  <div className="seller-review-avatar seller-review-avatar-orange">
-                    VK
-                  </div>
+                  <div className="seller-review-avatar seller-review-avatar-orange">VK</div>
                   <div className="seller-review-content">
                     <div className="seller-review-customer-row">
                       <div>
@@ -1421,8 +1378,7 @@ const removeAccount = () => {
                         </span>
                       </div>
                       <span className="seller-verified-review">
-                        <BadgeCheck size={14} />
-                        Verified purchase
+                        <BadgeCheck size={14} /> Verified purchase
                       </span>
                     </div>
                     <div className="seller-review-stars" aria-label="3 out of 5 stars">
@@ -1438,8 +1394,7 @@ const removeAccount = () => {
                       Better delivery updates would improve the overall experience.
                     </p>
                     <div className="seller-review-product-tag">
-                      <ShoppingBag size={13} />
-                      General seller feedback
+                      <ShoppingBag size={13} /> General seller feedback
                     </div>
                   </div>
                 </article>
@@ -1456,17 +1411,14 @@ const removeAccount = () => {
               {showAllReviews ? "Show Less" : "View All Reviews"}
               <ChevronDown
                 size={15}
-                className={
-                  showAllReviews ? "seller-reviews-chevron-open" : ""
-                }
+                className={showAllReviews ? "seller-reviews-chevron-open" : ""}
               />
             </button>
           </div>
 
           <div className="seller-reviews-footer">
             <span>
-              <Check size={14} />
-              Customer feedback helps improve your seller reputation.
+              <Check size={14} /> Customer feedback helps improve your seller reputation.
             </span>
             <span className="seller-reviews-demo-note">
               Sample reviews · Not live customer data
@@ -1475,7 +1427,6 @@ const removeAccount = () => {
         </section>
       </div>
 
-      {/* Add, edit and restock modal */}
       {modalMode && (
         <div
           className="seller-modal-backdrop"
@@ -1491,24 +1442,18 @@ const removeAccount = () => {
           >
             <div className="seller-product-modal-header">
               <div>
-                <span className="seller-hub-eyebrow">
-                  INVENTORY MANAGEMENT
-                </span>
+                <span className="seller-hub-eyebrow">INVENTORY MANAGEMENT</span>
                 <h2 id="seller-product-modal-title">
                   {modalMode === "add" && "Add New Product / Spare"}
                   {modalMode === "edit" && "Edit Product"}
                   {modalMode === "restock" && "Restock Product"}
                 </h2>
                 <p>
-                  {modalMode === "add" &&
-                    "Add a new item to your seller inventory."}
-                  {modalMode === "edit" &&
-                    "Update product details and available stock."}
-                  {modalMode === "restock" &&
-                    "Add units to the current available stock."}
+                  {modalMode === "add" && "Add a new item to your seller inventory."}
+                  {modalMode === "edit" && "Update product details and available stock."}
+                  {modalMode === "restock" && "Add units to the current available stock."}
                 </p>
               </div>
-
               <button
                 className="seller-modal-close"
                 type="button"
@@ -1533,7 +1478,6 @@ const removeAccount = () => {
                       required
                     />
                   </label>
-
                   <div className="seller-form-two-columns">
                     <label>
                       SKU
@@ -1546,7 +1490,6 @@ const removeAccount = () => {
                         required
                       />
                     </label>
-
                     <label>
                       Category
                       <input
@@ -1564,9 +1507,7 @@ const removeAccount = () => {
 
               <div className="seller-form-two-columns">
                 <label>
-                  {modalMode === "restock"
-                    ? "Quantity to add"
-                    : "Stock quantity"}
+                  {modalMode === "restock" ? "Quantity to add" : "Stock quantity"}
                   <input
                     type="number"
                     min={modalMode === "restock" ? 1 : 0}
@@ -1575,13 +1516,10 @@ const removeAccount = () => {
                     onChange={(event) =>
                       setForm({ ...form, stock: event.target.value })
                     }
-                    placeholder={
-                      modalMode === "restock" ? "Enter quantity" : "0"
-                    }
+                    placeholder={modalMode === "restock" ? "Enter quantity" : "0"}
                     required
                   />
                 </label>
-
                 {modalMode !== "restock" && (
                   <label>
                     Price (₹)
@@ -1604,16 +1542,13 @@ const removeAccount = () => {
                 <div className="seller-restock-note">
                   <Package size={18} />
                   <span>
-                    Current stock:{" "}
-                    <strong>{activeProduct.stock} units</strong>
+                    Current stock: <strong>{activeProduct.stock} units</strong>
                   </span>
                 </div>
               )}
 
               {formError && (
-                <p className="seller-form-error" role="alert">
-                  {formError}
-                </p>
+                <p className="seller-form-error" role="alert">{formError}</p>
               )}
 
               <div className="seller-product-form-actions">
@@ -1644,16 +1579,12 @@ const removeAccount = () => {
         </div>
       )}
 
-      {/* Remove seller account confirmation */}
       {showRemoveConfirmation && (
         <div
           className="seller-remove-overlay"
           role="presentation"
           onMouseDown={(event) => {
-            if (
-              event.target === event.currentTarget &&
-              !removingAccount
-            ) {
+            if (event.target === event.currentTarget && !removingAccount) {
               setShowRemoveConfirmation(false);
               setRemoveError("");
             }
@@ -1683,19 +1614,20 @@ const removeAccount = () => {
               <X size={19} />
             </button>
 
-            <h2 id="seller-remove-title">Remove Seller Account?</h2>
+            <h2 id="seller-remove-title">
+              Permanently Delete Seller Account?
+            </h2>
 
             <p id="seller-remove-description">
-              Are you sure you want to remove your seller account? Your saved
-              seller profile will be removed from this browser. You can return
-              to the profile page and join again. Your other OneService
-              account types will not be affected.
+              Are you sure you want to permanently delete your seller account?
+              Your seller profile, registration information, and seller product
+              records stored in this browser will be removed. This action cannot
+              be undone from this browser. Your regular OneService login and
+              other account types will remain unaffected.
             </p>
 
             {removeError && (
-              <p className="seller-remove-error" role="alert">
-                {removeError}
-              </p>
+              <p className="seller-remove-error" role="alert">{removeError}</p>
             )}
 
             <div className="seller-remove-dialog-actions">
@@ -1710,7 +1642,6 @@ const removeAccount = () => {
               >
                 Keep Account
               </button>
-
               <button
                 type="button"
                 className="seller-remove-confirm"
@@ -1718,12 +1649,13 @@ const removeAccount = () => {
                 onClick={removeAccount}
               >
                 <Trash2 size={16} />
-                {removingAccount ? "Removing..." : "Remove Account"}
+                {removingAccount ? "Deleting Account..." : "Permanently Delete"}
               </button>
             </div>
 
             <small className="seller-remove-note">
-              This action cannot be undone from this browser.
+              This removes seller data from this browser. Server-side deletion
+              requires a connected backend.
             </small>
           </section>
         </div>
