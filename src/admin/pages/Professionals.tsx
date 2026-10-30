@@ -36,6 +36,52 @@ type ProviderDocument = {
   fileName: string;
 };
 
+type ProfessionalApplication = {
+  id?: string;
+  fullName?: string;
+  name?: string;
+  mobile?: string;
+  phone?: string;
+  email?: string;
+  city?: string;
+  state?: string;
+  category?: string;
+  designation?: string;
+  services?: string[];
+  experience?: string | number;
+  workType?: string;
+  workingDays?: string[];
+  serviceArea?: string;
+  about?: string;
+  visitingFee?: string | number;
+  profileImage?: string;
+  image?: string;
+  photo?: string;
+  submittedAt?: string;
+  joinedOn?: string;
+  status?: string;
+  accountState?: AccountState;
+  rejectionReason?: string;
+  suspensionUntil?: string;
+  suspensionDuration?: string;
+  documents?: Array<{
+    id?: string;
+    title?: string;
+    name?: string;
+    subtitle?: string;
+    description?: string;
+    status?: DocumentStatus;
+    url?: string;
+    fileUrl?: string;
+    fileName?: string;
+  }>;
+  idProof?: string;
+  idProofUrl?: string;
+  experienceCertificate?: string;
+  experienceCertificateUrl?: string;
+  [key: string]: unknown;
+};
+
 type Provider = {
   id: string;
   initials: string;
@@ -53,6 +99,7 @@ type Provider = {
   services: string[];
   phone: string;
   email: string;
+  profileImage?: string;
   accountState?: AccountState;
   rejectionReason?: string;
   suspensionUntil?: string;
@@ -62,252 +109,10 @@ type Provider = {
 
 const PAGE_SIZE = 5;
 
-const providers: Provider[] = [
-  {
-    id: "S-210",
-    initials: "AR",
-    name: "Ananya Rao",
-    designation: "AC Technician",
-    category: "AC Technician",
-    location: "Visakhapatnam",
-    experience: "6 years",
-    idProofStatus: "Verified",
-    accountState: "Active",
-    subscriptionExpiry: "30 Nov 2026",
-    joinedOn: "30 Nov 2025",
-    rating: "4.8",
-    reviewCount: 124,
-    about:
-      "Experienced AC technician with 6+ years of hands-on expertise in installation, repair and maintenance of major AC brands. Committed to providing reliable, timely and professional service.",
-    services: [
-      "AC Installation",
-      "AC Repair",
-      "Gas Filling",
-      "Annual Maintenance",
-    ],
-    phone: "+91 98765 43210",
-    email: "ananya.rao@example.com",
-    documents: [
-      {
-        id: "id-proof",
-        title: "Aadhaar Card (ID Proof)",
-        subtitle: "Aadhaar No. •••• 4821",
-        status: "Verified",
-        fileName: "ananya-rao-id-proof.pdf",
-      },
-      {
-        id: "experience",
-        title: "Experience Certificate",
-        subtitle: "AC Technician • 6 years",
-        status: "Verified",
-        fileName: "ananya-rao-experience-certificate.pdf",
-      },
-    ],
-  },
-  {
-    id: "S-211",
-    initials: "VK",
-    name: "Vikas Kumar",
-    designation: "Electrician",
-    category: "Electrician",
-    location: "Visakhapatnam",
-    experience: "4 years",
-    idProofStatus: "Pending",
-    subscriptionExpiry: "14 Oct 2026",
-    joinedOn: "14 Oct 2025",
-    rating: "4.6",
-    reviewCount: 86,
-    about:
-      "Electrician providing residential electrical installation, repair and maintenance services.",
-    services: [
-      "Electrical Repairs",
-      "Wiring",
-      "Fan Installation",
-      "Safety Checks",
-    ],
-    phone: "+91 98765 43211",
-    email: "vikas.kumar@example.com",
-    documents: [
-      {
-        id: "id-proof",
-        title: "Government ID Proof",
-        subtitle: "Submitted ID document",
-        status: "Pending",
-        fileName: "vikas-kumar-id-proof.pdf",
-      },
-      {
-        id: "experience",
-        title: "Experience Certificate",
-        subtitle: "Electrician • 4 years",
-        status: "Pending",
-        fileName: "vikas-kumar-experience-certificate.pdf",
-      },
-    ],
-  },
-  {
-    id: "S-212",
-    initials: "MT",
-    name: "Meera Tailors",
-    designation: "Tailor",
-    category: "Tailor",
-    location: "Vizianagaram",
-    experience: "9 years",
-    idProofStatus: "Verified",
-    accountState: "Active",
-    subscriptionExpiry: "02 Dec 2026",
-    joinedOn: "02 Dec 2025",
-    rating: "4.9",
-    reviewCount: 102,
-    about:
-      "Experienced tailoring professional offering alterations, custom stitching and fitting services.",
-    services: [
-      "Custom Stitching",
-      "Alterations",
-      "Blouse Stitching",
-      "Fittings",
-    ],
-    phone: "+91 98765 43212",
-    email: "meera.tailors@example.com",
-    documents: [
-      {
-        id: "id-proof",
-        title: "Government ID Proof",
-        subtitle: "Identity document",
-        status: "Verified",
-        fileName: "meera-tailors-id-proof.pdf",
-      },
-      {
-        id: "experience",
-        title: "Experience Certificate",
-        subtitle: "Tailor • 9 years",
-        status: "Verified",
-        fileName: "meera-tailors-experience-certificate.pdf",
-      },
-    ],
-  },
-  {
-    id: "S-213",
-    initials: "RK",
-    name: "Ravi Kumar",
-    designation: "Plumber",
-    category: "Plumber",
-    location: "Anakapalle",
-    experience: "7 years",
-    idProofStatus: "Verified",
-    accountState: "Active",
-    subscriptionExpiry: "18 Dec 2026",
-    joinedOn: "18 Dec 2025",
-    rating: "4.7",
-    reviewCount: 73,
-    about:
-      "Plumbing professional handling repairs, fittings, leak detection and routine maintenance.",
-    services: [
-      "Leak Repairs",
-      "Pipe Fitting",
-      "Tap Installation",
-      "Bathroom Maintenance",
-    ],
-    phone: "+91 98765 43213",
-    email: "ravi.kumar@example.com",
-    documents: [
-      {
-        id: "id-proof",
-        title: "Government ID Proof",
-        subtitle: "Government identity document",
-        status: "Verified",
-        fileName: "ravi-kumar-id-proof.pdf",
-      },
-      {
-        id: "experience",
-        title: "Experience Certificate",
-        subtitle: "Plumber • 7 years",
-        status: "Verified",
-        fileName: "ravi-kumar-experience-certificate.pdf",
-      },
-    ],
-  },
-  {
-    id: "S-214",
-    initials: "PS",
-    name: "Priya Services",
-    designation: "Home Cleaning",
-    category: "Cleaning",
-    location: "Visakhapatnam",
-    experience: "5 years",
-    idProofStatus: "Pending",
-    subscriptionExpiry: "25 Oct 2026",
-    joinedOn: "25 Oct 2025",
-    rating: "4.5",
-    reviewCount: 59,
-    about:
-      "Home cleaning provider offering regular housekeeping and deep-cleaning services.",
-    services: [
-      "Deep Cleaning",
-      "Kitchen Cleaning",
-      "Bathroom Cleaning",
-      "Regular Housekeeping",
-    ],
-    phone: "+91 98765 43214",
-    email: "priya.services@example.com",
-    documents: [
-      {
-        id: "id-proof",
-        title: "Government ID Proof",
-        subtitle: "Submitted ID document",
-        status: "Pending",
-        fileName: "priya-services-id-proof.pdf",
-      },
-      {
-        id: "experience",
-        title: "Experience Certificate",
-        subtitle: "Cleaning • 5 years",
-        status: "Pending",
-        fileName: "priya-services-experience-certificate.pdf",
-      },
-    ],
-  },
-  {
-    id: "S-215",
-    initials: "SN",
-    name: "Suresh Naidu",
-    designation: "Carpenter",
-    category: "Carpenter",
-    location: "Gajuwaka",
-    experience: "8 years",
-    idProofStatus: "Verified",
-    accountState: "Active",
-    subscriptionExpiry: "12 Jan 2027",
-    joinedOn: "12 Jan 2026",
-    rating: "4.8",
-    reviewCount: 91,
-    about:
-      "Carpenter experienced in furniture assembly, repairs, fittings and custom woodwork.",
-    services: [
-      "Furniture Repair",
-      "Door Fitting",
-      "Custom Shelving",
-      "Assembly",
-    ],
-    phone: "+91 98765 43215",
-    email: "suresh.naidu@example.com",
-    documents: [
-      {
-        id: "id-proof",
-        title: "Government ID Proof",
-        subtitle: "Government identity document",
-        status: "Verified",
-        fileName: "suresh-naidu-id-proof.pdf",
-      },
-      {
-        id: "experience",
-        title: "Experience Certificate",
-        subtitle: "Carpenter • 8 years",
-        status: "Verified",
-        fileName: "suresh-naidu-experience-certificate.pdf",
-      },
-    ],
-  },
-];
+const APPLICATION_KEY = "oneservice_professional_application";
+const APPLICATIONS_KEY = "oneservice_professional_applications";
+const PROFESSIONALS_KEY = "oneservice_professionals";
+const CHANGE_EVENT = "oneservice-professional-change";
 
 const serviceTypes = [
   "Service Type",
@@ -317,6 +122,12 @@ const serviceTypes = [
   "Tailor",
   "Cleaning",
   "Carpenter",
+  "Home Appliances",
+  "Home Services",
+  "Personal Services",
+  "Professional Services",
+  "Home Staff",
+  "EduTech & Home Tutors",
 ];
 
 const locations = [
@@ -325,6 +136,10 @@ const locations = [
   "Vizianagaram",
   "Anakapalle",
   "Gajuwaka",
+  "Madhurawada",
+  "MVP Colony",
+  "Dwaraka Nagar",
+  "Siripuram",
 ];
 
 const statuses = [
@@ -335,6 +150,245 @@ const statuses = [
   "Blocked",
   "Rejected",
 ];
+
+function safeReadJson<T>(key: string, fallback: T): T {
+  try {
+    const value = localStorage.getItem(key);
+    return value ? (JSON.parse(value) as T) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function getInitials(name: string): string {
+  return name
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join("") || "PR";
+}
+
+function formatDate(value?: string): string {
+  if (!value) return "—";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) return value;
+
+  return date.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function normalizeDocumentStatus(
+  status?: string,
+): DocumentStatus {
+  const normalized = (status || "").toLowerCase();
+
+  if (normalized === "verified" || normalized === "approved") {
+    return "Verified";
+  }
+
+  if (normalized === "rejected") {
+    return "Rejected";
+  }
+
+  return "Pending";
+}
+
+function normalizeDocuments(
+  application: ProfessionalApplication,
+): ProviderDocument[] {
+  const suppliedDocuments = Array.isArray(application.documents)
+    ? application.documents
+    : [];
+
+  const documents: ProviderDocument[] = suppliedDocuments.map(
+    (document, index) => ({
+      id: document.id || `document-${index + 1}`,
+      title: document.title || document.name || `Document ${index + 1}`,
+      subtitle:
+        document.subtitle ||
+        document.description ||
+        document.fileName ||
+        "Submitted document",
+      status: normalizeDocumentStatus(document.status),
+      url: document.url || document.fileUrl,
+      fileName:
+        document.fileName ||
+        `${(document.title || document.name || "document")
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")}.pdf`,
+    }),
+  );
+
+  if (documents.length > 0) return documents;
+
+  if (application.idProofUrl || application.idProof) {
+    documents.push({
+      id: "id-proof",
+      title: "Government ID Proof",
+      subtitle: "Identity document submitted during registration",
+      status: "Pending",
+      url: application.idProofUrl || application.idProof,
+      fileName: "professional-id-proof.pdf",
+    });
+  }
+
+  if (
+    application.experienceCertificateUrl ||
+    application.experienceCertificate
+  ) {
+    documents.push({
+      id: "experience",
+      title: "Experience Certificate",
+      subtitle: "Professional experience document",
+      status: "Pending",
+      url:
+        application.experienceCertificateUrl ||
+        application.experienceCertificate,
+      fileName: "professional-experience-certificate.pdf",
+    });
+  }
+
+  if (documents.length === 0) {
+    documents.push({
+      id: "registration",
+      title: "Registration Details",
+      subtitle: "Professional registration information",
+      status: "Pending",
+      fileName: "professional-registration.pdf",
+    });
+  }
+
+  return documents;
+}
+
+function normalizeAccountState(
+  application: ProfessionalApplication,
+): AccountState | undefined {
+  if (application.accountState) return application.accountState;
+
+  const status = (application.status || "").toLowerCase();
+
+  if (status === "approved" || status === "verified" || status === "active") {
+    return "Active";
+  }
+
+  if (status === "rejected") return "Rejected";
+  if (status === "blocked") return "Blocked";
+  if (status === "suspended") return "Suspended";
+
+  return undefined;
+}
+
+function normalizeProvider(
+  application: ProfessionalApplication,
+  index: number,
+): Provider {
+  const name =
+    application.fullName ||
+    application.name ||
+    "Unnamed Professional";
+
+  const category =
+    application.category ||
+    application.designation ||
+    "Professional Services";
+
+  const id = application.id || `PRO-${index + 1}`;
+
+  const accountState = normalizeAccountState(application);
+
+  const isApproved = accountState === "Active";
+
+  return {
+    id,
+    initials: getInitials(name),
+    name,
+    designation: application.designation || category,
+    category,
+    location: [
+      application.city,
+      application.state,
+    ]
+      .filter(Boolean)
+      .join(", ") || application.serviceArea || "Location not provided",
+    experience:
+      application.experience !== undefined &&
+      application.experience !== ""
+        ? `${application.experience}${
+            typeof application.experience === "number" ||
+            /^\d+$/.test(String(application.experience))
+              ? " years"
+              : ""
+          }`
+        : "Not provided",
+    idProofStatus: isApproved ? "Verified" : "Pending",
+    subscriptionExpiry: "—",
+    joinedOn: formatDate(application.submittedAt || application.joinedOn),
+    rating: "—",
+    reviewCount: 0,
+    about: application.about || "No professional description provided.",
+    services: Array.isArray(application.services)
+      ? application.services
+      : [],
+    phone: application.mobile || application.phone || "—",
+    email: application.email || "—",
+    profileImage:
+      application.profileImage ||
+      application.image ||
+      application.photo,
+    accountState,
+    rejectionReason: application.rejectionReason,
+    suspensionUntil: application.suspensionUntil,
+    suspensionDuration: application.suspensionDuration,
+    documents: normalizeDocuments(application),
+  };
+}
+
+function readApplications(): ProfessionalApplication[] {
+  const multiple = safeReadJson<unknown>(APPLICATIONS_KEY, []);
+  const professionals = safeReadJson<unknown>(PROFESSIONALS_KEY, []);
+  const single = safeReadJson<unknown>(APPLICATION_KEY, null);
+
+  const combined: ProfessionalApplication[] = [];
+
+  if (Array.isArray(multiple)) {
+    combined.push(
+      ...(multiple as ProfessionalApplication[]),
+    );
+  }
+
+  if (Array.isArray(professionals)) {
+    combined.push(
+      ...(professionals as ProfessionalApplication[]),
+    );
+  }
+
+  if (
+    single &&
+    typeof single === "object" &&
+    !Array.isArray(single)
+  ) {
+    combined.push(single as ProfessionalApplication);
+  }
+
+  const unique = new Map<string, ProfessionalApplication>();
+
+  combined.forEach((record, index) => {
+    const id =
+      record.id ||
+      `${record.mobile || record.phone || record.fullName || record.name || "professional"}-${index}`;
+
+    unique.set(id, record);
+  });
+
+  return Array.from(unique.values());
+}
 
 function isPending(provider: Provider): boolean {
   return (
@@ -370,6 +424,70 @@ function getReasonLabel(provider: Provider): string {
   }
 }
 
+function persistProviderUpdate(
+  provider: Provider,
+  updatedState: AccountState,
+  reason?: string,
+  suspensionDuration?: string,
+  suspensionUntil?: string,
+) {
+  const updateRecord = (
+    application: ProfessionalApplication,
+  ): ProfessionalApplication => {
+    if (application.id !== provider.id) return application;
+
+    return {
+      ...application,
+      status:
+        updatedState === "Active"
+          ? "Approved"
+          : updatedState,
+      accountState: updatedState,
+      rejectionReason: reason,
+      suspensionDuration,
+      suspensionUntil,
+    };
+  };
+
+  const applications = safeReadJson<ProfessionalApplication[]>(
+    APPLICATIONS_KEY,
+    [],
+  );
+
+  if (Array.isArray(applications)) {
+    localStorage.setItem(
+      APPLICATIONS_KEY,
+      JSON.stringify(applications.map(updateRecord)),
+    );
+  }
+
+  const professionals = safeReadJson<ProfessionalApplication[]>(
+    PROFESSIONALS_KEY,
+    [],
+  );
+
+  if (Array.isArray(professionals)) {
+    localStorage.setItem(
+      PROFESSIONALS_KEY,
+      JSON.stringify(professionals.map(updateRecord)),
+    );
+  }
+
+  const single = safeReadJson<ProfessionalApplication | null>(
+    APPLICATION_KEY,
+    null,
+  );
+
+  if (single?.id === provider.id) {
+    localStorage.setItem(
+      APPLICATION_KEY,
+      JSON.stringify(updateRecord(single)),
+    );
+  }
+
+  window.dispatchEvent(new Event(CHANGE_EVENT));
+}
+
 export default function BookServices() {
   const [serviceType, setServiceType] = useState("Service Type");
   const [location, setLocation] = useState("Location");
@@ -379,18 +497,43 @@ export default function BookServices() {
 
   const [selectedProvider, setSelectedProvider] =
     useState<Provider | null>(null);
+
   const [notice, setNotice] = useState("");
 
   const [reviewTarget, setReviewTarget] =
     useState<Provider | null>(null);
+
   const [reviewAction, setReviewAction] =
     useState<ReviewAction>("suspend");
+
   const [reviewReason, setReviewReason] = useState("");
   const [reviewError, setReviewError] = useState("");
   const [suspensionDuration, setSuspensionDuration] = useState("7");
 
-  const [providerList, setProviderList] =
-    useState<Provider[]>(providers);
+  const [providerList, setProviderList] = useState<Provider[]>([]);
+
+  useEffect(() => {
+    const loadProviders = () => {
+      const registeredApplications = readApplications();
+
+      const mappedProviders = registeredApplications.map(
+        (application, index) =>
+          normalizeProvider(application, index),
+      );
+
+      setProviderList(mappedProviders);
+    };
+
+    loadProviders();
+
+    window.addEventListener("storage", loadProviders);
+    window.addEventListener(CHANGE_EVENT, loadProviders);
+
+    return () => {
+      window.removeEventListener("storage", loadProviders);
+      window.removeEventListener(CHANGE_EVENT, loadProviders);
+    };
+  }, []);
 
   const filteredProviders = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -398,11 +541,15 @@ export default function BookServices() {
     return providerList.filter((provider) => {
       const matchesService =
         serviceType === "Service Type" ||
-        provider.category === serviceType;
+        provider.category.toLowerCase() === serviceType.toLowerCase() ||
+        provider.services.some(
+          (service) =>
+            service.toLowerCase() === serviceType.toLowerCase(),
+        );
 
       const matchesLocation =
         location === "Location" ||
-        provider.location === location;
+        provider.location.toLowerCase().includes(location.toLowerCase());
 
       const matchesStatus =
         status === "All statuses" ||
@@ -416,6 +563,7 @@ export default function BookServices() {
         provider.location,
         provider.phone,
         provider.email,
+        ...provider.services,
       ];
 
       const matchesSearch =
@@ -475,21 +623,50 @@ export default function BookServices() {
     setPage(1);
   };
 
-  const updateProvider = (updated: Provider) => {
+  const updateProvider = (
+    updated: Provider,
+    nextState: AccountState,
+    reason?: string,
+    duration?: string,
+    until?: string,
+  ) => {
+    persistProviderUpdate(
+      updated,
+      nextState,
+      reason,
+      duration,
+      until,
+    );
+
     setProviderList((current) =>
       current.map((provider) =>
-        provider.id === updated.id ? updated : provider,
+        provider.id === updated.id
+          ? {
+              ...updated,
+              accountState: nextState,
+              rejectionReason: reason,
+              suspensionDuration: duration,
+              suspensionUntil: until,
+              idProofStatus:
+                nextState === "Active" ? "Verified" : "Pending",
+            }
+          : provider,
       ),
     );
 
     setSelectedProvider((current) =>
-      current?.id === updated.id ? updated : current,
+      current?.id === updated.id
+        ? {
+            ...updated,
+            accountState: nextState,
+            rejectionReason: reason,
+            suspensionDuration: duration,
+            suspensionUntil: until,
+          }
+        : current,
     );
 
-    setReviewTarget((current) =>
-      current?.id === updated.id ? updated : current,
-    );
-
+    setReviewTarget(null);
     setPage(1);
   };
 
@@ -556,7 +733,10 @@ export default function BookServices() {
     }
 
     available.forEach((document, index) => {
-      window.setTimeout(() => downloadDocument(document), index * 250);
+      window.setTimeout(
+        () => downloadDocument(document),
+        index * 250,
+      );
     });
 
     if (available.length < selectedProvider.documents.length) {
@@ -582,7 +762,7 @@ export default function BookServices() {
       })),
     };
 
-    updateProvider(updatedProvider);
+    updateProvider(updatedProvider, "Active");
     setSelectedProvider(null);
 
     setNotice(
@@ -626,14 +806,16 @@ export default function BookServices() {
       suspensionUntil = expiryDate.toISOString();
     }
 
+    const nextState: AccountState =
+      action === "reject"
+        ? "Rejected"
+        : action === "block"
+          ? "Blocked"
+          : "Suspended";
+
     const updatedProvider: Provider = {
       ...target,
-      accountState:
-        action === "reject"
-          ? "Rejected"
-          : action === "block"
-            ? "Blocked"
-            : "Suspended",
+      accountState: nextState,
       rejectionReason: reason,
       suspensionDuration:
         action === "suspend" ? `${suspensionDays} days` : undefined,
@@ -641,7 +823,14 @@ export default function BookServices() {
         action === "suspend" ? suspensionUntil : undefined,
     };
 
-    updateProvider(updatedProvider);
+    updateProvider(
+      updatedProvider,
+      nextState,
+      reason,
+      updatedProvider.suspensionDuration,
+      suspensionUntil,
+    );
+
     closeReviewDialog();
 
     if (action === "reject") {
@@ -671,7 +860,6 @@ export default function BookServices() {
         </div>
       </section>
 
-      {/* FILTERS */}
       <section className="book-services-filter-card">
         <div className="book-services-select">
           <select
@@ -754,7 +942,6 @@ export default function BookServices() {
         )}
       </section>
 
-      {/* PROVIDERS TABLE */}
       <section className="book-services-table-card">
         <div className="book-services-table-wrapper">
           <table className="book-services-table">
@@ -779,7 +966,14 @@ export default function BookServices() {
                   <tr key={provider.id}>
                     <td>
                       <div className="book-services-avatar">
-                        {provider.initials}
+                        {provider.profileImage ? (
+                          <img
+                            src={provider.profileImage}
+                            alt={provider.name}
+                          />
+                        ) : (
+                          provider.initials
+                        )}
                       </div>
                     </td>
 
@@ -843,7 +1037,6 @@ export default function BookServices() {
                         <button
                           type="button"
                           className="book-services-action secondary"
-                          disabled={pending}
                           onClick={() => {
                             setSelectedProvider(provider);
                             setNotice("");
@@ -853,7 +1046,6 @@ export default function BookServices() {
                           View Profile
                         </button>
 
-                        {/* New applicants: verify or reject */}
                         {pending && (
                           <>
                             <button
@@ -881,7 +1073,6 @@ export default function BookServices() {
                           </>
                         )}
 
-                        {/* Existing active professionals: block beside View Profile */}
                         {provider.accountState === "Active" && (
                           <button
                             type="button"
@@ -915,11 +1106,15 @@ export default function BookServices() {
                       <Search size={26} />
                       <strong>No service providers found</strong>
                       <span>
-                        Try changing your filters or search term.
+                        {providerList.length === 0
+                          ? "Professional registrations will appear here when applicants submit their forms."
+                          : "Try changing your filters or search term."}
                       </span>
-                      <button type="button" onClick={clearFilters}>
-                        Clear Filters
-                      </button>
+                      {hasFilters && (
+                        <button type="button" onClick={clearFilters}>
+                          Clear Filters
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -928,7 +1123,6 @@ export default function BookServices() {
           </table>
         </div>
 
-        {/* REAL PAGINATION */}
         <div className="book-services-pagination">
           <span>
             Showing <strong>{firstItem}–{lastItem}</strong> of{" "}
@@ -947,21 +1141,22 @@ export default function BookServices() {
               <ChevronLeft size={15} />
             </button>
 
-            {Array.from({ length: pageCount }, (_, index) => index + 1).map(
-              (pageNumber) => (
-                <button
-                  key={pageNumber}
-                  type="button"
-                  className={currentPage === pageNumber ? "active" : ""}
-                  aria-current={
-                    currentPage === pageNumber ? "page" : undefined
-                  }
-                  onClick={() => setPage(pageNumber)}
-                >
-                  {pageNumber}
-                </button>
-              ),
-            )}
+            {Array.from(
+              { length: pageCount },
+              (_, index) => index + 1,
+            ).map((pageNumber) => (
+              <button
+                key={pageNumber}
+                type="button"
+                className={currentPage === pageNumber ? "active" : ""}
+                aria-current={
+                  currentPage === pageNumber ? "page" : undefined
+                }
+                onClick={() => setPage(pageNumber)}
+              >
+                {pageNumber}
+              </button>
+            ))}
 
             <button
               type="button"
@@ -979,7 +1174,6 @@ export default function BookServices() {
         </div>
       </section>
 
-      {/* NOTIFICATION */}
       {notice && (
         <div className="book-services-toast" role="status">
           <span>{notice}</span>
@@ -993,7 +1187,6 @@ export default function BookServices() {
         </div>
       )}
 
-      {/* PROFILE MODAL */}
       {selectedProvider && (
         <div
           className="book-services-modal-backdrop"
@@ -1030,8 +1223,8 @@ export default function BookServices() {
                   <div>
                     <strong>Verification required</strong>
                     <p>
-                      Review the applicant's details and submitted documents
-                      before approving this professional.
+                      Review the applicant's details and submitted
+                      documents before approving this professional.
                     </p>
                   </div>
                 </div>
@@ -1039,7 +1232,14 @@ export default function BookServices() {
 
               <div className="book-services-profile-top">
                 <div className="book-services-modal-avatar">
-                  {selectedProvider.initials}
+                  {selectedProvider.profileImage ? (
+                    <img
+                      src={selectedProvider.profileImage}
+                      alt={selectedProvider.name}
+                    />
+                  ) : (
+                    selectedProvider.initials
+                  )}
                 </div>
 
                 <div className="book-services-profile-name">
@@ -1067,14 +1267,13 @@ export default function BookServices() {
                 </div>
 
                 <div className="book-services-rating">
-                  <div
-                    aria-label={`${selectedProvider.rating} out of 5 stars`}
-                  >
+                  <div aria-label="No customer rating available">
                     ★★★★★
                   </div>
                   <span>
-                    {selectedProvider.rating} (
-                    {selectedProvider.reviewCount} reviews)
+                    {selectedProvider.rating === "—"
+                      ? "No customer reviews yet"
+                      : `${selectedProvider.rating} (${selectedProvider.reviewCount} reviews)`}
                   </span>
                 </div>
               </div>
@@ -1095,13 +1294,7 @@ export default function BookServices() {
                         <span>
                           <CalendarDays size={15} />
                           Suspension ends:{" "}
-                          {new Date(
-                            selectedProvider.suspensionUntil,
-                          ).toLocaleDateString("en-IN", {
-                            day: "2-digit",
-                            month: "short",
-                            year: "numeric",
-                          })}
+                          {formatDate(selectedProvider.suspensionUntil)}
                         </span>
                       </div>
                     )}
@@ -1142,7 +1335,6 @@ export default function BookServices() {
                 <p>{selectedProvider.about}</p>
               </section>
 
-              {/* DOCUMENTS */}
               <section className="book-services-documents">
                 <div className="book-services-documents-heading">
                   <h4>
@@ -1228,9 +1420,13 @@ export default function BookServices() {
                 </h4>
 
                 <div>
-                  {selectedProvider.services.map((service) => (
-                    <span key={service}>{service}</span>
-                  ))}
+                  {selectedProvider.services.length > 0 ? (
+                    selectedProvider.services.map((service) => (
+                      <span key={service}>{service}</span>
+                    ))
+                  ) : (
+                    <span>No services submitted</span>
+                  )}
                 </div>
               </section>
 
@@ -1322,7 +1518,6 @@ export default function BookServices() {
         </div>
       )}
 
-      {/* REJECT / BLOCK / SUSPEND DIALOG */}
       {reviewTarget && (
         <div
           className="book-services-reject-backdrop"

@@ -2599,3 +2599,1082 @@ border-color: #1d4ed8;
 .professional-popup-backdrop.pinned .professional-detail-popup {
   pointer-events: auto;
 }
+
+
+/* =========================================================
+   ONESERVICE — CHOOSE YOUR PROFESSIONAL
+========================================================= */
+
+#professionals {
+  scroll-margin-top: 100px;
+}
+
+#professionals .detail-section-label {
+  display: block;
+  margin-bottom: 9px;
+  color: #0785ad;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+#professionals h2 {
+  margin: 0 0 18px;
+  color: #102f53;
+  font-size: clamp(25px, 2.2vw, 29px);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+#professionals .professional-section-description {
+  margin: 0 0 24px;
+  color: #60758d;
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+/* Professional cards grid */
+
+#professionals .professional-selection-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  width: 100%;
+}
+
+#professionals .professional-selection-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 0;
+  overflow: hidden;
+  text-align: left;
+  background: #ffffff;
+  border: 1px solid #dce7f1;
+  border-radius: 12px;
+  cursor: pointer;
+  transition:
+    border-color 0.25s ease,
+    box-shadow 0.25s ease,
+    transform 0.25s ease;
+}
+
+#professionals .professional-selection-card:hover {
+  border-color: #60a5fa;
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.10);
+  transform: translateY(-3px);
+}
+
+#professionals .professional-selection-card.selected {
+  border: 1.5px solid #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.09);
+}
+
+/* Professional image */
+
+#professionals .professional-selection-photo {
+  position: relative;
+  width: 100%;
+  height: 175px;
+  overflow: hidden;
+  background: #eff5fb;
+}
+
+#professionals .professional-selection-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transition: transform 0.35s ease;
+}
+
+#professionals .professional-selection-card:hover
+.professional-selection-photo img {
+  transform: scale(1.05);
+}
+
+/* Selected badge */
+
+#professionals .professional-selected-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  color: #ffffff;
+  background: #2563eb;
+  border-radius: 30px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* Professional information */
+
+#professionals .professional-selection-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 16px;
+  width: 100%;
+}
+
+#professionals .professional-selection-info h3 {
+  margin: 0;
+  color: #15385e;
+  font-size: 16px;
+  font-weight: 650;
+  line-height: 1.4;
+}
+
+#professionals .professional-verified-row {
+  display: flex;
+  align-items: center;
+}
+
+#professionals .professional-verified-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  color: #087b54;
+  background: #eaf8f1;
+  border-radius: 30px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+#professionals .professional-selection-rating {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #2563eb;
+  font-size: 12px;
+}
+
+#professionals .professional-selection-rating strong {
+  color: #405d7b;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+#professionals .professional-selection-area {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0;
+  color: #71859b;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+#professionals .professional-selection-area svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: #2563eb;
+}
+
+#professionals .professional-experience {
+  color: #647991;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+#professionals .professional-card-price {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  color: #1d4ed8;
+  background: #eff6ff;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* Empty state */
+
+#professionals .professional-empty-state {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 10px;
+  row-gap: 4px;
+  width: 100%;
+  padding: 0;
+  color: #15385e;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+}
+
+#professionals .professional-empty-state > svg {
+  flex-shrink: 0;
+  color: #15385e;
+  stroke-width: 2;
+}
+
+#professionals .professional-empty-state strong {
+  color: #15385e;
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+#professionals .professional-empty-state p {
+  flex-basis: 100%;
+  margin: 0;
+  color: #60758d;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* Carousel controls */
+
+#professionals .professional-carousel-controls {
+  display: flex;
+  justify-content: center;
+  margin-top: 22px;
+}
+
+#professionals .professional-next-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  color: #2563eb;
+  background: #ffffff;
+  border: 1px solid #d8e5f2;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+#professionals .professional-next-row:hover {
+  color: #ffffff;
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+/* Card animation */
+
+#professionals .professional-grid-animated {
+  animation: professionalGridFade 0.35s ease;
+}
+
+@keyframes professionalGridFade {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =========================================================
+   RESPONSIVE DESIGN
+========================================================= */
+
+@media (max-width: 900px) {
+  #professionals .professional-selection-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  #professionals h2 {
+    font-size: 23px;
+  }
+
+  #professionals .professional-section-description {
+    font-size: 13px;
+    margin-bottom: 19px;
+  }
+
+  #professionals .professional-selection-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  #professionals .professional-selection-photo {
+    height: 190px;
+  }
+
+  #professionals .professional-selection-info {
+    padding: 14px;
+  }
+
+  #professionals .professional-empty-state {
+    column-gap: 8px;
+  }
+
+  #professionals .professional-empty-state strong {
+    flex: 1;
+    font-size: 14px;
+  }
+
+  #professionals .professional-empty-state p {
+    font-size: 13px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #professionals .professional-grid-animated {
+    animation: none;
+  }
+
+  #professionals .professional-selection-card,
+  #professionals .professional-selection-photo img {
+    transition: none;
+  }
+}
+
+
+
+/* =========================================================
+   PROFESSIONAL PROFILE — IMAGE FALLBACK
+========================================================= */
+
+.professional-image-fallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #dbeafe, #eff6ff);
+  color: #2563eb;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+/* Profile image inside popup */
+
+.professional-popup-avatar {
+  width: 68px;
+  height: 68px;
+  min-width: 68px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #e5efff;
+  background: #eff6ff;
+}
+
+/* =========================================================
+   PROFESSIONAL CARD RATING
+========================================================= */
+
+.professional-card-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 7px;
+  color: #d99412;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+/* =========================================================
+   PROFESSIONAL POPUP RATING SUMMARY
+========================================================= */
+
+.professional-popup-rating-card {
+  margin: 17px 0;
+  padding: 14px 16px;
+  border: 1px solid #e6edfa;
+  border-radius: 13px;
+  background: linear-gradient(135deg, #f8fbff, #fff);
+}
+
+.professional-popup-rating-summary {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.professional-popup-rating-score {
+  min-width: 57px;
+  color: #15365e;
+  font-size: 29px;
+  font-weight: 750;
+  letter-spacing: -1px;
+}
+
+.professional-popup-rating-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.professional-popup-stars {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  color: #f2a51a;
+}
+
+.professional-popup-rating-content strong {
+  color: #243b59;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.professional-popup-rating-content span {
+  color: #8290a5;
+  font-size: 11px;
+}
+
+/* =========================================================
+   PROFESSIONAL POPUP CUSTOMER REVIEWS
+========================================================= */
+
+.professional-popup-customer-reviews {
+  margin-top: 20px;
+}
+
+.professional-popup-reviews-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.professional-popup-reviews-heading h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: #193b63;
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.professional-popup-reviews-heading h3 svg {
+  color: #e6a11a;
+}
+
+.professional-popup-reviews-heading > span {
+  color: #8290a5;
+  font-size: 11px;
+}
+
+.professional-popup-review-item {
+  padding: 12px 14px;
+  margin-bottom: 9px;
+  border: 1px solid #eaf0fa;
+  border-radius: 11px;
+  background: #f8faff;
+}
+
+.professional-popup-review-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.professional-popup-review-top strong {
+  color: #243b59;
+  font-size: 13px;
+}
+
+.professional-popup-review-top span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #e6a11a;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.professional-popup-review-item p {
+  margin: 8px 0 0;
+  color: #687991;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+/* Empty reviews state */
+
+.professional-popup-no-reviews {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  padding: 19px 14px;
+  border: 1px dashed #dce6f5;
+  border-radius: 11px;
+  background: #f9fbff;
+  text-align: center;
+}
+
+.professional-popup-no-reviews svg {
+  color: #a4b3c8;
+}
+
+.professional-popup-no-reviews strong {
+  color: #344b69;
+  font-size: 13px;
+}
+
+.professional-popup-no-reviews p {
+  max-width: 270px;
+  margin: 0;
+  color: #8290a5;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 480px) {
+  .professional-popup-rating-card {
+    padding: 12px;
+  }
+
+  .professional-popup-rating-score {
+    font-size: 25px;
+  }
+
+  .professional-popup-review-item {
+    padding: 10px;
+  }
+
+  .professional-popup-avatar {
+    width: 58px;
+    height: 58px;
+    min-width: 58px;
+  }
+}
+/* =========================================================
+   PROFESSIONAL CARDS — REDUCED WIDTH
+========================================================= */
+
+.professional-selection-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1050px);
+  justify-content: center;
+  gap: 18px;
+  width: 100%;
+  margin: 24px auto 0;
+}
+
+.professional-selection-card {
+  width: 100%;
+  max-width: 1050px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .professional-selection-grid {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 0 8px;
+  }
+
+  .professional-selection-card {
+    max-width: 100%;
+  }
+}
+
+/* =========================================================
+   PROFESSIONAL POPUP - MINIMAL PREMIUM DESIGN
+   Positioning and backdrop behavior remain unchanged.
+========================================================= */
+
+/* Popup surface */
+
+.professional-detail-popup {
+  background: #ffffff;
+  border: 1px solid #e8edf4;
+  border-radius: 18px;
+
+  box-shadow:
+    0 20px 60px rgba(15, 23, 42, 0.16),
+    0 4px 15px rgba(15, 23, 42, 0.05);
+
+  color: #334155;
+}
+
+/* Close button */
+
+.professional-popup-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 34px;
+  height: 34px;
+
+  border: 1px solid #e8edf4;
+  border-radius: 50%;
+
+  background: #f8fafc;
+  color: #64748b;
+
+  transition: 0.2s ease;
+}
+
+.professional-popup-close:hover {
+  background: #feecec;
+  border-color: #fecaca;
+  color: #dc2626;
+}
+
+/* Header label */
+
+.professional-popup-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+
+  color: #2563eb;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+}
+
+/* Profile header */
+
+.professional-popup-profile {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+
+  padding: 18px 0;
+  border-bottom: 1px solid #edf1f5;
+}
+
+.professional-popup-avatar {
+  width: 76px;
+  height: 76px;
+
+  flex-shrink: 0;
+
+  border: 3px solid #f1f5f9;
+  border-radius: 50%;
+
+  object-fit: cover;
+}
+
+.professional-popup-profile h2 {
+  margin: 0 0 5px;
+
+  color: #172b4d;
+  font-size: 20px;
+  font-weight: 750;
+  line-height: 1.3;
+}
+
+.professional-popup-profile p {
+  margin: 0 0 8px;
+
+  color: #64748b;
+  font-size: 12px;
+}
+
+.professional-popup-rating {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  color: #15803d;
+  font-size: 11px;
+}
+
+/* Rating summary */
+
+.professional-popup-rating-card {
+  margin: 16px 0;
+  padding: 15px;
+
+  background: #f8fafc;
+  border: 1px solid #edf1f5;
+  border-radius: 12px;
+}
+
+.professional-popup-rating-summary {
+  display: flex;
+  align-items: center;
+  gap: 17px;
+}
+
+.professional-popup-rating-score {
+  color: #172b4d;
+  font-size: 34px;
+  font-weight: 750;
+  line-height: 1;
+}
+
+.professional-popup-rating-content {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.professional-popup-stars {
+  display: flex;
+  gap: 3px;
+  color: #f5a623;
+}
+
+.professional-popup-rating-content strong {
+  color: #334155;
+  font-size: 12px;
+}
+
+.professional-popup-rating-content span {
+  color: #94a3b8;
+  font-size: 11px;
+}
+
+/* Information blocks */
+
+.professional-popup-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+
+  margin: 17px 0;
+}
+
+.professional-popup-stats > div {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 7px;
+
+  min-width: 0;
+  padding: 12px 10px;
+
+  border: 1px solid #edf1f5;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.professional-popup-stats svg {
+  color: #2563eb;
+}
+
+.professional-popup-stats span {
+  color: #94a3b8;
+  font-size: 10px;
+}
+
+.professional-popup-stats strong {
+  color: #334155;
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+/* Registered services and details */
+
+.professional-popup-reviews.professional-popup-details {
+  padding: 17px 0;
+  border-top: 1px solid #edf1f5;
+  border-bottom: 1px solid #edf1f5;
+}
+
+.professional-popup-details h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  margin: 14px 0 11px;
+
+  color: #172b4d;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.professional-popup-details h3:first-child {
+  margin-top: 0;
+}
+
+.professional-popup-details h3 svg {
+  color: #2563eb;
+}
+
+/* Service chips */
+
+.professional-popup-service-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.professional-popup-service-chips span {
+  padding: 7px 11px;
+
+  background: #eff6ff;
+  border: 1px solid #dbeafe;
+  border-radius: 6px;
+
+  color: #1d4ed8;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* Pricing rows */
+
+.professional-popup-price-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  padding: 11px 0;
+
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.professional-popup-price-row:last-child {
+  border-bottom: none;
+}
+
+.professional-popup-price-row span {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.professional-popup-price-row strong {
+  color: #172b4d;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* Availability and about */
+
+.professional-popup-details > p {
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.professional-popup-contact-note {
+  padding: 10px 12px;
+
+  background: #f8fafc;
+  border-left: 3px solid #93b4f8;
+  border-radius: 5px;
+
+  color: #64748b !important;
+  font-size: 11px !important;
+}
+
+/* Customer reviews */
+
+.professional-popup-customer-reviews {
+  padding: 17px 0;
+}
+
+.professional-popup-reviews-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+
+  margin-bottom: 15px;
+}
+
+.professional-popup-reviews-heading h3 {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+
+  margin: 0;
+
+  color: #172b4d;
+  font-size: 13px;
+}
+
+.professional-popup-reviews-heading h3 svg {
+  color: #e5a323;
+}
+
+.professional-popup-reviews-heading > span {
+  color: #94a3b8;
+  font-size: 11px;
+}
+
+.professional-popup-review-item {
+  padding: 13px 0;
+  border-bottom: 1px solid #edf1f5;
+}
+
+.professional-popup-review-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.professional-popup-review-top strong {
+  color: #334155;
+  font-size: 12px;
+}
+
+.professional-popup-review-top span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  color: #b7791f;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.professional-popup-review-item p {
+  margin: 8px 0 0;
+
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+/* No reviews */
+
+.professional-popup-no-reviews {
+  padding: 20px 12px;
+
+  background: #f8fafc;
+  border-radius: 10px;
+
+  text-align: center;
+}
+
+.professional-popup-no-reviews svg {
+  color: #cbd5e1;
+}
+
+.professional-popup-no-reviews strong {
+  display: block;
+  margin: 8px 0;
+
+  color: #475569;
+  font-size: 12px;
+}
+
+.professional-popup-no-reviews p {
+  margin: 0;
+
+  color: #94a3b8;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+/* Done button */
+
+.professional-popup-select-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  width: 100%;
+  min-height: 44px;
+
+  margin-top: 10px;
+  padding: 12px 18px;
+
+  border: none;
+  border-radius: 9px;
+
+  background: #2563eb;
+  color: #ffffff;
+
+  font-size: 13px;
+  font-weight: 650;
+
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.professional-popup-select-button:hover {
+  background: #1d4ed8;
+}
+
+/* =========================================================
+   RESPONSIVE PROFESSIONAL DESIGN
+========================================================= */
+
+@media (max-width: 900px) {
+  .professional-selection-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 520px) {
+  .professional-selection-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .professional-selection-photo {
+    padding: 17px 10px 8px;
+  }
+
+  .professional-selection-photo img,
+  .professional-selection-photo .professional-image-fallback {
+    width: 62px;
+    height: 62px;
+  }
+
+  .professional-selection-info {
+    padding: 10px 8px 13px;
+  }
+
+  .professional-selection-info h3 {
+    font-size: 13px;
+  }
+
+  .professional-popup-stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =========================================================
+   PROFESSIONAL CARDS — REDUCED WIDTH
+========================================================= */
+
+.professional-selection-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1050px);
+  justify-content: center;
+  gap: 18px;
+  width: 100%;
+  margin: 24px auto 0;
+}
+
+.professional-selection-card {
+  width: 100%;
+  max-width: 1050px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .professional-selection-grid {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 0 8px;
+  }
+
+  .professional-selection-card {
+    max-width: 100%;
+  }
+}

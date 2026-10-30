@@ -26,6 +26,8 @@ import {
   Wrench,
   X,
   XCircle,
+  Plus,
+  IndianRupee,
 } from "lucide-react";
 import "./ProfessionalHub.css";
 
@@ -46,6 +48,12 @@ type ProfessionalApplication = {
   status: string;
   visitingFee?: string;
   about?: string;
+};
+
+type ServicePrice = {
+  id: string;
+  name: string;
+  price: string;
 };
 
 type JobRequest = {
@@ -71,6 +79,7 @@ type Feedback = {
 const APPLICATION_KEY = "oneservice_professional_application";
 const JOBS_KEY = "oneservice_professional_job_requests";
 const AVAILABILITY_KEY = "oneservice_professional_accepting_calls";
+const PRICING_KEY = "oneservice_professional_service_prices";
 
 const INITIAL_JOBS: JobRequest[] = [
   {
@@ -121,6 +130,18 @@ function readJobs(): JobRequest[] {
   }
 }
 
+function readServicePrices(): ServicePrice[] | null {
+  try {
+    const stored = localStorage.getItem(PRICING_KEY);
+    if (!stored) return null;
+
+    const parsed = JSON.parse(stored);
+    return Array.isArray(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
 function getInitialAvailability() {
   try {
     return localStorage.getItem(AVAILABILITY_KEY) !== "false";
@@ -140,6 +161,14 @@ function formatDate(value?: string) {
     month: "short",
     year: "numeric",
   });
+}
+
+function createServicePrices(services: string[]): ServicePrice[] {
+  return services.map((service, index) => ({
+    id: `service-${Date.now()}-${index}`,
+    name: service,
+    price: "",
+  }));
 }
 
 function MetricCard({
@@ -177,15 +206,27 @@ export default function ProfessionalHub() {
 
   const [application, setApplication] =
     useState<ProfessionalApplication | null>(null);
+
   const [jobs, setJobs] = useState<JobRequest[]>(INITIAL_JOBS);
   const [acceptingCalls, setAcceptingCalls] = useState(true);
   const [editing, setEditing] = useState(false);
+
   const [saveMessage, setSaveMessage] = useState("");
   const [actionMessage, setActionMessage] = useState("");
-  const [activePeriod, setActivePeriod] = useState<"week" | "month">("week");
-  const [showRemoveConfirmation, setShowRemoveConfirmation] = useState(false);
+
+  const [activePeriod, setActivePeriod] =
+    useState<"week" | "month">("week");
+
+  const [showRemoveConfirmation, setShowRemoveConfirmation] =
+    useState(false);
+
   const [removingAccount, setRemovingAccount] = useState(false);
   const [removeError, setRemoveError] = useState("");
+
+  // Service pricing states
+  const [servicePrices, setServicePrices] = useState<ServicePrice[]>([]);
+  const [editingPrices, setEditingPrices] = useState(false);
+  const [pricingMessage, setPricingMessage] = useState("");
 
   const [form, setForm] = useState({
     fullName: "",
@@ -220,6 +261,22 @@ export default function ProfessionalHub() {
           visitingFee: saved.visitingFee || "200",
           about: saved.about || "",
         });
+
+        const savedPrices = readServicePrices();
+
+        if (savedPrices !== null) {
+          setServicePrices(savedPrices);
+        } else {
+          setServicePrices(
+            createServicePrices(
+              saved.services?.length
+                ? saved.services
+                : [saved.category || "Professional Service"]
+            )
+          );
+        }
+      } else {
+        setServicePrices([]);
       }
     };
 
@@ -238,6 +295,11 @@ export default function ProfessionalHub() {
 
       if (event.key === AVAILABILITY_KEY) {
         setAcceptingCalls(getInitialAvailability());
+      }
+
+      if (event.key === PRICING_KEY) {
+        const saved = readServicePrices();
+        if (saved !== null) setServicePrices(saved);
       }
     };
 
@@ -262,8 +324,10 @@ export default function ProfessionalHub() {
     application?.status?.toLowerCase() === "approved";
 
   const displayName = application?.fullName || "Professional";
+
   const displayCategory =
     application?.category || "Professional service provider";
+
   const displayLocation = [application?.city, application?.state]
     .filter(Boolean)
     .join(", ");
@@ -278,6 +342,84 @@ export default function ProfessionalHub() {
     [jobs]
   );
 
+  // Add a new service and its price
+  const addServicePrice = () => {
+    setServicePrices((previous) => [
+      ...previous,
+      {
+        id: `service-${Date.now()}-${previous.length}`,
+        name: "",
+        price: "",
+      },
+    ]);
+  };
+
+  // Update service name or price
+  const updateServicePrice = (
+    id: string,
+    field: "name" | "price",
+    value: string
+  ) => {
+    setServicePrices((previous) =>
+      previous.map((service) =>
+        service.id === id
+          ? { ...service, [field]: value }
+          : service
+      )
+    );
+  };
+
+  // Remove a service
+  const removeServicePrice = (id: string) => {
+    setServicePrices((previous) =>
+      previous.filter((service) => service.id !== id)
+    );
+  };
+
+  // Save service pricing and return to normal display mode
+  const saveServicePrices = () => {
+    setPricingMessage("");
+
+    const validServices = servicePrices.filter(
+      (service) =>
+        service.name.trim() !== "" &&
+        service.price.trim() !== ""
+    );
+
+    if (validServices.length === 0) {
+      setPricingMessage(
+        "Please add at least one service with its name and price."
+      );
+      return;
+    }
+
+    const invalidPrice = validServices.some(
+      (service) =>
+        !Number.isFinite(Number(service.price)) ||
+        Number(service.price) < 0
+    );
+
+    if (invalidPrice) {
+      setPricingMessage("Please enter valid service prices.");
+      return;
+    }
+
+    try {
+      localStorage.setItem(
+        PRICING_KEY,
+        JSON.stringify(validServices)
+      );
+
+      setServicePrices(validServices);
+      setEditingPrices(false);
+      setPricingMessage("Service pricing saved successfully.");
+    } catch {
+      setPricingMessage(
+        "Unable to save service pricing. Please try again."
+      );
+    }
+  };
+
   const updateAvailability = () => {
     const nextValue = !acceptingCalls;
     setAcceptingCalls(nextValue);
@@ -285,7 +427,9 @@ export default function ProfessionalHub() {
     try {
       localStorage.setItem(AVAILABILITY_KEY, String(nextValue));
     } catch {
-      setActionMessage("Could not save availability in this browser.");
+      setActionMessage(
+        "Could not save availability in this browser."
+      );
       return;
     }
 
@@ -296,9 +440,14 @@ export default function ProfessionalHub() {
     );
   };
 
-  const updateJob = (jobId: number, status: JobRequest["status"]) => {
+  const updateJob = (
+    jobId: number,
+    status: JobRequest["status"]
+  ) => {
     if (status === "accepted" && !acceptingCalls) {
-      setActionMessage("Turn on availability before accepting a request.");
+      setActionMessage(
+        "Turn on availability before accepting a request."
+      );
       return;
     }
 
@@ -314,6 +463,7 @@ export default function ProfessionalHub() {
     );
 
     setJobs(updated);
+
     setActionMessage(
       status === "accepted"
         ? "Request accepted locally. Customer contact and booking confirmation require backend integration."
@@ -329,7 +479,9 @@ export default function ProfessionalHub() {
     }
   };
 
-  const saveCredentials = (event: React.FormEvent<HTMLFormElement>) => {
+  const saveCredentials = (
+    event: React.FormEvent<HTMLFormElement>
+  ) => {
     event.preventDefault();
     setSaveMessage("");
 
@@ -358,10 +510,17 @@ export default function ProfessionalHub() {
         APPLICATION_KEY,
         JSON.stringify(updatedApplication)
       );
+
       setApplication(updatedApplication);
-      window.dispatchEvent(new Event("oneservice-professional-change"));
+
+      window.dispatchEvent(
+        new Event("oneservice-professional-change")
+      );
+
       setEditing(false);
-      setSaveMessage("Professional credentials saved in this browser.");
+      setSaveMessage(
+        "Professional credentials saved in this browser."
+      );
     } catch {
       setSaveMessage("Unable to save changes. Please try again.");
     }
@@ -373,17 +532,16 @@ export default function ProfessionalHub() {
     try {
       setRemovingAccount(true);
 
-      // Remove only the Professional Hub's locally stored data.
       localStorage.removeItem(APPLICATION_KEY);
       localStorage.removeItem(JOBS_KEY);
       localStorage.removeItem(AVAILABILITY_KEY);
+      localStorage.removeItem(PRICING_KEY);
 
-      // Notify other components, including the Profile page.
-      window.dispatchEvent(new Event("oneservice-professional-change"));
+      window.dispatchEvent(
+        new Event("oneservice-professional-change")
+      );
 
       setShowRemoveConfirmation(false);
-
-      // Return to Profile after removing the professional application.
       navigate("/profile", { replace: true });
     } catch {
       setRemoveError(
@@ -402,16 +560,25 @@ export default function ProfessionalHub() {
           <div className="ph-empty-icon">
             <Wrench size={30} />
           </div>
+
           <h1>Your Professional Hub</h1>
+
           <p>
-            Complete your professional registration to manage your service
-            profile and requests from one place.
+            Complete your professional registration to manage your
+            service profile and requests from one place.
           </p>
-          <Link to="/register-professional" className="ph-primary-button">
-            Register as a Professional <ChevronRight size={17} />
+
+          <Link
+            to="/register-professional"
+            className="ph-primary-button"
+          >
+            Register as a Professional
+            <ChevronRight size={17} />
           </Link>
+
           <Link to="/profile" className="ph-back-link">
-            <ArrowLeft size={16} /> Back to Profile
+            <ArrowLeft size={16} />
+            Back to Profile
           </Link>
         </div>
       </main>
@@ -421,6 +588,8 @@ export default function ProfessionalHub() {
   return (
     <main className="ph-page">
       <div className="ph-container">
+
+        {/* HEADER */}
         <header className="ph-topbar">
           <div className="ph-brand">
             <Link
@@ -430,6 +599,7 @@ export default function ProfessionalHub() {
             >
               <ArrowLeft size={18} />
             </Link>
+
             <div>
               <p className="ph-eyebrow">ONESERVICE</p>
               <h1>Professional Hub</h1>
@@ -446,12 +616,14 @@ export default function ProfessionalHub() {
                   : "Application under review"}
               </small>
             </div>
+
             <div className="ph-avatar">
               <UserRound size={23} />
             </div>
           </div>
         </header>
 
+        {/* STATUS */}
         <section
           className={`ph-status-banner ${
             applicationApproved ? "is-approved" : "is-pending"
@@ -464,31 +636,39 @@ export default function ProfessionalHub() {
               <Clock3 size={22} />
             )}
           </div>
+
           <div className="ph-status-copy">
             <strong>
               {applicationApproved
                 ? "Your professional account is approved"
                 : "Your professional application is under review"}
             </strong>
+
             <p>
               {applicationApproved
                 ? "Keep your credentials and service areas up to date."
                 : "You can review your details while the OneService team verifies your application."}
             </p>
           </div>
+
           <span className="ph-status-pill">
             {applicationApproved ? "Approved" : "Pending review"}
           </span>
         </section>
 
+        {/* WORKSPACE HEADING */}
         <section className="ph-heading-row">
           <div>
             <p className="ph-eyebrow">YOUR WORKSPACE</p>
-            <h2>Good to see you, {displayName.split(" ")[0]}!</h2>
+            <h2>
+              Good to see you, {displayName.split(" ")[0]}!
+            </h2>
             <p className="ph-section-subtitle">
-              Manage your service requests, performance and professional details.
+              Manage your service requests, performance and professional
+              details.
             </p>
           </div>
+
           <button
             type="button"
             className={`ph-availability ${
@@ -497,7 +677,9 @@ export default function ProfessionalHub() {
             onClick={updateAvailability}
           >
             <Power size={16} />
-            {acceptingCalls ? "Accepting Requests" : "Availability Paused"}
+            {acceptingCalls
+              ? "Accepting Requests"
+              : "Availability Paused"}
           </button>
         </section>
 
@@ -514,14 +696,19 @@ export default function ProfessionalHub() {
           </div>
         )}
 
+        {/* ANALYTICS */}
         <section className="ph-section">
           <div className="ph-section-heading">
             <div>
               <h2>
-                <Activity size={20} /> Analytics Overview
+                <Activity size={20} />
+                Analytics Overview
               </h2>
-              <p>A quick overview of your professional activity.</p>
+              <p>
+                A quick overview of your professional activity.
+              </p>
             </div>
+
             <span className="ph-data-note">
               Live data appears after backend integration
             </span>
@@ -535,6 +722,7 @@ export default function ProfessionalHub() {
               note="Requests awaiting your response"
               tone="blue"
             />
+
             <MetricCard
               icon={CheckCircle2}
               label="Accepted Jobs"
@@ -542,6 +730,7 @@ export default function ProfessionalHub() {
               note="Accepted in this browser"
               tone="green"
             />
+
             <MetricCard
               icon={Wallet}
               label="Total Earnings"
@@ -549,6 +738,7 @@ export default function ProfessionalHub() {
               note="Awaiting verified payment data"
               tone="purple"
             />
+
             <MetricCard
               icon={Star}
               label="Customer Rating"
@@ -559,31 +749,44 @@ export default function ProfessionalHub() {
           </div>
         </section>
 
+        {/* MAIN GRID */}
         <div className="ph-main-grid">
+
+          {/* REQUESTS */}
           <section className="ph-panel ph-requests-panel">
             <div className="ph-panel-heading">
               <div>
                 <p className="ph-eyebrow">CUSTOMER WORK</p>
                 <h2>
                   Incoming Requests{" "}
-                  <span className="ph-count">{newJobs.length}</span>
+                  <span className="ph-count">
+                    {newJobs.length}
+                  </span>
                 </h2>
-                <p>Review the service details before responding.</p>
+                <p>
+                  Review the service details before responding.
+                </p>
               </div>
-              <BriefcaseBusiness size={22} className="ph-heading-icon" />
+
+              <BriefcaseBusiness
+                size={22}
+                className="ph-heading-icon"
+              />
             </div>
 
             {!acceptingCalls && (
               <div className="ph-paused-note">
                 <Power size={16} />
-                Availability is paused. Turn it on to accept new requests.
+                Availability is paused. Turn it on to accept new
+                requests.
               </div>
             )}
 
             {!applicationApproved && (
               <div className="ph-review-note">
                 <ShieldCheck size={17} />
-                Accepting customer jobs becomes available after account approval.
+                Accepting customer jobs becomes available after
+                account approval.
               </div>
             )}
 
@@ -593,52 +796,80 @@ export default function ProfessionalHub() {
                   <CheckCircle2 size={23} />
                 </div>
                 <strong>You're all caught up</strong>
-                <p>New customer requests will appear here when available.</p>
+                <p>
+                  New customer requests will appear here when
+                  available.
+                </p>
               </div>
             ) : (
               <div className="ph-request-list">
                 {newJobs.map((job) => (
-                  <article className="ph-request-card" key={job.id}>
+                  <article
+                    className="ph-request-card"
+                    key={job.id}
+                  >
                     <div className="ph-request-top">
                       <div className="ph-request-symbol">
                         <Wrench size={19} />
                       </div>
+
                       <div className="ph-request-title">
                         <h3>{job.title}</h3>
+
                         <div className="ph-request-badges">
                           {job.urgent && (
-                            <span className="ph-urgent-badge">Urgent</span>
+                            <span className="ph-urgent-badge">
+                              Urgent
+                            </span>
                           )}
-                          <span className="ph-new-badge">New request</span>
+
+                          <span className="ph-new-badge">
+                            New request
+                          </span>
                         </div>
                       </div>
-                      <strong className="ph-estimate">{job.estimate}</strong>
+
+                      <strong className="ph-estimate">
+                        {job.estimate}
+                      </strong>
                     </div>
 
                     <p className="ph-request-description">
                       {job.description}
                     </p>
+
                     <div className="ph-request-location">
                       <MapPin size={15} />
                       <span>{job.location}</span>
-                      <span className="ph-distance">{job.distance}</span>
+                      <span className="ph-distance">
+                        {job.distance}
+                      </span>
                     </div>
 
                     <div className="ph-request-actions">
                       <button
                         type="button"
                         className="ph-secondary-button"
-                        onClick={() => updateJob(job.id, "declined")}
+                        onClick={() =>
+                          updateJob(job.id, "declined")
+                        }
                       >
-                        <XCircle size={16} /> Decline
+                        <XCircle size={16} />
+                        Decline
                       </button>
+
                       <button
                         type="button"
                         className="ph-primary-button"
-                        onClick={() => updateJob(job.id, "accepted")}
-                        disabled={!acceptingCalls || !applicationApproved}
+                        onClick={() =>
+                          updateJob(job.id, "accepted")
+                        }
+                        disabled={
+                          !acceptingCalls || !applicationApproved
+                        }
                       >
-                        <Check size={16} /> Accept Request
+                        <Check size={16} />
+                        Accept Request
                       </button>
                     </div>
                   </article>
@@ -650,20 +881,28 @@ export default function ProfessionalHub() {
               <div className="ph-accepted-summary">
                 <CheckCircle2 size={17} />
                 <span>
-                  {acceptedJobs.length} request(s) accepted in this browser.
+                  {acceptedJobs.length} request(s) accepted in this
+                  browser.
                 </span>
               </div>
             )}
           </section>
 
+          {/* RIGHT COLUMN */}
           <div className="ph-right-column">
+
+            {/* GRAPH */}
             <section className="ph-panel ph-graph-panel">
               <div className="ph-panel-heading compact">
                 <div>
                   <p className="ph-eyebrow">PERFORMANCE</p>
                   <h2>Analytics Graph</h2>
                 </div>
-                <Activity size={21} className="ph-heading-icon" />
+
+                <Activity
+                  size={21}
+                  className="ph-heading-icon"
+                />
               </div>
 
               <div
@@ -673,14 +912,19 @@ export default function ProfessionalHub() {
               >
                 <button
                   type="button"
-                  className={activePeriod === "week" ? "active" : ""}
+                  className={
+                    activePeriod === "week" ? "active" : ""
+                  }
                   onClick={() => setActivePeriod("week")}
                 >
                   This week
                 </button>
+
                 <button
                   type="button"
-                  className={activePeriod === "month" ? "active" : ""}
+                  className={
+                    activePeriod === "month" ? "active" : ""
+                  }
                   onClick={() => setActivePeriod("month")}
                 >
                   This month
@@ -694,38 +938,56 @@ export default function ProfessionalHub() {
                   <span>—</span>
                   <span>—</span>
                 </div>
+
                 <div className="ph-chart-plot">
                   {[0, 1, 2, 3].map((line) => (
-                    <div className="ph-chart-gridline" key={line} />
+                    <div
+                      className="ph-chart-gridline"
+                      key={line}
+                    />
                   ))}
+
                   <div className="ph-chart-empty">
                     <Activity size={24} />
-                    <span>Performance data will appear here</span>
+                    <span>
+                      Performance data will appear here
+                    </span>
                   </div>
                 </div>
               </div>
 
               <div className="ph-chart-legend">
                 <span>
-                  <i className="ph-legend-dot blue" /> Requests
+                  <i className="ph-legend-dot blue" />
+                  Requests
                 </span>
+
                 <span>
-                  <i className="ph-legend-dot green" /> Completed jobs
+                  <i className="ph-legend-dot green" />
+                  Completed jobs
                 </span>
               </div>
+
               <p className="ph-chart-footnote">
-                {activePeriod === "week" ? "Weekly" : "Monthly"} analytics
-                require verified job records.
+                {activePeriod === "week" ? "Weekly" : "Monthly"}{" "}
+                analytics require verified job records.
               </p>
             </section>
 
+            {/* FEEDBACK */}
             <section className="ph-panel ph-feedback-panel">
               <div className="ph-panel-heading compact">
                 <div>
-                  <p className="ph-eyebrow">CUSTOMER EXPERIENCE</p>
+                  <p className="ph-eyebrow">
+                    CUSTOMER EXPERIENCE
+                  </p>
                   <h2>Customer Feedback</h2>
                 </div>
-                <MessageSquareText size={21} className="ph-heading-icon" />
+
+                <MessageSquareText
+                  size={21}
+                  className="ph-heading-icon"
+                />
               </div>
 
               {feedback.length === 0 ? (
@@ -733,24 +995,34 @@ export default function ProfessionalHub() {
                   <div className="ph-feedback-icon">
                     <Star size={22} />
                   </div>
-                  <strong>Your reviews will appear here</strong>
+
+                  <strong>
+                    Your reviews will appear here
+                  </strong>
+
                   <p>
-                    After completed services, customer ratings and written
-                    feedback will be displayed in this section.
+                    After completed services, customer ratings and
+                    written feedback will be displayed in this section.
                   </p>
                 </div>
               ) : (
                 <div className="ph-feedback-list">
                   {feedback.map((item) => (
-                    <article className="ph-feedback-item" key={item.id}>
+                    <article
+                      className="ph-feedback-item"
+                      key={item.id}
+                    >
                       <div className="ph-feedback-item-top">
                         <strong>{item.customer}</strong>
+
                         <span>
-                          <Star size={14} fill="currentColor" />{" "}
+                          <Star size={14} fill="currentColor" />
                           {item.rating.toFixed(1)}
                         </span>
                       </div>
+
                       <p>{item.comment}</p>
+
                       <small>
                         {item.service} · {item.date}
                       </small>
@@ -762,6 +1034,239 @@ export default function ProfessionalHub() {
           </div>
         </div>
 
+        {/* =================================================
+            SERVICE PRICING SECTION
+            APPEARS ABOVE MODIFY CREDENTIALS
+        ================================================== */}
+
+        <section
+          className="ph-panel ph-pricing-panel"
+          id="service-pricing"
+        >
+          <div className="ph-credentials-heading">
+            <div className="ph-credentials-icon">
+              <IndianRupee size={23} />
+            </div>
+
+            <div>
+              <p className="ph-eyebrow">
+                YOUR SERVICE RATE CARD
+              </p>
+
+              <h2>Service Pricing</h2>
+
+              <p>
+                Set the prices you charge customers for each
+                professional service.
+              </p>
+            </div>
+
+            {!editingPrices && (
+              <button
+                type="button"
+                className="ph-outline-button"
+                onClick={() => {
+                  setPricingMessage("");
+                  setEditingPrices(true);
+                }}
+              >
+                <Pencil size={16} />
+                Edit Pricing
+              </button>
+            )}
+          </div>
+
+          {pricingMessage && (
+            <div className="ph-save-message" role="status">
+              <CheckCircle2 size={16} />
+              {pricingMessage}
+            </div>
+          )}
+
+          {editingPrices ? (
+            <>
+              <div className="ph-pricing-description">
+                <Wallet size={18} />
+                <p>
+                  Enter your service name and the corresponding
+                  technician charge. You can add as many services
+                  as required.
+                </p>
+              </div>
+
+              <div className="ph-pricing-list">
+                {servicePrices.map((service, index) => (
+                  <div
+                    className="ph-pricing-row"
+                    key={service.id}
+                  >
+                    <div className="ph-pricing-number">
+                      {index + 1}
+                    </div>
+
+                    <label className="ph-pricing-name">
+                      <span>Service name</span>
+
+                      <input
+                        type="text"
+                        value={service.name}
+                        placeholder="e.g. AC Repair"
+                        onChange={(event) =>
+                          updateServicePrice(
+                            service.id,
+                            "name",
+                            event.target.value
+                          )
+                        }
+                      />
+                    </label>
+
+                    <label className="ph-pricing-amount">
+                      <span>Technician price (₹)</span>
+
+                      <div className="ph-price-input">
+                        <IndianRupee size={16} />
+
+                        <input
+                          type="number"
+                          min="0"
+                          step="1"
+                          value={service.price}
+                          placeholder="Enter amount"
+                          onChange={(event) =>
+                            updateServicePrice(
+                              service.id,
+                              "price",
+                              event.target.value
+                            )
+                          }
+                        />
+                      </div>
+                    </label>
+
+                    <button
+                      type="button"
+                      className="ph-remove-service"
+                      onClick={() =>
+                        removeServicePrice(service.id)
+                      }
+                      aria-label={`Remove ${service.name || "service"}`}
+                      title="Remove service"
+                    >
+                      <Trash2 size={17} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                className="ph-add-service-button"
+                onClick={addServicePrice}
+              >
+                <Plus size={17} />
+                Add Another Service
+              </button>
+
+              <div className="ph-form-actions ph-pricing-actions">
+                <button
+                  type="button"
+                  className="ph-secondary-button"
+                  onClick={() => {
+                    const saved = readServicePrices();
+
+                    if (saved !== null) {
+                      setServicePrices(saved);
+                    } else {
+                      setServicePrices(
+                        createServicePrices(
+                          application.services?.length
+                            ? application.services
+                            : [application.category]
+                        )
+                      );
+                    }
+
+                    setEditingPrices(false);
+                    setPricingMessage("");
+                  }}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  className="ph-primary-button"
+                  onClick={saveServicePrices}
+                >
+                  <Save size={16} />
+                  Save Pricing
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="ph-pricing-display">
+              {servicePrices.length > 0 ? (
+                <>
+                  <div className="ph-pricing-display-header">
+                    <span>Service / Work Description</span>
+                    <span>Technician Charges</span>
+                  </div>
+
+                  {servicePrices.map((service, index) => (
+                    <div
+                      className="ph-pricing-display-row"
+                      key={service.id}
+                    >
+                      <div className="ph-pricing-display-name">
+                        <span className="ph-pricing-number">
+                          {index + 1}
+                        </span>
+
+                        <strong>{service.name}</strong>
+                      </div>
+
+                      <strong className="ph-pricing-display-price">
+                        ₹{Number(service.price).toLocaleString("en-IN")}
+                      </strong>
+                    </div>
+                  ))}
+
+                  <div className="ph-pricing-footer-note">
+                    <ShieldCheck size={16} />
+                    Your service charges are saved in your
+                    professional profile.
+                  </div>
+                </>
+              ) : (
+                <div className="ph-pricing-empty">
+                  <Wallet size={27} />
+
+                  <strong>No service prices added yet</strong>
+
+                  <p>
+                    Add your services and their corresponding
+                    technician charges to create your rate card.
+                  </p>
+
+                  <button
+                    type="button"
+                    className="ph-primary-button"
+                    onClick={() => setEditingPrices(true)}
+                  >
+                    <Plus size={16} />
+                    Add Service Pricing
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </section>
+
+        {/* =================================================
+            MODIFY CREDENTIALS
+        ================================================== */}
+
         <section
           className="ph-panel ph-credentials-panel"
           id="modify-credentials"
@@ -770,14 +1275,20 @@ export default function ProfessionalHub() {
             <div className="ph-credentials-icon">
               <ShieldCheck size={23} />
             </div>
+
             <div>
-              <p className="ph-eyebrow">YOUR PROFESSIONAL PROFILE</p>
+              <p className="ph-eyebrow">
+                YOUR PROFESSIONAL PROFILE
+              </p>
+
               <h2>Modify Credentials</h2>
+
               <p>
-                Keep your contact details, skills and service information up to
-                date.
+                Keep your contact details, skills and service
+                information up to date.
               </p>
             </div>
+
             {!editing && (
               <button
                 type="button"
@@ -787,129 +1298,191 @@ export default function ProfessionalHub() {
                   setEditing(true);
                 }}
               >
-                <Pencil size={16} /> Edit Credentials
+                <Pencil size={16} />
+                Edit Credentials
               </button>
             )}
           </div>
 
           {saveMessage && (
             <div className="ph-save-message" role="status">
-              <CheckCircle2 size={16} /> {saveMessage}
+              <CheckCircle2 size={16} />
+              {saveMessage}
             </div>
           )}
 
           {editing ? (
-            <form className="ph-credentials-form" onSubmit={saveCredentials}>
+            <form
+              className="ph-credentials-form"
+              onSubmit={saveCredentials}
+            >
               <div className="ph-form-grid">
                 <label>
                   Full name
+
                   <input
                     required
                     value={form.fullName}
                     onChange={(event) =>
-                      setForm({ ...form, fullName: event.target.value })
+                      setForm({
+                        ...form,
+                        fullName: event.target.value,
+                      })
                     }
                   />
                 </label>
+
                 <label>
                   Mobile number
+
                   <input
                     required
                     value={form.mobile}
                     inputMode="tel"
                     onChange={(event) =>
-                      setForm({ ...form, mobile: event.target.value })
+                      setForm({
+                        ...form,
+                        mobile: event.target.value,
+                      })
                     }
                   />
                 </label>
+
                 <label>
                   Email address
+
                   <input
                     type="email"
                     value={form.email}
                     onChange={(event) =>
-                      setForm({ ...form, email: event.target.value })
+                      setForm({
+                        ...form,
+                        email: event.target.value,
+                      })
                     }
                   />
                 </label>
+
                 <label>
                   Primary profession
+
                   <input
                     required
                     value={form.category}
                     onChange={(event) =>
-                      setForm({ ...form, category: event.target.value })
+                      setForm({
+                        ...form,
+                        category: event.target.value,
+                      })
                     }
                   />
                 </label>
+
                 <label>
                   Services / skills
+
                   <input
                     value={form.services}
                     placeholder="Electrical repair, wiring, installation"
                     onChange={(event) =>
-                      setForm({ ...form, services: event.target.value })
+                      setForm({
+                        ...form,
+                        services: event.target.value,
+                      })
                     }
                   />
-                  <small>Separate services with commas.</small>
+
+                  <small>
+                    Separate services with commas.
+                  </small>
                 </label>
+
                 <label>
                   Experience
+
                   <input
                     value={form.experience}
                     placeholder="e.g. 3 years"
                     onChange={(event) =>
-                      setForm({ ...form, experience: event.target.value })
+                      setForm({
+                        ...form,
+                        experience: event.target.value,
+                      })
                     }
                   />
                 </label>
+
                 <label>
                   City
+
                   <input
                     value={form.city}
                     onChange={(event) =>
-                      setForm({ ...form, city: event.target.value })
+                      setForm({
+                        ...form,
+                        city: event.target.value,
+                      })
                     }
                   />
                 </label>
+
                 <label>
                   State
+
                   <input
                     value={form.state}
                     onChange={(event) =>
-                      setForm({ ...form, state: event.target.value })
+                      setForm({
+                        ...form,
+                        state: event.target.value,
+                      })
                     }
                   />
                 </label>
+
                 <label>
                   Service areas
+
                   <input
                     value={form.serviceArea}
                     placeholder="Areas or localities you cover"
                     onChange={(event) =>
-                      setForm({ ...form, serviceArea: event.target.value })
+                      setForm({
+                        ...form,
+                        serviceArea: event.target.value,
+                      })
                     }
                   />
                 </label>
+
                 <label>
                   Visiting fee (₹)
+
                   <input
                     type="number"
                     min="0"
                     value={form.visitingFee}
                     onChange={(event) =>
-                      setForm({ ...form, visitingFee: event.target.value })
+                      setForm({
+                        ...form,
+                        visitingFee: event.target.value,
+                      })
                     }
                   />
                 </label>
+
                 <label className="ph-form-full">
                   About your services
+
                   <textarea
                     rows={3}
                     value={form.about}
                     placeholder="Briefly describe your experience and the services you provide."
                     onChange={(event) =>
-                      setForm({ ...form, about: event.target.value })
+                      setForm({
+                        ...form,
+                        about: event.target.value,
+                      })
                     }
                   />
                 </label>
@@ -919,12 +1492,33 @@ export default function ProfessionalHub() {
                 <button
                   type="button"
                   className="ph-secondary-button"
-                  onClick={() => setEditing(false)}
+                  onClick={() => {
+                    setEditing(false);
+
+                    setForm({
+                      fullName: application.fullName || "",
+                      mobile: application.mobile || "",
+                      email: application.email || "",
+                      category: application.category || "",
+                      services: (application.services || []).join(", "),
+                      experience: application.experience || "",
+                      city: application.city || "",
+                      state: application.state || "",
+                      serviceArea: application.serviceArea || "",
+                      visitingFee: application.visitingFee || "200",
+                      about: application.about || "",
+                    });
+                  }}
                 >
                   Cancel
                 </button>
-                <button type="submit" className="ph-primary-button">
-                  <Save size={16} /> Save Credentials
+
+                <button
+                  type="submit"
+                  className="ph-primary-button"
+                >
+                  <Save size={16} />
+                  Save Credentials
                 </button>
               </div>
             </form>
@@ -935,60 +1529,83 @@ export default function ProfessionalHub() {
                   <span className="ph-credential-icon">
                     <UserRound size={17} />
                   </span>
+
                   <div>
                     <small>Full name</small>
-                    <strong>{application.fullName || "Not provided"}</strong>
+                    <strong>
+                      {application.fullName || "Not provided"}
+                    </strong>
                   </div>
                 </div>
+
                 <div className="ph-credential-item">
                   <span className="ph-credential-icon">
                     <BriefcaseBusiness size={17} />
                   </span>
+
                   <div>
                     <small>Primary profession</small>
                     <strong>{displayCategory}</strong>
                   </div>
                 </div>
+
                 <div className="ph-credential-item">
                   <span className="ph-credential-icon">
                     <Phone size={17} />
                   </span>
+
                   <div>
                     <small>Mobile number</small>
-                    <strong>{application.mobile || "Not provided"}</strong>
+                    <strong>
+                      {application.mobile || "Not provided"}
+                    </strong>
                   </div>
                 </div>
+
                 <div className="ph-credential-item">
                   <span className="ph-credential-icon">
                     <FileText size={17} />
                   </span>
+
                   <div>
                     <small>Email address</small>
-                    <strong>{application.email || "Not provided"}</strong>
+                    <strong>
+                      {application.email || "Not provided"}
+                    </strong>
                   </div>
                 </div>
+
                 <div className="ph-credential-item">
                   <span className="ph-credential-icon">
                     <MapPin size={17} />
                   </span>
+
                   <div>
                     <small>Location</small>
-                    <strong>{displayLocation || "Not provided"}</strong>
+                    <strong>
+                      {displayLocation || "Not provided"}
+                    </strong>
                   </div>
                 </div>
+
                 <div className="ph-credential-item">
                   <span className="ph-credential-icon">
                     <CalendarDays size={17} />
                   </span>
+
                   <div>
                     <small>Experience</small>
-                    <strong>{application.experience || "Not provided"}</strong>
+                    <strong>
+                      {application.experience || "Not provided"}
+                    </strong>
                   </div>
                 </div>
+
                 <div className="ph-credential-item">
                   <span className="ph-credential-icon">
                     <Wallet size={17} />
                   </span>
+
                   <div>
                     <small>Visiting fee</small>
                     <strong>
@@ -998,13 +1615,17 @@ export default function ProfessionalHub() {
                     </strong>
                   </div>
                 </div>
+
                 <div className="ph-credential-item">
                   <span className="ph-credential-icon">
                     <Clock3 size={17} />
                   </span>
+
                   <div>
                     <small>Registered on</small>
-                    <strong>{formatDate(application.submittedAt)}</strong>
+                    <strong>
+                      {formatDate(application.submittedAt)}
+                    </strong>
                   </div>
                 </div>
               </div>
@@ -1012,8 +1633,12 @@ export default function ProfessionalHub() {
               <div className="ph-services-row">
                 <div>
                   <strong>Registered services</strong>
-                  <p>Services associated with your professional account.</p>
+                  <p>
+                    Services associated with your professional
+                    account.
+                  </p>
                 </div>
+
                 <div className="ph-service-chips">
                   {(application.services || []).length > 0 ? (
                     application.services.map((service) => (
@@ -1035,11 +1660,16 @@ export default function ProfessionalHub() {
           )}
         </section>
 
+        {/* FOOTER */}
         <footer className="ph-footer">
           <span>
-            <ShieldCheck size={15} /> OneService Professional Workspace
+            <ShieldCheck size={15} />
+            OneService Professional Workspace
           </span>
-          <span>Application ID: {application.id}</span>
+
+          <span>
+            Application ID: {application.id}
+          </span>
 
           <button
             type="button"
@@ -1055,12 +1685,16 @@ export default function ProfessionalHub() {
         </footer>
       </div>
 
+      {/* REMOVE ACCOUNT DIALOG */}
       {showRemoveConfirmation && (
         <div
           className="ph-remove-overlay"
           role="presentation"
           onMouseDown={(event) => {
-            if (event.target === event.currentTarget && !removingAccount) {
+            if (
+              event.target === event.currentTarget &&
+              !removingAccount
+            ) {
               setShowRemoveConfirmation(false);
               setRemoveError("");
             }
@@ -1090,11 +1724,15 @@ export default function ProfessionalHub() {
               <X size={19} />
             </button>
 
-            <h2 id="ph-remove-title">Remove Professional Account?</h2>
+            <h2 id="ph-remove-title">
+              Remove Professional Account?
+            </h2>
+
             <p id="ph-remove-description">
-              This will remove your saved professional application, job request
-              history and availability settings from this browser. Your other
-              OneService account types will not be affected.
+              This will remove your saved professional application,
+              job request history, service pricing and availability
+              settings from this browser. Your other OneService
+              account types will not be affected.
             </p>
 
             {removeError && (
@@ -1123,7 +1761,10 @@ export default function ProfessionalHub() {
                 onClick={removeAccount}
               >
                 <Trash2 size={16} />
-                {removingAccount ? "Removing..." : "Remove Account"}
+
+                {removingAccount
+                  ? "Removing..."
+                  : "Remove Account"}
               </button>
             </div>
 
