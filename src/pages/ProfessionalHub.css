@@ -3179,3 +3179,159 @@
     padding: 12px;
   }
 }
+
+
+/* =========================================================
+   PROFESSIONAL SUBSCRIPTION — synced with Admin Professionals
+========================================================= */
+
+.ph-subscription-panel {
+  margin: 0 0 28px;
+}
+
+.ph-subscription-heading,
+.ph-subscription-title-wrap,
+.ph-trial-topline,
+.ph-trial-intro,
+.ph-trial-progress-label,
+.ph-subscription-payment-row,
+.ph-active-subscription,
+.ph-subscription-expired,
+.ph-subscription-pending {
+  display: flex;
+  align-items: center;
+}
+
+.ph-subscription-heading {
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.ph-subscription-title-wrap { gap: 13px; min-width: 0; }
+.ph-subscription-heading-icon,
+.ph-trial-sparkle,
+.ph-plan-icon {
+  display: inline-flex;
+  width: 43px;
+  height: 43px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  color: var(--ph-blue);
+  background: var(--ph-blue-light);
+  border: 1px solid var(--ph-blue-border);
+  border-radius: 13px;
+}
+.ph-subscription-heading h2 { margin: 0; color: var(--ph-ink); font-size: 17px; font-weight: 770; }
+.ph-subscription-heading p:not(.ph-eyebrow) { margin: 5px 0 0; color: var(--ph-muted); font-size: 11px; line-height: 1.6; }
+.ph-subscription-status {
+  display: inline-flex; flex-shrink: 0; padding: 7px 12px; border: 1px solid var(--ph-line);
+  border-radius: 100px; color: #64748b; background: #f8fafc; font-size: 10px; font-weight: 750;
+}
+.ph-subscription-status.free-trial { color: var(--ph-green); background: var(--ph-green-light); border-color: var(--ph-green-border); }
+.ph-subscription-status.active { color: var(--ph-blue); background: var(--ph-blue-light); border-color: var(--ph-blue-border); }
+.ph-subscription-status.trial-expired, .ph-subscription-status.expired { color: var(--ph-red); background: var(--ph-red-light); border-color: var(--ph-red-border); }
+.ph-trial-card { padding: 20px; background: linear-gradient(135deg, #f8fbff, #eff6ff); border: 1px solid #dbeafe; border-radius: 15px; }
+.ph-trial-topline { justify-content: space-between; gap: 15px; }
+.ph-trial-intro { gap: 12px; min-width: 0; }
+.ph-trial-intro strong, .ph-active-subscription strong, .ph-subscription-expired strong { display: block; color: var(--ph-ink); font-size: 13px; font-weight: 780; }
+.ph-trial-intro p, .ph-subscription-expired p, .ph-active-subscription p { margin: 5px 0 0; color: var(--ph-muted); font-size: 11px; line-height: 1.65; }
+.ph-trial-price { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.ph-trial-price strong { color: var(--ph-green); font-size: 25px; font-weight: 800; }
+.ph-trial-price span { color: var(--ph-muted); font-size: 10px; }
+.ph-trial-countdown { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 20px 0; }
+.ph-trial-countdown > div { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 13px 8px; background: #fff; border: 1px solid #dbeafe; border-radius: 11px; }
+.ph-trial-countdown strong { color: var(--ph-blue); font-size: 25px; font-weight: 800; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.ph-trial-countdown span { color: var(--ph-muted); font-size: 10px; font-weight: 650; }
+.ph-trial-progress-label { justify-content: space-between; gap: 12px; margin-bottom: 8px; color: #64748b; font-size: 10px; }
+.ph-trial-progress-label strong { color: var(--ph-blue); }
+.ph-trial-progress-track { height: 8px; overflow: hidden; background: #dbeafe; border-radius: 100px; }
+.ph-trial-progress-track span { display: block; height: 100%; background: linear-gradient(90deg, #60a5fa, #2563eb); border-radius: inherit; transition: width 300ms ease; }
+.ph-trial-dates { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 17px; padding-top: 15px; border-top: 1px solid #dbeafe; }
+.ph-trial-dates > div { display: flex; flex-direction: column; gap: 5px; }
+.ph-trial-dates span, .ph-subscription-payment-row span { color: var(--ph-muted); font-size: 10px; }
+.ph-trial-dates strong { color: var(--ph-ink); font-size: 11px; }
+.ph-trial-note, .ph-subscription-footnote { margin: 14px 0 0; color: #64748b; font-size: 10px; line-height: 1.7; }
+.ph-subscription-expired { gap: 12px; padding: 14px 15px; margin-bottom: 19px; color: var(--ph-red); background: var(--ph-red-light); border: 1px solid var(--ph-red-border); border-radius: 12px; }
+.ph-subscription-expired > svg { flex-shrink: 0; }
+.ph-subscription-plans-heading { margin: 0 0 13px; }
+.ph-subscription-plans-heading h3 { margin: 0; color: var(--ph-ink); font-size: 14px; font-weight: 780; }
+.ph-subscription-plans-heading p { margin: 5px 0 0; color: var(--ph-muted); font-size: 11px; line-height: 1.6; }
+.ph-subscription-plan-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 13px; }
+.ph-subscription-plan-card { display: flex; min-width: 0; flex-direction: column; align-items: stretch; padding: 16px; color: inherit; text-align: left; background: #fff; border: 1px solid var(--ph-line); border-radius: 13px; cursor: pointer; transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease; }
+.ph-subscription-plan-card:hover { border-color: #93c5fd; box-shadow: 0 7px 18px rgb(37 99 235 / 7%); transform: translateY(-2px); }
+.ph-subscription-plan-card.selected { border: 2px solid var(--ph-blue); padding: 15px; background: #f8fbff; box-shadow: 0 0 0 3px rgb(37 99 235 / 7%); }
+.ph-plan-card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.ph-plan-icon { width: 37px; height: 37px; border-radius: 11px; }
+.ph-subscription-plan-card.exclusive .ph-plan-icon { color: #7c3aed; background: #f5f3ff; border-color: #ddd6fe; }
+.ph-subscription-plan-card.premium .ph-plan-icon { color: #b7791f; background: #fffbeb; border-color: #fde68a; }
+.ph-plan-radio { display: inline-flex; width: 20px; height: 20px; align-items: center; justify-content: center; color: #fff; border: 1px solid #cbd5e1; border-radius: 50%; }
+.ph-subscription-plan-card.selected .ph-plan-radio { background: var(--ph-blue); border-color: var(--ph-blue); }
+.ph-plan-name { color: var(--ph-ink); font-size: 14px; font-weight: 800; }
+.ph-plan-price { margin-top: 8px; color: var(--ph-blue); font-size: 25px; font-weight: 850; letter-spacing: -.7px; }
+.ph-plan-price small { margin-left: 4px; color: var(--ph-muted); font-size: 10px; font-weight: 550; letter-spacing: 0; }
+.ph-plan-description { min-height: 32px; margin-top: 5px; color: var(--ph-muted); font-size: 10px; line-height: 1.6; }
+.ph-plan-features { display: grid; gap: 8px; margin: 13px 0; }
+.ph-plan-features > span { display: flex; align-items: flex-start; gap: 7px; color: #475569; font-size: 10px; line-height: 1.5; }
+.ph-plan-features svg { flex-shrink: 0; color: var(--ph-green); }
+.ph-plan-select-label { display: block; margin-top: auto; padding: 8px 9px; color: var(--ph-blue); text-align: center; background: var(--ph-blue-light); border: 1px solid var(--ph-blue-border); border-radius: 8px; font-size: 10px; font-weight: 750; }
+.ph-subscription-plan-card.selected .ph-plan-select-label { color: #fff; background: var(--ph-blue); border-color: var(--ph-blue); }
+.ph-subscription-payment-row { justify-content: flex-end; flex-wrap: wrap; gap: 18px; padding: 14px 0 0; margin-top: 15px; border-top: 1px solid var(--ph-line); }
+.ph-subscription-payment-row > div { display: flex; flex-direction: column; gap: 5px; }
+.ph-subscription-payment-row > div strong { color: var(--ph-ink); font-size: 13px; }
+.ph-subscription-payment-row .ph-primary-button { margin-left: auto; }
+.ph-subscription-message { padding: 11px 13px; margin-top: 12px; color: #1d4ed8; background: var(--ph-blue-light); border: 1px solid var(--ph-blue-border); border-radius: 9px; font-size: 11px; line-height: 1.6; }
+.ph-active-subscription { gap: 13px; padding: 16px; color: var(--ph-green); background: var(--ph-green-light); border: 1px solid var(--ph-green-border); border-radius: 12px; }
+.ph-active-subscription > span { display: inline-flex; flex-shrink: 0; }
+.ph-subscription-pending { gap: 10px; padding: 13px; color: #a16207; background: #fefce8; border: 1px solid #fde68a; border-radius: 10px; font-size: 11px; line-height: 1.6; }
+
+@media (max-width: 900px) {
+  .ph-subscription-plan-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 600px) {
+  .ph-subscription-heading { align-items: flex-start; flex-direction: column; }
+  .ph-trial-topline { align-items: flex-start; }
+  .ph-subscription-plan-grid { grid-template-columns: 1fr; }
+  .ph-subscription-payment-row { justify-content: flex-start; gap: 14px; }
+  .ph-subscription-payment-row .ph-primary-button { width: 100%; margin-left: 0; }
+  .ph-trial-countdown { gap: 7px; }
+  .ph-trial-countdown > div { padding: 11px 5px; }
+  .ph-trial-countdown strong { font-size: 22px; }
+}
+
+
+/* Compact subscription summary positioned below the main workspace content */
+.ph-subscription-panel-bottom { margin: 30px 0 22px; padding: 19px 21px; }
+.ph-subscription-panel-bottom .ph-subscription-heading { margin-bottom: 13px; }
+.ph-subscription-panel-bottom .ph-subscription-heading-icon { width: 36px; height: 36px; border-radius: 10px; }
+.ph-subscription-panel-bottom .ph-subscription-heading h2 { font-size: 15px; }
+.ph-subscription-panel-bottom .ph-subscription-heading p:not(.ph-eyebrow) { font-size: 10px; }
+.ph-trial-compact { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 14px; margin-bottom: 15px; background: #f5f9ff; border: 1px solid #dbeafe; border-radius: 11px; }
+.ph-trial-compact-copy { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.ph-trial-compact .ph-trial-sparkle { width: 34px; height: 34px; border-radius: 9px; }
+.ph-trial-compact-copy strong { display: block; color: var(--ph-ink); font-size: 12px; }
+.ph-trial-compact-copy p { margin: 3px 0 0; color: var(--ph-muted); font-size: 10px; line-height: 1.5; }
+.ph-trial-compact .ph-trial-price { flex-shrink: 0; }
+.ph-trial-compact .ph-trial-price strong { font-size: 20px; }
+.ph-trial-compact .ph-trial-price small { color: var(--ph-muted); font-size: 9px; }
+.ph-subscription-panel-bottom .ph-subscription-plans-heading { margin-bottom: 9px; }
+.ph-subscription-panel-bottom .ph-subscription-plans-heading h3 { font-size: 12px; }
+.ph-subscription-panel-bottom .ph-subscription-plans-heading p { margin-top: 3px; font-size: 10px; }
+.ph-subscription-plan-grid.compact { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; }
+.ph-subscription-plan-grid.compact .ph-subscription-plan-card { padding: 11px 12px; border-radius: 10px; }
+.ph-subscription-plan-grid.compact .ph-subscription-plan-card.selected { padding: 10px 11px; }
+.ph-subscription-plan-grid.compact .ph-plan-card-top { margin-bottom: 7px; }
+.ph-subscription-plan-grid.compact .ph-plan-icon { width: 30px; height: 30px; }
+.ph-subscription-plan-grid.compact .ph-plan-name { font-size: 12px; }
+.ph-subscription-plan-grid.compact .ph-plan-price { margin-top: 4px; font-size: 20px; }
+.ph-subscription-plan-grid.compact .ph-plan-description { min-height: 0; margin-top: 3px; font-size: 9px; }
+.ph-subscription-plan-grid.compact .ph-plan-select-label { margin-top: 8px; padding: 6px; font-size: 9px; }
+.ph-subscription-panel-bottom .ph-subscription-footnote { margin-top: 9px; font-size: 9px; }
+.ph-subscription-panel-bottom .ph-subscription-expired { padding: 10px 12px; margin-bottom: 12px; }
+.ph-subscription-panel-bottom .ph-subscription-expired strong { font-size: 12px; }
+.ph-subscription-panel-bottom .ph-subscription-expired p { font-size: 10px; }
+@media (max-width: 700px) {
+  .ph-subscription-plan-grid.compact { grid-template-columns: 1fr; }
+  .ph-trial-compact { align-items: flex-start; }
+}

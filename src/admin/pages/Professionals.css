@@ -1647,3 +1647,552 @@
     transition: none;
   }
 }
+
+
+/* =========================================================
+   ONESERVICE — PROFESSIONAL SUBSCRIPTION SYSTEM
+========================================================= */
+
+.book-services-subscription {
+  margin-top: 25px;
+  padding-top: 23px;
+  border-top: 1px solid #e5eaf1;
+}
+
+.book-services-subscription-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.book-services-subscription-heading h4,
+.book-services-payment-heading h4 {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0;
+  color: #17365b;
+  font-size: 16px;
+  font-weight: 750;
+}
+
+.book-services-subscription-heading h4 svg {
+  color: #2563eb;
+}
+
+.book-services-subscription-heading p,
+.book-services-payment-heading p {
+  margin: 6px 0 0;
+  color: #758397;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.book-services-subscription-badge {
+  padding: 7px 12px;
+  border-radius: 30px;
+  font-size: 11px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.book-services-subscription-badge.trial {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.book-services-subscription-badge.active {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.book-services-subscription-badge.expired {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+/* =========================================================
+   FREE TRIAL
+========================================================= */
+
+.book-services-trial-card {
+  padding: 22px;
+  border: 1px solid #bbebcc;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #f0fdf4, #ffffff);
+}
+
+.book-services-trial-top {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+
+.book-services-trial-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.book-services-trial-top strong {
+  display: block;
+  color: #166534;
+  font-size: 16px;
+  font-weight: 750;
+}
+
+.book-services-trial-top span {
+  display: block;
+  margin-top: 4px;
+  color: #668574;
+  font-size: 12px;
+}
+
+.book-services-trial-countdown {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin: 23px 0;
+}
+
+.book-services-trial-days {
+  padding: 15px 8px;
+  text-align: center;
+  background: #ffffff;
+  border: 1px solid #dcfce7;
+  border-radius: 10px;
+}
+
+.book-services-trial-days strong {
+  display: block;
+  color: #15803d;
+  font-size: 27px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.book-services-trial-days span {
+  display: block;
+  margin-top: 4px;
+  color: #718477;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.book-services-trial-progress {
+  margin-bottom: 20px;
+}
+
+.book-services-trial-progress-label {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 9px;
+  color: #587261;
+  font-size: 12px;
+}
+
+.book-services-trial-progress-label strong {
+  color: #15803d;
+}
+
+.book-services-trial-progress-track {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 20px;
+  background: #dcefe1;
+}
+
+.book-services-trial-progress-track div {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #22c55e, #16a34a);
+  transition: width 0.4s ease;
+}
+
+.book-services-trial-dates {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  padding: 15px 0;
+  border-top: 1px solid #dcefe1;
+}
+
+.book-services-trial-dates div span,
+.book-services-trial-dates div strong {
+  display: block;
+}
+
+.book-services-trial-dates div span {
+  margin-bottom: 5px;
+  color: #758b7b;
+  font-size: 11px;
+}
+
+.book-services-trial-dates div strong {
+  color: #24553a;
+  font-size: 13px;
+}
+
+.book-services-trial-free {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 13px;
+  border-radius: 9px;
+  background: #dcfce7;
+}
+
+.book-services-trial-free span {
+  color: #166534;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.book-services-trial-free strong {
+  color: #15803d;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.book-services-trial-note {
+  margin: 13px 0 0;
+  color: #668574;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+/* =========================================================
+   TRIAL EXPIRED
+========================================================= */
+
+.book-services-subscription-expired {
+  display: flex;
+  gap: 13px;
+  padding: 17px;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  background: #fff7f7;
+}
+
+.book-services-expired-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.book-services-subscription-expired strong {
+  color: #991b1b;
+  font-size: 14px;
+}
+
+.book-services-subscription-expired p {
+  margin: 6px 0 0;
+  color: #895656;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+/* =========================================================
+   SUBSCRIPTION PLANS
+========================================================= */
+
+.book-services-payment-section {
+  margin-top: 22px;
+}
+
+.book-services-payment-heading {
+  margin-bottom: 17px;
+}
+
+.book-services-plan-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.book-services-plan-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 16px 13px;
+  text-align: left;
+  border: 1px solid #e1e7ef;
+  border-radius: 12px;
+  background: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.book-services-plan-card:hover {
+  border-color: #93b4ef;
+  transform: translateY(-2px);
+}
+
+.book-services-plan-card.selected {
+  border: 2px solid #2563eb;
+  padding: 15px 12px;
+  background: #f5f8ff;
+  box-shadow: 0 5px 16px rgba(37, 99, 235, 0.09);
+}
+
+.book-services-plan-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.book-services-plan-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 37px;
+  height: 37px;
+  border-radius: 10px;
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.book-services-plan-card.exclusive .book-services-plan-icon {
+  background: #f3e8ff;
+  color: #9333ea;
+}
+
+.book-services-plan-card.premium .book-services-plan-icon {
+  background: #fef3c7;
+  color: #d97706;
+}
+
+.book-services-plan-radio {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 19px;
+  height: 19px;
+  border: 1px solid #cbd5e1;
+  border-radius: 50%;
+  color: #ffffff;
+}
+
+.book-services-plan-card.selected .book-services-plan-radio {
+  border-color: #2563eb;
+  background: #2563eb;
+}
+
+.book-services-plan-name {
+  display: block;
+  color: #17365b;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.book-services-plan-price {
+  margin-top: 9px;
+  color: #1e40af;
+  font-size: 25px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.book-services-plan-price span {
+  color: #8592a4;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.book-services-plan-description {
+  min-height: 34px;
+  margin: 7px 0 13px;
+  color: #7b8797;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.book-services-plan-features {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.book-services-plan-features span {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  color: #526276;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.book-services-plan-features svg {
+  flex-shrink: 0;
+  color: #16a34a;
+}
+
+.book-services-plan-select {
+  display: block;
+  margin-top: auto;
+  padding: 9px 5px;
+  margin-top: 17px;
+  border: 1px solid #dbe5f2;
+  border-radius: 7px;
+  color: #365a88;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.book-services-plan-card.selected .book-services-plan-select {
+  border-color: #2563eb;
+  background: #2563eb;
+  color: #ffffff;
+}
+
+/* =========================================================
+   PAYMENT SUMMARY
+========================================================= */
+
+.book-services-payment-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
+  padding: 16px;
+  border-radius: 10px;
+  background: #f5f7fb;
+}
+
+.book-services-payment-summary div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.book-services-payment-summary span {
+  color: #718096;
+  font-size: 12px;
+}
+
+.book-services-payment-summary strong {
+  color: #17365b;
+  font-size: 14px;
+}
+
+.book-services-payment-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  width: 100%;
+  margin-top: 16px;
+  padding: 14px;
+  border: none;
+  border-radius: 9px;
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 750;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  font-family: inherit;
+}
+
+.book-services-payment-button:hover {
+  background: #1d4ed8;
+}
+
+.book-services-payment-note {
+  margin: 11px 0 0;
+  color: #8592a4;
+  font-size: 11px;
+  text-align: center;
+  line-height: 1.5;
+}
+
+/* =========================================================
+   ACTIVE SUBSCRIPTION
+========================================================= */
+
+.book-services-active-subscription {
+  display: flex;
+  gap: 13px;
+  padding: 17px;
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.book-services-active-subscription > svg {
+  flex-shrink: 0;
+}
+
+.book-services-active-subscription strong {
+  color: #1e40af;
+  font-size: 14px;
+}
+
+.book-services-active-subscription p {
+  margin: 6px 0 0;
+  color: #64748b;
+  font-size: 12px;
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 650px) {
+  .book-services-plan-list {
+    grid-template-columns: 1fr;
+  }
+
+  .book-services-plan-card {
+    padding: 17px;
+  }
+
+  .book-services-plan-card.selected {
+    padding: 16px;
+  }
+
+  .book-services-plan-description {
+    min-height: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .book-services-trial-card {
+    padding: 15px;
+  }
+
+  .book-services-trial-days strong {
+    font-size: 22px;
+  }
+
+  .book-services-subscription-heading {
+    align-items: flex-start;
+  }
+
+  .book-services-trial-dates {
+    grid-template-columns: 1fr;
+  }
+
+  .book-services-trial-countdown {
+    gap: 7px;
+  }
+}

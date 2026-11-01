@@ -10,6 +10,9 @@ import {
   Check,
   CheckCircle2,
   ChevronRight,
+  CreditCard,
+  Crown,
+  Sparkles,
   Clock3,
   FileText,
   MapPin,
@@ -48,6 +51,12 @@ type ProfessionalApplication = {
   status: string;
   visitingFee?: string;
   about?: string;
+  trialStartedAt?: string;
+  trialEndsAt?: string;
+  subscriptionPlan?: "Basic" | "Exclusive" | "Premium";
+  subscriptionStartedAt?: string;
+  subscriptionEndsAt?: string;
+  subscriptionStatus?: "Not Started" | "Free Trial" | "Trial Expired" | "Active" | "Expired";
 };
 
 type ServicePrice = {
@@ -80,6 +89,49 @@ const APPLICATION_KEY = "oneservice_professional_application";
 const JOBS_KEY = "oneservice_professional_job_requests";
 const AVAILABILITY_KEY = "oneservice_professional_accepting_calls";
 const PRICING_KEY = "oneservice_professional_service_prices";
+const TRIAL_DURATION_DAYS = 30;
+
+type SubscriptionPlan = "Basic" | "Exclusive" | "Premium";
+
+const SUBSCRIPTION_PLANS: {
+  name: SubscriptionPlan;
+  price: number;
+  description: string;
+  features: string[];
+}[] = [
+  {
+    name: "Basic",
+    price: 199,
+    description: "Essential professional visibility",
+    features: [
+      "Professional profile listing",
+      "Service enquiries",
+      "Basic profile management",
+    ],
+  },
+  {
+    name: "Exclusive",
+    price: 499,
+    description: "More visibility for your business",
+    features: [
+      "Everything in Basic",
+      "Priority profile visibility",
+      "Enhanced professional listing",
+      "Customer enquiry management",
+    ],
+  },
+  {
+    name: "Premium",
+    price: 999,
+    description: "Maximum professional exposure",
+    features: [
+      "Everything in Exclusive",
+      "Premium profile visibility",
+      "Featured professional listing",
+      "Priority support",
+    ],
+  },
+];
 
 const INITIAL_JOBS: JobRequest[] = [
   {
@@ -171,6 +223,47 @@ function createServicePrices(services: string[]): ServicePrice[] {
   }));
 }
 
+function calculateTrialEnd(startDate: string): string {
+  const end = new Date(startDate);
+  end.setDate(end.getDate() + TRIAL_DURATION_DAYS);
+  return end.toISOString();
+}
+
+function getSubscriptionStatus(
+  application: ProfessionalApplication,
+  currentTime: number,
+): "Not Started" | "Free Trial" | "Trial Expired" | "Active" | "Expired" {
+  if (application.subscriptionStartedAt && application.subscriptionEndsAt) {
+    return new Date(application.subscriptionEndsAt).getTime() > currentTime
+      ? "Active"
+      : "Expired";
+  }
+
+  if (!application.trialStartedAt || !application.trialEndsAt) {
+    return "Not Started";
+  }
+
+  return new Date(application.trialEndsAt).getTime() > currentTime
+    ? "Free Trial"
+    : "Trial Expired";
+}
+
+function getTrialRemaining(endDate?: string, currentTime = Date.now()) {
+  if (!endDate) return null;
+  const difference = new Date(endDate).getTime() - currentTime;
+
+  if (!Number.isFinite(difference) || difference <= 0) {
+    return { days: 0, hours: 0, minutes: 0 };
+  }
+
+  const totalMinutes = Math.floor(difference / 60000);
+  return {
+    days: Math.floor(totalMinutes / 1440),
+    hours: Math.floor((totalMinutes % 1440) / 60),
+    minutes: totalMinutes % 60,
+  };
+}
+
 function MetricCard({
   icon: Icon,
   label,
@@ -228,6 +321,12 @@ export default function ProfessionalHub() {
   const [editingPrices, setEditingPrices] = useState(false);
   const [pricingMessage, setPricingMessage] = useState("");
 
+  // Subscription state is shared with Admin Professionals through the
+  // professional application record in localStorage.
+  const [currentTime, setCurrentTime] = useState(Date.now());
+  const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan>("Exclusive");
+  const [subscriptionMessage, setSubscriptionMessage] = useState("");
+
   const [form, setForm] = useState({
     fullName: "",
     mobile: "",
@@ -244,7 +343,30 @@ export default function ProfessionalHub() {
 
   useEffect(() => {
     const loadApplication = () => {
-      const saved = readApplication();
+      let saved = readApplication();
+
+      // Admin starts the 30-day trial when an application is approved or
+      // when its profile is first opened. Keep the Hub aligned if the
+      // approved professional reaches this page first.
+      if (
+        saved?.status?.toLowerCase() === "approved" &&
+        !saved.trialStartedAt &&
+        !saved.subscriptionStartedAt
+      ) {
+        const startedAt = new Date().toISOString();
+        saved = {
+          ...saved,
+          trialStartedAt: startedAt,
+          trialEndsAt: calculateTrialEnd(startedAt),
+          subscriptionStatus: "Free Trial",
+        };
+        try {
+          localStorage.setItem(APPLICATION_KEY, JSON.stringify(saved));
+        } catch {
+          // Keep the page usable even if browser storage is unavailable.
+        }
+      }
+
       setApplication(saved);
 
       if (saved) {
@@ -320,8 +442,30 @@ export default function ProfessionalHub() {
     };
   }, []);
 
+  useEffect(() => {
+    const timer = window.setInterval(() => setCurrentTime(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
   const applicationApproved =
     application?.status?.toLowerCase() === "approved";
+
+  const subscriptionStatus = application
+    ? getSubscriptionStatus(application, currentTime)
+    : "Not Started";
+
+  const trialRemaining = application
+    ? getTrialRemaining(application.trialEndsAt, currentTime)
+    : null;
+
+
+  const proceedToSubscriptionPayment = () => {
+    const plan = SUBSCRIPTION_PLANS.find((item) => item.name === selectedPlan);
+    if (!plan || !application) return;
+    setSubscriptionMessage(
+      `${plan.name} plan selected for ₹${plan.price}/month. Payment gateway integration is required to complete activation.`,
+    );
+  };
 
   const displayName = application?.fullName || "Professional";
 
@@ -647,7 +791,7 @@ export default function ProfessionalHub() {
             <p>
               {applicationApproved
                 ? "Keep your credentials and service areas up to date."
-                : "You can review your details while the OneService team verifies your application."}
+                : "You can review your details while the NeedOneService team verifies your application."}
             </p>
           </div>
 
@@ -1660,11 +1804,100 @@ export default function ProfessionalHub() {
           )}
         </section>
 
+        {/* PROFESSIONAL SUBSCRIPTION */}
+        {applicationApproved && (
+          <section className="ph-panel ph-subscription-panel ph-subscription-panel-bottom" id="professional-subscription">
+            <div className="ph-subscription-heading">
+              <div className="ph-subscription-title-wrap">
+                <span className="ph-subscription-heading-icon">
+                  <CreditCard size={21} />
+                </span>
+                <div>
+                  <p className="ph-eyebrow">MEMBERSHIP &amp; VISIBILITY</p>
+                  <h2>Professional Subscription</h2>
+                  <p>Track your free trial and manage your NeedOneService membership.</p>
+                </div>
+              </div>
+              <span className={`ph-subscription-status ${subscriptionStatus.toLowerCase().replaceAll(" ", "-")}`}>
+                {subscriptionStatus}
+              </span>
+            </div>
+
+            {subscriptionStatus === "Free Trial" && trialRemaining && (
+              <div className="ph-trial-compact">
+                <div className="ph-trial-compact-copy">
+                  <span className="ph-trial-sparkle"><Sparkles size={17} /></span>
+                  <div>
+                    <strong>30-day free trial</strong>
+                    <p>{trialRemaining.days} days, {trialRemaining.hours} hours and {trialRemaining.minutes} minutes remaining · Ends {formatDate(application.trialEndsAt)}</p>
+                  </div>
+                </div>
+                <span className="ph-trial-price"><strong>₹0</strong><small>during trial</small></span>
+              </div>
+            )}
+
+            {(subscriptionStatus === "Free Trial" || subscriptionStatus === "Trial Expired" || subscriptionStatus === "Expired") && (
+              <>
+                {subscriptionStatus !== "Free Trial" && (
+                  <div className="ph-subscription-expired">
+                    <Clock3 size={20} />
+                    <div><strong>Your free trial has expired</strong><p>Choose a plan to continue your NeedOneService professional membership.</p></div>
+                  </div>
+                )}
+                <div className="ph-subscription-plans-heading">
+                  <div><h3>Plans after your trial</h3><p>Choose a membership that suits your professional requirements.</p></div>
+                </div>
+                <div className="ph-subscription-plan-grid compact">
+                  {SUBSCRIPTION_PLANS.map((plan) => (
+                    <button
+                      type="button"
+                      key={plan.name}
+                      className={`ph-subscription-plan-card ${plan.name.toLowerCase()} ${selectedPlan === plan.name ? "selected" : ""}`}
+                      onClick={() => { setSelectedPlan(plan.name); setSubscriptionMessage(""); }}
+                      aria-pressed={selectedPlan === plan.name}
+                    >
+                      <span className="ph-plan-card-top">
+                        <span className="ph-plan-icon">{plan.name === "Basic" ? <ShieldCheck size={17} /> : plan.name === "Exclusive" ? <Sparkles size={17} /> : <Crown size={17} />}</span>
+                        <span className="ph-plan-radio">{selectedPlan === plan.name ? <Check size={12} /> : null}</span>
+                      </span>
+                      <strong className="ph-plan-name">{plan.name}</strong>
+                      <span className="ph-plan-price">₹{plan.price}<small>/ month</small></span>
+                      <span className="ph-plan-description">{plan.description}</span>
+                      <span className="ph-plan-select-label">{selectedPlan === plan.name ? "Selected" : "Select plan"}</span>
+                    </button>
+                  ))}
+                </div>
+                {subscriptionStatus !== "Free Trial" && (
+                  <div className="ph-subscription-payment-row">
+                    <div><span>Selected plan</span><strong>{selectedPlan}</strong></div>
+                    <div><span>Monthly subscription</span><strong>₹{SUBSCRIPTION_PLANS.find((plan) => plan.name === selectedPlan)?.price}</strong></div>
+                    <button type="button" className="ph-primary-button" onClick={proceedToSubscriptionPayment}><CreditCard size={16} />Proceed to Payment</button>
+                  </div>
+                )}
+                {subscriptionMessage && <div className="ph-subscription-message" role="status">{subscriptionMessage}</div>}
+                <p className="ph-subscription-footnote">No charge is made during the free trial. A plan is activated only after successful payment verification.</p>
+              </>
+            )}
+
+            {subscriptionStatus === "Active" && (
+              <div className="ph-active-subscription">
+                <span><CheckCircle2 size={22} /></span>
+                <div><strong>{application.subscriptionPlan || "Subscription"} Plan Active</strong><p>Subscription started: {formatDate(application.subscriptionStartedAt)}</p><p>Subscription expires: {formatDate(application.subscriptionEndsAt)}</p></div>
+              </div>
+            )}
+
+            {subscriptionStatus === "Not Started" && (
+              <div className="ph-subscription-pending"><Clock3 size={19} /><span>Your subscription trial will begin once your professional account is approved.</span></div>
+            )}
+          </section>
+        )}
+
+
         {/* FOOTER */}
         <footer className="ph-footer">
           <span>
             <ShieldCheck size={15} />
-            OneService Professional Workspace
+            NeedOneService Professional Workspace
           </span>
 
           <span>
@@ -1731,7 +1964,7 @@ export default function ProfessionalHub() {
             <p id="ph-remove-description">
               This will remove your saved professional application,
               job request history, service pricing and availability
-              settings from this browser. Your other OneService
+              settings from this browser. Your other NeedOneService
               account types will not be affected.
             </p>
 

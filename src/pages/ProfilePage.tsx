@@ -185,7 +185,7 @@ const NETWORK_OPTIONS = [
     },
     {
         title: "Seller",
-        description: "Grow your product business with OneService.",
+        description: "Grow your product business with NeedOneService.",
         path: "/register-seller",
         icon: ShoppingBag,
     },
@@ -918,7 +918,7 @@ function ProfilePage() {
                         </div>
 
                         <span className="profile-eyebrow">
-                            YOUR ONESERVICE ACCOUNT
+                            YOUR NEEDONESERVICE ACCOUNT
                         </span>
 
                         <h2>
@@ -1050,7 +1050,7 @@ function ProfilePage() {
                             <div className="profile-registered-accounts">
                                 <div className="profile-section-heading">
                                     <span className="profile-section-eyebrow">
-                                        YOUR ONESERVICE NETWORK
+                                        YOUR NEEDONESERVICE NETWORK
                                     </span>
                                     <h2>Your Registered Accounts</h2>
                                     <p>
@@ -1772,7 +1772,7 @@ function ProfilePage() {
                                                             )}
                                                         </strong>
 
-                                                        <small>Visited on OneService</small>
+                                                        <small>Visited on NeedOneService</small>
 
                                                         <time dateTime={visit.visitedAt}>
                                                             {formatVisitDate(visit.visitedAt)}
@@ -1908,7 +1908,7 @@ function ProfilePage() {
                                 <span className="profile-setting-icon"><CircleHelp size={19} /></span>
                                 <span className="profile-setting-copy">
                                     <strong>Help and support</strong>
-                                    <small>Get help with your OneService account</small>
+                                    <small>Get help with your NeedOneService account</small>
                                 </span>
                                 <ChevronRight size={18} />
                             </button>
@@ -1917,7 +1917,7 @@ function ProfilePage() {
                                 <span className="profile-setting-icon"><LogOut size={19} /></span>
                                 <span className="profile-setting-copy">
                                     <strong>Logout</strong>
-                                    <small>Sign out of your OneService account</small>
+                                    <small>Sign out of your NeedOneService account</small>
                                 </span>
                                 <ChevronRight size={18} />
                             </button>
@@ -2021,10 +2021,10 @@ function ProfilePage() {
                                 <div className="profile-info-panel">
                                     <CircleHelp size={23} />
                                     <div>
-                                        <strong>Need help with OneService?</strong>
+                                        <strong>Need help with NeedOneService?</strong>
                                         <p>For booking, order or account assistance, visit our Contact page.</p>
                                         <Link to="/contact" className="profile-modal-text-link" onClick={() => setActiveModal(null)}>
-                                            Contact OneService <ArrowRight size={15} />
+                                            Contact NeedOneService <ArrowRight size={15} />
                                         </Link>
                                     </div>
                                 </div>

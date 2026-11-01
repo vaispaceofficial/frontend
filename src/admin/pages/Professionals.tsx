@@ -1,4 +1,6 @@
+
 import { useEffect, useMemo, useState } from "react";
+
 import {
   CalendarDays,
   Ban,
@@ -7,6 +9,9 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  Clock,
+  CreditCard,
+  Crown,
   Download,
   Eye,
   FileBadge,
@@ -16,16 +21,27 @@ import {
   Phone,
   Search,
   ShieldCheck,
+  Sparkles,
   UsersRound,
   Wrench,
   X,
 } from "lucide-react";
+
 import "./Professionals.css";
 
 type ProviderStatus = "Verified" | "Pending";
 type DocumentStatus = "Verified" | "Pending" | "Rejected";
 type AccountState = "Active" | "Suspended" | "Blocked" | "Rejected";
 type ReviewAction = "suspend" | "block" | "reject";
+
+type SubscriptionPlan = "Basic" | "Exclusive" | "Premium";
+
+type SubscriptionStatus =
+  | "Not Started"
+  | "Free Trial"
+  | "Trial Expired"
+  | "Active"
+  | "Expired";
 
 type ProviderDocument = {
   id: string;
@@ -64,6 +80,15 @@ type ProfessionalApplication = {
   rejectionReason?: string;
   suspensionUntil?: string;
   suspensionDuration?: string;
+
+  trialStartedAt?: string;
+  trialEndsAt?: string;
+
+  subscriptionPlan?: SubscriptionPlan;
+  subscriptionStartedAt?: string;
+  subscriptionEndsAt?: string;
+  subscriptionStatus?: SubscriptionStatus;
+
   documents?: Array<{
     id?: string;
     title?: string;
@@ -75,10 +100,12 @@ type ProfessionalApplication = {
     fileUrl?: string;
     fileName?: string;
   }>;
+
   idProof?: string;
   idProofUrl?: string;
   experienceCertificate?: string;
   experienceCertificateUrl?: string;
+
   [key: string]: unknown;
 };
 
@@ -100,19 +127,70 @@ type Provider = {
   phone: string;
   email: string;
   profileImage?: string;
+
   accountState?: AccountState;
   rejectionReason?: string;
   suspensionUntil?: string;
   suspensionDuration?: string;
+
+  trialStartedAt?: string;
+  trialEndsAt?: string;
+
+  subscriptionPlan?: SubscriptionPlan;
+  subscriptionStartedAt?: string;
+  subscriptionEndsAt?: string;
+  subscriptionStatus?: SubscriptionStatus;
+
   documents: ProviderDocument[];
 };
 
 const PAGE_SIZE = 5;
+const TRIAL_DURATION_DAYS = 30;
 
 const APPLICATION_KEY = "oneservice_professional_application";
 const APPLICATIONS_KEY = "oneservice_professional_applications";
 const PROFESSIONALS_KEY = "oneservice_professionals";
 const CHANGE_EVENT = "oneservice-professional-change";
+
+const SUBSCRIPTION_PLANS: {
+  name: SubscriptionPlan;
+  price: number;
+  description: string;
+  features: string[];
+}[] = [
+  {
+    name: "Basic",
+    price: 199,
+    description: "Essential professional visibility",
+    features: [
+      "Professional profile listing",
+      "Service enquiries",
+      "Basic profile management",
+    ],
+  },
+  {
+    name: "Exclusive",
+    price: 499,
+    description: "More visibility for your business",
+    features: [
+      "Everything in Basic",
+      "Priority profile visibility",
+      "Enhanced professional listing",
+      "Customer enquiry management",
+    ],
+  },
+  {
+    name: "Premium",
+    price: 999,
+    description: "Maximum professional exposure",
+    features: [
+      "Everything in Exclusive",
+      "Premium profile visibility",
+      "Featured professional listing",
+      "Priority support",
+    ],
+  },
+];
 
 const serviceTypes = [
   "Service Type",
@@ -161,12 +239,14 @@ function safeReadJson<T>(key: string, fallback: T): T {
 }
 
 function getInitials(name: string): string {
-  return name
-    .trim()
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((part) => part.charAt(0).toUpperCase())
-    .join("") || "PR";
+  return (
+    name
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((part) => part.charAt(0).toUpperCase())
+      .join("") || "PR"
+  );
 }
 
 function formatDate(value?: string): string {
@@ -183,9 +263,7 @@ function formatDate(value?: string): string {
   });
 }
 
-function normalizeDocumentStatus(
-  status?: string,
-): DocumentStatus {
+function normalizeDocumentStatus(status?: string): DocumentStatus {
   const normalized = (status || "").toLowerCase();
 
   if (normalized === "verified" || normalized === "approved") {
@@ -274,7 +352,11 @@ function normalizeAccountState(
 
   const status = (application.status || "").toLowerCase();
 
-  if (status === "approved" || status === "verified" || status === "active") {
+  if (
+    status === "approved" ||
+    status === "verified" ||
+    status === "active"
+  ) {
     return "Active";
   }
 
@@ -300,9 +382,7 @@ function normalizeProvider(
     "Professional Services";
 
   const id = application.id || `PRO-${index + 1}`;
-
   const accountState = normalizeAccountState(application);
-
   const isApproved = accountState === "Active";
 
   return {
@@ -311,12 +391,11 @@ function normalizeProvider(
     name,
     designation: application.designation || category,
     category,
-    location: [
-      application.city,
-      application.state,
-    ]
-      .filter(Boolean)
-      .join(", ") || application.serviceArea || "Location not provided",
+    location:
+      [application.city, application.state].filter(Boolean).join(", ") ||
+      application.serviceArea ||
+      "Location not provided",
+
     experience:
       application.experience !== undefined &&
       application.experience !== ""
@@ -327,25 +406,39 @@ function normalizeProvider(
               : ""
           }`
         : "Not provided",
+
     idProofStatus: isApproved ? "Verified" : "Pending",
-    subscriptionExpiry: "—",
+    subscriptionExpiry: formatDate(application.subscriptionEndsAt),
     joinedOn: formatDate(application.submittedAt || application.joinedOn),
     rating: "—",
     reviewCount: 0,
     about: application.about || "No professional description provided.",
+
     services: Array.isArray(application.services)
       ? application.services
       : [],
+
     phone: application.mobile || application.phone || "—",
     email: application.email || "—",
+
     profileImage:
       application.profileImage ||
       application.image ||
       application.photo,
+
     accountState,
     rejectionReason: application.rejectionReason,
     suspensionUntil: application.suspensionUntil,
     suspensionDuration: application.suspensionDuration,
+
+    trialStartedAt: application.trialStartedAt,
+    trialEndsAt: application.trialEndsAt,
+
+    subscriptionPlan: application.subscriptionPlan,
+    subscriptionStartedAt: application.subscriptionStartedAt,
+    subscriptionEndsAt: application.subscriptionEndsAt,
+    subscriptionStatus: application.subscriptionStatus,
+
     documents: normalizeDocuments(application),
   };
 }
@@ -358,22 +451,14 @@ function readApplications(): ProfessionalApplication[] {
   const combined: ProfessionalApplication[] = [];
 
   if (Array.isArray(multiple)) {
-    combined.push(
-      ...(multiple as ProfessionalApplication[]),
-    );
+    combined.push(...(multiple as ProfessionalApplication[]));
   }
 
   if (Array.isArray(professionals)) {
-    combined.push(
-      ...(professionals as ProfessionalApplication[]),
-    );
+    combined.push(...(professionals as ProfessionalApplication[]));
   }
 
-  if (
-    single &&
-    typeof single === "object" &&
-    !Array.isArray(single)
-  ) {
+  if (single && typeof single === "object" && !Array.isArray(single)) {
     combined.push(single as ProfessionalApplication);
   }
 
@@ -424,6 +509,69 @@ function getReasonLabel(provider: Provider): string {
   }
 }
 
+/* =========================================================
+   SUBSCRIPTION HELPERS
+========================================================= */
+
+function calculateTrialEnd(startDate: string): string {
+  const start = new Date(startDate);
+  const end = new Date(start);
+
+  end.setDate(end.getDate() + TRIAL_DURATION_DAYS);
+
+  return end.toISOString();
+}
+
+function getTrialRemaining(endDate?: string) {
+  if (!endDate) return null;
+
+  const difference = new Date(endDate).getTime() - Date.now();
+
+  if (!Number.isFinite(difference) || difference <= 0) {
+    return {
+      expired: true,
+      days: 0,
+      hours: 0,
+      minutes: 0,
+    };
+  }
+
+  const totalMinutes = Math.floor(difference / 60000);
+
+  return {
+    expired: false,
+    days: Math.floor(totalMinutes / 1440),
+    hours: Math.floor((totalMinutes % 1440) / 60),
+    minutes: totalMinutes % 60,
+  };
+}
+
+function getSubscriptionStatus(
+  provider: Provider,
+  currentTime: number,
+): SubscriptionStatus {
+  if (
+    provider.subscriptionStartedAt &&
+    provider.subscriptionEndsAt
+  ) {
+    return new Date(provider.subscriptionEndsAt).getTime() > currentTime
+      ? "Active"
+      : "Expired";
+  }
+
+  if (!provider.trialStartedAt || !provider.trialEndsAt) {
+    return "Not Started";
+  }
+
+  return new Date(provider.trialEndsAt).getTime() > currentTime
+    ? "Free Trial"
+    : "Trial Expired";
+}
+
+/* =========================================================
+   PERSIST PROFESSIONAL STATUS
+========================================================= */
+
 function persistProviderUpdate(
   provider: Provider,
   updatedState: AccountState,
@@ -434,18 +582,32 @@ function persistProviderUpdate(
   const updateRecord = (
     application: ProfessionalApplication,
   ): ProfessionalApplication => {
-    if (application.id !== provider.id) return application;
+    const matches =
+      application.id === provider.id ||
+      (
+        !application.id &&
+        provider.phone !== "—" &&
+        (application.mobile || application.phone) === provider.phone
+      );
+
+    if (!matches) return application;
 
     return {
       ...application,
-      status:
-        updatedState === "Active"
-          ? "Approved"
-          : updatedState,
+
+      status: updatedState === "Active" ? "Approved" : updatedState,
       accountState: updatedState,
       rejectionReason: reason,
       suspensionDuration,
       suspensionUntil,
+
+      trialStartedAt: provider.trialStartedAt,
+      trialEndsAt: provider.trialEndsAt,
+
+      subscriptionPlan: provider.subscriptionPlan,
+      subscriptionStartedAt: provider.subscriptionStartedAt,
+      subscriptionEndsAt: provider.subscriptionEndsAt,
+      subscriptionStatus: provider.subscriptionStatus,
     };
   };
 
@@ -478,7 +640,17 @@ function persistProviderUpdate(
     null,
   );
 
-  if (single?.id === provider.id) {
+  if (
+    single &&
+    (
+      single.id === provider.id ||
+      (
+        !single.id &&
+        provider.phone !== "—" &&
+        (single.mobile || single.phone) === provider.phone
+      )
+    )
+  ) {
     localStorage.setItem(
       APPLICATION_KEY,
       JSON.stringify(updateRecord(single)),
@@ -487,6 +659,76 @@ function persistProviderUpdate(
 
   window.dispatchEvent(new Event(CHANGE_EVENT));
 }
+
+/* =========================================================
+   PERSIST SUBSCRIPTION DATA
+========================================================= */
+
+function persistSubscriptionUpdate(
+  provider: Provider,
+  updates: Partial<ProfessionalApplication>,
+) {
+  const matchesProvider = (
+    application: ProfessionalApplication,
+  ) =>
+    application.id === provider.id ||
+    (
+      !application.id &&
+      provider.phone !== "—" &&
+      (application.mobile || application.phone) === provider.phone
+    );
+
+  const updateRecords = (
+    records: ProfessionalApplication[],
+  ) =>
+    records.map((application) =>
+      matchesProvider(application)
+        ? { ...application, ...updates }
+        : application,
+    );
+
+  const applications = safeReadJson<ProfessionalApplication[]>(
+    APPLICATIONS_KEY,
+    [],
+  );
+
+  if (Array.isArray(applications)) {
+    localStorage.setItem(
+      APPLICATIONS_KEY,
+      JSON.stringify(updateRecords(applications)),
+    );
+  }
+
+  const professionals = safeReadJson<ProfessionalApplication[]>(
+    PROFESSIONALS_KEY,
+    [],
+  );
+
+  if (Array.isArray(professionals)) {
+    localStorage.setItem(
+      PROFESSIONALS_KEY,
+      JSON.stringify(updateRecords(professionals)),
+    );
+  }
+
+  const single = safeReadJson<ProfessionalApplication | null>(
+    APPLICATION_KEY,
+    null,
+  );
+
+  if (single && matchesProvider(single)) {
+    localStorage.setItem(
+      APPLICATION_KEY,
+      JSON.stringify({ ...single, ...updates }),
+    );
+  }
+
+  window.dispatchEvent(new Event(CHANGE_EVENT));
+}
+
+/* =========================================================
+   MAIN COMPONENT
+========================================================= */
 
 export default function BookServices() {
   const [serviceType, setServiceType] = useState("Service Type");
@@ -512,6 +754,13 @@ export default function BookServices() {
 
   const [providerList, setProviderList] = useState<Provider[]>([]);
 
+  const [currentTime, setCurrentTime] = useState(Date.now());
+
+  const [selectedPlan, setSelectedPlan] =
+    useState<SubscriptionPlan>("Exclusive");
+
+  /* LOAD PROFESSIONALS */
+
   useEffect(() => {
     const loadProviders = () => {
       const registeredApplications = readApplications();
@@ -534,6 +783,18 @@ export default function BookServices() {
       window.removeEventListener(CHANGE_EVENT, loadProviders);
     };
   }, []);
+
+  /* LIVE COUNTDOWN */
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setCurrentTime(Date.now());
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, []);
+
+  /* FILTER PROFESSIONALS */
 
   const filteredProviders = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -581,6 +842,8 @@ export default function BookServices() {
     });
   }, [providerList, serviceType, location, status, search]);
 
+  /* PAGINATION */
+
   const pageCount = Math.max(
     1,
     Math.ceil(filteredProviders.length / PAGE_SIZE),
@@ -623,6 +886,8 @@ export default function BookServices() {
     setPage(1);
   };
 
+  /* UPDATE PROVIDER */
+
   const updateProvider = (
     updated: Provider,
     nextState: AccountState,
@@ -630,8 +895,18 @@ export default function BookServices() {
     duration?: string,
     until?: string,
   ) => {
+    const finalProvider: Provider = {
+      ...updated,
+      accountState: nextState,
+      rejectionReason: reason,
+      suspensionDuration: duration,
+      suspensionUntil: until,
+      idProofStatus:
+        nextState === "Active" ? "Verified" : "Pending",
+    };
+
     persistProviderUpdate(
-      updated,
+      finalProvider,
       nextState,
       reason,
       duration,
@@ -640,35 +915,56 @@ export default function BookServices() {
 
     setProviderList((current) =>
       current.map((provider) =>
-        provider.id === updated.id
-          ? {
-              ...updated,
-              accountState: nextState,
-              rejectionReason: reason,
-              suspensionDuration: duration,
-              suspensionUntil: until,
-              idProofStatus:
-                nextState === "Active" ? "Verified" : "Pending",
-            }
-          : provider,
+        provider.id === updated.id ? finalProvider : provider,
       ),
     );
 
     setSelectedProvider((current) =>
-      current?.id === updated.id
-        ? {
-            ...updated,
-            accountState: nextState,
-            rejectionReason: reason,
-            suspensionDuration: duration,
-            suspensionUntil: until,
-          }
-        : current,
+      current?.id === updated.id ? finalProvider : current,
     );
 
     setReviewTarget(null);
     setPage(1);
   };
+
+  /* OPEN PROFILE */
+
+  const openProviderProfile = (provider: Provider) => {
+    let updatedProvider = provider;
+
+    if (
+      provider.accountState === "Active" &&
+      !provider.trialStartedAt &&
+      !provider.subscriptionStartedAt
+    ) {
+      const now = new Date().toISOString();
+      const trialEndsAt = calculateTrialEnd(now);
+
+      updatedProvider = {
+        ...provider,
+        trialStartedAt: now,
+        trialEndsAt,
+        subscriptionStatus: "Free Trial",
+      };
+
+      persistSubscriptionUpdate(provider, {
+        trialStartedAt: now,
+        trialEndsAt,
+        subscriptionStatus: "Free Trial",
+      });
+
+      setProviderList((current) =>
+        current.map((item) =>
+          item.id === provider.id ? updatedProvider : item,
+        ),
+      );
+    }
+
+    setSelectedProvider(updatedProvider);
+    setNotice("");
+  };
+
+  /* REVIEW DIALOG */
 
   const openReviewDialog = (
     provider: Provider,
@@ -687,6 +983,8 @@ export default function BookServices() {
     setReviewError("");
     setSuspensionDuration("7");
   };
+
+  /* DOCUMENT ACTIONS */
 
   const openDocument = (document: ProviderDocument) => {
     if (!document.url) {
@@ -708,6 +1006,7 @@ export default function BookServices() {
     }
 
     const link = window.document.createElement("a");
+
     link.href = document.url;
     link.download = document.fileName;
     link.target = "_blank";
@@ -748,14 +1047,26 @@ export default function BookServices() {
     }
   };
 
+  /* VERIFY PROFESSIONAL AND START TRIAL */
+
   const verifyProvider = (provider: Provider) => {
+    const now = new Date().toISOString();
+    const trialEndsAt = calculateTrialEnd(now);
+
     const updatedProvider: Provider = {
       ...provider,
+
       idProofStatus: "Verified",
       accountState: "Active",
+
       rejectionReason: undefined,
       suspensionUntil: undefined,
       suspensionDuration: undefined,
+
+      trialStartedAt: now,
+      trialEndsAt,
+      subscriptionStatus: "Free Trial",
+
       documents: provider.documents.map((document) => ({
         ...document,
         status: "Verified",
@@ -763,12 +1074,18 @@ export default function BookServices() {
     };
 
     updateProvider(updatedProvider, "Active");
-    setSelectedProvider(null);
+
+    setSelectedProvider({
+      ...updatedProvider,
+      accountState: "Active",
+    });
 
     setNotice(
-      `${provider.name} has been verified and approved successfully.`,
+      `${provider.name} has been verified. Their 30-day free trial has started.`,
     );
   };
+
+  /* SUBMIT REVIEW ACTION */
 
   const submitReviewAction = () => {
     if (!reviewTarget) return;
@@ -845,14 +1162,63 @@ export default function BookServices() {
     }
   };
 
+  /* SUBSCRIPTION STATE */
+
+  const selectedSubscriptionStatus = selectedProvider
+    ? getSubscriptionStatus(selectedProvider, currentTime)
+    : "Not Started";
+
+  const trialRemaining = selectedProvider
+    ? getTrialRemaining(selectedProvider.trialEndsAt)
+    : null;
+
+  const trialProgress =
+    selectedProvider?.trialStartedAt &&
+    selectedProvider?.trialEndsAt
+      ? Math.min(
+          100,
+          Math.max(
+            0,
+            ((currentTime -
+              new Date(selectedProvider.trialStartedAt).getTime()) /
+              (new Date(selectedProvider.trialEndsAt).getTime() -
+                new Date(selectedProvider.trialStartedAt).getTime())) *
+              100,
+          ),
+        )
+      : 0;
+
+  /* PAYMENT SELECTION */
+
+  const proceedToPayment = () => {
+    if (!selectedProvider) return;
+
+    const plan = SUBSCRIPTION_PLANS.find(
+      (item) => item.name === selectedPlan,
+    );
+
+    if (!plan) return;
+
+    setNotice(
+      `${plan.name} plan selected for ₹${plan.price}/month. Connect a payment gateway to complete activation.`,
+    );
+  };
+
+  /* =====================================================
+     RENDER
+  ===================================================== */
+
   return (
     <div className="book-services-page">
+
       <section className="book-services-header">
         <div>
           <div className="book-services-eyebrow">
             PARTNER MANAGEMENT · TAB 1
           </div>
+
           <h1>Professionals</h1>
+
           <p>
             Manage individual service providers such as technicians,
             cleaners, tutors, tailors, and cooks.
@@ -860,7 +1226,10 @@ export default function BookServices() {
         </div>
       </section>
 
+      {/* FILTERS */}
+
       <section className="book-services-filter-card">
+
         <div className="book-services-select">
           <select
             aria-label="Filter by service type"
@@ -876,6 +1245,7 @@ export default function BookServices() {
               </option>
             ))}
           </select>
+
           <ChevronDown size={17} />
         </div>
 
@@ -894,11 +1264,13 @@ export default function BookServices() {
               </option>
             ))}
           </select>
+
           <ChevronDown size={17} />
         </div>
 
         <div className="book-services-search">
           <Search size={17} />
+
           <input
             type="text"
             placeholder="Search provider"
@@ -926,6 +1298,7 @@ export default function BookServices() {
               </option>
             ))}
           </select>
+
           <ChevronDown size={17} />
         </div>
 
@@ -940,11 +1313,16 @@ export default function BookServices() {
             <X size={15} />
           </button>
         )}
+
       </section>
 
+      {/* PROFESSIONAL TABLE */}
+
       <section className="book-services-table-card">
+
         <div className="book-services-table-wrapper">
           <table className="book-services-table">
+
             <thead>
               <tr>
                 <th>PHOTO / AVATAR</th>
@@ -958,12 +1336,14 @@ export default function BookServices() {
             </thead>
 
             <tbody>
+
               {paginatedProviders.map((provider) => {
                 const pending = isPending(provider);
                 const displayedStatus = getDisplayedStatus(provider);
 
                 return (
                   <tr key={provider.id}>
+
                     <td>
                       <div className="book-services-avatar">
                         {provider.profileImage ? (
@@ -980,6 +1360,7 @@ export default function BookServices() {
                     <td>
                       <div className="book-services-provider">
                         <strong>{provider.name}</strong>
+
                         <span>
                           {provider.designation} · {provider.id}
                         </span>
@@ -1022,25 +1403,30 @@ export default function BookServices() {
                         ) : (
                           <span className="book-services-pending-dot" />
                         )}
+
                         {displayedStatus}
                       </span>
                     </td>
 
                     <td>
                       <div className="book-services-expiry">
-                        <span>{provider.subscriptionExpiry}</span>
+                        <span>
+                          {provider.subscriptionEndsAt
+                            ? formatDate(provider.subscriptionEndsAt)
+                            : provider.trialEndsAt
+                              ? formatDate(provider.trialEndsAt)
+                              : "—"}
+                        </span>
                       </div>
                     </td>
 
                     <td>
                       <div className="book-services-actions">
+
                         <button
                           type="button"
                           className="book-services-action secondary"
-                          onClick={() => {
-                            setSelectedProvider(provider);
-                            setNotice("");
-                          }}
+                          onClick={() => openProviderProfile(provider)}
                         >
                           <Eye size={13} />
                           View Profile
@@ -1051,10 +1437,7 @@ export default function BookServices() {
                             <button
                               type="button"
                               className="book-services-action primary"
-                              onClick={() => {
-                                setSelectedProvider(provider);
-                                setNotice("");
-                              }}
+                              onClick={() => openProviderProfile(provider)}
                             >
                               <ShieldCheck size={13} />
                               Verify Docs
@@ -1093,8 +1476,10 @@ export default function BookServices() {
                             {provider.accountState}
                           </span>
                         )}
+
                       </div>
                     </td>
+
                   </tr>
                 );
               })}
@@ -1104,12 +1489,15 @@ export default function BookServices() {
                   <td colSpan={7}>
                     <div className="book-services-empty">
                       <Search size={26} />
+
                       <strong>No service providers found</strong>
+
                       <span>
                         {providerList.length === 0
                           ? "Professional registrations will appear here when applicants submit their forms."
                           : "Try changing your filters or search term."}
                       </span>
+
                       {hasFilters && (
                         <button type="button" onClick={clearFilters}>
                           Clear Filters
@@ -1119,17 +1507,22 @@ export default function BookServices() {
                   </td>
                 </tr>
               )}
+
             </tbody>
           </table>
         </div>
 
+        {/* PAGINATION */}
+
         <div className="book-services-pagination">
+
           <span>
             Showing <strong>{firstItem}–{lastItem}</strong> of{" "}
             <strong>{filteredProviders.length}</strong> matching providers
           </span>
 
           <div className="book-services-pagination-buttons">
+
             <button
               type="button"
               disabled={currentPage <= 1}
@@ -1170,13 +1563,18 @@ export default function BookServices() {
             >
               <ChevronRight size={15} />
             </button>
+
           </div>
         </div>
+
       </section>
+
+      {/* NOTIFICATION */}
 
       {notice && (
         <div className="book-services-toast" role="status">
           <span>{notice}</span>
+
           <button
             type="button"
             aria-label="Dismiss message"
@@ -1186,6 +1584,8 @@ export default function BookServices() {
           </button>
         </div>
       )}
+
+      {/* VIEW PROFILE MODAL */}
 
       {selectedProvider && (
         <div
@@ -1199,6 +1599,7 @@ export default function BookServices() {
             aria-labelledby="provider-profile-title"
             onClick={(event) => event.stopPropagation()}
           >
+
             <header className="book-services-modal-header">
               <h2 id="provider-profile-title">
                 {isPending(selectedProvider)
@@ -1217,11 +1618,14 @@ export default function BookServices() {
             </header>
 
             <div className="book-services-modal-body">
+
               {isPending(selectedProvider) && (
                 <div className="book-services-verification-notice">
                   <ShieldCheck size={19} />
+
                   <div>
                     <strong>Verification required</strong>
+
                     <p>
                       Review the applicant's details and submitted
                       documents before approving this professional.
@@ -1230,7 +1634,10 @@ export default function BookServices() {
                 </div>
               )}
 
+              {/* PROFILE HEADER */}
+
               <div className="book-services-profile-top">
+
                 <div className="book-services-modal-avatar">
                   {selectedProvider.profileImage ? (
                     <img
@@ -1243,8 +1650,10 @@ export default function BookServices() {
                 </div>
 
                 <div className="book-services-profile-name">
+
                   <h3>
                     {selectedProvider.name}
+
                     <ShieldCheck
                       className="book-services-name-shield"
                       size={19}
@@ -1264,28 +1673,36 @@ export default function BookServices() {
                   >
                     {getDisplayedStatus(selectedProvider)}
                   </span>
+
                 </div>
 
                 <div className="book-services-rating">
                   <div aria-label="No customer rating available">
                     ★★★★★
                   </div>
+
                   <span>
                     {selectedProvider.rating === "—"
                       ? "No customer reviews yet"
                       : `${selectedProvider.rating} (${selectedProvider.reviewCount} reviews)`}
                   </span>
                 </div>
+
               </div>
+
+              {/* ACCOUNT REASON */}
 
               {selectedProvider.rejectionReason && (
                 <div className="book-services-account-reason">
+
                   <strong>{getReasonLabel(selectedProvider)}</strong>
+
                   <p>{selectedProvider.rejectionReason}</p>
 
                   {selectedProvider.accountState === "Suspended" &&
                     selectedProvider.suspensionUntil && (
                       <div className="book-services-suspension-details">
+
                         <span>
                           <CalendarDays size={15} />
                           Duration: {selectedProvider.suspensionDuration}
@@ -1296,14 +1713,20 @@ export default function BookServices() {
                           Suspension ends:{" "}
                           {formatDate(selectedProvider.suspensionUntil)}
                         </span>
+
                       </div>
                     )}
+
                 </div>
               )}
 
+              {/* PROFILE META */}
+
               <div className="book-services-profile-meta">
+
                 <div>
                   <MapPin size={19} />
+
                   <span>
                     <small>Location</small>
                     <strong>{selectedProvider.location}</strong>
@@ -1312,6 +1735,7 @@ export default function BookServices() {
 
                 <div>
                   <CalendarDays size={19} />
+
                   <span>
                     <small>Joined on</small>
                     <strong>{selectedProvider.joinedOn}</strong>
@@ -1320,23 +1744,32 @@ export default function BookServices() {
 
                 <div>
                   <Wrench size={19} />
+
                   <span>
                     <small>Experience</small>
                     <strong>{selectedProvider.experience}</strong>
                   </span>
                 </div>
+
               </div>
+
+              {/* ABOUT */}
 
               <section className="book-services-about">
                 <h4>
                   <ShieldCheck size={19} />
                   About
                 </h4>
+
                 <p>{selectedProvider.about}</p>
               </section>
 
+              {/* DOCUMENTS */}
+
               <section className="book-services-documents">
+
                 <div className="book-services-documents-heading">
+
                   <h4>
                     <FileText size={19} />
                     ID Proofs &amp; Documents
@@ -1350,14 +1783,17 @@ export default function BookServices() {
                     <Download size={14} />
                     Download All
                   </button>
+
                 </div>
 
                 <div className="book-services-document-list">
+
                   {selectedProvider.documents.map((document) => (
                     <div
                       className="book-services-document-row"
                       key={document.id}
                     >
+
                       <div className="book-services-document-icon">
                         {document.id === "id-proof" ? (
                           <FileBadge size={25} />
@@ -1372,6 +1808,7 @@ export default function BookServices() {
                       </div>
 
                       <div className="book-services-document-actions">
+
                         <button
                           type="button"
                           className="book-services-doc-view"
@@ -1389,6 +1826,7 @@ export default function BookServices() {
                           <Download size={14} />
                           Download
                         </button>
+
                       </div>
 
                       <span
@@ -1401,19 +1839,26 @@ export default function BookServices() {
                         ) : (
                           <span className="book-services-pending-dot" />
                         )}
+
                         {document.status}
                       </span>
+
                     </div>
                   ))}
+
                 </div>
 
                 <p className="book-services-document-note">
                   Document previews and downloads require a valid uploaded
                   file URL in each document's <code>url</code> property.
                 </p>
+
               </section>
 
+              {/* SERVICES */}
+
               <section className="book-services-selected-services">
+
                 <h4>
                   <UsersRound size={18} />
                   Selected Services
@@ -1428,9 +1873,13 @@ export default function BookServices() {
                     <span>No services submitted</span>
                   )}
                 </div>
+
               </section>
 
+              {/* CONTACT */}
+
               <section className="book-services-contact">
+
                 <h4>Contact Information</h4>
 
                 <div>
@@ -1444,10 +1893,322 @@ export default function BookServices() {
                     {selectedProvider.email}
                   </span>
                 </div>
+
               </section>
+
+              {/* SUBSCRIPTION */}
+
+              {selectedProvider.accountState === "Active" && (
+                <section className="book-services-subscription">
+
+                  <div className="book-services-subscription-heading">
+
+                    <div>
+                      <h4>
+                        <CreditCard size={19} />
+                        Professional Subscription
+                      </h4>
+
+                      <p>
+                        Manage professional membership and subscription.
+                      </p>
+                    </div>
+
+                    <span
+                      className={`book-services-subscription-badge ${
+                        selectedSubscriptionStatus === "Free Trial"
+                          ? "trial"
+                          : selectedSubscriptionStatus === "Active"
+                            ? "active"
+                            : "expired"
+                      }`}
+                    >
+                      {selectedSubscriptionStatus}
+                    </span>
+
+                  </div>
+
+                  {/* FREE TRIAL */}
+
+                  {selectedSubscriptionStatus === "Free Trial" &&
+                    trialRemaining && (
+
+                      <div className="book-services-trial-card">
+
+                        <div className="book-services-trial-top">
+
+                          <div className="book-services-trial-icon">
+                            <Sparkles size={22} />
+                          </div>
+
+                          <div>
+                            <strong>30-Day Free Trial</strong>
+                            <span>
+                              Enjoy OneService professional membership.
+                            </span>
+                          </div>
+
+                        </div>
+
+                        <div className="book-services-trial-countdown">
+
+                          <div className="book-services-trial-days">
+                            <strong>{trialRemaining.days}</strong>
+                            <span>Days</span>
+                          </div>
+
+                          <div className="book-services-trial-days">
+                            <strong>{trialRemaining.hours}</strong>
+                            <span>Hours</span>
+                          </div>
+
+                          <div className="book-services-trial-days">
+                            <strong>{trialRemaining.minutes}</strong>
+                            <span>Minutes</span>
+                          </div>
+
+                        </div>
+
+                        <div className="book-services-trial-progress">
+
+                          <div className="book-services-trial-progress-label">
+                            <span>Trial period used</span>
+                            <strong>{Math.round(trialProgress)}%</strong>
+                          </div>
+
+                          <div className="book-services-trial-progress-track">
+                            <div
+                              style={{
+                                width: `${trialProgress}%`,
+                              }}
+                            />
+                          </div>
+
+                        </div>
+
+                        <div className="book-services-trial-dates">
+
+                          <div>
+                            <span>Trial started</span>
+                            <strong>
+                              {formatDate(selectedProvider.trialStartedAt)}
+                            </strong>
+                          </div>
+
+                          <div>
+                            <span>Trial expires</span>
+                            <strong>
+                              {formatDate(selectedProvider.trialEndsAt)}
+                            </strong>
+                          </div>
+
+                        </div>
+
+                        <div className="book-services-trial-free">
+                          <span>Current subscription charge</span>
+                          <strong>₹0</strong>
+                        </div>
+
+                        <p className="book-services-trial-note">
+                          Payment options will become available
+                          automatically after the 30-day trial expires.
+                        </p>
+
+                      </div>
+                    )}
+
+                  {/* EXPIRED NOTICE */}
+
+                  {(selectedSubscriptionStatus === "Trial Expired" ||
+                    selectedSubscriptionStatus === "Expired") && (
+
+                    <div className="book-services-subscription-expired">
+
+                      <div className="book-services-expired-icon">
+                        <Clock size={23} />
+                      </div>
+
+                      <div>
+                        <strong>Your free trial has expired</strong>
+
+                        <p>
+                          The 30-day free trial is over. Choose a
+                          subscription plan to continue with your
+                          OneService professional membership.
+                        </p>
+                      </div>
+
+                    </div>
+                  )}
+
+                  {/* ACTIVE SUBSCRIPTION */}
+
+                  {selectedSubscriptionStatus === "Active" && (
+
+                    <div className="book-services-active-subscription">
+
+                      <CheckCircle2 size={22} />
+
+                      <div>
+                        <strong>
+                          {selectedProvider.subscriptionPlan} Plan Active
+                        </strong>
+
+                        <p>
+                          Subscription started:{" "}
+                          {formatDate(
+                            selectedProvider.subscriptionStartedAt,
+                          )}
+                        </p>
+
+                        <p>
+                          Subscription expires:{" "}
+                          {formatDate(
+                            selectedProvider.subscriptionEndsAt,
+                          )}
+                        </p>
+                      </div>
+
+                    </div>
+                  )}
+
+                  {/* PAYMENT PLANS */}
+
+                  {(selectedSubscriptionStatus === "Trial Expired" ||
+                    selectedSubscriptionStatus === "Expired") && (
+
+                    <div className="book-services-payment-section">
+
+                      <div className="book-services-payment-heading">
+
+                        <h4>Choose Your Subscription Plan</h4>
+
+                        <p>
+                          Select the membership that suits your
+                          professional requirements.
+                        </p>
+
+                      </div>
+
+                      <div className="book-services-plan-list">
+
+                        {SUBSCRIPTION_PLANS.map((plan) => (
+
+                          <button
+                            type="button"
+                            key={plan.name}
+                            className={`book-services-plan-card ${
+                              selectedPlan === plan.name ? "selected" : ""
+                            } ${plan.name.toLowerCase()}`}
+                            onClick={() => setSelectedPlan(plan.name)}
+                            aria-pressed={selectedPlan === plan.name}
+                          >
+
+                            <div className="book-services-plan-top">
+
+                              <div className="book-services-plan-icon">
+
+                                {plan.name === "Basic" ? (
+                                  <ShieldCheck size={20} />
+                                ) : plan.name === "Exclusive" ? (
+                                  <Sparkles size={20} />
+                                ) : (
+                                  <Crown size={20} />
+                                )}
+
+                              </div>
+
+                              <span className="book-services-plan-radio">
+                                {selectedPlan === plan.name && (
+                                  <Check size={13} />
+                                )}
+                              </span>
+
+                            </div>
+
+                            <strong className="book-services-plan-name">
+                              {plan.name}
+                            </strong>
+
+                            <div className="book-services-plan-price">
+                              ₹{plan.price}
+                              <span>/ month</span>
+                            </div>
+
+                            <p className="book-services-plan-description">
+                              {plan.description}
+                            </p>
+
+                            <div className="book-services-plan-features">
+
+                              {plan.features.map((feature) => (
+                                <span key={feature}>
+                                  <CheckCircle2 size={14} />
+                                  {feature}
+                                </span>
+                              ))}
+
+                            </div>
+
+                            <span className="book-services-plan-select">
+                              {selectedPlan === plan.name
+                                ? "Selected Plan"
+                                : "Select Plan"}
+                            </span>
+
+                          </button>
+                        ))}
+
+                      </div>
+
+                      <div className="book-services-payment-summary">
+
+                        <div>
+                          <span>Selected subscription</span>
+                          <strong>{selectedPlan}</strong>
+                        </div>
+
+                        <div>
+                          <span>Monthly subscription fee</span>
+
+                          <strong>
+                            ₹
+                            {
+                              SUBSCRIPTION_PLANS.find(
+                                (plan) => plan.name === selectedPlan,
+                              )?.price
+                            }
+                          </strong>
+                        </div>
+
+                      </div>
+
+                      <button
+                        type="button"
+                        className="book-services-payment-button"
+                        onClick={proceedToPayment}
+                      >
+                        <CreditCard size={17} />
+                        Proceed to Payment
+                      </button>
+
+                      <p className="book-services-payment-note">
+                        Subscription activation will take place only
+                        after successful payment verification.
+                      </p>
+
+                    </div>
+                  )}
+
+                </section>
+              )}
+
             </div>
 
+            {/* MODAL FOOTER */}
+
             <footer className="book-services-modal-footer">
+
               <button
                 type="button"
                 className="book-services-modal-secondary"
@@ -1458,6 +2219,7 @@ export default function BookServices() {
 
               {isPending(selectedProvider) && (
                 <>
+
                   <button
                     type="button"
                     className="book-services-action danger"
@@ -1477,11 +2239,13 @@ export default function BookServices() {
                     <Check size={13} />
                     Verify &amp; Approve
                   </button>
+
                 </>
               )}
 
               {selectedProvider.accountState === "Active" && (
                 <>
+
                   <button
                     type="button"
                     className="book-services-action warning"
@@ -1503,6 +2267,7 @@ export default function BookServices() {
                     <Ban size={13} />
                     Block
                   </button>
+
                 </>
               )}
 
@@ -1513,16 +2278,21 @@ export default function BookServices() {
                   {selectedProvider.accountState}
                 </span>
               )}
+
             </footer>
+
           </section>
         </div>
       )}
+
+      {/* REJECT / SUSPEND / BLOCK DIALOG */}
 
       {reviewTarget && (
         <div
           className="book-services-reject-backdrop"
           onClick={closeReviewDialog}
         >
+
           <section
             className="book-services-reject-dialog"
             role="dialog"
@@ -1530,6 +2300,7 @@ export default function BookServices() {
             aria-labelledby="review-dialog-title"
             onClick={(event) => event.stopPropagation()}
           >
+
             <div className={`book-services-reject-icon ${reviewAction}`}>
               {reviewAction === "reject" ? (
                 <X size={22} />
@@ -1589,6 +2360,7 @@ export default function BookServices() {
 
             {reviewAction === "suspend" && (
               <div className="book-services-suspension-period">
+
                 <label htmlFor="suspension-duration">
                   Suspension period <span>*</span>
                 </label>
@@ -1609,9 +2381,10 @@ export default function BookServices() {
                 </select>
 
                 <p>
-                  The suspension expiry date will be calculated from the
-                  date you submit this action.
+                  The suspension expiry date will be calculated from
+                  the date you submit this action.
                 </p>
+
               </div>
             )}
 
@@ -1626,6 +2399,7 @@ export default function BookServices() {
             )}
 
             <div className="book-services-reject-actions">
+
               <button
                 type="button"
                 className="book-services-modal-secondary"
@@ -1641,6 +2415,7 @@ export default function BookServices() {
                 }`}
                 onClick={submitReviewAction}
               >
+
                 {reviewAction === "reject" ? (
                   <X size={13} />
                 ) : reviewAction === "block" ? (
@@ -1654,11 +2429,15 @@ export default function BookServices() {
                   : reviewAction === "block"
                     ? "Confirm Block"
                     : "Confirm Suspension"}
+
               </button>
+
             </div>
+
           </section>
         </div>
       )}
+
     </div>
   );
 }
