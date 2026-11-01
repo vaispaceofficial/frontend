@@ -931,3 +931,605 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+/* =========================================================
+   NEEDONESERVICE — VENDOR DETAILS DASHBOARD
+========================================================= */
+
+.vendor-details-modal {
+  width: min(1120px, 96vw);
+  max-height: 92vh;
+  overflow-y: auto;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 24px 70px rgba(15, 35, 65, 0.22);
+  animation: vendorModalIn 0.22s ease;
+}
+
+@keyframes vendorModalIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.vendor-details-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e8edf4;
+}
+
+.vendor-details-topbar span {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: #718096;
+}
+
+.vendor-details-topbar h2 {
+  margin: 5px 0 0;
+  font-size: 22px;
+  color: #15365b;
+}
+
+.vendor-details-topbar > button {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  border-radius: 9px;
+  color: #52657d;
+  cursor: pointer;
+}
+
+.vendor-profile-header {
+  display: flex;
+  align-items: center;
+  gap: 17px;
+  padding: 20px 24px;
+  background: #f8faff;
+  border-bottom: 1px solid #e8edf4;
+}
+
+.vendor-profile-avatar {
+  width: 76px;
+  height: 76px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  background: #e9f1ff;
+  color: #2563eb;
+  border: 1px solid #d8e6ff;
+  border-radius: 13px;
+}
+
+.vendor-profile-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.vendor-profile-main h2 {
+  margin: 0 0 4px;
+  color: #15365b;
+  font-size: 20px;
+  font-weight: 750;
+}
+
+.vendor-profile-main p {
+  margin: 0 0 5px;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.vendor-profile-main > span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.vendor-profile-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: 9px;
+}
+
+.vendor-status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 9px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 700;
+  background: #ecfdf3;
+  color: #15803d;
+}
+
+.vendor-status-badge.pending {
+  background: #fff7e6;
+  color: #b7791f;
+}
+
+.vendor-status-badge.rejected {
+  background: #fff0f0;
+  color: #dc2626;
+}
+
+.vendor-status-badge.suspended {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.vendor-status-badge.neutral {
+  background: #edf3ff;
+  color: #315da8;
+}
+
+.vendor-report-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 9px 12px;
+  border: 1px solid #dce5f0;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #31577f;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.vendor-tabs {
+  display: flex;
+  gap: 5px;
+  padding: 12px 20px 0;
+  overflow-x: auto;
+  border-bottom: 1px solid #e8edf4;
+  scrollbar-width: thin;
+}
+
+.vendor-tabs button {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 11px 13px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.vendor-tabs button:hover {
+  color: #2563eb;
+  background: #f8faff;
+}
+
+.vendor-tabs button.active {
+  color: #2563eb;
+  border-bottom-color: #2563eb;
+}
+
+.vendor-details-content {
+  padding: 20px 24px;
+  min-height: 250px;
+}
+
+.vendor-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 11px;
+  margin-bottom: 18px;
+}
+
+.vendor-metric {
+  padding: 14px;
+  border: 1px solid #e5ebf3;
+  border-radius: 10px;
+  background: #f8faff;
+}
+
+.vendor-metric span {
+  display: block;
+  color: #718096;
+  font-size: 11px;
+  font-weight: 550;
+}
+
+.vendor-metric strong {
+  display: block;
+  margin-top: 5px;
+  color: #173d69;
+  font-size: 22px;
+  font-weight: 750;
+}
+
+.vendor-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 13px;
+}
+
+.vendor-detail-card {
+  min-width: 0;
+  padding: 15px;
+  border: 1px solid #e6ebf2;
+  border-radius: 11px;
+  background: #ffffff;
+}
+
+.vendor-detail-card-heading {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #edf0f5;
+}
+
+.vendor-detail-card-heading h3 {
+  margin: 0;
+  color: #173b64;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.vendor-detail-card-icon {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  background: #edf4ff;
+  color: #2563eb;
+}
+
+.vendor-detail-items {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 15px 13px;
+}
+
+.vendor-detail-item {
+  min-width: 0;
+}
+
+.vendor-detail-item span {
+  display: block;
+  margin-bottom: 4px;
+  color: #8995a7;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.vendor-detail-item strong {
+  display: block;
+  overflow-wrap: anywhere;
+  color: #334b68;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.5;
+}
+
+.vendor-document-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 0;
+  border-bottom: 1px solid #edf0f5;
+}
+
+.vendor-document-row:last-of-type {
+  border-bottom: none;
+}
+
+.vendor-document-row > div {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #475b75;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.vendor-document-row > div svg {
+  color: #6481a5;
+  flex-shrink: 0;
+}
+
+.vendor-not-provided {
+  color: #9a7b45;
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.vendor-private-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  padding: 10px;
+  margin: 13px 0 0;
+  border-radius: 8px;
+  background: #fff9ed;
+  color: #946a24;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.vendor-private-note svg {
+  flex-shrink: 0;
+}
+
+.vendor-gallery-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 190px;
+  padding: 25px;
+  text-align: center;
+  color: #8a9bb0;
+}
+
+.vendor-gallery-empty strong {
+  margin-top: 12px;
+  color: #405773;
+  font-size: 13px;
+}
+
+.vendor-gallery-empty span {
+  max-width: 400px;
+  margin-top: 6px;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.vendor-remarks-input {
+  width: 100%;
+  min-height: 85px;
+  resize: vertical;
+  padding: 10px;
+  border: 1px solid #dfe6ef;
+  border-radius: 8px;
+  outline: none;
+  font: inherit;
+  font-size: 12px;
+}
+
+.vendor-remarks-input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
+}
+
+.vendor-save-remark {
+  margin-top: 9px;
+  padding: 9px 12px;
+  border: none;
+  border-radius: 7px;
+  background: #2563eb;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.vendor-save-remark:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.vendor-saved-remark {
+  padding: 12px;
+  margin-top: 13px;
+  border-radius: 8px;
+  background: #f6f8fc;
+}
+
+.vendor-saved-remark span {
+  color: #8290a3;
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.vendor-saved-remark p {
+  margin: 6px 0 0;
+  color: #405773;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.vendor-admin-panel {
+  padding: 17px 24px;
+  background: #f8faff;
+  border-top: 1px solid #e7edf5;
+}
+
+.vendor-admin-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.vendor-admin-heading h3 {
+  margin: 0;
+  color: #173b64;
+  font-size: 14px;
+}
+
+.vendor-admin-heading p {
+  margin: 4px 0 0;
+  color: #8290a3;
+  font-size: 11px;
+}
+
+.vendor-admin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-top: 14px;
+  margin-bottom: 10px;
+}
+
+.vendor-admin-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 10px 13px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.vendor-admin-approve {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.vendor-admin-reject {
+  background: #fff1f2;
+  border-color: #fecdd3 !important;
+  color: #be123c;
+}
+
+.vendor-admin-suspend {
+  background: #ffffff;
+  border-color: #dce4ef !important;
+  color: #52657d;
+}
+
+.vendor-admin-disclaimer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 12px 0 0;
+  color: #8290a3;
+  font-size: 10px;
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 760px) {
+  .vendor-details-modal {
+    width: 96vw;
+    max-height: 94vh;
+    border-radius: 12px;
+  }
+
+  .vendor-profile-header {
+    flex-wrap: wrap;
+    padding: 15px;
+  }
+
+  .vendor-report-button {
+    margin-left: auto;
+  }
+
+  .vendor-details-content {
+    padding: 15px;
+  }
+
+  .vendor-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .vendor-metric-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .vendor-tabs {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .vendor-tabs button {
+    padding: 10px;
+    font-size: 11px;
+  }
+
+  .vendor-admin-panel {
+    padding: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .vendor-details-topbar {
+    padding: 15px;
+  }
+
+  .vendor-details-topbar h2 {
+    font-size: 19px;
+  }
+
+  .vendor-profile-avatar {
+    width: 58px;
+    height: 58px;
+  }
+
+  .vendor-profile-main h2 {
+    font-size: 16px;
+  }
+
+  .vendor-detail-items {
+    grid-template-columns: 1fr 1fr;
+    gap: 13px 9px;
+  }
+
+  .vendor-admin-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .vendor-admin-actions button {
+    flex: 1 1 100%;
+  }
+}
+
+@media print {
+  .businesses-page-header,
+  .businesses-directory-card,
+  .vendor-tabs,
+  .vendor-admin-panel,
+  .vendor-details-topbar > button,
+  .vendor-report-button {
+    display: none !important;
+  }
+
+  .business-modal-backdrop {
+    position: static;
+    padding: 0;
+    background: #ffffff;
+  }
+
+  .vendor-details-modal {
+    width: 100%;
+    max-height: none;
+    overflow: visible;
+    box-shadow: none;
+  }
+}
+
