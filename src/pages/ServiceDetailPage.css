@@ -2250,246 +2250,638 @@ border-color: #1d4ed8;
   color: #2563eb;
 }
 
-/* =========================================
-   PROFESSIONAL DETAILS POPUP
-========================================= */
+
+/* =========================================================
+   PROFESSIONAL DETAILS POPUP — ONESERVICE PREMIUM
+   Preserves positioning, preview/pinned behavior and scrolling
+========================================================= */
 
 .professional-popup-backdrop {
   position: fixed;
   inset: 0;
   z-index: 9998;
+
   display: flex;
   align-items: flex-end;
   justify-content: flex-end;
+
   padding: 22px;
+
   background: rgba(15, 23, 42, 0.2);
+
   animation: professionalBackdropIn 0.2s ease;
 }
 
+/* Popup surface */
+
 .professional-detail-popup {
   position: relative;
+
   width: min(440px, 100%);
   max-height: min(82vh, 780px);
+
+  box-sizing: border-box;
+
+  overflow-x: hidden;
   overflow-y: auto;
+
   padding: 25px;
-  color: #172033;
-  background: #fff;
-  border: 1px solid #dbeafe;
+
+  color: #334155;
+  background: #ffffff;
+
+  border: 1px solid #e8edf4;
   border-radius: 18px;
-  box-shadow: 0 24px 80px rgba(15, 35, 70, 0.22);
+
+  box-shadow:
+    0 24px 70px rgba(15, 23, 42, 0.17),
+    0 5px 18px rgba(15, 23, 42, 0.05);
+
   overscroll-behavior: contain;
+
+  scrollbar-width: none !important;
+  -ms-overflow-style: none;
+
   animation: professionalPopupIn 0.25s ease;
 }
+
+.professional-detail-popup::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Close button */
 
 .professional-popup-close {
   position: absolute;
   top: 15px;
   right: 15px;
+  z-index: 2;
+
   display: grid;
   place-items: center;
-  width: 35px;
-  height: 35px;
-  color: #475569;
-  background: #f1f5f9;
-  border: 1px solid #e2e8f0;
+
+  width: 34px;
+  height: 34px;
+  padding: 0;
+
+  color: #64748b;
+  background: #f8fafc;
+
+  border: 1px solid #e8edf4;
   border-radius: 50%;
+
   cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
 }
 
 .professional-popup-close:hover {
-  color: #1d4ed8;
-  background: #dbeafe;
+  color: #dc2626;
+  background: #feecec;
+  border-color: #fecaca;
+
+  transform: rotate(90deg);
 }
+
+/* Profile label */
 
 .professional-popup-label {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  margin-bottom: 20px;
+
+  margin-bottom: 16px;
   padding: 7px 10px;
-  color: #1d4ed8;
+
+  color: #2563eb;
   background: #eff6ff;
+
+  border: 1px solid #dbeafe;
   border-radius: 7px;
-  font-size: 12px;
-  font-weight: 600;
+
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
 }
+
+.professional-popup-label svg {
+  color: #2563eb;
+}
+
+/* Profile header */
 
 .professional-popup-profile {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #e8eef6;
+  gap: 15px;
+
+  padding: 5px 0 20px;
+
+  border-bottom: 1px solid #edf1f5;
 }
 
-.professional-popup-profile > img {
+.professional-popup-profile > img,
+.professional-popup-profile .professional-popup-avatar {
   flex-shrink: 0;
-  width: 72px;
-  height: 72px;
+
+  width: 76px;
+  height: 76px;
+
   object-fit: cover;
-  border-radius: 50%;
+
   background: #eff6ff;
+
+  border: 3px solid #f1f5f9;
+  border-radius: 50%;
+
+  box-shadow: 0 0 0 1px #dbeafe;
+}
+
+.professional-popup-profile-info {
+  min-width: 0;
 }
 
 .professional-popup-profile h2 {
   margin: 0 32px 5px 0;
-  font-size: 18px;
-  font-weight: 650;
+
+  color: #172b4d;
+
+  font-size: 20px;
+  font-weight: 750;
+  line-height: 1.3;
+
+  overflow-wrap: anywhere;
 }
 
 .professional-popup-profile p {
-  margin: 0 0 7px;
+  margin: 0 0 8px;
+
   color: #64748b;
-  font-size: 13px;
+
+  font-size: 12px;
+  font-weight: 500;
 }
 
+/* Header rating */
+
+.professional-popup-header-rating,
 .professional-popup-rating {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 5px;
+
   color: #64748b;
   font-size: 12px;
 }
 
+.professional-popup-header-rating svg,
 .professional-popup-rating svg {
-  color: #f2ad16;
+  color: #e5a323;
 }
 
+.professional-popup-header-rating strong,
 .professional-popup-rating strong {
-  color: #172033;
+  color: #172b4d;
+  font-weight: 750;
 }
 
-/* EXPERIENCE, SERVICE AREA AND RESPONSE TIME */
+.professional-popup-header-rating span {
+  color: #94a3b8;
+  font-size: 11px;
+}
 
+/* Divider */
+
+.professional-popup-divider {
+  width: 100%;
+  height: 1px;
+
+  background: #edf1f5;
+}
+
+/* =========================================================
+   PROFESSIONAL INFORMATION — VERTICAL LAYOUT
+========================================================= */
+
+.professional-popup-info-list,
 .professional-popup-stats {
   display: grid;
-  gap: 0;
-  padding: 8px 0;
-  border-bottom: 1px solid #e8eef6;
+  grid-template-columns: 1fr;
+  gap: 10px;
+
+  padding: 17px 0;
 }
 
+/* Individual information row */
+
+.professional-popup-info-row,
 .professional-popup-stats > div {
-  display: grid;
-  grid-template-columns: 25px 1fr;
-  column-gap: 9px;
+  display: flex;
+  flex-direction: row;
   align-items: center;
-  padding: 10px 0;
+  gap: 12px;
+
+  min-width: 0;
+  padding: 13px 14px;
+
+  background: #f8fafc;
+  border: 1px solid #edf1f5;
+  border-radius: 10px;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
 }
 
+/* Information icon */
+
+.professional-popup-info-row > svg,
 .professional-popup-stats > div > svg {
-  grid-row: span 2;
+  flex-shrink: 0;
   color: #2563eb;
+  width: 18px;
+  height: 18px;
 }
 
+/* Information text container */
+
+.professional-popup-info-row > div,
+.professional-popup-stats > div > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  min-width: 0;
+}
+
+/* Information label */
+
+.professional-popup-info-row span,
 .professional-popup-stats > div > span {
-  color: #64748b;
-  font-size: 12px;
-}
-
-.professional-popup-stats > div > strong {
-  margin-top: 3px;
-  font-size: 13px;
+  color: #94a3b8;
+  font-size: 10px;
   font-weight: 600;
+  line-height: 1.4;
 }
 
-/* CUSTOMER REVIEWS */
+/* Information value */
 
-.professional-popup-reviews {
-  padding-top: 18px;
+.professional-popup-info-row strong,
+.professional-popup-stats > div > strong {
+  color: #334155;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.5;
+
+  overflow-wrap: anywhere;
 }
 
-.professional-popup-reviews > h3 {
+/* Subtle hover effect */
+
+.professional-popup-info-row:hover,
+.professional-popup-stats > div:hover {
+  background: #f1f6ff;
+  border-color: #dbeafe;
+}
+
+/* =========================================================
+   SERVICE PRICING
+========================================================= */
+
+.professional-popup-pricing {
+  margin: 16px 0;
+  padding: 15px;
+
+  background: #f8fafc;
+
+  border: 1px solid #e8edf4;
+  border-radius: 12px;
+}
+
+.professional-popup-pricing h3 {
   display: flex;
   align-items: center;
   gap: 8px;
+
   margin: 0 0 12px;
-  font-size: 15px;
+
+  color: #172b4d;
+
+  font-size: 13px;
+  font-weight: 750;
 }
 
-.professional-popup-reviews > h3 svg,
-.professional-popup-review-header > span svg {
-  color: #f2ad16;
+.professional-popup-pricing h3 svg {
+  color: #2563eb;
 }
 
-.professional-popup-review {
-  padding: 12px 0;
-  border-bottom: 1px solid #edf2f7;
-}
-
-.professional-popup-review-header {
+.professional-popup-price-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+
+  padding: 11px 0;
+
+  border-bottom: 1px solid #e8edf4;
 }
 
-.professional-popup-review-header > strong {
-  font-size: 13px;
+.professional-popup-price-row:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
 }
 
-.professional-popup-review-header > span {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-}
+.professional-popup-price-row span {
+  min-width: 0;
 
-.professional-popup-review > p {
-  margin: 7px 0 0;
   color: #64748b;
-  font-size: 13px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.professional-popup-price-row strong {
+  flex-shrink: 0;
+
+  color: #166534;
+
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.professional-popup-price-empty {
+  padding: 12px;
+
+  color: #94a3b8;
+  background: #ffffff;
+
+  border: 1px dashed #dbe3ee;
+  border-radius: 8px;
+
+  font-size: 11px;
   line-height: 1.6;
 }
 
+/* Registered service chips */
+
+.professional-popup-service-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.professional-popup-service-chips span {
+  padding: 7px 11px;
+
+  color: #1d4ed8;
+  background: #eff6ff;
+
+  border: 1px solid #dbeafe;
+  border-radius: 6px;
+
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* Additional popup details */
+
+.professional-popup-details > p {
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.professional-popup-contact-note {
+  padding: 10px 12px;
+
+  color: #64748b !important;
+  background: #f8fafc;
+
+  border-left: 3px solid #93b4f8;
+  border-radius: 5px;
+
+  font-size: 11px !important;
+}
+
+/* =========================================================
+   CUSTOMER REVIEWS
+========================================================= */
+
+.professional-popup-customer-reviews,
+.professional-popup-reviews {
+  padding: 17px 0;
+}
+
+.professional-popup-reviews-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+
+  margin-bottom: 13px;
+}
+
+.professional-popup-reviews-heading h3,
+.professional-popup-reviews > h3 {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+
+  margin: 0;
+
+  color: #172b4d;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.professional-popup-reviews-heading h3 svg,
+.professional-popup-reviews > h3 svg {
+  color: #e5a323;
+}
+
+.professional-popup-reviews-heading > span {
+  color: #94a3b8;
+  font-size: 11px;
+}
+
+.professional-popup-review-item,
+.professional-popup-review {
+  padding: 13px 0;
+
+  border-bottom: 1px solid #edf1f5;
+}
+
+.professional-popup-review-item:last-child,
+.professional-popup-review:last-child {
+  border-bottom: none;
+}
+
+.professional-popup-review-top,
+.professional-popup-review-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.professional-popup-review-top strong,
+.professional-popup-review-header > strong {
+  color: #334155;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.professional-popup-review-top span,
+.professional-popup-review-header > span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  color: #b7791f;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.professional-popup-review-top svg,
+.professional-popup-review-header svg {
+  color: #e5a323;
+}
+
+.professional-popup-review-item p,
+.professional-popup-review > p {
+  margin: 8px 0 0;
+
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+/* No reviews */
+
+.professional-popup-no-reviews {
+  padding: 20px 12px;
+
+  background: #f8fafc;
+
+  border: 1px dashed #e2e8f0;
+  border-radius: 10px;
+
+  text-align: center;
+}
+
+.professional-popup-no-reviews strong {
+  display: block;
+  margin-bottom: 7px;
+
+  color: #475569;
+  font-size: 12px;
+}
+
+.professional-popup-no-reviews p {
+  margin: 0;
+
+  color: #94a3b8;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+/* =========================================================
+   OVERALL RATING — COMPACT
+========================================================= */
+
+.professional-popup-overall-rating,
 .professional-popup-review-summary {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 14px;
-  padding: 12px;
-  color: #1d4ed8;
-  background: #eff6ff;
-  border-radius: 9px;
+  gap: 7px;
+
+  margin-top: 10px;
+  padding: 9px 11px;
+
+  color: #92400e;
+  background: #fffbeb;
+
+  border: 1px solid #fef3c7;
+  border-radius: 8px;
 }
 
-.professional-popup-review-summary > span {
-  color: #475569;
-  font-size: 12px;
+.professional-popup-overall-rating strong {
+  color: #92400e;
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.2;
 }
+
+.professional-popup-overall-rating span,
+.professional-popup-review-summary > span {
+  color: #a16207;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+/* Done button */
 
 .professional-popup-select-button {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+
   width: 100%;
-  margin-top: 18px;
+  min-height: 44px;
+
+  margin-top: 16px;
   padding: 12px 16px;
-  color: #fff;
+
+  color: #ffffff;
   background: #2563eb;
-  border: 0;
-  border-radius: 10px;
+
+  border: none;
+  border-radius: 9px;
+
   font: inherit;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 700;
+
   cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
 }
 
 .professional-popup-select-button:hover {
   background: #1d4ed8;
+  box-shadow: 0 5px 14px rgba(37, 99, 235, 0.2);
 }
+
+.professional-popup-select-button:active {
+  transform: scale(0.99);
+}
+
+/* Booking hint */
 
 .booking-hint {
   display: block;
   margin-top: 10px;
+
   color: #64748b;
-  font-size: 12px;
+  font-size: 11px;
   line-height: 1.5;
 }
 
-/* ANIMATIONS */
+/* =========================================================
+   ANIMATIONS
+========================================================= */
 
 @keyframes professionalPopupIn {
   from {
@@ -2513,7 +2905,9 @@ border-color: #1d4ed8;
   }
 }
 
-/* RESPONSIVE */
+/* =========================================================
+   RESPONSIVE
+========================================================= */
 
 @media (max-width: 600px) {
   .professional-popup-backdrop {
@@ -2527,9 +2921,33 @@ border-color: #1d4ed8;
     border-radius: 16px;
   }
 
-  .professional-popup-profile > img {
+  .professional-popup-profile > img,
+  .professional-popup-profile .professional-popup-avatar {
     width: 62px;
     height: 62px;
+  }
+
+  .professional-popup-profile h2 {
+    font-size: 17px;
+  }
+
+  .professional-popup-info-list,
+  .professional-popup-stats {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .professional-popup-info-row,
+  .professional-popup-stats > div {
+    flex-direction: row;
+    align-items: center;
+
+    padding: 11px 12px;
+  }
+
+  .professional-popup-info-row > div,
+  .professional-popup-stats > div > div {
+    flex: 1;
   }
 }
 
@@ -2538,51 +2956,38 @@ border-color: #1d4ed8;
   .professional-detail-popup {
     animation: none;
   }
-}
 
-
-
-/* =========================================
-   PROFESSIONAL POPUP — CUSTOM SCROLL INDICATOR
-========================================= */
-
-.professional-detail-popup {
-  position: relative;
-  overflow-x: hidden;
-  overflow-y: auto;
-  scrollbar-width: none !important;
-  -ms-overflow-style: none;
-}
-
-.professional-detail-popup::-webkit-scrollbar {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
-}
-
-/* Thin blue indicator that follows scrolling */
-.professional-scroll-indicator {
-  position: absolute;
-  top: 8px;
-  right: 3px;
-  width: 3px;
-  height: var(--scroll-thumb-height, 40px);
-  border-radius: 999px;
-  background: #2563eb;
-  transform: translateY(var(--scroll-thumb-offset, 0px));
-  pointer-events: none;
-  z-index: 10;
-}
-
-@media (prefers-reduced-motion: reduce) {
   .professional-scroll-indicator {
     transition: none;
   }
 }
 
+/* =========================================================
+   CUSTOM SCROLL INDICATOR
+========================================================= */
 
-/* Add these rules at the END of ServiceDetailPage.css.
-   Existing pinned/modal popup styling remains unchanged. */
+.professional-scroll-indicator {
+  position: absolute;
+  top: 8px;
+  right: 3px;
+
+  width: 3px;
+  height: var(--scroll-thumb-height, 40px);
+
+  background: #2563eb;
+  border-radius: 999px;
+
+  transform: translateY(var(--scroll-thumb-offset, 0px));
+
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* =========================================================
+   PREVIEW / PINNED BEHAVIOR
+   Preserve existing popup interaction
+========================================================= */
+
 .professional-popup-backdrop.preview {
   background: transparent;
   pointer-events: none;
@@ -2599,6 +3004,7 @@ border-color: #1d4ed8;
 .professional-popup-backdrop.pinned .professional-detail-popup {
   pointer-events: auto;
 }
+
 
 
 /* =========================================================
@@ -2634,187 +3040,420 @@ border-color: #1d4ed8;
   line-height: 1.7;
 }
 
-/* Professional cards grid */
+
+/* =========================================================
+   ONESERVICE — PROFESSIONAL CARDS
+   Premium | Exclusive | Professionals
+========================================================= */
+
+/* =========================================================
+   PROFESSIONAL CATEGORY GROUPS — HEADINGS REMOVED
+========================================================= */
+
+#professionals .professional-category-group {
+  width: 100%;
+  margin-top: 0;
+}
+
+#professionals .professional-category-heading {
+  display: none;
+}
+
+/* =========================================================
+   PROFESSIONAL GRID
+========================================================= */
 
 #professionals .professional-selection-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
+  gap: 12px;
   width: 100%;
 }
+
+/* =========================================================
+   PROFESSIONAL CARD
+========================================================= */
 
 #professionals .professional-selection-card {
   position: relative;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+
+  width: 100%;
   min-width: 0;
-  padding: 0;
-  overflow: hidden;
+  min-height: 132px;
+
+  padding: 12px 14px;
   text-align: left;
+
   background: #ffffff;
-  border: 1px solid #dce7f1;
-  border-radius: 12px;
+  border: 1px solid #e1e8f0;
+  border-radius: 13px;
+
   cursor: pointer;
+
   transition:
-    border-color 0.25s ease,
-    box-shadow 0.25s ease,
-    transform 0.25s ease;
+    border-color 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
 }
 
 #professionals .professional-selection-card:hover {
-  border-color: #60a5fa;
-  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.10);
-  transform: translateY(-3px);
+  border-color: #a8c7f5;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.07);
+  transform: translateY(-2px);
 }
 
 #professionals .professional-selection-card.selected {
+  background: #f8fbff;
   border: 1.5px solid #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.09);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.06);
 }
 
-/* Professional image */
+/* =========================================================
+   CATEGORY ICON — TOP RIGHT
+   Supports both category-icon and tier-icon class names
+========================================================= */
+
+#professionals .professional-category-icon,
+#professionals .professional-tier-icon {
+  position: absolute;
+  top: 8px;
+  right: 9px;
+  left: auto;
+
+  z-index: 4;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 22px;
+  height: 22px;
+  padding: 0;
+
+  background: transparent;
+  border: none;
+  border-radius: 5px;
+
+  color: #64748b;
+  opacity: 0.85;
+
+  pointer-events: none;
+}
+
+#professionals .professional-category-icon svg,
+#professionals .professional-tier-icon svg {
+  width: 15px;
+  height: 15px;
+  stroke-width: 1.8;
+}
+
+/* Premium — subtle blue */
+
+#professionals .professional-category-icon.premium,
+#professionals .professional-tier-icon-premium {
+  color: #2563eb;
+}
+
+/* Exclusive — subtle violet */
+
+#professionals .professional-category-icon.exclusive,
+#professionals .professional-tier-icon-exclusive {
+  color: #7c3aed;
+}
+
+/* Regular professional — neutral slate */
+
+#professionals .professional-category-icon.professional,
+#professionals .professional-tier-icon-professional {
+  color: #64748b;
+}
+
+/* =========================================================
+   PROFESSIONAL IMAGE
+========================================================= */
 
 #professionals .professional-selection-photo {
   position: relative;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex: 0 0 68px;
+  width: 68px;
+  height: 82px;
+
+  overflow: visible;
+  background: transparent;
+  border-radius: 9px;
+}
+
+#professionals .professional-selection-photo > *:first-child {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
   width: 100%;
-  height: 175px;
+  height: 100%;
+
   overflow: hidden;
-  background: #eff5fb;
+  border-radius: 9px;
 }
 
 #professionals .professional-selection-photo img {
+  display: block;
+
   width: 100%;
   height: 100%;
+
   object-fit: cover;
   object-position: center;
-  transition: transform 0.35s ease;
+
+  border-radius: 9px;
+  transition: transform 0.25s ease;
 }
 
-#professionals .professional-selection-card:hover
+#professionals
+.professional-selection-card:hover
 .professional-selection-photo img {
-  transform: scale(1.05);
+  transform: scale(1.04);
 }
 
-/* Selected badge */
+/* =========================================================
+   SELECTED BADGE
+========================================================= */
 
 #professionals .professional-selected-badge {
   position: absolute;
-  top: 10px;
-  right: 10px;
+  left: -4px;
+  bottom: -4px;
+
+  z-index: 5;
+
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 6px 10px;
+  justify-content: center;
+  gap: 4px;
+
+  padding: 4px 6px;
+  white-space: nowrap;
+
   color: #ffffff;
   background: #2563eb;
-  border-radius: 30px;
-  font-size: 11px;
+
+  border: 2px solid #ffffff;
+  border-radius: 6px;
+
+  font-size: 9px;
   font-weight: 600;
+  line-height: 1.2;
+
+  box-shadow: 0 2px 5px rgba(37, 99, 235, 0.15);
 }
 
-/* Professional information */
+#professionals .professional-selected-badge svg {
+  flex-shrink: 0;
+}
+
+/* =========================================================
+   PROFESSIONAL INFORMATION
+========================================================= */
 
 #professionals .professional-selection-info {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 9px;
-  padding: 16px;
-  width: 100%;
+
+  flex: 1;
+  min-width: 0;
+
+  gap: 4px;
+  padding: 0;
+  margin: 0;
 }
 
+/* Professional name */
+
 #professionals .professional-selection-info h3 {
+  width: 100%;
+
   margin: 0;
-  color: #15385e;
-  font-size: 16px;
-  font-weight: 650;
-  line-height: 1.4;
+  padding-top: 4px;
+
+  color: #071b36;
+
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
+
+/* =========================================================
+   VERIFIED BADGE
+========================================================= */
 
 #professionals .professional-verified-row {
   display: flex;
   align-items: center;
+  margin: 0;
 }
 
 #professionals .professional-verified-badge {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 4px 8px;
+  gap: 4px;
+
+  padding: 2px 6px;
+
   color: #087b54;
-  background: #eaf8f1;
-  border-radius: 30px;
-  font-size: 11px;
+  background: #f0faf4;
+
+  border: 1px solid #d1eadb;
+  border-radius: 20px;
+
+  font-size: 9px;
   font-weight: 600;
+  line-height: 1.3;
 }
+
+#professionals .professional-verified-badge svg {
+  flex-shrink: 0;
+  color: #16a34a;
+  stroke-width: 2.3;
+}
+
+/* =========================================================
+   RATING
+========================================================= */
 
 #professionals .professional-selection-rating {
   display: flex;
   align-items: center;
-  gap: 6px;
-  color: #2563eb;
-  font-size: 12px;
+  gap: 4px;
+
+  margin: 0;
+  color: #64748b;
+
+  font-size: 11px;
+  line-height: 1.3;
+}
+
+#professionals .professional-selection-rating svg {
+  flex-shrink: 0;
+  color: #f59e0b;
 }
 
 #professionals .professional-selection-rating strong {
-  color: #405d7b;
-  font-size: 12px;
+  color: #172b45;
+  font-size: 11px;
   font-weight: 600;
 }
 
+#professionals .professional-selection-rating span {
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 400;
+}
+
+/* =========================================================
+   SERVICE AREA
+========================================================= */
+
 #professionals .professional-selection-area {
   display: flex;
-  align-items: flex-start;
-  gap: 6px;
-  margin: 0;
-  color: #71859b;
-  font-size: 12px;
-  line-height: 1.5;
+  align-items: center;
+  gap: 5px;
+
+  width: 100%;
+  margin: 2px 0 0;
+
+  color: #60758d;
+
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.3;
 }
 
 #professionals .professional-selection-area svg {
   flex-shrink: 0;
-  margin-top: 2px;
   color: #2563eb;
+  stroke-width: 2;
 }
 
-#professionals .professional-experience {
-  color: #647991;
-  font-size: 12px;
-  line-height: 1.5;
+#professionals .professional-selection-area span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
+
+/* =========================================================
+   EXPERIENCE
+========================================================= */
+
+#professionals .professional-experience {
+  display: block;
+  margin-top: 2px;
+
+  color: #2563eb;
+
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+/* =========================================================
+   STARTING PRICE
+========================================================= */
 
 #professionals .professional-card-price {
   display: inline-flex;
   align-items: center;
-  padding: 6px 10px;
+
+  margin-top: 3px;
+  padding: 3px 7px;
+
   color: #1d4ed8;
-  background: #eff6ff;
-  border-radius: 6px;
-  font-size: 12px;
+  background: #f5f9ff;
+
+  border: 1px solid #e0ebfb;
+  border-radius: 5px;
+
+  font-size: 10px;
   font-weight: 700;
+  line-height: 1.3;
 }
 
-/* Empty state */
+/* =========================================================
+   EMPTY STATE
+========================================================= */
 
 #professionals .professional-empty-state {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+
   column-gap: 10px;
   row-gap: 4px;
+
   width: 100%;
   padding: 0;
+
   color: #15385e;
   background: transparent;
   border: none;
-  border-radius: 0;
 }
 
 #professionals .professional-empty-state > svg {
   flex-shrink: 0;
   color: #15385e;
-  stroke-width: 2;
 }
 
 #professionals .professional-empty-state strong {
@@ -2827,49 +3466,24 @@ border-color: #1d4ed8;
 #professionals .professional-empty-state p {
   flex-basis: 100%;
   margin: 0;
+
   color: #60758d;
   font-size: 14px;
   line-height: 1.6;
 }
 
-/* Carousel controls */
-
-#professionals .professional-carousel-controls {
-  display: flex;
-  justify-content: center;
-  margin-top: 22px;
-}
-
-#professionals .professional-next-row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 38px;
-  height: 38px;
-  color: #2563eb;
-  background: #ffffff;
-  border: 1px solid #d8e5f2;
-  border-radius: 50%;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-#professionals .professional-next-row:hover {
-  color: #ffffff;
-  background: #2563eb;
-  border-color: #2563eb;
-}
-
-/* Card animation */
+/* =========================================================
+   GRID ANIMATION
+========================================================= */
 
 #professionals .professional-grid-animated {
-  animation: professionalGridFade 0.35s ease;
+  animation: professionalGridFade 0.3s ease;
 }
 
 @keyframes professionalGridFade {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(5px);
   }
 
   to {
@@ -2879,51 +3493,82 @@ border-color: #1d4ed8;
 }
 
 /* =========================================================
-   RESPONSIVE DESIGN
+   RESPONSIVE — TABLET
 ========================================================= */
 
 @media (max-width: 900px) {
   #professionals .professional-selection-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  #professionals .professional-selection-card {
+    gap: 10px;
+    padding: 12px;
+    min-height: 130px;
+  }
+
+  #professionals .professional-selection-photo {
+    flex: 0 0 60px;
+    width: 60px;
+    height: 76px;
+  }
+
+  #professionals .professional-selection-info h3 {
+    font-size: 13px;
+  }
+
+  #professionals .professional-selection-area {
+    font-size: 11px;
   }
 }
 
-@media (max-width: 600px) {
-  #professionals h2 {
-    font-size: 23px;
-  }
+/* =========================================================
+   RESPONSIVE — MOBILE
+========================================================= */
 
-  #professionals .professional-section-description {
-    font-size: 13px;
-    margin-bottom: 19px;
+@media (max-width: 600px) {
+  #professionals .professional-category-group {
+    margin-top: 0;
   }
 
   #professionals .professional-selection-grid {
     grid-template-columns: 1fr;
-    gap: 14px;
+    gap: 10px;
+  }
+
+  #professionals .professional-selection-card {
+    min-height: 132px;
+    padding: 12px 14px;
+    gap: 12px;
   }
 
   #professionals .professional-selection-photo {
-    height: 190px;
+    flex: 0 0 68px;
+    width: 68px;
+    height: 82px;
   }
 
   #professionals .professional-selection-info {
-    padding: 14px;
+    gap: 4px;
   }
 
-  #professionals .professional-empty-state {
-    column-gap: 8px;
-  }
-
-  #professionals .professional-empty-state strong {
-    flex: 1;
+  #professionals .professional-selection-info h3 {
     font-size: 14px;
   }
 
-  #professionals .professional-empty-state p {
-    font-size: 13px;
+  #professionals .professional-selection-area {
+    font-size: 11px;
+  }
+
+  #professionals .professional-experience {
+    font-size: 10px;
   }
 }
+
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
 
 @media (prefers-reduced-motion: reduce) {
   #professionals .professional-grid-animated {
@@ -2937,49 +3582,6 @@ border-color: #1d4ed8;
 }
 
 
-
-/* =========================================================
-   PROFESSIONAL PROFILE — IMAGE FALLBACK
-========================================================= */
-
-.professional-image-fallback {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  overflow: hidden;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #dbeafe, #eff6ff);
-  color: #2563eb;
-  font-size: 20px;
-  font-weight: 700;
-}
-
-/* Profile image inside popup */
-
-.professional-popup-avatar {
-  width: 68px;
-  height: 68px;
-  min-width: 68px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid #e5efff;
-  background: #eff6ff;
-}
-
-/* =========================================================
-   PROFESSIONAL CARD RATING
-========================================================= */
-
-.professional-card-rating {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  margin-top: 7px;
-  color: #d99412;
-  font-size: 12px;
-  font-weight: 650;
-}
 
 /* =========================================================
    PROFESSIONAL POPUP RATING SUMMARY
@@ -3677,4 +4279,67 @@ border-color: #1d4ed8;
   .professional-selection-card {
     max-width: 100%;
   }
+}
+
+
+/* =========================================================
+   ONESERVICE — PROFESSIONAL CATEGORY ICON COLORS
+   Circular background + white icon
+========================================================= */
+
+#professionals .professional-category-icon,
+#professionals .professional-tier-icon {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  left: auto;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 34px;
+  height: 34px;
+  padding: 0;
+
+  border-radius: 50%;
+  border: none;
+
+  color: #ffffff;
+  opacity: 1;
+
+  pointer-events: none;
+}
+
+/* White icon */
+
+#professionals .professional-category-icon svg,
+#professionals .professional-tier-icon svg {
+  width: 17px;
+  height: 17px;
+
+  color: #ffffff;
+  stroke: #ffffff;
+  stroke-width: 2.2;
+}
+
+/* Premium — Blue */
+
+#professionals .professional-category-icon.premium,
+#professionals .professional-tier-icon-premium {
+  background-color: #2563eb;
+}
+
+/* Exclusive — Purple */
+
+#professionals .professional-category-icon.exclusive,
+#professionals .professional-tier-icon-exclusive {
+  background-color: #9333ea;
+}
+
+/* Professional — Green */
+
+#professionals .professional-category-icon.professional,
+#professionals .professional-tier-icon-professional {
+  background-color: #16a34a;
 }
