@@ -111,85 +111,65 @@
 }
 
 /* =========================================================
-   VENDOR GRID
+   MARKETPLACE KPI GRID — 5 CARDS IN ONE ROW
 ========================================================= */
 
-.products-vendor-grid {
+.products-vendor-grid.marketplace-kpi-grid {
   display: grid;
 
-  grid-template-columns:
-    repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
 
-  gap: 18px;
+  gap: 16px;
+
+  width: 100%;
 
   margin-bottom: 23px;
 }
 
 /* =========================================================
-   VENDOR CARD
+   MARKETPLACE KPI CARD
 ========================================================= */
 
-.products-vendor-card {
-  min-height: 257px;
+.marketplace-kpi-card {
+  min-width: 0;
+  min-height: 165px;
 
   padding: 20px;
 
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
+
+  gap: 17px;
 
   border: 1px solid #e0e7ef;
   border-radius: 15px;
 
   background: #ffffff;
 
-  box-shadow:
-    0 2px 8px rgba(16, 43, 78, 0.035);
+  box-shadow: 0 2px 8px rgba(16, 43, 78, 0.035);
+
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease;
 }
 
-.products-vendor-badge {
-  width: fit-content;
+.marketplace-kpi-card:hover {
+  transform: translateY(-3px);
 
-  min-height: 30px;
+  border-color: #cbd9eb;
 
-  padding: 0 11px;
-
-  display: inline-flex;
-  align-items: center;
-
-  gap: 5px;
-
-  border-radius: 18px;
-
-  font-size: 10px;
-  font-weight: 700;
-}
-
-.products-vendor-badge.active {
-  background: #e8f1ff;
-  color: #1d5bbd;
-}
-
-.products-vendor-badge.pending {
-  background: #fff3d7;
-  color: #a66b00;
+  box-shadow: 0 8px 20px rgba(16, 43, 78, 0.07);
 }
 
 /* =========================================================
-   VENDOR HEADING
+   KPI ICON
 ========================================================= */
 
-.products-vendor-heading {
-  margin-top: 16px;
-
-  display: flex;
-  align-items: center;
-
-  gap: 11px;
-}
-
-.products-vendor-avatar {
-  width: 42px;
-  height: 42px;
+.marketplace-kpi-icon {
+  width: 43px;
+  height: 43px;
 
   flex: 0 0 auto;
 
@@ -197,108 +177,262 @@
   align-items: center;
   justify-content: center;
 
-  border-radius: 50%;
-
-  background: #eaf2ff;
-  color: #1554b8;
-
-  font-size: 11px;
-  font-weight: 800;
+  border-radius: 12px;
 }
 
-.products-vendor-heading h2 {
-  margin: 0 0 4px;
+.marketplace-kpi-icon svg {
+  width: 21px;
+  height: 21px;
 
-  color: #172033;
-
-  font-size: 16px;
-  font-weight: 700;
+  stroke-width: 2;
 }
 
-.products-vendor-heading span {
-  color: #718096;
+/* Icon backgrounds */
 
-  font-size: 11px;
+.marketplace-kpi-icon.blue {
+  background: #e8f1ff;
+  color: #2563eb;
+}
+
+.marketplace-kpi-icon.purple {
+  background: #f0eaff;
+  color: #7c3aed;
+}
+
+.marketplace-kpi-icon.orange {
+  background: #fff2df;
+  color: #ea580c;
+}
+
+.marketplace-kpi-icon.green {
+  background: #e5f8ed;
+  color: #16a34a;
+}
+
+.marketplace-kpi-icon.teal {
+  background: #e0f7f5;
+  color: #0d9488;
 }
 
 /* =========================================================
-   VENDOR META
+   KPI CONTENT
 ========================================================= */
 
-.products-vendor-meta {
-  margin-top: 19px;
+.marketplace-kpi-content {
+  width: 100%;
 
   display: flex;
   flex-direction: column;
 
-  gap: 6px;
+  gap: 5px;
 }
 
-.products-vendor-meta span {
-  color: #53657c;
+.marketplace-kpi-content > span {
+  color: #64748b;
 
-  font-size: 11px;
+  font-size: 12px;
+  font-weight: 600;
 }
 
-.products-vendor-meta strong {
-  color: #3d506a;
+.marketplace-kpi-content > strong {
+  color: #172033;
 
-  font-size: 11px;
+  font-size: 27px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.marketplace-kpi-content small {
+  display: inline-flex;
+  align-items: center;
+
+  gap: 5px;
+
+  color: #64748b;
+
+  font-size: 10px;
   font-weight: 500;
 }
 
+.marketplace-kpi-content small svg {
+  width: 12px;
+  height: 12px;
+}
+
+.marketplace-kpi-content .marketplace-kpi-pending {
+  color: #d97706;
+}
+
 /* =========================================================
-   VENDOR ACTIONS
+   RESPONSIVE LAYOUT
 ========================================================= */
 
-.products-vendor-actions {
-  margin-top: auto;
+/* Smaller desktop / laptop */
 
-  padding-top: 18px;
+@media (max-width: 1200px) {
+  .products-vendor-grid.marketplace-kpi-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Tablet */
+
+@media (max-width: 768px) {
+  .products-vendor-grid.marketplace-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    gap: 12px;
+  }
+
+  .marketplace-kpi-card {
+    min-height: 150px;
+
+    padding: 16px;
+  }
+}
+
+/* Mobile */
+
+@media (max-width: 480px) {
+  .products-vendor-grid.marketplace-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =========================================================
+   MARKETPLACE KPI GRID — 5 CARDS IN ONE ROW
+========================================================= */
+
+.products-vendor-grid.marketplace-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 16px;
+  width: 100%;
+  margin-bottom: 23px;
+}
+
+/* =========================================================
+   MARKETPLACE KPI CARD
+========================================================= */
+
+.marketplace-kpi-card {
+  min-width: 0;
+  min-height: 165px;
+  padding: 20px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 17px;
+
+  border: 1px solid #e0e7ef;
+  border-radius: 15px;
+  background: #ffffff;
+
+  box-shadow: 0 2px 8px rgba(16, 43, 78, 0.035);
+
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    border-color 0.18s ease;
+}
+
+.marketplace-kpi-card:hover {
+  transform: translateY(-3px);
+  border-color: #cbd9eb;
+
+  box-shadow: 0 8px 20px rgba(16, 43, 78, 0.07);
+}
+
+/* =========================================================
+   KPI ICON
+========================================================= */
+
+.marketplace-kpi-icon {
+  width: 43px;
+  height: 43px;
+  flex: 0 0 auto;
 
   display: flex;
   align-items: center;
-
-  gap: 9px;
-}
-
-.products-secondary-button {
-  height: 43px;
-
-  padding: 0 14px;
-
-  display: inline-flex;
-  align-items: center;
   justify-content: center;
 
-  gap: 7px;
-
-  border: 1px solid #d5dfeb;
-  border-radius: 10px;
-
-  background: #ffffff;
-
-  color: #19365b;
-
-  font-family: inherit;
-
-  font-size: 11px;
-  font-weight: 650;
-
-  cursor: pointer;
-
-  transition:
-    border-color 0.16s ease,
-    background 0.16s ease,
-    transform 0.16s ease;
+  border-radius: 12px;
 }
 
-.products-secondary-button:hover {
-  border-color: #aebfd5;
+.marketplace-kpi-icon svg {
+  width: 21px;
+  height: 21px;
+  stroke-width: 2;
+}
 
-  background: #f8fbff;
+.marketplace-kpi-icon.blue {
+  background: #e8f1ff;
+  color: #2563eb;
+}
 
-  transform: translateY(-1px);
+.marketplace-kpi-icon.purple {
+  background: #f0eaff;
+  color: #7c3aed;
+}
+
+.marketplace-kpi-icon.orange {
+  background: #fff2df;
+  color: #ea580c;
+}
+
+.marketplace-kpi-icon.green {
+  background: #e5f8ed;
+  color: #16a34a;
+}
+
+.marketplace-kpi-icon.teal {
+  background: #e0f7f5;
+  color: #0d9488;
+}
+
+/* =========================================================
+   KPI CONTENT
+========================================================= */
+
+.marketplace-kpi-content {
+  width: 100%;
+
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.marketplace-kpi-content > span {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.marketplace-kpi-content > strong {
+  color: #172033;
+  font-size: 27px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.marketplace-kpi-content small {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.marketplace-kpi-content small svg {
+  width: 12px;
+  height: 12px;
+}
+
+.marketplace-kpi-content .marketplace-kpi-pending {
+  color: #d97706;
 }
 
 /* =========================================================
@@ -307,16 +441,13 @@
 
 .products-inventory-card {
   width: 100%;
-
   overflow: hidden;
 
   border: 1px solid #e0e7ef;
   border-radius: 15px;
-
   background: #ffffff;
 
-  box-shadow:
-    0 2px 8px rgba(16, 43, 78, 0.035);
+  box-shadow: 0 2px 8px rgba(16, 43, 78, 0.035);
 }
 
 /* =========================================================
@@ -325,17 +456,11 @@
 
 .products-inventory-filter {
   min-height: 81px;
-
   padding: 18px;
 
   display: grid;
-
-  grid-template-columns:
-    minmax(250px, 1fr)
-    140px;
-
+  grid-template-columns: minmax(250px, 1fr) 140px auto;
   gap: 9px;
-
   align-items: center;
 
   border-bottom: 1px solid #e7ecf2;
@@ -343,44 +468,36 @@
 
 .products-inventory-search {
   height: 45px;
-
   padding: 0 14px;
 
   display: flex;
   align-items: center;
-
   gap: 9px;
 
   border: 1px solid #d5deea;
   border-radius: 10px;
 
   background: #ffffff;
-
   color: #94a3b8;
 }
 
 .products-inventory-search:focus-within {
   border-color: #8eb2ed;
-
-  box-shadow:
-    0 0 0 3px rgba(37, 99, 235, 0.08);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
 }
 
 .products-inventory-search input {
   width: 100%;
   min-width: 0;
-
   padding: 0;
 
   border: 0;
   outline: 0;
 
   background: transparent;
-
   color: #334155;
 
   font-family: inherit;
-
   font-size: 12px;
 }
 
@@ -400,7 +517,6 @@
   border-radius: 6px;
 
   background: #f1f5f9;
-
   color: #64748b;
 
   cursor: pointer;
@@ -412,29 +528,24 @@
 
 .products-category-select {
   position: relative;
-
   height: 45px;
 }
 
 .products-category-select select {
   width: 100%;
   height: 100%;
-
   padding: 0 34px 0 14px;
 
   appearance: none;
 
   border: 1px solid #d5deea;
   border-radius: 10px;
-
   outline: 0;
 
   background: #ffffff;
-
   color: #526176;
 
   font-family: inherit;
-
   font-size: 11px;
 
   cursor: pointer;
@@ -442,21 +553,17 @@
 
 .products-category-select select:focus {
   border-color: #8eb2ed;
-
-  box-shadow:
-    0 0 0 3px rgba(37, 99, 235, 0.08);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.08);
 }
 
 .products-category-select svg {
   position: absolute;
-
   top: 50%;
   right: 11px;
 
   transform: translateY(-50%);
 
   color: #475569;
-
   pointer-events: none;
 }
 
@@ -466,31 +573,32 @@
 
 .products-clear-filter {
   height: 32px;
-
   padding: 0 11px;
 
   border: 1px solid #dbe3ec;
   border-radius: 7px;
 
   background: #ffffff;
-
   color: #64748b;
 
   font-family: inherit;
-
   font-size: 10px;
   font-weight: 650;
 
   cursor: pointer;
 }
 
+.products-clear-filter:hover {
+  background: #f8fbff;
+  border-color: #aebfd5;
+}
+
 /* =========================================================
-   TABLE
+   INVENTORY TABLE
 ========================================================= */
 
 .products-inventory-table-wrapper {
   width: 100%;
-
   overflow-x: auto;
 }
 
@@ -507,7 +615,6 @@
 
 .products-inventory-table th {
   height: 47px;
-
   padding: 0 18px;
 
   text-align: left;
@@ -516,10 +623,8 @@
   border-bottom: 1px solid #e6ebf2;
 
   color: #64748b;
-
   font-size: 10px;
   font-weight: 750;
-
   letter-spacing: 0.04em;
 
   white-space: nowrap;
@@ -527,7 +632,6 @@
 
 .products-inventory-table td {
   height: 72px;
-
   padding: 9px 18px;
 
   vertical-align: middle;
@@ -535,7 +639,6 @@
   border-bottom: 1px solid #e8edf3;
 
   color: #40516a;
-
   font-size: 12px;
 
   white-space: nowrap;
@@ -556,14 +659,12 @@
 .products-item-name {
   display: flex;
   align-items: center;
-
   gap: 10px;
 }
 
 .products-item-icon {
   width: 34px;
   height: 34px;
-
   flex: 0 0 auto;
 
   display: flex;
@@ -573,7 +674,6 @@
   border-radius: 8px;
 
   background: #edf4ff;
-
   color: #2563eb;
 }
 
@@ -586,14 +686,12 @@
   margin-bottom: 3px;
 
   color: #172033;
-
   font-size: 12px;
   font-weight: 700;
 }
 
 .products-item-name span {
   color: #98a4b3;
-
   font-size: 9px;
 }
 
@@ -603,19 +701,16 @@
 
 .products-vendor-name {
   color: #42556e;
-
   font-size: 12px;
 }
 
 .products-table-category {
   color: #526176;
-
   font-size: 12px;
 }
 
 .products-listing-count {
   color: #526176;
-
   font-size: 12px;
 }
 
@@ -625,7 +720,6 @@
 
 .products-liability-status {
   min-width: 89px;
-
   padding: 7px 10px;
 
   display: inline-flex;
@@ -640,34 +734,29 @@
 
 .products-liability-status.acknowledged {
   background: #e7f7ed;
-
   color: #087443;
 }
 
 .products-liability-status.pending {
   background: #fff3d8;
-
   color: #a66b00;
 }
 
 /* =========================================================
-   REMOVE BUTTON
+   LISTING ACTION BUTTON
 ========================================================= */
 
 .products-remove-button {
   height: 42px;
-
   padding: 0 14px;
 
   border: 1px solid #d7e0eb;
   border-radius: 10px;
 
   background: #ffffff;
-
   color: #d02f38;
 
   font-family: inherit;
-
   font-size: 11px;
   font-weight: 650;
 
@@ -680,7 +769,6 @@
 
 .products-remove-button:hover {
   border-color: #efb6ba;
-
   background: #fff8f8;
 }
 
@@ -695,7 +783,6 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-
   gap: 7px;
 
   color: #94a3b8;
@@ -703,7 +790,6 @@
 
 .products-empty-state strong {
   color: #475569;
-
   font-size: 13px;
 }
 
@@ -715,13 +801,11 @@
   margin-top: 6px;
 
   border: 0;
-
   background: transparent;
 
   color: #2563eb;
 
   font-family: inherit;
-
   font-size: 10px;
   font-weight: 700;
 
@@ -734,7 +818,6 @@
 
 .products-pagination {
   min-height: 59px;
-
   padding: 0 18px;
 
   display: flex;
@@ -746,7 +829,6 @@
 
 .products-pagination > span {
   color: #8a96a5;
-
   font-size: 10px;
 }
 
@@ -757,14 +839,12 @@
 .products-pagination-controls {
   display: flex;
   align-items: center;
-
   gap: 4px;
 }
 
 .products-pagination-controls button {
   min-width: 29px;
   height: 29px;
-
   padding: 0 7px;
 
   display: inline-flex;
@@ -775,11 +855,9 @@
   border-radius: 7px;
 
   background: #ffffff;
-
   color: #667487;
 
   font-family: inherit;
-
   font-size: 10px;
   font-weight: 600;
 
@@ -788,40 +866,33 @@
 
 .products-pagination-controls button:hover:not(:disabled) {
   border-color: #a9c1e5;
-
   color: #2563eb;
 }
 
 .products-pagination-controls button.active {
   border-color: #2563eb;
-
   background: #2563eb;
-
   color: #ffffff;
 }
 
 .products-pagination-controls button:disabled {
   opacity: 0.45;
-
   cursor: not-allowed;
 }
 
 .products-pagination-controls span {
   padding: 0 3px;
-
   color: #9aa5b3;
-
   font-size: 10px;
 }
 
 /* =========================================================
-   MODAL
+   INVENTORY MODAL
 ========================================================= */
 
 .products-modal-backdrop {
   position: fixed;
   z-index: 1000;
-
   inset: 0;
 
   padding: 20px;
@@ -831,22 +902,21 @@
   justify-content: center;
 
   background: rgba(15, 35, 60, 0.28);
-
   backdrop-filter: blur(3px);
 }
 
 .products-modal {
   width: min(500px, 100%);
+  max-height: calc(100vh - 40px);
 
-  overflow: hidden;
+  overflow-y: auto;
 
   border: 1px solid #e0e6ee;
   border-radius: 15px;
 
   background: #ffffff;
 
-  box-shadow:
-    0 24px 70px rgba(16, 43, 78, 0.18);
+  box-shadow: 0 24px 70px rgba(16, 43, 78, 0.18);
 }
 
 .products-modal-header {
@@ -861,14 +931,11 @@
 
 .products-modal-header span {
   display: block;
-
   margin-bottom: 5px;
 
   color: #2563eb;
-
   font-size: 9px;
   font-weight: 800;
-
   letter-spacing: 0.1em;
 }
 
@@ -876,7 +943,6 @@
   margin: 0;
 
   color: #172033;
-
   font-size: 18px;
 }
 
@@ -892,68 +958,22 @@
   border-radius: 7px;
 
   background: #f5f7fa;
-
   color: #64748b;
 
   cursor: pointer;
 }
 
-.products-modal-profile {
-  padding: 18px;
-
-  display: flex;
-  align-items: center;
-
-  gap: 11px;
-}
-
-.products-modal-avatar {
-  width: 45px;
-  height: 45px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 50%;
-
-  background: #eaf2ff;
-
-  color: #1554b8;
-
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.products-modal-profile strong,
-.products-modal-profile span {
-  display: block;
-}
-
-.products-modal-profile strong {
-  margin-bottom: 3px;
-
-  color: #26364d;
-
-  font-size: 13px;
-}
-
-.products-modal-profile span {
-  color: #8b98aa;
-
-  font-size: 10px;
-}
+/* =========================================================
+   MODAL DETAILS GRID
+========================================================= */
 
 .products-modal-grid {
-  margin: 0 18px;
+  margin: 18px;
 
   padding: 15px;
 
   display: grid;
-
-  grid-template-columns:
-    repeat(2, 1fr);
-
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 15px;
 
   border: 1px solid #e4e9ef;
@@ -964,63 +984,61 @@
 
 .products-modal-grid span {
   display: block;
-
   margin-bottom: 5px;
 
   color: #8b96a5;
-
   font-size: 8px;
   font-weight: 800;
-
   letter-spacing: 0.07em;
 }
 
 .products-modal-grid strong {
   color: #46566c;
-
   font-size: 10px;
+  overflow-wrap: anywhere;
 }
+
+/* =========================================================
+   WARNING BOX
+========================================================= */
 
 .products-warning-box {
   margin: 16px 18px 0;
-
   padding: 11px 12px;
 
   display: flex;
   align-items: flex-start;
-
   gap: 8px;
 
   border: 1px solid #f0dfb3;
   border-radius: 9px;
 
   background: #fffaf0;
-
   color: #916f22;
 
   font-size: 10px;
-
   line-height: 1.45;
 }
+
+/* =========================================================
+   MODAL FOOTER
+========================================================= */
 
 .products-modal-footer {
   padding: 18px;
 
   display: flex;
   justify-content: flex-end;
-
   gap: 8px;
 }
 
 .products-modal-footer button {
-  height: 37px;
-
+  min-height: 37px;
   padding: 0 13px;
 
   border-radius: 8px;
 
   font-family: inherit;
-
   font-size: 10px;
   font-weight: 700;
 
@@ -1029,75 +1047,71 @@
 
 .products-modal-secondary {
   border: 1px solid #dce3eb;
-
   background: #ffffff;
-
   color: #526176;
 }
 
 .products-modal-primary {
   display: inline-flex;
   align-items: center;
-
   gap: 6px;
 
   border: 1px solid #2563eb;
-
   background: #2563eb;
-
   color: #ffffff;
 }
 
 .products-modal-danger {
   border: 1px solid #d64a50;
-
   background: #d64a50;
-
   color: #ffffff;
 }
 
 /* =========================================================
-   RESPONSIVE
+   RESPONSIVE KPI CARDS
 ========================================================= */
 
-@media (max-width: 1100px) {
-  .products-vendor-grid {
-    grid-template-columns:
-      repeat(2, minmax(0, 1fr));
+/* Smaller desktop */
+
+@media (max-width: 1200px) {
+  .products-vendor-grid.marketplace-kpi-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
-@media (max-width: 850px) {
-  .products-vendor-grid {
-    grid-template-columns: 1fr;
+/* Tablet */
+
+@media (max-width: 768px) {
+  .products-vendor-grid.marketplace-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
   }
 
+  .marketplace-kpi-card {
+    min-height: 150px;
+    padding: 16px;
+  }
+}
+
+/* Mobile */
+
+@media (max-width: 480px) {
+  .products-vendor-grid.marketplace-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =========================================================
+   RESPONSIVE INVENTORY
+========================================================= */
+
+@media (max-width: 850px) {
   .products-inventory-filter {
-    grid-template-columns: 1fr 140px;
+    grid-template-columns: minmax(0, 1fr) 140px auto;
   }
 }
 
 @media (max-width: 600px) {
-  .products-admin-header h1 {
-    font-size: 23px;
-  }
-
-  .products-admin-header p {
-    font-size: 11px;
-  }
-
-  .products-liability-banner {
-    align-items: flex-start;
-  }
-
-  .products-liability-banner strong {
-    font-size: 12px;
-  }
-
-  .products-liability-banner span {
-    font-size: 10px;
-  }
-
   .products-inventory-filter {
     grid-template-columns: 1fr;
   }
@@ -1108,7 +1122,6 @@
 
   .products-pagination {
     align-items: flex-start;
-
     flex-direction: column;
 
     padding-top: 13px;
@@ -1119,9 +1132,5 @@
 
   .products-modal-grid {
     grid-template-columns: 1fr;
-  }
-
-  .products-vendor-actions {
-    flex-wrap: wrap;
   }
 }
