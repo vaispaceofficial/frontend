@@ -25,9 +25,17 @@ import {
   UsersRound,
   Wrench,
   X,
+  MessageSquare,
+  AlertTriangle,
+  Send,
+  ClipboardCheck,
 } from "lucide-react";
 
 import "./Professionals.css";
+
+/* =========================================================
+   TYPES
+========================================================= */
 
 type ProviderStatus = "Verified" | "Pending";
 type DocumentStatus = "Verified" | "Pending" | "Rejected";
@@ -42,6 +50,29 @@ type SubscriptionStatus =
   | "Trial Expired"
   | "Active"
   | "Expired";
+
+type RemarkType = "note" | "warning" | "final-warning";
+
+type AdminRemark = {
+  id: string;
+  message: string;
+  createdAt: string;
+  createdBy: string;
+  type: RemarkType;
+  warningNumber?: number;
+  readAt?: string;
+  adminReviewRequired?: boolean;
+  adminReviewStatus?: "Pending" | "Reviewed";
+  reviewedAt?: string;
+};
+
+/* Professional service pricing */
+
+type ProfessionalServicePrice = {
+  id?: string;
+  name: string;
+  price: string | number;
+};
 
 type ProviderDocument = {
   id: string;
@@ -64,12 +95,18 @@ type ProfessionalApplication = {
   category?: string;
   designation?: string;
   services?: string[];
+
+  /* Pricing fields */
+  servicePrices?: unknown;
+  servicePricing?: unknown;
+  servicePricesByService?: unknown;
+  visitingFee?: string | number;
+
   experience?: string | number;
   workType?: string;
   workingDays?: string[];
   serviceArea?: string;
   about?: string;
-  visitingFee?: string | number;
   profileImage?: string;
   image?: string;
   photo?: string;
@@ -88,6 +125,12 @@ type ProfessionalApplication = {
   subscriptionStartedAt?: string;
   subscriptionEndsAt?: string;
   subscriptionStatus?: SubscriptionStatus;
+
+  adminRemarks?: AdminRemark[];
+  adminReviewRequired?: boolean;
+  adminReviewStatus?: "Pending" | "Reviewed";
+  adminReviewRequestedAt?: string;
+  adminReviewCompletedAt?: string;
 
   documents?: Array<{
     id?: string;
@@ -124,6 +167,8 @@ type Provider = {
   reviewCount: number;
   about: string;
   services: string[];
+  servicePrices: ProfessionalServicePrice[];
+  visitingFee?: string | number;
   phone: string;
   email: string;
   profileImage?: string;
@@ -141,16 +186,29 @@ type Provider = {
   subscriptionEndsAt?: string;
   subscriptionStatus?: SubscriptionStatus;
 
+  adminRemarks: AdminRemark[];
+  adminReviewRequired?: boolean;
+  adminReviewStatus?: "Pending" | "Reviewed";
+  adminReviewRequestedAt?: string;
+  adminReviewCompletedAt?: string;
+
   documents: ProviderDocument[];
 };
 
+/* =========================================================
+   CONSTANTS
+========================================================= */
+
 const PAGE_SIZE = 5;
 const TRIAL_DURATION_DAYS = 30;
+const MAX_FORMAL_WARNINGS = 3;
+const ADMIN_DISPLAY_NAME = "Edmund";
 
 const APPLICATION_KEY = "oneservice_professional_application";
 const APPLICATIONS_KEY = "oneservice_professional_applications";
 const PROFESSIONALS_KEY = "oneservice_professionals";
 const CHANGE_EVENT = "oneservice-professional-change";
+const REMARK_EVENT = "oneservice-professional-remark";
 
 const SUBSCRIPTION_PLANS: {
   name: SubscriptionPlan;
@@ -158,39 +216,40 @@ const SUBSCRIPTION_PLANS: {
   description: string;
   features: string[];
 }[] = [
-  {
-    name: "Basic",
-    price: 199,
-    description: "Essential professional visibility",
-    features: [
-      "Professional profile listing",
-      "Service enquiries",
-      "Basic profile management",
-    ],
-  },
-  {
-    name: "Exclusive",
-    price: 499,
-    description: "More visibility for your business",
-    features: [
-      "Everything in Basic",
-      "Priority profile visibility",
-      "Enhanced professional listing",
-      "Customer enquiry management",
-    ],
-  },
-  {
-    name: "Premium",
-    price: 999,
-    description: "Maximum professional exposure",
-    features: [
-      "Everything in Exclusive",
-      "Premium profile visibility",
-      "Featured professional listing",
-      "Priority support",
-    ],
-  },
-];
+    {
+      name: "Basic",
+      price: 199,
+      description: "Essential professional visibility",
+      features: [
+        "Professional profile listing",
+        "Service enquiries",
+        "Basic profile management",
+      ],
+    },
+    {
+      name: "Exclusive",
+      price: 499,
+      description: "More visibility for your business",
+      features: [
+        "Everything in Basic",
+        "Priority profile visibility",
+        "Enhanced professional listing",
+        "Customer enquiry management",
+      ],
+    },
+    {
+      name: "Premium",
+      price: 999,
+      description: "Maximum professional exposure",
+      features: [
+        "Everything in Exclusive",
+        "Premium profile visibility",
+        "Featured professional listing",
+        "Priority support",
+        "Lead Analytics & Profile View Insights",
+      ],
+    },
+  ];
 
 const serviceTypes = [
   "Service Type",
@@ -229,6 +288,10 @@ const statuses = [
   "Rejected",
 ];
 
+/* =========================================================
+   GENERAL HELPERS
+========================================================= */
+
 function safeReadJson<T>(key: string, fallback: T): T {
   try {
     const value = localStorage.getItem(key);
@@ -263,6 +326,22 @@ function formatDate(value?: string): string {
   });
 }
 
+function formatDateTime(value?: string): string {
+  if (!value) return "—";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) return value;
+
+  return date.toLocaleString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 function normalizeDocumentStatus(status?: string): DocumentStatus {
   const normalized = (status || "").toLowerCase();
 
@@ -276,6 +355,208 @@ function normalizeDocumentStatus(status?: string): DocumentStatus {
 
   return "Pending";
 }
+
+/* =========================================================
+   SERVICE PRICE HELPERS
+========================================================= */
+
+function normalizeServicePriceItems(
+  value: unknown,
+): ProfessionalServicePrice[] {
+  if (!value) return [];
+
+  const normalizeItem = (
+    item: unknown,
+    fallbackName?: string,
+  ): ProfessionalServicePrice | null => {
+    if (typeof item === "number" || typeof item === "string") {
+      if (!fallbackName) return null;
+
+      return {
+        name: fallbackName,
+        price: item,
+      };
+    }
+
+    if (!item || typeof item !== "object" || Array.isArray(item)) {
+      return null;
+    }
+
+    const record = item as Record<string, unknown>;
+
+    const name =
+      record.name ??
+      record.serviceName ??
+      record.service ??
+      record.title ??
+      record.label ??
+      fallbackName;
+
+    const price =
+      record.price ??
+      record.servicePrice ??
+      record.amount ??
+      record.rate ??
+      record.value;
+
+    if (
+      typeof name !== "string" ||
+      price === undefined ||
+      price === null ||
+      price === ""
+    ) {
+      return null;
+    }
+
+    return {
+      id:
+        typeof record.id === "string"
+          ? record.id
+          : undefined,
+      name,
+      price: price as string | number,
+    };
+  };
+
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => normalizeItem(item))
+      .filter(
+        (item): item is ProfessionalServicePrice =>
+          item !== null,
+      );
+  }
+
+  if (typeof value === "object") {
+    return Object.entries(
+      value as Record<string, unknown>,
+    )
+      .map(([name, item]) => normalizeItem(item, name))
+      .filter(
+        (item): item is ProfessionalServicePrice =>
+          item !== null,
+      );
+  }
+
+  return [];
+}
+
+function normalizeServicePrices(
+  application: ProfessionalApplication,
+): ProfessionalServicePrice[] {
+  const id = application.id;
+
+  /*
+   * 1. Read prices saved directly in the professional application.
+   */
+  const directPrices = normalizeServicePriceItems(
+    application.servicePrices ??
+    application.servicePricing ??
+    application.servicePricesByService,
+  );
+
+  if (directPrices.length > 0) {
+    return directPrices;
+  }
+
+  /*
+   * 2. Read a per-professional price record.
+   */
+  if (id) {
+    const individualPrices = safeReadJson<unknown>(
+      `oneservice_professional_service_prices_${id}`,
+      null,
+    );
+
+    const normalizedIndividual =
+      normalizeServicePriceItems(individualPrices);
+
+    if (normalizedIndividual.length > 0) {
+      return normalizedIndividual;
+    }
+  }
+
+  /*
+   * 3. Read shared price storage.
+   * Supported formats:
+   * - Array of records containing professionalId/id
+   * - Object indexed by professional ID
+   */
+  const sharedPrices = safeReadJson<unknown>(
+    "oneservice_professional_service_prices",
+    null,
+  );
+
+  if (Array.isArray(sharedPrices)) {
+    const matchingRecords = sharedPrices.filter((item) => {
+      if (!item || typeof item !== "object") return false;
+
+      const record = item as Record<string, unknown>;
+
+      return (
+        record.professionalId === id ||
+        record.applicationId === id ||
+        record.providerId === id
+      );
+    });
+
+    const normalizedShared =
+      normalizeServicePriceItems(matchingRecords);
+
+    if (normalizedShared.length > 0) {
+      return normalizedShared;
+    }
+  }
+
+  if (
+    sharedPrices &&
+    typeof sharedPrices === "object" &&
+    !Array.isArray(sharedPrices) &&
+    id
+  ) {
+    const priceRecord = (
+      sharedPrices as Record<string, unknown>
+    )[id];
+
+    const normalizedShared =
+      normalizeServicePriceItems(priceRecord);
+
+    if (normalizedShared.length > 0) {
+      return normalizedShared;
+    }
+  }
+
+  /*
+   * 4. Some registration forms store service prices
+   * inside the services array as objects.
+   */
+  const servicePricesFromServices =
+    normalizeServicePriceItems(application.services);
+
+  if (servicePricesFromServices.length > 0) {
+    return servicePricesFromServices;
+  }
+
+  return [];
+}
+
+function formatRupee(value?: string | number): string {
+  if (value === undefined || value === null || value === "") {
+    return "Not provided";
+  }
+
+  const numericValue = Number(value);
+
+  if (Number.isFinite(numericValue)) {
+    return `₹${numericValue.toLocaleString("en-IN")}`;
+  }
+
+  return `₹${String(value)}`;
+}
+
+/* =========================================================
+   DOCUMENT HELPERS
+========================================================= */
 
 function normalizeDocuments(
   application: ProfessionalApplication,
@@ -345,6 +626,10 @@ function normalizeDocuments(
   return documents;
 }
 
+/* =========================================================
+   PROVIDER NORMALIZATION
+========================================================= */
+
 function normalizeAccountState(
   application: ProfessionalApplication,
 ): AccountState | undefined {
@@ -391,6 +676,7 @@ function normalizeProvider(
     name,
     designation: application.designation || category,
     category,
+
     location:
       [application.city, application.state].filter(Boolean).join(", ") ||
       application.serviceArea ||
@@ -398,13 +684,12 @@ function normalizeProvider(
 
     experience:
       application.experience !== undefined &&
-      application.experience !== ""
-        ? `${application.experience}${
-            typeof application.experience === "number" ||
-            /^\d+$/.test(String(application.experience))
-              ? " years"
-              : ""
-          }`
+        application.experience !== ""
+        ? `${application.experience}${typeof application.experience === "number" ||
+          /^\d+$/.test(String(application.experience))
+          ? " years"
+          : ""
+        }`
         : "Not provided",
 
     idProofStatus: isApproved ? "Verified" : "Pending",
@@ -415,8 +700,14 @@ function normalizeProvider(
     about: application.about || "No professional description provided.",
 
     services: Array.isArray(application.services)
-      ? application.services
+      ? application.services.filter(
+        (service): service is string =>
+          typeof service === "string",
+      )
       : [],
+
+    servicePrices: normalizeServicePrices(application),
+    visitingFee: application.visitingFee,
 
     phone: application.mobile || application.phone || "—",
     email: application.email || "—",
@@ -439,9 +730,22 @@ function normalizeProvider(
     subscriptionEndsAt: application.subscriptionEndsAt,
     subscriptionStatus: application.subscriptionStatus,
 
+    adminRemarks: Array.isArray(application.adminRemarks)
+      ? application.adminRemarks
+      : [],
+
+    adminReviewRequired: application.adminReviewRequired,
+    adminReviewStatus: application.adminReviewStatus,
+    adminReviewRequestedAt: application.adminReviewRequestedAt,
+    adminReviewCompletedAt: application.adminReviewCompletedAt,
+
     documents: normalizeDocuments(application),
   };
 }
+
+/* =========================================================
+   READ APPLICATIONS
+========================================================= */
 
 function readApplications(): ProfessionalApplication[] {
   const multiple = safeReadJson<unknown>(APPLICATIONS_KEY, []);
@@ -475,6 +779,10 @@ function readApplications(): ProfessionalApplication[] {
   return Array.from(unique.values());
 }
 
+/* =========================================================
+   STATUS HELPERS
+========================================================= */
+
 function isPending(provider: Provider): boolean {
   return (
     provider.idProofStatus === "Pending" &&
@@ -507,6 +815,23 @@ function getReasonLabel(provider: Provider): string {
     default:
       return "Reason";
   }
+}
+
+/* =========================================================
+   REMARK AND WARNING HELPERS
+========================================================= */
+
+function getFormalWarningCount(remarks: AdminRemark[]): number {
+  return remarks.filter(
+    (remark) =>
+      remark.type === "warning" ||
+      remark.type === "final-warning",
+  ).length;
+}
+
+function getWarningLabel(count: number): string {
+  if (count >= MAX_FORMAL_WARNINGS) return "Final Warning";
+  return `Warning ${count} of ${MAX_FORMAL_WARNINGS}`;
 }
 
 /* =========================================================
@@ -569,120 +894,32 @@ function getSubscriptionStatus(
 }
 
 /* =========================================================
-   PERSIST PROFESSIONAL STATUS
+   SHARED RECORD MATCHING AND PERSISTENCE
 ========================================================= */
 
-function persistProviderUpdate(
+function matchesProvider(
+  application: ProfessionalApplication,
   provider: Provider,
-  updatedState: AccountState,
-  reason?: string,
-  suspensionDuration?: string,
-  suspensionUntil?: string,
-) {
-  const updateRecord = (
-    application: ProfessionalApplication,
-  ): ProfessionalApplication => {
-    const matches =
-      application.id === provider.id ||
-      (
-        !application.id &&
-        provider.phone !== "—" &&
-        (application.mobile || application.phone) === provider.phone
-      );
-
-    if (!matches) return application;
-
-    return {
-      ...application,
-
-      status: updatedState === "Active" ? "Approved" : updatedState,
-      accountState: updatedState,
-      rejectionReason: reason,
-      suspensionDuration,
-      suspensionUntil,
-
-      trialStartedAt: provider.trialStartedAt,
-      trialEndsAt: provider.trialEndsAt,
-
-      subscriptionPlan: provider.subscriptionPlan,
-      subscriptionStartedAt: provider.subscriptionStartedAt,
-      subscriptionEndsAt: provider.subscriptionEndsAt,
-      subscriptionStatus: provider.subscriptionStatus,
-    };
-  };
-
-  const applications = safeReadJson<ProfessionalApplication[]>(
-    APPLICATIONS_KEY,
-    [],
-  );
-
-  if (Array.isArray(applications)) {
-    localStorage.setItem(
-      APPLICATIONS_KEY,
-      JSON.stringify(applications.map(updateRecord)),
-    );
+): boolean {
+  if (application.id && provider.id) {
+    return application.id === provider.id;
   }
 
-  const professionals = safeReadJson<ProfessionalApplication[]>(
-    PROFESSIONALS_KEY,
-    [],
+  return (
+    provider.phone !== "—" &&
+    (application.mobile || application.phone) === provider.phone
   );
-
-  if (Array.isArray(professionals)) {
-    localStorage.setItem(
-      PROFESSIONALS_KEY,
-      JSON.stringify(professionals.map(updateRecord)),
-    );
-  }
-
-  const single = safeReadJson<ProfessionalApplication | null>(
-    APPLICATION_KEY,
-    null,
-  );
-
-  if (
-    single &&
-    (
-      single.id === provider.id ||
-      (
-        !single.id &&
-        provider.phone !== "—" &&
-        (single.mobile || single.phone) === provider.phone
-      )
-    )
-  ) {
-    localStorage.setItem(
-      APPLICATION_KEY,
-      JSON.stringify(updateRecord(single)),
-    );
-  }
-
-  window.dispatchEvent(new Event(CHANGE_EVENT));
 }
 
-/* =========================================================
-   PERSIST SUBSCRIPTION DATA
-========================================================= */
-
-function persistSubscriptionUpdate(
+function persistApplicationUpdates(
   provider: Provider,
   updates: Partial<ProfessionalApplication>,
 ) {
-  const matchesProvider = (
-    application: ProfessionalApplication,
-  ) =>
-    application.id === provider.id ||
-    (
-      !application.id &&
-      provider.phone !== "—" &&
-      (application.mobile || application.phone) === provider.phone
-    );
-
   const updateRecords = (
     records: ProfessionalApplication[],
   ) =>
     records.map((application) =>
-      matchesProvider(application)
+      matchesProvider(application, provider)
         ? { ...application, ...updates }
         : application,
     );
@@ -716,7 +953,7 @@ function persistSubscriptionUpdate(
     null,
   );
 
-  if (single && matchesProvider(single)) {
+  if (single && matchesProvider(single, provider)) {
     localStorage.setItem(
       APPLICATION_KEY,
       JSON.stringify({ ...single, ...updates }),
@@ -724,6 +961,117 @@ function persistSubscriptionUpdate(
   }
 
   window.dispatchEvent(new Event(CHANGE_EVENT));
+}
+
+/* =========================================================
+   PERSIST PROFESSIONAL STATUS
+========================================================= */
+
+function persistProviderUpdate(
+  provider: Provider,
+  updatedState: AccountState,
+  reason?: string,
+  suspensionDuration?: string,
+  suspensionUntil?: string,
+) {
+  persistApplicationUpdates(provider, {
+    status: updatedState === "Active" ? "Approved" : updatedState,
+    accountState: updatedState,
+    rejectionReason: reason,
+    suspensionDuration,
+    suspensionUntil,
+
+    trialStartedAt: provider.trialStartedAt,
+    trialEndsAt: provider.trialEndsAt,
+
+    subscriptionPlan: provider.subscriptionPlan,
+    subscriptionStartedAt: provider.subscriptionStartedAt,
+    subscriptionEndsAt: provider.subscriptionEndsAt,
+    subscriptionStatus: provider.subscriptionStatus,
+  });
+}
+
+/* =========================================================
+   PERSIST SUBSCRIPTION DATA
+========================================================= */
+
+function persistSubscriptionUpdate(
+  provider: Provider,
+  updates: Partial<ProfessionalApplication>,
+) {
+  persistApplicationUpdates(provider, updates);
+}
+
+/* =========================================================
+   PERSIST ADMIN REMARK
+========================================================= */
+
+function persistProfessionalRemark(
+  provider: Provider,
+  remark: AdminRemark,
+  updatedRemarks: AdminRemark[],
+) {
+  const isFinalWarning = remark.type === "final-warning";
+
+  /*
+   * Save the remark in all professional application records.
+   */
+  persistApplicationUpdates(provider, {
+    adminRemarks: updatedRemarks,
+
+    ...(isFinalWarning
+      ? {
+        adminReviewRequired: true,
+        adminReviewStatus: "Pending",
+        adminReviewRequestedAt: remark.createdAt,
+        adminReviewCompletedAt: undefined,
+      }
+      : {}),
+  });
+
+  /*
+   * Notify other parts of the frontend that a remark was created.
+   *
+   * ProfilePage can listen for this event and add the remark
+   * to the professional's notification list.
+   */
+  window.dispatchEvent(
+    new CustomEvent(REMARK_EVENT, {
+      detail: {
+        professionalId: provider.id,
+        professionalName: provider.name,
+        remark,
+      },
+    }),
+  );
+}
+
+/* =========================================================
+   MARK FINAL WARNING AS REVIEWED
+========================================================= */
+
+function persistAdminReviewCompleted(provider: Provider) {
+  const now = new Date().toISOString();
+
+  const updatedRemarks = provider.adminRemarks.map((remark) =>
+    remark.type === "final-warning" &&
+      remark.adminReviewRequired
+      ? {
+        ...remark,
+        adminReviewStatus: "Reviewed" as const,
+        reviewedAt: now,
+      }
+      : remark,
+  );
+
+  persistApplicationUpdates(provider, {
+    adminRemarks: updatedRemarks,
+    adminReviewRequired: false,
+    adminReviewStatus: "Reviewed",
+    adminReviewCompletedAt: now,
+  });
+
+  return updatedRemarks;
 }
 
 /* =========================================================
@@ -740,6 +1088,9 @@ export default function BookServices() {
   const [selectedProvider, setSelectedProvider] =
     useState<Provider | null>(null);
 
+  const [selectedPlan, setSelectedPlan] =
+    useState<SubscriptionPlan>("Basic");
+
   const [notice, setNotice] = useState("");
 
   const [reviewTarget, setReviewTarget] =
@@ -753,11 +1104,15 @@ export default function BookServices() {
   const [suspensionDuration, setSuspensionDuration] = useState("7");
 
   const [providerList, setProviderList] = useState<Provider[]>([]);
-
   const [currentTime, setCurrentTime] = useState(Date.now());
 
-  const [selectedPlan, setSelectedPlan] =
-    useState<SubscriptionPlan>("Exclusive");
+  /* REMARK MODAL STATE */
+
+  const [remarkModalOpen, setRemarkModalOpen] = useState(false);
+  const [remarkMessage, setRemarkMessage] = useState("");
+  const [remarkType, setRemarkType] =
+    useState<"note" | "warning">("note");
+  const [remarkError, setRemarkError] = useState("");
 
   /* LOAD PROFESSIONALS */
 
@@ -771,6 +1126,15 @@ export default function BookServices() {
       );
 
       setProviderList(mappedProviders);
+
+      setSelectedProvider((current) => {
+        if (!current) return current;
+
+        return (
+          mappedProviders.find((provider) => provider.id === current.id) ??
+          current
+        );
+      });
     };
 
     loadProviders();
@@ -825,6 +1189,7 @@ export default function BookServices() {
         provider.phone,
         provider.email,
         ...provider.services,
+        ...provider.servicePrices.map((item) => item.name),
       ];
 
       const matchesSearch =
@@ -1162,6 +1527,170 @@ export default function BookServices() {
     }
   };
 
+  /* =====================================================
+     ADMIN REMARKS
+  ===================================================== */
+
+  const openRemarkModal = () => {
+    setRemarkMessage("");
+    setRemarkType("note");
+    setRemarkError("");
+    setRemarkModalOpen(true);
+  };
+
+  const closeRemarkModal = () => {
+    setRemarkModalOpen(false);
+    setRemarkMessage("");
+    setRemarkError("");
+  };
+
+  const submitAdminRemark = () => {
+    if (!selectedProvider) return;
+
+    const message = remarkMessage.trim();
+
+    if (!message) {
+      setRemarkError("Please enter a remark before sending.");
+      return;
+    }
+
+    const existingRemarks = selectedProvider.adminRemarks || [];
+    const currentWarningCount =
+      getFormalWarningCount(existingRemarks);
+
+    if (
+      remarkType === "warning" &&
+      currentWarningCount >= MAX_FORMAL_WARNINGS
+    ) {
+      setRemarkError(
+        "This professional has already received three formal warnings. The final warning has been recorded and requires admin review.",
+      );
+      return;
+    }
+
+    const isFormalWarning = remarkType === "warning";
+
+    const warningNumber = isFormalWarning
+      ? currentWarningCount + 1
+      : undefined;
+
+    const isFinalWarning =
+      isFormalWarning &&
+      warningNumber === MAX_FORMAL_WARNINGS;
+
+    const now = new Date().toISOString();
+
+    const newRemark: AdminRemark = {
+      id:
+        typeof crypto !== "undefined" && "randomUUID" in crypto
+          ? crypto.randomUUID()
+          : `remark-${Date.now()}-${Math.random()
+            .toString(36)
+            .slice(2, 9)}`,
+
+      message,
+      createdAt: now,
+      createdBy: ADMIN_DISPLAY_NAME,
+
+      type: isFinalWarning
+        ? "final-warning"
+        : isFormalWarning
+          ? "warning"
+          : "note",
+
+      warningNumber,
+      adminReviewRequired: isFinalWarning,
+
+      ...(isFinalWarning
+        ? { adminReviewStatus: "Pending" as const }
+        : {}),
+    };
+
+    const updatedRemarks = [...existingRemarks, newRemark];
+
+    const updatedProvider: Provider = {
+      ...selectedProvider,
+      adminRemarks: updatedRemarks,
+
+      ...(isFinalWarning
+        ? {
+          adminReviewRequired: true,
+          adminReviewStatus: "Pending" as const,
+          adminReviewRequestedAt: now,
+          adminReviewCompletedAt: undefined,
+        }
+        : {}),
+    };
+
+    persistProfessionalRemark(
+      selectedProvider,
+      newRemark,
+      updatedRemarks,
+    );
+
+    setProviderList((current) =>
+      current.map((provider) =>
+        provider.id === selectedProvider.id
+          ? updatedProvider
+          : provider,
+      ),
+    );
+
+    setSelectedProvider(updatedProvider);
+
+    closeRemarkModal();
+
+    if (isFinalWarning) {
+      setNotice(
+        `Final warning sent to ${selectedProvider.name}. Admin review is now required. The professional has not been automatically suspended or blocked.`,
+      );
+    } else if (isFormalWarning && warningNumber === 2) {
+      setNotice(
+        `Second formal warning sent to ${selectedProvider.name}. The professional has been informed that the next warning will be a final warning requiring admin review.`,
+      );
+    } else if (isFormalWarning) {
+      setNotice(
+        `First formal warning sent to ${selectedProvider.name}.`,
+      );
+    } else {
+      setNotice(`Remark sent to ${selectedProvider.name}.`);
+    }
+  };
+
+  /* =====================================================
+     COMPLETE FINAL WARNING ADMIN REVIEW
+  ===================================================== */
+
+  const completeAdminReview = () => {
+    if (!selectedProvider) return;
+    if (!selectedProvider.adminReviewRequired) return;
+
+    const updatedRemarks =
+      persistAdminReviewCompleted(selectedProvider);
+
+    const updatedProvider: Provider = {
+      ...selectedProvider,
+      adminRemarks: updatedRemarks,
+      adminReviewRequired: false,
+      adminReviewStatus: "Reviewed",
+      adminReviewCompletedAt: new Date().toISOString(),
+    };
+
+    setSelectedProvider(updatedProvider);
+
+    setProviderList((current) =>
+      current.map((provider) =>
+        provider.id === selectedProvider.id
+          ? updatedProvider
+          : provider,
+      ),
+    );
+
+    setNotice(
+      `Final warning review for ${selectedProvider.name} has been marked as reviewed. Their account status has not been changed.`,
+    );
+  };
+
   /* SUBSCRIPTION STATE */
 
   const selectedSubscriptionStatus = selectedProvider
@@ -1174,18 +1703,18 @@ export default function BookServices() {
 
   const trialProgress =
     selectedProvider?.trialStartedAt &&
-    selectedProvider?.trialEndsAt
+      selectedProvider?.trialEndsAt
       ? Math.min(
+        100,
+        Math.max(
+          0,
+          ((currentTime -
+            new Date(selectedProvider.trialStartedAt).getTime()) /
+            (new Date(selectedProvider.trialEndsAt).getTime() -
+              new Date(selectedProvider.trialStartedAt).getTime())) *
           100,
-          Math.max(
-            0,
-            ((currentTime -
-              new Date(selectedProvider.trialStartedAt).getTime()) /
-              (new Date(selectedProvider.trialEndsAt).getTime() -
-                new Date(selectedProvider.trialStartedAt).getTime())) *
-              100,
-          ),
-        )
+        ),
+      )
       : 0;
 
   /* PAYMENT SELECTION */
@@ -1341,6 +1870,10 @@ export default function BookServices() {
                 const pending = isPending(provider);
                 const displayedStatus = getDisplayedStatus(provider);
 
+                const warningCount = getFormalWarningCount(
+                  provider.adminRemarks,
+                );
+
                 return (
                   <tr key={provider.id}>
 
@@ -1364,6 +1897,23 @@ export default function BookServices() {
                         <span>
                           {provider.designation} · {provider.id}
                         </span>
+
+                        {warningCount > 0 && (
+                          <small
+                            className="professional-warning-count"
+                            title={`${warningCount} formal warning(s) recorded`}
+                          >
+                            <AlertTriangle size={12} />
+                            {warningCount}/{MAX_FORMAL_WARNINGS} warnings
+                          </small>
+                        )}
+
+                        {provider.adminReviewRequired && (
+                          <small className="professional-review-required">
+                            <ClipboardCheck size={12} />
+                            Final warning · Review required
+                          </small>
+                        )}
 
                         {provider.rejectionReason && (
                           <small
@@ -1397,8 +1947,8 @@ export default function BookServices() {
                         {displayedStatus === "Verified" ? (
                           <CheckCircle2 size={14} />
                         ) : ["Suspended", "Blocked", "Rejected"].includes(
-                            displayedStatus,
-                          ) ? (
+                          displayedStatus,
+                        ) ? (
                           <Ban size={14} />
                         ) : (
                           <span className="book-services-pending-dot" />
@@ -1472,10 +2022,10 @@ export default function BookServices() {
                         {["Suspended", "Blocked", "Rejected"].includes(
                           provider.accountState ?? "",
                         ) && (
-                          <span className="book-services-action-disabled">
-                            {provider.accountState}
-                          </span>
-                        )}
+                            <span className="book-services-action-disabled">
+                              {provider.accountState}
+                            </span>
+                          )}
 
                       </div>
                     </td>
@@ -1855,23 +2405,70 @@ export default function BookServices() {
 
               </section>
 
-              {/* SERVICES */}
+              {/* SERVICES AND SERVICE-WISE PRICING */}
 
               <section className="book-services-selected-services">
 
                 <h4>
                   <UsersRound size={18} />
-                  Selected Services
+                  Selected Services &amp; Pricing
                 </h4>
 
-                <div>
-                  {selectedProvider.services.length > 0 ? (
-                    selectedProvider.services.map((service) => (
-                      <span key={service}>{service}</span>
-                    ))
-                  ) : (
-                    <span>No services submitted</span>
-                  )}
+                {selectedProvider.servicePrices.length > 0 ? (
+                  <div className="book-services-service-price-list">
+
+                    {selectedProvider.servicePrices.map(
+                      (service, index) => (
+                        <div
+                          className="book-services-service-price-row"
+                          key={service.id || `${service.name}-${index}`}
+                        >
+                          <span className="book-services-service-price-name">
+                            {service.name}
+                          </span>
+
+                          <strong className="book-services-service-price-value">
+                            {formatRupee(service.price)}
+                          </strong>
+                        </div>
+                      ),
+                    )}
+
+                  </div>
+                ) : selectedProvider.services.length > 0 ? (
+                  <div className="book-services-service-price-list">
+
+                    {selectedProvider.services.map((service) => (
+                      <div
+                        className="book-services-service-price-row"
+                        key={service}
+                      >
+                        <span className="book-services-service-price-name">
+                          {service}
+                        </span>
+
+                        <strong className="book-services-service-price-value">
+                          Price not provided
+                        </strong>
+                      </div>
+                    ))}
+
+                  </div>
+                ) : (
+                  <div className="book-services-service-price-empty">
+                    No services submitted
+                  </div>
+                )}
+
+                <div className="book-services-visiting-fee">
+                  <span>
+                    <MapPin size={15} />
+                    Visiting Fee
+                  </span>
+
+                  <strong>
+                    {formatRupee(selectedProvider.visitingFee)}
+                  </strong>
                 </div>
 
               </section>
@@ -1896,6 +2493,227 @@ export default function BookServices() {
 
               </section>
 
+              {/* ADMIN REMARKS AND WARNINGS */}
+
+              <section className="professional-admin-remarks">
+
+                <div className="professional-admin-remarks-heading">
+                  <div>
+                    <h4>
+                      <MessageSquare size={19} />
+                      Admin Remarks &amp; Warnings
+                    </h4>
+
+                    <p>
+                      Send an individual remark or formal warning to this
+                      professional.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="professional-send-remark-button"
+                    onClick={openRemarkModal}
+                  >
+                    <Send size={14} />
+                    Send Remark
+                  </button>
+                </div>
+
+                <div className="professional-warning-summary">
+
+                  <div>
+                    <span>Formal warnings</span>
+
+                    <strong>
+                      {getFormalWarningCount(
+                        selectedProvider.adminRemarks,
+                      )}{" "}
+                      / {MAX_FORMAL_WARNINGS}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>General remarks</span>
+
+                    <strong>
+                      {
+                        selectedProvider.adminRemarks.filter(
+                          (remark) => remark.type === "note",
+                        ).length
+                      }
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>Admin review</span>
+
+                    <strong>
+                      {selectedProvider.adminReviewRequired
+                        ? "Required"
+                        : selectedProvider.adminReviewStatus === "Reviewed"
+                          ? "Reviewed"
+                          : "Not required"}
+                    </strong>
+                  </div>
+
+                </div>
+
+                {selectedProvider.adminReviewRequired && (
+                  <div className="professional-final-warning-review">
+
+                    <div className="professional-final-warning-review-icon">
+                      <AlertTriangle size={20} />
+                    </div>
+
+                    <div className="professional-final-warning-review-content">
+                      <strong>
+                        Final Warning — Admin Review Required
+                      </strong>
+
+                      <p>
+                        This professional has received three formal
+                        warnings. The account has not been automatically
+                        suspended or blocked. Please review the warning
+                        history and decide whether further action is
+                        necessary.
+                      </p>
+
+                      <span>
+                        Review requested:{" "}
+                        {formatDateTime(
+                          selectedProvider.adminReviewRequestedAt,
+                        )}
+                      </span>
+
+                      <button
+                        type="button"
+                        onClick={completeAdminReview}
+                      >
+                        <ClipboardCheck size={15} />
+                        Mark Review Completed
+                      </button>
+                    </div>
+
+                  </div>
+                )}
+
+                {selectedProvider.adminReviewStatus === "Reviewed" &&
+                  !selectedProvider.adminReviewRequired && (
+                    <div className="professional-review-completed">
+                      <CheckCircle2 size={16} />
+
+                      <span>
+                        Final warning review completed on{" "}
+                        {formatDateTime(
+                          selectedProvider.adminReviewCompletedAt,
+                        )}
+                      </span>
+                    </div>
+                  )}
+
+                <div className="professional-admin-remark-list">
+
+                  {selectedProvider.adminRemarks.length > 0 ? (
+                    [...selectedProvider.adminRemarks]
+                      .sort(
+                        (a, b) =>
+                          new Date(b.createdAt).getTime() -
+                          new Date(a.createdAt).getTime(),
+                      )
+                      .map((remark) => (
+                        <article
+                          key={remark.id}
+                          className={`professional-admin-remark-item ${remark.type}`}
+                        >
+
+                          <div className="professional-admin-remark-top">
+
+                            <div>
+                              {remark.type === "note" ? (
+                                <MessageSquare size={15} />
+                              ) : remark.type === "final-warning" ? (
+                                <AlertTriangle size={15} />
+                              ) : (
+                                <ShieldCheck size={15} />
+                              )}
+
+                              <strong>
+                                {remark.type === "note"
+                                  ? "General Remark"
+                                  : remark.type === "final-warning"
+                                    ? "Final Warning"
+                                    : `Formal Warning ${remark.warningNumber}`}
+                              </strong>
+                            </div>
+
+                            <span>
+                              {formatDateTime(remark.createdAt)}
+                            </span>
+
+                          </div>
+
+                          <p>{remark.message}</p>
+
+                          <div className="professional-admin-remark-meta">
+                            <span>Sent by {remark.createdBy}</span>
+
+                            {remark.type === "final-warning" && (
+                              <span>
+                                {remark.adminReviewStatus === "Reviewed"
+                                  ? "Admin review completed"
+                                  : "Admin review pending"}
+                              </span>
+                            )}
+                          </div>
+
+                        </article>
+                      ))
+                  ) : (
+                    <div className="professional-no-remarks">
+                      <MessageSquare size={22} />
+
+                      <strong>No remarks yet</strong>
+
+                      <span>
+                        Admin remarks and formal warnings sent to this
+                        professional will appear here.
+                      </span>
+                    </div>
+                  )}
+
+                </div>
+
+                {getFormalWarningCount(
+                  selectedProvider.adminRemarks,
+                ) === 2 && (
+                    <div className="professional-next-warning-notice">
+                      <AlertTriangle size={16} />
+
+                      <span>
+                        One more formal warning will result in a final
+                        warning and mandatory admin review. It will not
+                        automatically suspend or block the account.
+                      </span>
+                    </div>
+                  )}
+
+                {getFormalWarningCount(
+                  selectedProvider.adminRemarks,
+                ) >= MAX_FORMAL_WARNINGS && (
+                    <div className="professional-warning-limit-notice">
+                      <ShieldCheck size={16} />
+
+                      <span>
+                        The three-warning limit has been reached. Further
+                        formal warnings are disabled. The professional
+                        remains subject to admin review.
+                      </span>
+                    </div>
+                  )}
+
+              </section>
+
               {/* SUBSCRIPTION */}
 
               {selectedProvider.accountState === "Active" && (
@@ -1915,13 +2733,12 @@ export default function BookServices() {
                     </div>
 
                     <span
-                      className={`book-services-subscription-badge ${
-                        selectedSubscriptionStatus === "Free Trial"
-                          ? "trial"
-                          : selectedSubscriptionStatus === "Active"
-                            ? "active"
-                            : "expired"
-                      }`}
+                      className={`book-services-subscription-badge ${selectedSubscriptionStatus === "Free Trial"
+                        ? "trial"
+                        : selectedSubscriptionStatus === "Active"
+                          ? "active"
+                          : "expired"
+                        }`}
                     >
                       {selectedSubscriptionStatus}
                     </span>
@@ -2022,24 +2839,24 @@ export default function BookServices() {
                   {(selectedSubscriptionStatus === "Trial Expired" ||
                     selectedSubscriptionStatus === "Expired") && (
 
-                    <div className="book-services-subscription-expired">
+                      <div className="book-services-subscription-expired">
 
-                      <div className="book-services-expired-icon">
-                        <Clock size={23} />
+                        <div className="book-services-expired-icon">
+                          <Clock size={23} />
+                        </div>
+
+                        <div>
+                          <strong>Your free trial has expired</strong>
+
+                          <p>
+                            The 30-day free trial is over. Choose a
+                            subscription plan to continue with your
+                            OneService professional membership.
+                          </p>
+                        </div>
+
                       </div>
-
-                      <div>
-                        <strong>Your free trial has expired</strong>
-
-                        <p>
-                          The 30-day free trial is over. Choose a
-                          subscription plan to continue with your
-                          OneService professional membership.
-                        </p>
-                      </div>
-
-                    </div>
-                  )}
+                    )}
 
                   {/* ACTIVE SUBSCRIPTION */}
 
@@ -2077,128 +2894,127 @@ export default function BookServices() {
                   {(selectedSubscriptionStatus === "Trial Expired" ||
                     selectedSubscriptionStatus === "Expired") && (
 
-                    <div className="book-services-payment-section">
+                      <div className="book-services-payment-section">
 
-                      <div className="book-services-payment-heading">
+                        <div className="book-services-payment-heading">
 
-                        <h4>Choose Your Subscription Plan</h4>
+                          <h4>Choose Your Subscription Plan</h4>
 
-                        <p>
-                          Select the membership that suits your
-                          professional requirements.
-                        </p>
+                          <p>
+                            Select the membership that suits your
+                            professional requirements.
+                          </p>
 
-                      </div>
+                        </div>
 
-                      <div className="book-services-plan-list">
+                        <div className="book-services-plan-list">
 
-                        {SUBSCRIPTION_PLANS.map((plan) => (
+                          {SUBSCRIPTION_PLANS.map((plan) => (
 
-                          <button
-                            type="button"
-                            key={plan.name}
-                            className={`book-services-plan-card ${
-                              selectedPlan === plan.name ? "selected" : ""
-                            } ${plan.name.toLowerCase()}`}
-                            onClick={() => setSelectedPlan(plan.name)}
-                            aria-pressed={selectedPlan === plan.name}
-                          >
+                            <button
+                              type="button"
+                              key={plan.name}
+                              className={`book-services-plan-card ${selectedPlan === plan.name ? "selected" : ""
+                                } ${plan.name.toLowerCase()}`}
+                              onClick={() => setSelectedPlan(plan.name)}
+                              aria-pressed={selectedPlan === plan.name}
+                            >
 
-                            <div className="book-services-plan-top">
+                              <div className="book-services-plan-top">
 
-                              <div className="book-services-plan-icon">
+                                <div className="book-services-plan-icon">
 
-                                {plan.name === "Basic" ? (
-                                  <ShieldCheck size={20} />
-                                ) : plan.name === "Exclusive" ? (
-                                  <Sparkles size={20} />
-                                ) : (
-                                  <Crown size={20} />
-                                )}
+                                  {plan.name === "Basic" ? (
+                                    <ShieldCheck size={20} />
+                                  ) : plan.name === "Exclusive" ? (
+                                    <Sparkles size={20} />
+                                  ) : (
+                                    <Crown size={20} />
+                                  )}
+
+                                </div>
+
+                                <span className="book-services-plan-radio">
+                                  {selectedPlan === plan.name && (
+                                    <Check size={13} />
+                                  )}
+                                </span>
 
                               </div>
 
-                              <span className="book-services-plan-radio">
-                                {selectedPlan === plan.name && (
-                                  <Check size={13} />
-                                )}
+                              <strong className="book-services-plan-name">
+                                {plan.name}
+                              </strong>
+
+                              <div className="book-services-plan-price">
+                                ₹{plan.price}
+                                <span>/ month</span>
+                              </div>
+
+                              <p className="book-services-plan-description">
+                                {plan.description}
+                              </p>
+
+                              <div className="book-services-plan-features">
+
+                                {plan.features.map((feature) => (
+                                  <span key={feature}>
+                                    <CheckCircle2 size={14} />
+                                    {feature}
+                                  </span>
+                                ))}
+
+                              </div>
+
+                              <span className="book-services-plan-select">
+                                {selectedPlan === plan.name
+                                  ? "Selected Plan"
+                                  : "Select Plan"}
                               </span>
 
-                            </div>
+                            </button>
+                          ))}
 
-                            <strong className="book-services-plan-name">
-                              {plan.name}
+                        </div>
+
+                        <div className="book-services-payment-summary">
+
+                          <div>
+                            <span>Selected subscription</span>
+                            <strong>{selectedPlan}</strong>
+                          </div>
+
+                          <div>
+                            <span>Monthly subscription fee</span>
+
+                            <strong>
+                              ₹
+                              {
+                                SUBSCRIPTION_PLANS.find(
+                                  (plan) => plan.name === selectedPlan,
+                                )?.price
+                              }
                             </strong>
+                          </div>
 
-                            <div className="book-services-plan-price">
-                              ₹{plan.price}
-                              <span>/ month</span>
-                            </div>
-
-                            <p className="book-services-plan-description">
-                              {plan.description}
-                            </p>
-
-                            <div className="book-services-plan-features">
-
-                              {plan.features.map((feature) => (
-                                <span key={feature}>
-                                  <CheckCircle2 size={14} />
-                                  {feature}
-                                </span>
-                              ))}
-
-                            </div>
-
-                            <span className="book-services-plan-select">
-                              {selectedPlan === plan.name
-                                ? "Selected Plan"
-                                : "Select Plan"}
-                            </span>
-
-                          </button>
-                        ))}
-
-                      </div>
-
-                      <div className="book-services-payment-summary">
-
-                        <div>
-                          <span>Selected subscription</span>
-                          <strong>{selectedPlan}</strong>
                         </div>
 
-                        <div>
-                          <span>Monthly subscription fee</span>
+                        <button
+                          type="button"
+                          className="book-services-payment-button"
+                          onClick={proceedToPayment}
+                        >
+                          <CreditCard size={17} />
+                          Proceed to Payment
+                        </button>
 
-                          <strong>
-                            ₹
-                            {
-                              SUBSCRIPTION_PLANS.find(
-                                (plan) => plan.name === selectedPlan,
-                              )?.price
-                            }
-                          </strong>
-                        </div>
+                        <p className="book-services-payment-note">
+                          Subscription activation will take place only
+                          after successful payment verification.
+                        </p>
 
                       </div>
-
-                      <button
-                        type="button"
-                        className="book-services-payment-button"
-                        onClick={proceedToPayment}
-                      >
-                        <CreditCard size={17} />
-                        Proceed to Payment
-                      </button>
-
-                      <p className="book-services-payment-note">
-                        Subscription activation will take place only
-                        after successful payment verification.
-                      </p>
-
-                    </div>
-                  )}
+                    )}
 
                 </section>
               )}
@@ -2274,10 +3090,165 @@ export default function BookServices() {
               {["Suspended", "Blocked"].includes(
                 selectedProvider.accountState ?? "",
               ) && (
-                <span className="book-services-action-disabled">
-                  {selectedProvider.accountState}
+                  <span className="book-services-action-disabled">
+                    {selectedProvider.accountState}
+                  </span>
+                )}
+
+            </footer>
+
+          </section>
+        </div>
+      )}
+
+      {/* SEND REMARK MODAL */}
+
+      {remarkModalOpen && selectedProvider && (
+        <div
+          className="professional-remark-backdrop"
+          onClick={closeRemarkModal}
+        >
+          <section
+            className="professional-remark-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="professional-remark-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+
+            <header className="professional-remark-dialog-header">
+              <div>
+                <span className="professional-remark-dialog-icon">
+                  <MessageSquare size={20} />
+                </span>
+
+                <div>
+                  <h2 id="professional-remark-title">
+                    Send Admin Remark
+                  </h2>
+
+                  <p>
+                    To: <strong>{selectedProvider.name}</strong>
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={closeRemarkModal}
+                aria-label="Close remark dialog"
+              >
+                <X size={19} />
+              </button>
+            </header>
+
+            <div className="professional-remark-dialog-body">
+
+              <label htmlFor="professional-remark-type">
+                Remark type
+              </label>
+
+              <select
+                id="professional-remark-type"
+                value={remarkType}
+                onChange={(event) => {
+                  setRemarkType(event.target.value as "note" | "warning");
+                  setRemarkError("");
+                }}
+              >
+                <option value="note">
+                  General Remark — Does not count as a warning
+                </option>
+
+                <option value="warning">
+                  Formal Warning — Counts toward 3-warning limit
+                </option>
+              </select>
+
+              {remarkType === "warning" && (
+                <div className="professional-remark-warning-preview">
+                  <AlertTriangle size={17} />
+
+                  <div>
+                    <strong>
+                      {getWarningLabel(
+                        getFormalWarningCount(
+                          selectedProvider.adminRemarks,
+                        ) + 1,
+                      )}
+                    </strong>
+
+                    <p>
+                      {getFormalWarningCount(
+                        selectedProvider.adminRemarks,
+                      ) === 0
+                        ? "This will be the first formal warning."
+                        : getFormalWarningCount(
+                          selectedProvider.adminRemarks,
+                        ) === 1
+                          ? "This will be the second warning. The next formal warning will become a final warning and require admin review."
+                          : "This will be the final warning. It will flag the account for admin review, without automatically suspending or blocking the professional."}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              <label htmlFor="professional-remark-message">
+                Message <span>*</span>
+              </label>
+
+              <textarea
+                id="professional-remark-message"
+                rows={5}
+                maxLength={1000}
+                value={remarkMessage}
+                onChange={(event) => {
+                  setRemarkMessage(event.target.value);
+                  setRemarkError("");
+                }}
+                placeholder="Write the remark or explain the reason for this warning..."
+              />
+
+              <div className="professional-remark-character-count">
+                {remarkMessage.length}/1000 characters
+              </div>
+
+              {remarkError && (
+                <span className="professional-remark-error" role="alert">
+                  {remarkError}
                 </span>
               )}
+
+              <div className="professional-remark-dialog-note">
+                <ShieldCheck size={16} />
+
+                <span>
+                  This remark will be saved in the professional's
+                  registration record. A notification event will also
+                  be dispatched for the professional profile to handle.
+                </span>
+              </div>
+
+            </div>
+
+            <footer className="professional-remark-dialog-footer">
+
+              <button
+                type="button"
+                className="book-services-modal-secondary"
+                onClick={closeRemarkModal}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                className="professional-send-remark-button"
+                onClick={submitAdminRemark}
+              >
+                <Send size={15} />
+                Send to Professional
+              </button>
 
             </footer>
 
@@ -2410,9 +3381,8 @@ export default function BookServices() {
 
               <button
                 type="button"
-                className={`book-services-action ${
-                  reviewAction === "suspend" ? "warning" : "danger"
-                }`}
+                className={`book-services-action ${reviewAction === "suspend" ? "warning" : "danger"
+                  }`}
                 onClick={submitReviewAction}
               >
 

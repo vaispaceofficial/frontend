@@ -95,43 +95,55 @@ type SubscriptionPlan = "Basic" | "Exclusive" | "Premium";
 
 const SUBSCRIPTION_PLANS: {
   name: SubscriptionPlan;
+  displayName: string;
   price: number;
   description: string;
   features: string[];
 }[] = [
-  {
-    name: "Basic",
-    price: 199,
-    description: "Essential professional visibility",
-    features: [
-      "Professional profile listing",
-      "Service enquiries",
-      "Basic profile management",
-    ],
-  },
-  {
-    name: "Exclusive",
-    price: 499,
-    description: "More visibility for your business",
-    features: [
-      "Everything in Basic",
-      "Priority profile visibility",
-      "Enhanced professional listing",
-      "Customer enquiry management",
-    ],
-  },
-  {
-    name: "Premium",
-    price: 999,
-    description: "Maximum professional exposure",
-    features: [
-      "Everything in Exclusive",
-      "Premium profile visibility",
-      "Featured professional listing",
-      "Priority support",
-    ],
-  },
-];
+    {
+      name: "Basic",
+      displayName: "Lite / Basic",
+      price: 199,
+      description: "For individual professionals and local service providers.",
+      features: [
+        "0% commission on customer jobs",
+        "1 primary category listing",
+        "Direct customer Call and WhatsApp connection",
+        "Aadhaar / ID verification badge",
+        "Up to 3 work portfolio photos",
+        "1 local PIN code coverage",
+      ],
+    },
+    {
+      name: "Exclusive",
+      displayName: "Starter / Pro",
+      price: 499,
+      description: "For established technicians and service professionals.",
+      features: [
+        "0% commission on customer jobs",
+        "Up to 3 sub-category listings",
+        "Priority ranking in search",
+        "Up to 15 photos and video catalog",
+        "Instant SMS and push lead alerts",
+        "City-zone PIN code coverage",
+      ],
+    },
+    {
+      name: "Premium",
+      displayName: "Growth / Biz",
+      price: 999,
+      description: "For contractors, agencies and growing service businesses.",
+      features: [
+        "0% commission on customer jobs",
+        "Top 3 featured spot ranking",
+        "Unlimited categories and locations",
+        "Gold Trusted Partner verified seal",
+        "1 in-app category banner advertisement per month",
+        "Dedicated support manager",
+      ],
+    },
+  ];
+
 
 const INITIAL_JOBS: JobRequest[] = [
   {
@@ -327,6 +339,9 @@ export default function ProfessionalHub() {
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan>("Exclusive");
   const [subscriptionMessage, setSubscriptionMessage] = useState("");
 
+  const [viewingPlan, setViewingPlan] =
+    useState<SubscriptionPlan | null>(null);
+
   const [form, setForm] = useState({
     fullName: "",
     mobile: "",
@@ -457,6 +472,10 @@ export default function ProfessionalHub() {
   const trialRemaining = application
     ? getTrialRemaining(application.trialEndsAt, currentTime)
     : null;
+
+  const viewingPlanDetails = SUBSCRIPTION_PLANS.find(
+    (plan) => plan.name  === viewingPlan
+  ) ?? null;
 
 
   const proceedToSubscriptionPayment = () => {
@@ -769,9 +788,8 @@ export default function ProfessionalHub() {
 
         {/* STATUS */}
         <section
-          className={`ph-status-banner ${
-            applicationApproved ? "is-approved" : "is-pending"
-          }`}
+          className={`ph-status-banner ${applicationApproved ? "is-approved" : "is-pending"
+            }`}
         >
           <div className="ph-status-icon">
             {applicationApproved ? (
@@ -815,9 +833,8 @@ export default function ProfessionalHub() {
 
           <button
             type="button"
-            className={`ph-availability ${
-              acceptingCalls ? "is-on" : "is-off"
-            }`}
+            className={`ph-availability ${acceptingCalls ? "is-on" : "is-off"
+              }`}
             onClick={updateAvailability}
           >
             <Power size={16} />
@@ -1852,24 +1869,56 @@ export default function ProfessionalHub() {
                     <button
                       type="button"
                       key={plan.name}
-                      className={`ph-subscription-plan-card ${plan.name.toLowerCase()} ${selectedPlan === plan.name ? "selected" : ""}`}
-                      onClick={() => { setSelectedPlan(plan.name); setSubscriptionMessage(""); }}
-                      aria-pressed={selectedPlan === plan.name}
+                      className={`ph-subscription-plan-card ${plan.name.toLowerCase()} ${selectedPlan === plan.name ? "selected" : ""
+                        }`}
+                      onClick={() => {
+                        setViewingPlan(plan.name);
+                        setSubscriptionMessage("");
+                      }}
+                      aria-label={`View ${plan.displayName} membership details`}
                     >
                       <span className="ph-plan-card-top">
-                        <span className="ph-plan-icon">{plan.name === "Basic" ? <ShieldCheck size={17} /> : plan.name === "Exclusive" ? <Sparkles size={17} /> : <Crown size={17} />}</span>
-                        <span className="ph-plan-radio">{selectedPlan === plan.name ? <Check size={12} /> : null}</span>
+                        <span className="ph-plan-icon">
+                          {plan.name === "Basic" ? (
+                            <ShieldCheck size={17} />
+                          ) : plan.name === "Exclusive" ? (
+                            <Sparkles size={17} />
+                          ) : (
+                            <Crown size={17} />
+                          )}
+                        </span>
+
+                        <span className="ph-plan-radio">
+                          {selectedPlan === plan.name ? <Check size={12} /> : null}
+                        </span>
                       </span>
-                      <strong className="ph-plan-name">{plan.name}</strong>
-                      <span className="ph-plan-price">₹{plan.price}<small>/ month</small></span>
-                      <span className="ph-plan-description">{plan.description}</span>
-                      <span className="ph-plan-select-label">{selectedPlan === plan.name ? "Selected" : "Select plan"}</span>
+
+                      <strong className="ph-plan-name">
+                        {plan.displayName}
+                      </strong>
+
+                      <span className="ph-plan-price">
+                        ₹{plan.price}
+                        <small>/ month</small>
+                      </span>
+
+                      <span className="ph-plan-description">
+                        {plan.description}
+                      </span>
+
+                      <span className="ph-plan-select-label">
+                        View Plan Details <ChevronRight size={14} />
+                      </span>
                     </button>
                   ))}
                 </div>
                 {subscriptionStatus !== "Free Trial" && (
                   <div className="ph-subscription-payment-row">
-                    <div><span>Selected plan</span><strong>{selectedPlan}</strong></div>
+                    <div><span>Selected plan</span><strong>
+                      {SUBSCRIPTION_PLANS.find(
+                        (plan) => plan.name === selectedPlan
+                      )?.displayName}
+                    </strong></div>
                     <div><span>Monthly subscription</span><strong>₹{SUBSCRIPTION_PLANS.find((plan) => plan.name === selectedPlan)?.price}</strong></div>
                     <button type="button" className="ph-primary-button" onClick={proceedToSubscriptionPayment}><CreditCard size={16} />Proceed to Payment</button>
                   </div>
@@ -1890,6 +1939,134 @@ export default function ProfessionalHub() {
               <div className="ph-subscription-pending"><Clock3 size={19} /><span>Your subscription trial will begin once your professional account is approved.</span></div>
             )}
           </section>
+        )}
+
+        {/* MEMBERSHIP PLAN DETAILS POPUP */}
+        {viewingPlanDetails && (
+          <div
+            className="ph-plan-modal-overlay"
+            role="presentation"
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget) {
+                setViewingPlan(null);
+              }
+            }}
+          >
+            <section
+              className={`ph-plan-modal-dialog ${viewingPlanDetails.name.toLowerCase()}`}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="ph-plan-modal-title"
+            >
+              <button
+                type="button"
+                className="ph-plan-modal-close"
+                onClick={() => setViewingPlan(null)}
+                aria-label="Close membership details"
+              >
+                <X size={20} />
+              </button>
+
+              <div className="ph-plan-modal-header">
+                <span className="ph-plan-modal-icon">
+                  {viewingPlanDetails.name === "Basic" ? (
+                    <ShieldCheck size={25} />
+                  ) : viewingPlanDetails.name === "Exclusive" ? (
+                    <Sparkles size={25} />
+                  ) : (
+                    <Crown size={25} />
+                  )}
+                </span>
+
+                <div>
+                  <span className="ph-eyebrow">
+                    PROFESSIONAL MEMBERSHIP
+                  </span>
+
+                  <h2 id="ph-plan-modal-title">
+                    {viewingPlanDetails.displayName}
+                  </h2>
+
+                  <p>{viewingPlanDetails.description}</p>
+                </div>
+              </div>
+
+              <div className="ph-plan-modal-price">
+                <div>
+                  <strong>
+                    ₹{viewingPlanDetails.price.toLocaleString("en-IN")}
+                  </strong>
+                  <span>/ month</span>
+                </div>
+
+                <small>0% commission on customer jobs</small>
+              </div>
+
+              <div className="ph-plan-modal-features">
+                <h3>Membership Benefits</h3>
+
+                <ul>
+                  {viewingPlanDetails.features.map((feature, index) => (
+                    <li key={`${viewingPlanDetails.name}-${index}`}>
+                      <span>
+                        <Check size={15} />
+                      </span>
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="ph-plan-modal-discounts">
+                <h3>Save with upfront subscriptions</h3>
+
+                <div className="ph-plan-discount-grid">
+                  <div>
+                    <strong>10% OFF</strong>
+                    <span>3 months</span>
+                  </div>
+
+                  <div>
+                    <strong>15% OFF</strong>
+                    <span>6 months</span>
+                  </div>
+
+                  <div>
+                    <strong>2 Months FREE</strong>
+                    <span>12 months</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="ph-plan-modal-actions">
+                <button
+                  type="button"
+                  className="ph-secondary-button"
+                  onClick={() => setViewingPlan(null)}
+                >
+                  Close
+                </button>
+
+                <button
+                  type="button"
+                  className="ph-primary-button"
+                  onClick={() => {
+                    setSelectedPlan(viewingPlanDetails.name);
+                    setSubscriptionMessage("");
+                    setViewingPlan(null);
+                  }}
+                >
+                  <CheckCircle2 size={17} />
+                  Select This Plan
+                </button>
+              </div>
+
+              <p className="ph-plan-modal-note">
+                Your 30-day free trial remains unchanged. Subscription
+                activation requires successful payment verification.
+              </p>
+            </section>
+          </div>
         )}
 
 

@@ -3335,3 +3335,589 @@
   .ph-subscription-plan-grid.compact { grid-template-columns: 1fr; }
   .ph-trial-compact { align-items: flex-start; }
 }
+
+
+/* =========================================================
+   ONESERVICE — PROFESSIONAL MEMBERSHIP PLAN CARDS
+========================================================= */
+
+.ph-subscription-plan-grid.compact {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.ph-subscription-plan-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  min-width: 0;
+  min-height: 205px;
+  padding: 20px;
+  text-align: left;
+  font-family: inherit;
+  color: #1e293b;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 15px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.ph-subscription-plan-card:hover {
+  transform: translateY(-3px);
+  border-color: #93c5fd;
+  box-shadow: 0 9px 24px rgba(37, 99, 235, 0.09);
+}
+
+.ph-subscription-plan-card.selected {
+  border: 2px solid #2563eb;
+  background: #f8fbff;
+  padding: 19px;
+}
+
+.ph-plan-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.ph-plan-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 37px;
+  height: 37px;
+  color: #ffffff;
+  background: #2563eb;
+  border-radius: 11px;
+}
+
+.ph-subscription-plan-card.exclusive .ph-plan-icon {
+  background: #7c3aed;
+}
+
+.ph-subscription-plan-card.premium .ph-plan-icon {
+  background: #d97706;
+}
+
+.ph-plan-radio {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 21px;
+  height: 21px;
+  color: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 50%;
+}
+
+.ph-subscription-plan-card.selected .ph-plan-radio {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+.ph-plan-name {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 16px;
+  font-weight: 750;
+  color: #172554;
+}
+
+.ph-plan-price {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  margin-bottom: 9px;
+  font-size: 27px;
+  font-weight: 800;
+  color: #2563eb;
+}
+
+.ph-plan-price small {
+  font-size: 12px;
+  font-weight: 500;
+  color: #64748b;
+}
+
+.ph-plan-description {
+  display: block;
+  min-height: 36px;
+  margin-bottom: 15px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #64748b;
+}
+
+.ph-plan-select-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: auto;
+  font-size: 12px;
+  font-weight: 700;
+  color: #2563eb;
+}
+
+
+/* =========================================================
+   MEMBERSHIP DETAILS POPUP — OVERLAY
+========================================================= */
+
+.ph-plan-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 22px;
+  overflow-y: auto;
+  background: rgba(15, 23, 42, 0.58);
+  backdrop-filter: blur(5px);
+  animation: phPlanOverlayIn 0.2s ease;
+}
+
+@keyframes phPlanOverlayIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+
+/* =========================================================
+   MEMBERSHIP DETAILS POPUP — MAIN DIALOG
+========================================================= */
+
+.ph-plan-modal-dialog {
+  position: relative;
+  width: 100%;
+  max-width: 590px;
+  max-height: calc(100vh - 44px);
+  padding: 30px;
+  overflow-y: auto;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.25);
+  animation: phPlanDialogIn 0.25s ease;
+}
+
+@keyframes phPlanDialogIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.ph-plan-modal-close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 35px;
+  height: 35px;
+  padding: 0;
+  color: #64748b;
+  background: #f1f5f9;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.ph-plan-modal-close:hover {
+  color: #dc2626;
+  background: #fee2e2;
+}
+
+
+/* =========================================================
+   POPUP HEADER
+========================================================= */
+
+.ph-plan-modal-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding-right: 35px;
+}
+
+.ph-plan-modal-icon {
+  display: flex;
+  flex: 0 0 52px;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  color: #ffffff;
+  background: #2563eb;
+  border-radius: 15px;
+}
+
+.ph-plan-modal-dialog.exclusive .ph-plan-modal-icon {
+  background: #7c3aed;
+}
+
+.ph-plan-modal-dialog.premium .ph-plan-modal-icon {
+  background: #d97706;
+}
+
+.ph-plan-modal-header > div {
+  min-width: 0;
+}
+
+.ph-plan-modal-header .ph-eyebrow {
+  margin: 0 0 5px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  color: #64748b;
+}
+
+.ph-plan-modal-header h2 {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1.3;
+  font-weight: 800;
+  color: #172554;
+}
+
+.ph-plan-modal-header p {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #64748b;
+}
+
+
+/* =========================================================
+   POPUP PRICE SECTION
+========================================================= */
+
+.ph-plan-modal-price {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 24px;
+  padding: 17px 19px;
+  background: #eff6ff;
+  border: 1px solid #dbeafe;
+  border-radius: 13px;
+}
+
+.ph-plan-modal-price > div {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.ph-plan-modal-price strong {
+  font-size: 30px;
+  font-weight: 800;
+  color: #1d4ed8;
+}
+
+.ph-plan-modal-price > div span {
+  font-size: 12px;
+  color: #64748b;
+}
+
+.ph-plan-modal-price small {
+  font-size: 11px;
+  font-weight: 700;
+  color: #15803d;
+}
+
+
+/* =========================================================
+   MEMBERSHIP BENEFITS
+========================================================= */
+
+.ph-plan-modal-features {
+  margin-top: 24px;
+}
+
+.ph-plan-modal-features h3,
+.ph-plan-modal-discounts h3 {
+  margin: 0 0 14px;
+  font-size: 15px;
+  font-weight: 800;
+  color: #1e293b;
+}
+
+.ph-plan-modal-features ul {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ph-plan-modal-features li {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  min-width: 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #475569;
+}
+
+.ph-plan-modal-features li > span {
+  display: flex;
+  flex: 0 0 20px;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  color: #15803d;
+  background: #dcfce7;
+  border-radius: 50%;
+}
+
+
+/* =========================================================
+   SUBSCRIPTION DISCOUNTS
+========================================================= */
+
+.ph-plan-modal-discounts {
+  margin-top: 25px;
+  padding-top: 20px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.ph-plan-discount-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.ph-plan-discount-grid > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 75px;
+  padding: 12px 7px;
+  text-align: center;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 11px;
+}
+
+.ph-plan-discount-grid strong {
+  font-size: 13px;
+  font-weight: 800;
+  color: #15803d;
+}
+
+.ph-plan-discount-grid span {
+  font-size: 11px;
+  color: #64748b;
+}
+
+
+/* =========================================================
+   POPUP ACTION BUTTONS
+========================================================= */
+
+.ph-plan-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 25px;
+}
+
+.ph-plan-modal-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 43px;
+  padding: 0 18px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 750;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.ph-plan-modal-actions button:hover {
+  transform: translateY(-1px);
+}
+
+.ph-plan-modal-actions .ph-secondary-button {
+  color: #475569;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+}
+
+.ph-plan-modal-actions .ph-secondary-button:hover {
+  background: #f1f5f9;
+}
+
+.ph-plan-modal-actions .ph-primary-button {
+  color: #ffffff;
+  background: #2563eb;
+  border: 1px solid #2563eb;
+}
+
+.ph-plan-modal-actions .ph-primary-button:hover {
+  background: #1d4ed8;
+}
+
+
+/* =========================================================
+   POPUP FOOTNOTE
+========================================================= */
+
+.ph-plan-modal-note {
+  margin: 16px 0 0;
+  padding-top: 13px;
+  font-size: 11px;
+  line-height: 1.6;
+  text-align: center;
+  color: #64748b;
+  border-top: 1px solid #f1f5f9;
+}
+
+
+/* =========================================================
+   RESPONSIVE — TABLET
+========================================================= */
+
+@media (max-width: 900px) {
+  .ph-subscription-plan-grid.compact {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+
+/* =========================================================
+   RESPONSIVE — MOBILE
+========================================================= */
+
+@media (max-width: 600px) {
+  .ph-subscription-plan-grid.compact {
+    grid-template-columns: 1fr;
+  }
+
+  .ph-plan-modal-overlay {
+    align-items: flex-end;
+    padding: 10px;
+  }
+
+  .ph-plan-modal-dialog {
+    max-height: calc(100vh - 20px);
+    padding: 23px 18px;
+    border-radius: 18px;
+  }
+
+  .ph-plan-modal-header {
+    gap: 12px;
+  }
+
+  .ph-plan-modal-icon {
+    flex-basis: 44px;
+    width: 44px;
+    height: 44px;
+  }
+
+  .ph-plan-modal-header h2 {
+    font-size: 20px;
+  }
+
+  .ph-plan-modal-price {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .ph-plan-modal-features ul {
+    grid-template-columns: 1fr;
+    gap: 11px;
+  }
+
+  .ph-plan-discount-grid {
+    gap: 7px;
+  }
+
+  .ph-plan-discount-grid strong {
+    font-size: 11px;
+  }
+
+  .ph-plan-discount-grid span {
+    font-size: 10px;
+  }
+
+  .ph-plan-modal-actions {
+    flex-direction: column-reverse;
+  }
+
+  .ph-plan-modal-actions button {
+    width: 100%;
+  }
+}
+
+
+/* =========================================================
+   MEMBERSHIP PLAN ICONS — CONSISTENT WHITE ICONS
+========================================================= */
+
+
+.ph-subscription-plan-card .ph-plan-icon {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff !important;
+  opacity: 1 !important;
+}
+
+/* Ensure every Lucide icon is visible in white */
+.ph-subscription-plan-card .ph-plan-icon svg {
+  display: block !important;
+  width: 19px;
+  height: 19px;
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+  fill: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Basic */
+.ph-subscription-plan-card.basic .ph-plan-icon {
+  background: #2563eb !important;
+}
+
+/* Starter / Pro */
+.ph-subscription-plan-card.exclusive .ph-plan-icon {
+  background: #7c3aed !important;
+}
+
+/* Growth / Biz */
+.ph-subscription-plan-card.premium .ph-plan-icon {
+  background: #d97706 !important;
+}
