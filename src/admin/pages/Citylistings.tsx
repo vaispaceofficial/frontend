@@ -15,8 +15,8 @@ import {
   Eye,
   FileCheck,
   FileText,
-  Image,
-  IndianRupee,
+  Image as ImageIcon,
+  // IndianRupee,
   LayoutDashboard,
   MapPin,
   MessageSquare,
@@ -38,59 +38,49 @@ import "./Citylistings.css";
    TYPES
 ========================================================= */
 
-type RegistrationStatus = "Paid" | "Pending";
-
 type VendorStatus =
   | "Approved"
   | "Pending"
   | "Rejected"
   | "Suspended";
 
+type RegistrationStatus = "Paid" | "Pending";
+
 type VendorRecord = Record<string, unknown> & {
   id?: string;
   vendorId?: string;
-  role?: string;
-  accountType?: string;
   fullName?: string;
   ownerName?: string;
   name?: string;
-  mobile?: string;
-  phone?: string;
-  email?: string;
   businessName?: string;
   businessType?: string;
   businessCategory?: string;
+  mobile?: string;
+  phone?: string;
+  email?: string;
+  whatsapp?: string;
+  whatsappNumber?: string;
+  alternateMobile?: string;
+  website?: string;
   businessAddress?: string;
   address?: string;
   locality?: string;
   area?: string;
-  businessLocality?: string;
   city?: string;
   state?: string;
   pincode?: string;
   pinCode?: string;
   postalCode?: string;
-  productDescription?: string;
   description?: string;
   businessDescription?: string;
+  productDescription?: string;
+  projects?: string;
+  portfolioDescription?: string;
   products?: unknown[];
   services?: unknown[];
   serviceAreas?: unknown[];
   coverageAreas?: unknown[];
-  projects?: string;
-  portfolioDescription?: string;
-  registrationStatus?: string;
-  paymentStatus?: string;
-  feeStatus?: string;
-  registrationFeeStatus?: string;
-  status?: string;
-  vendorStatus?: string;
-  registeredAt?: string;
-  createdAt?: string;
-  established?: string;
-  yearEstablished?: string;
-  whatsapp?: string;
-  whatsappNumber?: string;
+  paymentMethods?: unknown[];
   productCount?: number;
   serviceCount?: number;
   workingHours?: string;
@@ -98,68 +88,71 @@ type VendorRecord = Record<string, unknown> & {
   workingDays?: string;
   delivery?: string;
   deliveryAvailability?: string;
-  paymentMethods?: unknown[];
   rating?: string | number;
   reviews?: number;
   views?: number;
   enquiries?: number;
   phoneClicks?: number;
   followers?: number;
+  registrationStatus?: string;
+  registrationFeeStatus?: string;
+  feeStatus?: string;
+  paymentStatus?: string;
+  status?: string;
+  vendorStatus?: string;
+  registeredAt?: string;
+  createdAt?: string;
+  established?: string;
+  yearEstablished?: string;
 };
 
 type Business = {
   id: string;
   name: string;
   type: string;
-  projects: string;
-  contact: string;
-  registrationStatus: RegistrationStatus;
-
   owner: string;
   email: string;
   phone: string;
   whatsapp: string;
+  alternateMobile: string;
+  website: string;
   description: string;
   established: string;
-
   address: string;
   locality: string;
   city: string;
   state: string;
   pincode: string;
-
-  serviceAreas: string[];
   products: string[];
   services: string[];
-
+  serviceAreas: string[];
   productCount: number;
   serviceCount: number;
-
   workingHours: string;
   workingDays: string;
   delivery: string;
   paymentMethods: string[];
-
   rating: string;
   reviews: number;
   views: number;
   enquiries: number;
   phoneClicks: number;
   followers: number;
-
+  registrationStatus: RegistrationStatus;
   vendorStatus: VendorStatus;
   registeredAt: string;
+  projects: string;
+  documents: unknown[];
+  gallery: unknown[];
+  portfolioLinks: unknown[];
 };
 
 type VendorTab =
   | "Overview"
-  | "Business"
-  | "Products & Services"
+  | "Business Details"
   | "Operations"
-  | "Documents"
-  | "Gallery"
-  | "Performance"
-  | "Activity";
+  | "Documents & Gallery"
+  | "Performance & Activity";
 
 const VENDORS_STORAGE_KEY = "oneservice_vendors";
 const REMARKS_STORAGE_KEY = "oneservice_vendor_admin_remarks";
@@ -172,11 +165,17 @@ const readText = (
   value: unknown,
   fallback = "Not provided",
 ): string => {
-  if (typeof value === "string" && value.trim()) {
+  if (
+    typeof value === "string" &&
+    value.trim()
+  ) {
     return value.trim();
   }
 
-  if (typeof value === "number" && Number.isFinite(value)) {
+  if (
+    typeof value === "number" &&
+    Number.isFinite(value)
+  ) {
     return String(value);
   }
 
@@ -188,7 +187,6 @@ const readNumber = (
   fallback = 0,
 ): number => {
   const parsed = Number(value);
-
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
@@ -218,10 +216,6 @@ const readArray = (value: unknown): string[] => {
     .filter(Boolean);
 };
 
-/* ---------------------------------------------------------
-   SAFE STORAGE READING
---------------------------------------------------------- */
-
 const readStoredVendors = (): VendorRecord[] => {
   try {
     const stored = localStorage.getItem(VENDORS_STORAGE_KEY);
@@ -239,18 +233,10 @@ const readStoredVendors = (): VendorRecord[] => {
         !Array.isArray(item),
     );
   } catch (error) {
-    console.error(
-      "Unable to read registered vendors:",
-      error,
-    );
-
+    console.error("Unable to read vendors:", error);
     return [];
   }
 };
-
-/* ---------------------------------------------------------
-   SAFE STORAGE WRITING
---------------------------------------------------------- */
 
 const writeStoredVendors = (
   vendors: VendorRecord[],
@@ -265,17 +251,9 @@ const writeStoredVendors = (
       new CustomEvent("oneservice-vendors-change"),
     );
   } catch (error) {
-    console.error(
-      "Unable to save vendor records:",
-      error,
-    );
+    console.error("Unable to save vendors:", error);
   }
 };
-
-/* ---------------------------------------------------------
-   VENDOR IDENTITY
-   One consistent ID is used throughout the page.
---------------------------------------------------------- */
 
 const getVendorIdentity = (
   vendor: VendorRecord,
@@ -300,9 +278,7 @@ const getVendorIdentity = (
 const getVendorBusinessId = (
   vendor: VendorRecord,
 ): string => {
-  const explicitId =
-    vendor.vendorId ??
-    vendor.id;
+  const explicitId = vendor.vendorId ?? vendor.id;
 
   if (
     typeof explicitId === "string" &&
@@ -320,31 +296,20 @@ const getVendorBusinessId = (
 
   const identity = getVendorIdentity(vendor);
 
-  if (identity) {
-    return `V-${identity}`;
-  }
+  if (identity) return `V-${identity}`;
 
-  const businessName = readText(
+  const name = readText(
     vendor.businessName ?? vendor.name,
     "Unnamed Business",
   );
 
-  return `V-${businessName
-    .replace(/[^a-zA-Z0-9]/g, "")
-    .slice(0, 12)}`;
+  return `V-${name.replace(/[^a-zA-Z0-9]/g, "").slice(0, 12)}`;
 };
-
-/* ---------------------------------------------------------
-   STATUS NORMALIZATION
---------------------------------------------------------- */
 
 const normalizeStatus = (
   status: unknown,
 ): VendorStatus => {
-  const value = readText(
-    status,
-    "Pending",
-  ).toLowerCase();
+  const value = readText(status, "Pending").toLowerCase();
 
   if (
     value.includes("approved") ||
@@ -354,25 +319,16 @@ const normalizeStatus = (
     return "Approved";
   }
 
-  if (value.includes("reject")) {
-    return "Rejected";
-  }
-
-  if (value.includes("suspend")) {
-    return "Suspended";
-  }
+  if (value.includes("reject")) return "Rejected";
+  if (value.includes("suspend")) return "Suspended";
 
   return "Pending";
 };
 
-/* ---------------------------------------------------------
-   REGISTRATION PAYMENT STATUS
---------------------------------------------------------- */
-
 const normalizeRegistrationStatus = (
   vendor: VendorRecord,
 ): RegistrationStatus => {
-  const rawStatus = readText(
+  const value = readText(
     vendor.registrationStatus ??
       vendor.registrationFeeStatus ??
       vendor.feeStatus ??
@@ -380,16 +336,14 @@ const normalizeRegistrationStatus = (
     "Pending",
   ).toLowerCase();
 
-  return rawStatus === "paid" ||
-    rawStatus === "completed" ||
-    rawStatus === "success"
+  return ["paid", "completed", "success"].includes(value)
     ? "Paid"
     : "Pending";
 };
 
-/* ---------------------------------------------------------
-   NORMALIZE VENDOR INTO BUSINESS
---------------------------------------------------------- */
+/* =========================================================
+   NORMALIZE VENDOR
+========================================================= */
 
 const normalizeBusiness = (
   vendor: VendorRecord,
@@ -397,72 +351,32 @@ const normalizeBusiness = (
   const products = readArray(vendor.products);
   const services = readArray(vendor.services);
 
-  const businessName = readText(
-    vendor.businessName ?? vendor.name,
-    "Unnamed Business",
-  );
-
-  const phone = readText(
-    vendor.mobile ?? vendor.phone,
-  );
-
-  const address = readText(
-    vendor.businessAddress ?? vendor.address,
-  );
-
-  const locality = readText(
-    vendor.locality ??
-      vendor.area ??
-      vendor.businessLocality,
-    "",
-  );
-
-  const city = readText(
-    vendor.city,
-    "Visakhapatnam",
-  );
-
-  const state = readText(
-    vendor.state,
-    "Andhra Pradesh",
-  );
-
-  const id = getVendorBusinessId(vendor);
-
   return {
-    id,
-    name: businessName,
+    id: getVendorBusinessId(vendor),
+
+    name: readText(
+      vendor.businessName ?? vendor.name,
+      "Unnamed Business",
+    ),
 
     type: readText(
-      vendor.businessType ??
-        vendor.businessCategory,
+      vendor.businessType ?? vendor.businessCategory,
       "Business & Professional Services",
     ),
 
-    projects: readText(
-      vendor.projects ??
-        vendor.portfolioDescription,
-      "Portfolio not provided",
-    ),
-
-    contact: phone,
-
-    registrationStatus:
-      normalizeRegistrationStatus(vendor),
-
     owner: readText(
-      vendor.fullName ??
-        vendor.ownerName ??
-        vendor.name,
+      vendor.fullName ?? vendor.ownerName,
     ),
 
     email: readText(vendor.email),
-    phone,
+    phone: readText(vendor.mobile ?? vendor.phone),
 
     whatsapp: readText(
-      vendor.whatsapp ??
-        vendor.whatsappNumber,
+      vendor.whatsapp ?? vendor.whatsappNumber,
     ),
+
+    alternateMobile: readText(vendor.alternateMobile),
+    website: readText(vendor.website),
 
     description: readText(
       vendor.productDescription ??
@@ -471,28 +385,31 @@ const normalizeBusiness = (
     ),
 
     established: readText(
-      vendor.established ??
-        vendor.yearEstablished,
+      vendor.established ?? vendor.yearEstablished,
     ),
 
-    address,
-    locality,
-    city,
-    state,
+    address: readText(
+      vendor.businessAddress ?? vendor.address,
+    ),
+
+    locality: readText(
+      vendor.locality ?? vendor.area,
+      "",
+    ),
+
+    city: readText(vendor.city, "Visakhapatnam"),
+    state: readText(vendor.state, "Andhra Pradesh"),
 
     pincode: readText(
-      vendor.pincode ??
-        vendor.pinCode ??
-        vendor.postalCode,
-    ),
-
-    serviceAreas: readArray(
-      vendor.serviceAreas ??
-        vendor.coverageAreas,
+      vendor.pincode ?? vendor.pinCode ?? vendor.postalCode,
     ),
 
     products,
     services,
+
+    serviceAreas: readArray(
+      vendor.serviceAreas ?? vendor.coverageAreas,
+    ),
 
     productCount: readNumber(
       vendor.productCount,
@@ -505,48 +422,62 @@ const normalizeBusiness = (
     ),
 
     workingHours: readText(
-      vendor.workingHours ??
-        vendor.businessHours,
+      vendor.workingHours ?? vendor.businessHours,
     ),
 
-    workingDays: readText(
-      vendor.workingDays,
-    ),
+    workingDays: readText(vendor.workingDays),
 
     delivery: readText(
-      vendor.delivery ??
-        vendor.deliveryAvailability,
+      vendor.delivery ?? vendor.deliveryAvailability,
     ),
 
-    paymentMethods: readArray(
-      vendor.paymentMethods,
-    ),
+    paymentMethods: readArray(vendor.paymentMethods),
 
-    rating: readText(
-      vendor.rating,
-      "Not available",
-    ),
-
+    rating: readText(vendor.rating, "Not available"),
     reviews: readNumber(vendor.reviews),
     views: readNumber(vendor.views),
     enquiries: readNumber(vendor.enquiries),
     phoneClicks: readNumber(vendor.phoneClicks),
     followers: readNumber(vendor.followers),
 
+    registrationStatus: normalizeRegistrationStatus(vendor),
+
     vendorStatus: normalizeStatus(
-      vendor.status ??
-        vendor.vendorStatus,
+      vendor.status ?? vendor.vendorStatus,
     ),
 
     registeredAt: readText(
-      vendor.registeredAt ??
-        vendor.createdAt,
+      vendor.registeredAt ?? vendor.createdAt,
     ),
+
+    projects: readText(
+      vendor.projects ?? vendor.portfolioDescription,
+    ),
+
+    documents: [
+      ...(Array.isArray(vendor.documents) ? vendor.documents : []),
+      ...(Array.isArray(vendor.uploadedDocuments)
+        ? vendor.uploadedDocuments
+        : []),
+      ...(Array.isArray(vendor.businessDocuments)
+        ? vendor.businessDocuments
+        : []),
+    ],
+
+    gallery: [
+      ...(Array.isArray(vendor.gallery) ? vendor.gallery : []),
+      ...(Array.isArray(vendor.images) ? vendor.images : []),
+      ...(Array.isArray(vendor.photos) ? vendor.photos : []),
+    ],
+
+    portfolioLinks: Array.isArray(vendor.portfolioLinks)
+      ? vendor.portfolioLinks
+      : [],
   };
 };
 
 /* =========================================================
-   CONTRACTOR TYPES
+   FILTER OPTIONS
 ========================================================= */
 
 const contractorTypes = [
@@ -559,7 +490,7 @@ const contractorTypes = [
 ];
 
 /* =========================================================
-   VENDOR TABS
+   FIVE COMPACT TABS
 ========================================================= */
 
 const vendorTabs: {
@@ -567,17 +498,14 @@ const vendorTabs: {
   icon: typeof LayoutDashboard;
 }[] = [
   { label: "Overview", icon: LayoutDashboard },
-  { label: "Business", icon: Building2 },
-  { label: "Products & Services", icon: Package },
+  { label: "Business Details", icon: Building2 },
   { label: "Operations", icon: Clock3 },
-  { label: "Documents", icon: FileCheck },
-  { label: "Gallery", icon: Image },
-  { label: "Performance", icon: Activity },
-  { label: "Activity", icon: MessageSquare },
+  { label: "Documents & Gallery", icon: FileCheck },
+  { label: "Performance & Activity", icon: Activity },
 ];
 
 /* =========================================================
-   DETAIL COMPONENTS
+   REUSABLE DETAIL COMPONENTS
 ========================================================= */
 
 function DetailItem({
@@ -587,17 +515,17 @@ function DetailItem({
   label: string;
   value?: string | number | null;
 }) {
+  const displayValue =
+    value !== undefined &&
+    value !== null &&
+    value !== ""
+      ? value
+      : "Not provided";
+
   return (
     <div className="vendor-detail-item">
       <span>{label}</span>
-
-      <strong>
-        {value !== undefined &&
-        value !== null &&
-        value !== ""
-          ? value
-          : "Not provided"}
-      </strong>
+      <strong>{displayValue}</strong>
     </div>
   );
 }
@@ -626,6 +554,61 @@ function DetailCard({
   );
 }
 
+function Metric({
+  label,
+  value,
+}: {
+  label: string;
+  value: string | number;
+}) {
+  return (
+    <div className="vendor-metric">
+      <span>{label}</span>
+      <strong>{value}</strong>
+    </div>
+  );
+}
+
+/* =========================================================
+   DOCUMENT / GALLERY HELPERS
+========================================================= */
+
+function getMediaDetails(item: unknown) {
+  if (typeof item === "string") {
+    return {
+      name: item.split("/").pop() || item,
+      url: item,
+    };
+  }
+
+  if (item && typeof item === "object") {
+    const record = item as Record<string, unknown>;
+
+    return {
+      name: readText(
+        record.name ?? record.title ?? record.filename,
+        "Uploaded file",
+      ),
+      url: readText(
+        record.url ??
+          record.fileUrl ??
+          record.image ??
+          record.src,
+        "",
+      ),
+    };
+  }
+
+  return {
+    name: "Uploaded file",
+    url: "",
+  };
+}
+
+// function isImageUrl(url: string) {
+//   return /\.(png|jpe?g|webp|gif|avif)(\?.*)?$/i.test(url);
+// }
+
 /* =========================================================
    MAIN ADMIN COMPONENT
 ========================================================= */
@@ -646,7 +629,7 @@ export default function Businesses() {
     useState<VendorTab>("Overview");
 
   const [action, setAction] = useState<
-    "approve" | "portfolio" | "subscription" | null
+    "portfolio" | "subscription" | null
   >(null);
 
   const [page, setPage] = useState(1);
@@ -657,48 +640,37 @@ export default function Businesses() {
 
   const [remarkInput, setRemarkInput] = useState("");
 
-  /* -------------------------------------------------------
-     LOAD VENDORS AND ADMIN REMARKS
-  ------------------------------------------------------- */
+  /* =====================================================
+     LOAD DATA
+  ===================================================== */
 
   const loadVendors = useCallback(() => {
     setRegisteredVendors(readStoredVendors());
 
     try {
-      const storedRemarks = localStorage.getItem(
-        REMARKS_STORAGE_KEY,
-      );
+      const stored = localStorage.getItem(REMARKS_STORAGE_KEY);
 
-      if (storedRemarks) {
-        const parsed: unknown = JSON.parse(storedRemarks);
+      if (!stored) {
+        setRemarks({});
+        return;
+      }
 
-        if (
-          parsed &&
-          typeof parsed === "object" &&
-          !Array.isArray(parsed)
-        ) {
-          setRemarks(
-            parsed as Record<string, string>,
-          );
-        } else {
-          setRemarks({});
-        }
+      const parsed: unknown = JSON.parse(stored);
+
+      if (
+        parsed &&
+        typeof parsed === "object" &&
+        !Array.isArray(parsed)
+      ) {
+        setRemarks(parsed as Record<string, string>);
       } else {
         setRemarks({});
       }
     } catch (error) {
-      console.error(
-        "Unable to read admin remarks:",
-        error,
-      );
-
+      console.error("Unable to read remarks:", error);
       setRemarks({});
     }
   }, []);
-
-  /* -------------------------------------------------------
-     REAL-TIME SHARED COLLECTION LISTENER
-  ------------------------------------------------------- */
 
   useEffect(() => {
     loadVendors();
@@ -708,10 +680,7 @@ export default function Businesses() {
       loadVendors,
     );
 
-    window.addEventListener(
-      "storage",
-      loadVendors,
-    );
+    window.addEventListener("storage", loadVendors);
 
     return () => {
       window.removeEventListener(
@@ -719,40 +688,33 @@ export default function Businesses() {
         loadVendors,
       );
 
-      window.removeEventListener(
-        "storage",
-        loadVendors,
-      );
+      window.removeEventListener("storage", loadVendors);
     };
   }, [loadVendors]);
 
-  /* -------------------------------------------------------
-     MAP SHARED RECORDS TO BUSINESS DATA
+  /* =====================================================
+     NORMALIZED BUSINESS COLLECTION
+  ===================================================== */
 
-     No sample businesses are shown here.
-     Only actual registered vendor records are displayed.
-  ------------------------------------------------------- */
+  const businesses = useMemo(
+    () => registeredVendors.map(normalizeBusiness),
+    [registeredVendors],
+  );
 
-  const businesses = useMemo(() => {
-    return registeredVendors.map(normalizeBusiness);
-  }, [registeredVendors]);
+  const vendorStatuses = useMemo(
+    () =>
+      Object.fromEntries(
+        businesses.map((business) => [
+          business.id,
+          business.vendorStatus,
+        ]),
+      ) as Record<string, VendorStatus>,
+    [businesses],
+  );
 
-  /* -------------------------------------------------------
-     VENDOR STATUS LOOKUP
-  ------------------------------------------------------- */
-
-  const vendorStatuses = useMemo(() => {
-    return Object.fromEntries(
-      businesses.map((business) => [
-        business.id,
-        business.vendorStatus,
-      ]),
-    ) as Record<string, VendorStatus>;
-  }, [businesses]);
-
-  /* -------------------------------------------------------
+  /* =====================================================
      FILTERING
-  ------------------------------------------------------- */
+  ===================================================== */
 
   const filteredBusinesses = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -772,15 +734,11 @@ export default function Businesses() {
 
       return matchesSearch && matchesType;
     });
-  }, [
-    businesses,
-    search,
-    contractorType,
-  ]);
+  }, [businesses, search, contractorType]);
 
-  /* -------------------------------------------------------
+  /* =====================================================
      PAGINATION
-  ------------------------------------------------------- */
+  ===================================================== */
 
   const pageSize = 10;
 
@@ -795,9 +753,7 @@ export default function Businesses() {
   );
 
   useEffect(() => {
-    setPage((current) =>
-      Math.min(current, totalPages),
-    );
+    setPage((current) => Math.min(current, totalPages));
   }, [totalPages]);
 
   const clearFilters = () => {
@@ -806,9 +762,9 @@ export default function Businesses() {
     setPage(1);
   };
 
-  /* -------------------------------------------------------
-     SELECT BUSINESS
-  ------------------------------------------------------- */
+  /* =====================================================
+     MODAL CONTROLS
+  ===================================================== */
 
   const openDetails = (business: Business) => {
     setSelectedBusiness(business);
@@ -823,25 +779,18 @@ export default function Businesses() {
     setRemarkInput("");
   };
 
-  /* -------------------------------------------------------
-     FIND MATCHING VENDOR RECORD
-  ------------------------------------------------------- */
-
   const findVendorRecord = (
     business: Business,
-  ): VendorRecord | undefined => {
+  ) => {
     return registeredVendors.find(
       (vendor) =>
         getVendorBusinessId(vendor) === business.id,
     );
   };
 
-  /* -------------------------------------------------------
+  /* =====================================================
      UPDATE VENDOR STATUS
-
-     Admin status is written to the shared collection.
-     Registration payment status remains unchanged.
-  ------------------------------------------------------- */
+  ===================================================== */
 
   const updateVendorStatus = (
     status: VendorStatus,
@@ -852,57 +801,42 @@ export default function Businesses() {
       selectedBusiness,
     );
 
-    if (!matchingVendor) {
-      console.warn(
-        "Vendor record could not be found in the shared collection.",
-      );
-
-      return;
-    }
+    if (!matchingVendor) return;
 
     const updatedVendors = registeredVendors.map(
       (vendor) => {
-        const matches =
-          getVendorBusinessId(vendor) ===
-          selectedBusiness.id;
-
-        if (!matches) return vendor;
+        if (
+          getVendorBusinessId(vendor) !==
+          selectedBusiness.id
+        ) {
+          return vendor;
+        }
 
         return {
           ...vendor,
           status,
           vendorStatus: status,
-          adminStatusUpdatedAt:
-            new Date().toISOString(),
+          adminStatusUpdatedAt: new Date().toISOString(),
         };
       },
     );
 
     writeStoredVendors(updatedVendors);
-
     setRegisteredVendors(updatedVendors);
 
     setSelectedBusiness((previous) =>
       previous
-        ? {
-            ...previous,
-            vendorStatus: status,
-          }
+        ? { ...previous, vendorStatus: status }
         : null,
     );
   };
 
-  /* -------------------------------------------------------
+  /* =====================================================
      SAVE ADMIN REMARK
-  ------------------------------------------------------- */
+  ===================================================== */
 
   const saveRemark = () => {
-    if (
-      !selectedBusiness ||
-      !remarkInput.trim()
-    ) {
-      return;
-    }
+    if (!selectedBusiness || !remarkInput.trim()) return;
 
     const updatedRemarks = {
       ...remarks,
@@ -917,34 +851,29 @@ export default function Businesses() {
         JSON.stringify(updatedRemarks),
       );
     } catch (error) {
-      console.error(
-        "Unable to save admin remark:",
-        error,
-      );
+      console.error("Unable to save remark:", error);
     }
 
     setRemarkInput("");
   };
 
-  /* -------------------------------------------------------
-     STATUS CSS CLASS
-  ------------------------------------------------------- */
+  /* =====================================================
+     STATUS HELPERS
+  ===================================================== */
 
-  const statusClass = (
-    status: VendorStatus,
-  ) => {
-    return status
-      .toLowerCase()
-      .replace(/\s+/g, "-");
-  };
+  const statusClass = (status: VendorStatus) =>
+    status.toLowerCase().replace(/\s+/g, "-");
 
-  /* -------------------------------------------------------
-     VENDOR DETAIL CONTENT
-  ------------------------------------------------------- */
+  const currentStatus = selectedBusiness
+    ? vendorStatuses[selectedBusiness.id] ??
+      selectedBusiness.vendorStatus
+    : "Pending";
 
-  const renderVendorContent = (
-    business: Business,
-  ) => {
+  /* =====================================================
+     COMPACT TAB CONTENT
+  ===================================================== */
+
+  const renderVendorContent = (business: Business) => {
     switch (activeTab) {
       /* ================================================
          OVERVIEW
@@ -954,39 +883,31 @@ export default function Businesses() {
         return (
           <>
             <div className="vendor-metric-grid">
-              <div className="vendor-metric">
-                <span>Products</span>
-                <strong>
-                  {business.productCount}
-                </strong>
-              </div>
+              <Metric
+                label="Products"
+                value={business.productCount}
+              />
 
-              <div className="vendor-metric">
-                <span>Services</span>
-                <strong>
-                  {business.serviceCount}
-                </strong>
-              </div>
+              <Metric
+                label="Services"
+                value={business.serviceCount}
+              />
 
-              <div className="vendor-metric">
-                <span>Enquiries</span>
-                <strong>
-                  {business.enquiries}
-                </strong>
-              </div>
+              <Metric
+                label="Enquiries"
+                value={business.enquiries}
+              />
 
-              <div className="vendor-metric">
-                <span>Rating</span>
-                <strong>
-                  {business.rating}
-                </strong>
-              </div>
+              <Metric
+                label="Rating"
+                value={business.rating}
+              />
             </div>
 
             <div className="vendor-detail-grid">
               <DetailCard
-                title="Business & Owner"
-                icon={Building2}
+                title="Business Information"
+                icon={Store}
               >
                 <div className="vendor-detail-items">
                   <DetailItem
@@ -995,12 +916,12 @@ export default function Businesses() {
                   />
 
                   <DetailItem
-                    label="Business type"
+                    label="Category"
                     value={business.type}
                   />
 
                   <DetailItem
-                    label="Owner name"
+                    label="Owner"
                     value={business.owner}
                   />
 
@@ -1008,15 +929,32 @@ export default function Businesses() {
                     label="Established"
                     value={business.established}
                   />
+                </div>
+              </DetailCard>
 
+              <DetailCard
+                title="Contact Information"
+                icon={UserRound}
+              >
+                <div className="vendor-detail-items">
                   <DetailItem
-                    label="Mobile number"
+                    label="Mobile"
                     value={business.phone}
                   />
 
                   <DetailItem
-                    label="Email address"
+                    label="Email"
                     value={business.email}
+                  />
+
+                  <DetailItem
+                    label="WhatsApp"
+                    value={business.whatsapp}
+                  />
+
+                  <DetailItem
+                    label="Website"
+                    value={business.website}
                   />
                 </div>
               </DetailCard>
@@ -1042,72 +980,35 @@ export default function Businesses() {
                   />
 
                   <DetailItem
-                    label="State"
-                    value={business.state}
-                  />
-
-                  <DetailItem
-                    label="PIN code"
-                    value={business.pincode}
-                  />
-
-                  <DetailItem
-                    label="Service areas"
-                    value={business.serviceAreas.join(", ")}
+                    label="State / PIN"
+                    value={`${business.state} - ${business.pincode}`}
                   />
                 </div>
               </DetailCard>
 
               <DetailCard
-                title="Products & Services"
-                icon={Package}
+                title="Registration"
+                icon={ShieldCheck}
               >
                 <div className="vendor-detail-items">
                   <DetailItem
-                    label="Products listed"
-                    value={business.productCount}
+                    label="Business ID"
+                    value={business.id}
                   />
 
                   <DetailItem
-                    label="Services offered"
-                    value={business.serviceCount}
+                    label="Registration fee"
+                    value={business.registrationStatus}
                   />
 
                   <DetailItem
-                    label="Product categories"
-                    value={business.products.join(", ")}
+                    label="Vendor status"
+                    value={business.vendorStatus}
                   />
 
                   <DetailItem
-                    label="Service categories"
-                    value={business.services.join(", ")}
-                  />
-                </div>
-              </DetailCard>
-
-              <DetailCard
-                title="Business Operations"
-                icon={Clock3}
-              >
-                <div className="vendor-detail-items">
-                  <DetailItem
-                    label="Working hours"
-                    value={business.workingHours}
-                  />
-
-                  <DetailItem
-                    label="Working days"
-                    value={business.workingDays}
-                  />
-
-                  <DetailItem
-                    label="Delivery"
-                    value={business.delivery}
-                  />
-
-                  <DetailItem
-                    label="Payment methods"
-                    value={business.paymentMethods.join(", ")}
+                    label="Registered on"
+                    value={business.registeredAt}
                   />
                 </div>
               </DetailCard>
@@ -1116,14 +1017,14 @@ export default function Businesses() {
         );
 
       /* ================================================
-         BUSINESS
+         BUSINESS DETAILS
       ================================================ */
 
-      case "Business":
+      case "Business Details":
         return (
           <div className="vendor-detail-grid">
             <DetailCard
-              title="Business Information"
+              title="About the Business"
               icon={Building2}
             >
               <div className="vendor-detail-items">
@@ -1133,12 +1034,7 @@ export default function Businesses() {
                 />
 
                 <DetailItem
-                  label="Business ID"
-                  value={business.id}
-                />
-
-                <DetailItem
-                  label="Business type"
+                  label="Business category"
                   value={business.type}
                 />
 
@@ -1146,61 +1042,48 @@ export default function Businesses() {
                   label="Year established"
                   value={business.established}
                 />
+              </div>
 
-                <DetailItem
-                  label="Business description"
-                  value={business.description}
-                />
-
-                <DetailItem
-                  label="Registration fee"
-                  value={business.registrationStatus}
-                />
+              <div className="vendor-description">
+                <span>Business description</span>
+                <p>{business.description}</p>
               </div>
             </DetailCard>
 
             <DetailCard
-              title="Owner & Contact Information"
-              icon={UserRound}
+              title="Products & Services"
+              icon={Package}
             >
               <div className="vendor-detail-items">
                 <DetailItem
-                  label="Owner name"
-                  value={business.owner}
+                  label="Products listed"
+                  value={business.productCount}
                 />
 
                 <DetailItem
-                  label="Primary mobile"
-                  value={business.phone}
+                  label="Product categories"
+                  value={business.products.join(", ")}
                 />
 
                 <DetailItem
-                  label="Alternate mobile"
+                  label="Services offered"
+                  value={business.serviceCount}
                 />
 
                 <DetailItem
-                  label="WhatsApp number"
-                  value={business.whatsapp}
-                />
-
-                <DetailItem
-                  label="Email"
-                  value={business.email}
-                />
-
-                <DetailItem
-                  label="Website"
+                  label="Service categories"
+                  value={business.services.join(", ")}
                 />
               </div>
             </DetailCard>
 
             <DetailCard
-              title="Address & Coverage"
+              title="Business Address"
               icon={MapPin}
             >
               <div className="vendor-detail-items">
                 <DetailItem
-                  label="Street address"
+                  label="Address"
                   value={business.address}
                 />
 
@@ -1215,10 +1098,6 @@ export default function Businesses() {
                 />
 
                 <DetailItem
-                  label="District"
-                />
-
-                <DetailItem
                   label="State"
                   value={business.state}
                 />
@@ -1227,142 +1106,22 @@ export default function Businesses() {
                   label="PIN code"
                   value={business.pincode}
                 />
-
-                <DetailItem
-                  label="Google Maps location"
-                />
-
-                <DetailItem
-                  label="Service areas"
-                  value={business.serviceAreas.join(", ")}
-                />
-              </div>
-            </DetailCard>
-          </div>
-        );
-
-      /* ================================================
-         PRODUCTS & SERVICES
-      ================================================ */
-
-      case "Products & Services":
-        return (
-          <div className="vendor-detail-grid">
-            <DetailCard
-              title="Product Catalogue"
-              icon={Package}
-            >
-              <div className="vendor-detail-items">
-                <DetailItem
-                  label="Total products"
-                  value={business.productCount}
-                />
-
-                <DetailItem
-                  label="Categories"
-                  value={business.products.join(", ")}
-                />
-
-                <DetailItem
-                  label="Brands / manufacturers"
-                />
-
-                <DetailItem
-                  label="Price range"
-                />
-
-                <DetailItem
-                  label="Stock availability"
-                />
-
-                <DetailItem
-                  label="Warranty details"
-                />
-
-                <DetailItem
-                  label="Delivery availability"
-                  value={business.delivery}
-                />
-
-                <DetailItem
-                  label="Product catalogue upload"
-                />
               </div>
             </DetailCard>
 
             <DetailCard
-              title="Service Catalogue"
-              icon={Wrench}
+              title="Portfolio"
+              icon={ExternalLink}
             >
               <div className="vendor-detail-items">
                 <DetailItem
-                  label="Total services"
-                  value={business.serviceCount}
+                  label="Portfolio description"
+                  value={business.projects}
                 />
 
                 <DetailItem
-                  label="Service categories"
-                  value={business.services.join(", ")}
-                />
-
-                <DetailItem
-                  label="Service description"
-                />
-
-                <DetailItem
-                  label="Service coverage"
-                  value={business.serviceAreas.join(", ")}
-                />
-
-                <DetailItem
-                  label="Service charges"
-                />
-
-                <DetailItem
-                  label="Estimated completion time"
-                />
-
-                <DetailItem
-                  label="Availability"
-                />
-              </div>
-            </DetailCard>
-
-            <DetailCard
-              title="Pricing & Charges"
-              icon={IndianRupee}
-            >
-              <div className="vendor-detail-items">
-                <DetailItem
-                  label="Minimum order value"
-                />
-
-                <DetailItem
-                  label="Product price range"
-                />
-
-                <DetailItem
-                  label="Labour charges"
-                />
-
-                <DetailItem
-                  label="Visiting charges"
-                />
-
-                <DetailItem
-                  label="Installation charges"
-                />
-
-                <DetailItem
-                  label="Delivery charges"
-                />
-
-                <DetailItem
-                  label="Discounts / offers"
-                />
-
-                <DetailItem
-                  label="Platform commission"
+                  label="Portfolio links"
+                  value={business.portfolioLinks.length}
                 />
               </div>
             </DetailCard>
@@ -1387,20 +1146,8 @@ export default function Businesses() {
                 />
 
                 <DetailItem
-                  label="Opening / closing hours"
+                  label="Working hours"
                   value={business.workingHours}
-                />
-
-                <DetailItem
-                  label="Weekly holidays"
-                />
-
-                <DetailItem
-                  label="Order acceptance status"
-                />
-
-                <DetailItem
-                  label="Customer support availability"
                 />
               </div>
             </DetailCard>
@@ -1416,165 +1163,232 @@ export default function Businesses() {
                 />
 
                 <DetailItem
-                  label="Pickup availability"
-                />
-
-                <DetailItem
                   label="Payment methods"
                   value={business.paymentMethods.join(", ")}
                 />
-
-                <DetailItem
-                  label="Return policy"
-                />
-
-                <DetailItem
-                  label="Replacement policy"
-                />
               </div>
             </DetailCard>
-          </div>
-        );
 
-      /* ================================================
-         DOCUMENTS
-      ================================================ */
-
-      case "Documents":
-        return (
-          <div className="vendor-detail-grid">
             <DetailCard
-              title="Business Documents"
-              icon={FileCheck}
+              title="Service Coverage"
+              icon={MapPin}
             >
-              {[
-                "PAN Card",
-                "GST Certificate / GSTIN",
-                "Business Registration",
-                "Shop Establishment Certificate",
-                "Trade Licence",
-                "Other Applicable Licences",
-              ].map((document) => (
-                <div
-                  className="vendor-document-row"
-                  key={document}
-                >
-                  <div>
-                    <FileText size={17} />
-                    <span>{document}</span>
-                  </div>
-
-                  <span className="vendor-not-provided">
-                    Not uploaded
-                  </span>
-                </div>
-              ))}
+              <div className="vendor-description">
+                <span>Areas served</span>
+                <p>
+                  {business.serviceAreas.length
+                    ? business.serviceAreas.join(", ")
+                    : "Not provided"}
+                </p>
+              </div>
             </DetailCard>
 
             <DetailCard
-              title="Owner Identity & Bank Verification"
-              icon={ShieldCheck}
+              title="Business Contact"
+              icon={Wrench}
             >
               <div className="vendor-detail-items">
                 <DetailItem
-                  label="Owner identity proof"
+                  label="Primary mobile"
+                  value={business.phone}
                 />
 
                 <DetailItem
-                  label="Document submission date"
+                  label="Alternate mobile"
+                  value={business.alternateMobile}
                 />
 
                 <DetailItem
-                  label="Document verification"
+                  label="WhatsApp"
+                  value={business.whatsapp}
                 />
 
                 <DetailItem
-                  label="Verification remarks"
-                />
-
-                <DetailItem
-                  label="Bank account holder"
-                />
-
-                <DetailItem
-                  label="Bank name"
-                />
-
-                <DetailItem
-                  label="Account number"
-                />
-
-                <DetailItem
-                  label="IFSC code"
-                />
-
-                <DetailItem
-                  label="UPI ID"
-                />
-
-                <DetailItem
-                  label="Bank verification status"
+                  label="Email"
+                  value={business.email}
                 />
               </div>
-
-              <p className="vendor-private-note">
-                <ShieldCheck size={14} />
-
-                Sensitive identity and banking information is
-                restricted to authorized administrators.
-              </p>
             </DetailCard>
           </div>
         );
 
       /* ================================================
-         GALLERY
+         DOCUMENTS & GALLERY
       ================================================ */
 
-      case "Gallery":
+      case "Documents & Gallery":
         return (
-          <DetailCard
-            title="Business Gallery & Media"
-            icon={Image}
-          >
-            <div className="vendor-gallery-empty">
-              <Image size={30} />
+          <div className="vendor-detail-grid">
+            <DetailCard
+              title="Uploaded Documents"
+              icon={FileCheck}
+            >
+              {business.documents.length > 0 ? (
+                <div className="vendor-upload-list">
+                  {business.documents.map((item, index) => {
+                    const file = getMediaDetails(item);
 
-              <strong>
-                No gallery images available
-              </strong>
+                    return (
+                      <div
+                        className="vendor-document-row"
+                        key={`${file.name}-${index}`}
+                      >
+                        <div>
+                          <FileText size={17} />
+                          <span>{file.name}</span>
+                        </div>
 
-              <span>
-                Business logos, shop photos, product images,
-                work samples and videos will appear here when
-                uploaded by the vendor.
-              </span>
-            </div>
-          </DetailCard>
+                        {file.url ? (
+                          <a
+                            href={file.url}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            View <ExternalLink size={13} />
+                          </a>
+                        ) : (
+                          <span className="vendor-not-provided">
+                            File unavailable
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="vendor-gallery-empty">
+                  <FileText size={27} />
+                  <strong>No documents uploaded</strong>
+                  <span>
+                    Uploaded business documents will appear here.
+                  </span>
+                </div>
+              )}
+            </DetailCard>
+
+            <DetailCard
+              title="Business Gallery"
+              icon={ImageIcon}
+            >
+              {business.gallery.length > 0 ? (
+                <div className="vendor-upload-list">
+                  {business.gallery.map((item, index) => {
+                    const file = getMediaDetails(item);
+
+                    return (
+                      <div
+                        className="vendor-document-row"
+                        key={`${file.name}-${index}`}
+                      >
+                        <div>
+                          <ImageIcon size={17} />
+                          <span>{file.name}</span>
+                        </div>
+
+                        {file.url ? (
+                          <a
+                            href={file.url}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            View <ExternalLink size={13} />
+                          </a>
+                        ) : (
+                          <span className="vendor-not-provided">
+                            File unavailable
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="vendor-gallery-empty">
+                  <ImageIcon size={27} />
+                  <strong>No gallery images available</strong>
+                  <span>
+                    Business photos and uploaded images will appear here.
+                  </span>
+                </div>
+              )}
+            </DetailCard>
+
+            <DetailCard
+              title="Portfolio Links"
+              icon={ExternalLink}
+            >
+              {business.portfolioLinks.length > 0 ? (
+                <div className="vendor-upload-list">
+                  {business.portfolioLinks.map((item, index) => {
+                    const file = getMediaDetails(item);
+
+                    return (
+                      <div
+                        className="vendor-document-row"
+                        key={`${file.name}-${index}`}
+                      >
+                        <div>
+                          <ExternalLink size={16} />
+                          <span>{file.name}</span>
+                        </div>
+
+                        {file.url ? (
+                          <a
+                            href={file.url}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            Open <ExternalLink size={13} />
+                          </a>
+                        ) : (
+                          <span className="vendor-not-provided">
+                            Link unavailable
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="vendor-gallery-empty">
+                  <ExternalLink size={27} />
+                  <strong>No portfolio links</strong>
+                  <span>
+                    Portfolio references have not been submitted.
+                  </span>
+                </div>
+              )}
+            </DetailCard>
+          </div>
         );
 
       /* ================================================
-         PERFORMANCE
+         PERFORMANCE & ACTIVITY
       ================================================ */
 
-      case "Performance":
+      case "Performance & Activity":
         return (
           <>
             <div className="vendor-metric-grid">
-              {[
-                ["Profile views", business.views],
-                ["Customer enquiries", business.enquiries],
-                ["Phone clicks", business.phoneClicks],
-                ["Followers", business.followers],
-              ].map(([label, value]) => (
-                <div
-                  className="vendor-metric"
-                  key={String(label)}
-                >
-                  <span>{label}</span>
-                  <strong>{value}</strong>
-                </div>
-              ))}
+              <Metric
+                label="Profile views"
+                value={business.views}
+              />
+
+              <Metric
+                label="Enquiries"
+                value={business.enquiries}
+              />
+
+              <Metric
+                label="Phone clicks"
+                value={business.phoneClicks}
+              />
+
+              <Metric
+                label="Followers"
+                value={business.followers}
+              />
             </div>
 
             <div className="vendor-detail-grid">
@@ -1592,152 +1406,76 @@ export default function Businesses() {
                     label="Total reviews"
                     value={business.reviews}
                   />
+                </div>
+              </DetailCard>
 
+              <DetailCard
+                title="Registration Activity"
+                icon={Activity}
+              >
+                <div className="vendor-detail-items">
                   <DetailItem
-                    label="Customer complaints"
+                    label="Registration date"
+                    value={business.registeredAt}
                   />
 
                   <DetailItem
-                    label="Vendor responses"
+                    label="Vendor status"
+                    value={business.vendorStatus}
                   />
 
                   <DetailItem
-                    label="Reported reviews"
-                  />
-
-                  <DetailItem
-                    label="Moderation status"
+                    label="Registration payment"
+                    value={business.registrationStatus}
                   />
                 </div>
               </DetailCard>
 
               <DetailCard
-                title="Listing Engagement"
-                icon={Activity}
+                title="Admin Remarks"
+                icon={MessageSquare}
               >
-                <div className="vendor-detail-items">
-                  <DetailItem
-                    label="Profile views"
-                    value={business.views}
-                  />
+                <textarea
+                  className="vendor-remarks-input"
+                  placeholder="Add an internal admin remark..."
+                  value={remarkInput}
+                  onChange={(event) =>
+                    setRemarkInput(event.target.value)
+                  }
+                />
 
-                  <DetailItem
-                    label="Product views"
-                  />
+                <button
+                  type="button"
+                  className="vendor-save-remark"
+                  onClick={saveRemark}
+                  disabled={!remarkInput.trim()}
+                >
+                  Save Remark
+                </button>
 
-                  <DetailItem
-                    label="Service views"
-                  />
-
-                  <DetailItem
-                    label="Customer enquiries"
-                    value={business.enquiries}
-                  />
-
-                  <DetailItem
-                    label="Phone clicks"
-                    value={business.phoneClicks}
-                  />
-
-                  <DetailItem
-                    label="Followers"
-                    value={business.followers}
-                  />
+                <div className="vendor-saved-remark">
+                  <span>Latest internal remark</span>
+                  <p>
+                    {remarks[business.id] ||
+                      "No admin remarks recorded."}
+                  </p>
                 </div>
               </DetailCard>
             </div>
           </>
         );
-
-      /* ================================================
-         ACTIVITY
-      ================================================ */
-
-      case "Activity":
-        return (
-          <div className="vendor-detail-grid">
-            <DetailCard
-              title="Vendor Activity"
-              icon={Activity}
-            >
-              <div className="vendor-detail-items">
-                <DetailItem
-                  label="Registration date"
-                  value={business.registeredAt}
-                />
-
-                <DetailItem
-                  label="Last profile update"
-                />
-
-                <DetailItem
-                  label="Last login"
-                />
-
-                <DetailItem
-                  label="Product changes"
-                />
-
-                <DetailItem
-                  label="Service changes"
-                />
-
-                <DetailItem
-                  label="Document submissions"
-                />
-
-                <DetailItem
-                  label="Approval history"
-                />
-
-                <DetailItem
-                  label="Suspension history"
-                />
-              </div>
-            </DetailCard>
-
-            <DetailCard
-              title="Admin Remarks & History"
-              icon={MessageSquare}
-            >
-              <textarea
-                className="vendor-remarks-input"
-                placeholder="Add an internal admin remark..."
-                value={remarkInput}
-                onChange={(event) =>
-                  setRemarkInput(event.target.value)
-                }
-              />
-
-              <button
-                type="button"
-                className="vendor-save-remark"
-                onClick={saveRemark}
-                disabled={!remarkInput.trim()}
-              >
-                Save Internal Remark
-              </button>
-
-              <div className="vendor-saved-remark">
-                <span>Latest internal remark</span>
-
-                <p>
-                  {remarks[business.id] ||
-                    "No admin remarks recorded."}
-                </p>
-              </div>
-            </DetailCard>
-          </div>
-        );
     }
   };
 
-  /* =======================================================
-     RENDER
-  ======================================================= */
+  /* =====================================================
+     MAIN PAGE
+  ===================================================== */
 
   return (
     <div className="businesses-admin-page">
+
+      {/* PAGE HEADER */}
+
       <section className="businesses-page-header">
         <div>
           <div className="businesses-eyebrow">
@@ -1747,16 +1485,16 @@ export default function Businesses() {
           <h1>Find City Listings</h1>
 
           <p>
-            Manage city listings and registered business
-            information.
+            Manage registered businesses and city listings.
           </p>
         </div>
       </section>
 
+      {/* DIRECTORY */}
+
       <section className="businesses-directory-card">
-        {/* ================================================
-            FILTER BAR
-        ================================================ */}
+
+        {/* FILTER BAR */}
 
         <div className="businesses-filter-bar">
           <div className="businesses-search">
@@ -1795,10 +1533,7 @@ export default function Businesses() {
               }}
             >
               {contractorTypes.map((type) => (
-                <option
-                  key={type}
-                  value={type}
-                >
+                <option key={type} value={type}>
                   {type}
                 </option>
               ))}
@@ -1819,9 +1554,7 @@ export default function Businesses() {
           )}
         </div>
 
-        {/* ================================================
-            BUSINESS TABLE
-        ================================================ */}
+        {/* BUSINESS TABLE */}
 
         <div className="businesses-table-wrapper">
           <table className="businesses-table">
@@ -1841,13 +1574,8 @@ export default function Businesses() {
                 <tr key={business.id}>
                   <td>
                     <div className="business-name-cell">
-                      <strong>
-                        {business.name}
-                      </strong>
-
-                      <span>
-                        {business.id}
-                      </span>
+                      <strong>{business.name}</strong>
+                      <span>{business.id}</span>
                     </div>
                   </td>
 
@@ -1865,7 +1593,7 @@ export default function Businesses() {
 
                   <td>
                     <span className="business-contact">
-                      {business.contact}
+                      {business.phone}
                     </span>
                   </td>
 
@@ -1876,7 +1604,6 @@ export default function Businesses() {
                       {business.registrationStatus === "Paid" && (
                         <CheckCircle2 size={13} />
                       )}
-
                       {business.registrationStatus}
                     </span>
                   </td>
@@ -1886,9 +1613,7 @@ export default function Businesses() {
                       <button
                         type="button"
                         className="business-primary-action"
-                        onClick={() =>
-                          openDetails(business)
-                        }
+                        onClick={() => openDetails(business)}
                       >
                         <Eye size={14} />
                         View Details
@@ -1902,7 +1627,7 @@ export default function Businesses() {
                           setAction("portfolio");
                         }}
                       >
-                        Portfolio Links
+                        Portfolio
                         <ExternalLink size={13} />
                       </button>
 
@@ -1914,16 +1639,12 @@ export default function Businesses() {
                           setAction("subscription");
                         }}
                       >
-                        Manage Subscription
+                        Subscription
                       </button>
                     </div>
                   </td>
                 </tr>
               ))}
-
-              {/* ==========================================
-                  EMPTY STATE
-              ========================================== */}
 
               {paginatedBusinesses.length === 0 && (
                 <tr>
@@ -1939,7 +1660,7 @@ export default function Businesses() {
 
                       <span>
                         {registeredVendors.length === 0
-                          ? "New vendor registrations will appear here automatically when they are added to the shared vendor collection."
+                          ? "New vendor registrations will appear here when added to the shared vendor collection."
                           : "Try changing your search or contractor type."}
                       </span>
 
@@ -1960,9 +1681,7 @@ export default function Businesses() {
           </table>
         </div>
 
-        {/* ================================================
-            TABLE FOOTER
-        ================================================ */}
+        {/* TABLE FOOTER */}
 
         <div className="businesses-table-footer">
           <span>
@@ -1977,11 +1696,7 @@ export default function Businesses() {
                 filteredBusinesses.length,
               )}
             </strong>{" "}
-            of{" "}
-            <strong>
-              {filteredBusinesses.length}
-            </strong>{" "}
-            businesses
+            of <strong>{filteredBusinesses.length}</strong> businesses
           </span>
 
           <div className="businesses-pagination">
@@ -1989,9 +1704,7 @@ export default function Businesses() {
               type="button"
               disabled={page <= 1}
               onClick={() =>
-                setPage((current) =>
-                  Math.max(1, current - 1),
-                )
+                setPage((current) => Math.max(1, current - 1))
               }
               aria-label="Previous page"
             >
@@ -2005,9 +1718,7 @@ export default function Businesses() {
               <button
                 type="button"
                 key={pageNumber}
-                className={
-                  page === pageNumber ? "active" : ""
-                }
+                className={page === pageNumber ? "active" : ""}
                 onClick={() => setPage(pageNumber)}
               >
                 {pageNumber}
@@ -2030,9 +1741,9 @@ export default function Businesses() {
         </div>
       </section>
 
-      {/* ===================================================
-          COMPLETE VENDOR DETAILS MODAL
-      =================================================== */}
+      {/* =================================================
+          VENDOR DETAILS MODAL
+      ================================================= */}
 
       {selectedBusiness && !action && (
         <div
@@ -2041,17 +1752,15 @@ export default function Businesses() {
         >
           <div
             className="vendor-details-modal"
-            onClick={(event) =>
-              event.stopPropagation()
-            }
+            onClick={(event) => event.stopPropagation()}
           >
+
             {/* TOP BAR */}
 
             <div className="vendor-details-topbar">
               <div>
                 <span>
-                  CITY LISTINGS / VENDORS /{" "}
-                  {selectedBusiness.id}
+                  CITY LISTINGS / VENDORS / {selectedBusiness.id}
                 </span>
 
                 <h2>Vendor Details</h2>
@@ -2074,31 +1783,23 @@ export default function Businesses() {
               </div>
 
               <div className="vendor-profile-main">
-                <h2>
-                  {selectedBusiness.name}
-                </h2>
+                <h2>{selectedBusiness.name}</h2>
 
                 <p>
-                  {selectedBusiness.id} ·{" "}
-                  {selectedBusiness.type}
+                  {selectedBusiness.id} · {selectedBusiness.type}
                 </p>
 
                 <span>
                   <MapPin size={13} />
-
                   {selectedBusiness.locality ||
                     selectedBusiness.city}
                 </span>
 
                 <div className="vendor-profile-badges">
                   <span
-                    className={`vendor-status-badge ${statusClass(
-                      vendorStatuses[selectedBusiness.id] ??
-                        selectedBusiness.vendorStatus,
-                    )}`}
+                    className={`vendor-status-badge ${statusClass(currentStatus)}`}
                   >
-                    {vendorStatuses[selectedBusiness.id] ??
-                      selectedBusiness.vendorStatus}
+                    {currentStatus}
                   </span>
 
                   <span className="vendor-status-badge neutral">
@@ -2117,29 +1818,23 @@ export default function Businesses() {
               </button>
             </div>
 
-            {/* VENDOR TABS */}
+            {/* FIVE TABS */}
 
             <div className="vendor-tabs">
-              {vendorTabs.map(
-                ({ label, icon: Icon }) => (
-                  <button
-                    type="button"
-                    key={label}
-                    className={
-                      activeTab === label ? "active" : ""
-                    }
-                    onClick={() =>
-                      setActiveTab(label)
-                    }
-                  >
-                    <Icon size={15} />
-                    {label}
-                  </button>
-                ),
-              )}
+              {vendorTabs.map(({ label, icon: Icon }) => (
+                <button
+                  type="button"
+                  key={label}
+                  className={activeTab === label ? "active" : ""}
+                  onClick={() => setActiveTab(label)}
+                >
+                  <Icon size={15} />
+                  {label}
+                </button>
+              ))}
             </div>
 
-            {/* TAB CONTENT */}
+            {/* CONTENT */}
 
             <div className="vendor-details-content">
               {renderVendorContent(selectedBusiness)}
@@ -2151,89 +1846,57 @@ export default function Businesses() {
               <div className="vendor-admin-heading">
                 <div>
                   <h3>Admin Management</h3>
-
-                  <p>
-                    Administrative controls for this vendor
-                    listing.
-                  </p>
+                  <p>Manage this business listing.</p>
                 </div>
 
                 <span
-                  className={`vendor-status-badge ${statusClass(
-                    vendorStatuses[selectedBusiness.id] ??
-                      selectedBusiness.vendorStatus,
-                  )}`}
+                  className={`vendor-status-badge ${statusClass(currentStatus)}`}
                 >
-                  {vendorStatuses[selectedBusiness.id] ??
-                    selectedBusiness.vendorStatus}
+                  {currentStatus}
                 </span>
               </div>
 
               <div className="vendor-admin-actions">
-                {(vendorStatuses[selectedBusiness.id] ??
-                  selectedBusiness.vendorStatus) !== "Approved" && (
+                {currentStatus !== "Approved" && (
                   <button
                     type="button"
                     className="vendor-admin-approve"
-                    onClick={() =>
-                      updateVendorStatus("Approved")
-                    }
+                    onClick={() => updateVendorStatus("Approved")}
                   >
                     <CheckCircle2 size={15} />
-                    Approve Vendor
+                    {currentStatus === "Suspended"
+                      ? "Reactivate Listing"
+                      : "Approve Vendor"}
                   </button>
                 )}
 
-                {(vendorStatuses[selectedBusiness.id] ??
-                  selectedBusiness.vendorStatus) === "Pending" && (
+                {currentStatus === "Pending" && (
                   <button
                     type="button"
                     className="vendor-admin-reject"
-                    onClick={() =>
-                      updateVendorStatus("Rejected")
-                    }
+                    onClick={() => updateVendorStatus("Rejected")}
                   >
                     <X size={15} />
                     Reject Application
                   </button>
                 )}
 
-                {(vendorStatuses[selectedBusiness.id] ??
-                  selectedBusiness.vendorStatus) === "Approved" && (
+                {currentStatus === "Approved" && (
                   <button
                     type="button"
                     className="vendor-admin-suspend"
-                    onClick={() =>
-                      updateVendorStatus("Suspended")
-                    }
+                    onClick={() => updateVendorStatus("Suspended")}
                   >
                     <PauseCircle size={15} />
                     Suspend Listing
                   </button>
                 )}
 
-                {(vendorStatuses[selectedBusiness.id] ??
-                  selectedBusiness.vendorStatus) === "Suspended" && (
+                {currentStatus === "Rejected" && (
                   <button
                     type="button"
                     className="vendor-admin-approve"
-                    onClick={() =>
-                      updateVendorStatus("Approved")
-                    }
-                  >
-                    <CheckCircle2 size={15} />
-                    Reactivate Listing
-                  </button>
-                )}
-
-                {(vendorStatuses[selectedBusiness.id] ??
-                  selectedBusiness.vendorStatus) === "Rejected" && (
-                  <button
-                    type="button"
-                    className="vendor-admin-approve"
-                    onClick={() =>
-                      updateVendorStatus("Pending")
-                    }
+                    onClick={() => updateVendorStatus("Pending")}
                   >
                     <FileCheck size={15} />
                     Review Again
@@ -2243,18 +1906,17 @@ export default function Businesses() {
 
               <p className="vendor-admin-disclaimer">
                 <ShieldCheck size={14} />
-
-                Vendor information is read-only. Admin actions
-                update the shared vendor listing status.
+                Vendor information is read-only. Admin actions update
+                the shared vendor listing status.
               </p>
             </div>
           </div>
         </div>
       )}
 
-      {/* ===================================================
-          PORTFOLIO AND SUBSCRIPTION MODALS
-      =================================================== */}
+      {/* =================================================
+          PORTFOLIO / SUBSCRIPTION MODAL
+      ================================================= */}
 
       {selectedBusiness && action && (
         <div
@@ -2263,21 +1925,16 @@ export default function Businesses() {
         >
           <div
             className="business-modal"
-            onClick={(event) =>
-              event.stopPropagation()
-            }
+            onClick={(event) => event.stopPropagation()}
           >
             <div className="business-modal-header">
               <div>
                 <span>CORPORATE DIRECTORY</span>
 
-                <h2>
-                  {selectedBusiness.name}
-                </h2>
+                <h2>{selectedBusiness.name}</h2>
 
                 <small>
-                  {selectedBusiness.id} ·{" "}
-                  {selectedBusiness.type}
+                  {selectedBusiness.id} · {selectedBusiness.type}
                 </small>
               </div>
 
@@ -2300,22 +1957,41 @@ export default function Businesses() {
                   <h3>Portfolio Links</h3>
 
                   <p>
-                    Portfolio references submitted by{" "}
-                    <strong>
-                      {selectedBusiness.name}
-                    </strong>{" "}
-                    will be available here for administrative
-                    review.
+                    Portfolio information submitted by{" "}
+                    <strong>{selectedBusiness.name}</strong>.
                   </p>
 
-                  <div className="business-portfolio-placeholder">
-                    <ExternalLink size={18} />
+                  {selectedBusiness.portfolioLinks.length > 0 ? (
+                    <div className="business-portfolio-placeholder">
+                      {selectedBusiness.portfolioLinks.map(
+                        (item, index) => {
+                          const file = getMediaDetails(item);
 
-                    <span>
-                      No portfolio links available in the
-                      current record.
-                    </span>
-                  </div>
+                          return (
+                            <div key={index}>
+                              {file.url ? (
+                                <a
+                                  href={file.url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                >
+                                  {file.name}
+                                  <ExternalLink size={13} />
+                                </a>
+                              ) : (
+                                <span>{file.name}</span>
+                              )}
+                            </div>
+                          );
+                        },
+                      )}
+                    </div>
+                  ) : (
+                    <div className="business-portfolio-placeholder">
+                      <ExternalLink size={18} />
+                      <span>No portfolio links available.</span>
+                    </div>
+                  )}
                 </>
               ) : (
                 <>
@@ -2326,19 +2002,13 @@ export default function Businesses() {
                   <h3>Manage Subscription</h3>
 
                   <p>
-                    Review registration and listing
-                    subscription details for{" "}
-                    <strong>
-                      {selectedBusiness.name}
-                    </strong>.
+                    Review the registration and listing fee status.
                   </p>
 
                   <div className="business-modal-info">
                     <div>
                       <span>PLAN</span>
-                      <strong>
-                        Business Listing
-                      </strong>
+                      <strong>Business Listing</strong>
                     </div>
 
                     <div>
@@ -2346,6 +2016,11 @@ export default function Businesses() {
                       <strong>
                         {selectedBusiness.registrationStatus}
                       </strong>
+                    </div>
+
+                    <div>
+                      <span>VENDOR STATUS</span>
+                      <strong>{currentStatus}</strong>
                     </div>
                   </div>
                 </>
