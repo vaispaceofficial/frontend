@@ -1,4 +1,3 @@
-
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -32,6 +31,10 @@ import {
     ExternalLink,
 } from "lucide-react";
 import "./ProfilePage.css";
+
+/* =========================================================
+   TYPES
+========================================================= */
 
 type ServiceUser = {
     id?: string;
@@ -143,9 +146,27 @@ type OrderHistoryItem = {
     amount?: number | string;
 };
 
+type AdminNotification = {
+    id: string;
+    recipientMobile: string;
+    accountType: "seller" | "professional" | "vendor" | "student";
+    accountId?: string;
+    title: string;
+    message: string;
+    type?: string;
+    createdAt: string;
+    targetPath: string;
+    targetSection: string;
+    read?: boolean;
+};
+
 type OrderTypeFilter = "all" | "service" | "product";
 type OrderDateSort = "newest" | "oldest";
 type ProfileModal = "personal" | "address" | "privacy" | "help" | null;
+
+/* =========================================================
+   CONSTANTS
+========================================================= */
 
 const DEFAULT_SETTINGS: AccountSettings = {
     language: "English",
@@ -157,13 +178,19 @@ const DEFAULT_SETTINGS: AccountSettings = {
 const PROFESSIONAL_APPLICATION_KEY = "oneservice_professional_application";
 const SELLER_APPLICATION_KEY = "oneservice_seller_application";
 const VENDOR_APPLICATION_KEY = "oneservice_vendor";
+
 const STUDENT_APPLICATION_KEYS = [
     "oneservice_student_application",
     "oneservice_student",
 ];
+
 const PROFESSIONAL_NOTICE_KEY = "oneservice_professional_notice";
 const ORDER_HISTORY_KEY = "oneservice_order_history";
 const PAGE_HISTORY_KEY = "oneservice_page_history";
+
+const ADMIN_NOTIFICATIONS_KEY = "oneservice_admin_notifications";
+const ADMIN_NOTIFICATION_CHANGE_EVENT =
+    "oneservice-admin-notification-change";
 
 const ORDER_STATUS_OPTIONS = [
     { value: "all", label: "All statuses" },
@@ -202,6 +229,95 @@ const NETWORK_OPTIONS = [
         icon: GraduationCap,
     },
 ];
+
+/* =========================================================
+   SHARED ADMIN NOTIFICATION HELPERS
+========================================================= */
+
+function normalizeMobile(mobile?: string): string {
+    return (mobile ?? "").replace(/\D/g, "").slice(-10);
+}
+
+function readAdminNotifications(): AdminNotification[] {
+    try {
+        const saved = localStorage.getItem(ADMIN_NOTIFICATIONS_KEY);
+        if (!saved) return [];
+
+        const parsed: unknown = JSON.parse(saved);
+        if (!Array.isArray(parsed)) return [];
+
+        return parsed.filter(
+            (item): item is AdminNotification =>
+                item !== null &&
+                typeof item === "object" &&
+                typeof item.id === "string" &&
+                typeof item.recipientMobile === "string" &&
+                typeof item.accountType === "string" &&
+                typeof item.title === "string" &&
+                typeof item.message === "string" &&
+                typeof item.createdAt === "string" &&
+                typeof item.targetPath === "string" &&
+                typeof item.targetSection === "string",
+        );
+    } catch {
+        return [];
+    }
+}
+
+function saveAdminNotifications(
+    notifications: AdminNotification[],
+): void {
+    localStorage.setItem(
+        ADMIN_NOTIFICATIONS_KEY,
+        JSON.stringify(notifications),
+    );
+
+    // Custom event refreshes Profile and role hubs in the same browser tab.
+    window.dispatchEvent(
+        new Event(ADMIN_NOTIFICATION_CHANGE_EVENT),
+    );
+}
+
+function formatAdminNotificationDate(date: string): string {
+    const timestamp = Date.parse(date);
+    if (Number.isNaN(timestamp)) return date;
+
+    return new Intl.DateTimeFormat("en-IN", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+    }).format(new Date(timestamp));
+}
+
+function getAdminRoleLabel(
+    accountType: AdminNotification["accountType"],
+): string {
+    const labels: Record<AdminNotification["accountType"], string> = {
+        professional: "Professional",
+        seller: "Seller",
+        vendor: "Vendor",
+        student: "Student",
+    };
+
+    return labels[accountType];
+}
+
+function getAdminNotificationPath(
+    notification: AdminNotification,
+): string {
+    const path = notification.targetPath || "/profile";
+
+    if (!notification.targetSection) return path;
+
+    const section = notification.targetSection.replace(/^#/, "");
+    return `${path.split("#")[0]}#${section}`;
+}
+
+/* =========================================================
+   GENERAL HELPERS
+========================================================= */
 
 function readSettings(): AccountSettings {
     try {
@@ -247,7 +363,6 @@ function readSellerApplication(): SellerApplication | null {
         if (!saved) return null;
 
         const application = JSON.parse(saved) as SellerApplication;
-
         if (!application || typeof application !== "object") return null;
 
         const hasSellerDetails = Boolean(
@@ -271,7 +386,6 @@ function readVendorApplication(): VendorApplication | null {
         if (!saved) return null;
 
         const application = JSON.parse(saved) as VendorApplication;
-
         if (!application || typeof application !== "object") return null;
 
         const hasVendorDetails = Boolean(
@@ -295,7 +409,6 @@ function readStudentApplication(): StudentApplication | null {
             if (!saved) continue;
 
             const application = JSON.parse(saved) as StudentApplication;
-
             if (!application || typeof application !== "object") continue;
 
             const hasStudentDetails = Boolean(
@@ -341,8 +454,10 @@ function readPageHistory(): PageVisit[] {
     try {
         const saved = localStorage.getItem(PAGE_HISTORY_KEY);
         if (!saved) return [];
+
         const parsed: unknown = JSON.parse(saved);
         if (!Array.isArray(parsed)) return [];
+
         return parsed.filter(
             (visit): visit is PageVisit =>
                 visit !== null &&
@@ -360,6 +475,7 @@ function readPageHistory(): PageVisit[] {
 function formatVisitDate(date: string): string {
     const timestamp = Date.parse(date);
     if (Number.isNaN(timestamp)) return date;
+
     return new Intl.DateTimeFormat("en-IN", {
         day: "numeric",
         month: "short",
@@ -468,6 +584,10 @@ function formatOrderAmount(amount: number | string): string {
     return trimmed.startsWith("₹") ? trimmed : trimmed;
 }
 
+/* =========================================================
+   MAIN PROFILE PAGE
+========================================================= */
+
 function ProfilePage() {
     const navigate = useNavigate();
 
@@ -482,7 +602,12 @@ function ProfilePage() {
     const [address, setAddress] = useState("");
     const [savedAddress, setSavedAddress] = useState("");
     const [notice, setNotice] = useState("");
-    const [readNotificationIds, setReadNotificationIds] = useState<string[]>([]);
+
+    const [readNotificationIds, setReadNotificationIds] =
+        useState<string[]>([]);
+
+    const [adminNotifications, setAdminNotifications] =
+        useState<AdminNotification[]>([]);
 
     const [professionalApplication, setProfessionalApplication] =
         useState<ProfessionalApplication | null>(null);
@@ -496,16 +621,28 @@ function ProfilePage() {
     const [studentApplication, setStudentApplication] =
         useState<StudentApplication | null>(null);
 
-    const [orderHistory, setOrderHistory] = useState<OrderHistoryItem[]>([]);
-    const [pageHistory, setPageHistory] = useState<PageVisit[]>([]);
+    const [orderHistory, setOrderHistory] =
+        useState<OrderHistoryItem[]>([]);
+
+    const [pageHistory, setPageHistory] =
+        useState<PageVisit[]>([]);
+
     const [showAllOrders, setShowAllOrders] = useState(false);
 
     const [orderTypeFilter, setOrderTypeFilter] =
         useState<OrderTypeFilter>("all");
-    const [orderStatusFilter, setOrderStatusFilter] = useState("all");
+
+    const [orderStatusFilter, setOrderStatusFilter] =
+        useState("all");
+
     const [orderSearch, setOrderSearch] = useState("");
+
     const [orderDateSort, setOrderDateSort] =
         useState<OrderDateSort>("newest");
+
+    /* =====================================================
+       INITIAL ACCOUNT LOAD
+    ===================================================== */
 
     useEffect(() => {
         const storedUser = localStorage.getItem("oneservice_user");
@@ -532,19 +669,27 @@ function ProfilePage() {
                 const savedReadNotifications = localStorage.getItem(
                     "oneservice_profile_read_notifications",
                 );
+
                 if (savedReadNotifications) {
-                    const parsedReadNotifications: unknown = JSON.parse(savedReadNotifications);
+                    const parsedReadNotifications: unknown =
+                        JSON.parse(savedReadNotifications);
+
                     if (Array.isArray(parsedReadNotifications)) {
                         setReadNotificationIds(
                             parsedReadNotifications.filter(
-                                (item): item is string => typeof item === "string",
+                                (item): item is string =>
+                                    typeof item === "string",
                             ),
                         );
                     }
                 }
             } catch {
-                localStorage.removeItem("oneservice_profile_read_notifications");
+                localStorage.removeItem(
+                    "oneservice_profile_read_notifications",
+                );
             }
+
+            setAdminNotifications(readAdminNotifications());
 
             const storedAddress =
                 localStorage.getItem("oneservice_saved_address") ?? "";
@@ -574,6 +719,10 @@ function ProfilePage() {
         }
     }, [navigate]);
 
+    /* =====================================================
+       LIVE DATA REFRESH
+    ===================================================== */
+
     useEffect(() => {
         const refreshProfessionalApplication = () => {
             setProfessionalApplication(readProfessionalApplication());
@@ -599,6 +748,10 @@ function ProfilePage() {
             setPageHistory(readPageHistory());
         };
 
+        const refreshAdminNotifications = () => {
+            setAdminNotifications(readAdminNotifications());
+        };
+
         const refreshWorkspaceData = () => {
             refreshProfessionalApplication();
             refreshSellerApplication();
@@ -610,26 +763,40 @@ function ProfilePage() {
             "oneservice-professional-change",
             refreshProfessionalApplication,
         );
+
         window.addEventListener(
             "oneservice-seller-change",
             refreshSellerApplication,
         );
+
         window.addEventListener(
             "oneservice-vendor-change",
             refreshVendorApplication,
         );
+
         window.addEventListener(
             "oneservice-student-change",
             refreshStudentApplication,
         );
+
         window.addEventListener(
             "oneservice-order-change",
             refreshOrderHistory,
         );
-        window.addEventListener("oneservice-page-visit", refreshPageHistory);
+
+        window.addEventListener(
+            "oneservice-page-visit",
+            refreshPageHistory,
+        );
+
         window.addEventListener(
             "oneservice-workspace-change",
             refreshWorkspaceData,
+        );
+
+        window.addEventListener(
+            ADMIN_NOTIFICATION_CHANGE_EVENT,
+            refreshAdminNotifications,
         );
 
         window.addEventListener("storage", refreshProfessionalApplication);
@@ -638,32 +805,47 @@ function ProfilePage() {
         window.addEventListener("storage", refreshVendorApplication);
         window.addEventListener("storage", refreshStudentApplication);
         window.addEventListener("storage", refreshOrderHistory);
+        window.addEventListener("storage", refreshAdminNotifications);
 
         return () => {
             window.removeEventListener(
                 "oneservice-professional-change",
                 refreshProfessionalApplication,
             );
+
             window.removeEventListener(
                 "oneservice-seller-change",
                 refreshSellerApplication,
             );
+
             window.removeEventListener(
                 "oneservice-vendor-change",
                 refreshVendorApplication,
             );
+
             window.removeEventListener(
                 "oneservice-student-change",
                 refreshStudentApplication,
             );
+
             window.removeEventListener(
                 "oneservice-order-change",
                 refreshOrderHistory,
             );
-            window.removeEventListener("oneservice-page-visit", refreshPageHistory);
+
+            window.removeEventListener(
+                "oneservice-page-visit",
+                refreshPageHistory,
+            );
+
             window.removeEventListener(
                 "oneservice-workspace-change",
                 refreshWorkspaceData,
+            );
+
+            window.removeEventListener(
+                ADMIN_NOTIFICATION_CHANGE_EVENT,
+                refreshAdminNotifications,
             );
 
             window.removeEventListener("storage", refreshProfessionalApplication);
@@ -672,15 +854,22 @@ function ProfilePage() {
             window.removeEventListener("storage", refreshVendorApplication);
             window.removeEventListener("storage", refreshStudentApplication);
             window.removeEventListener("storage", refreshOrderHistory);
+            window.removeEventListener("storage", refreshAdminNotifications);
         };
     }, []);
 
+    /* =====================================================
+       SETTINGS AND ACCOUNT ACTIONS
+    ===================================================== */
+
     const updateSettings = (next: AccountSettings) => {
         setSettings(next);
+
         localStorage.setItem(
             "oneservice_profile_settings",
             JSON.stringify(next),
         );
+
         setNotice("Your preferences have been saved.");
         window.setTimeout(() => setNotice(""), 2600);
     };
@@ -694,7 +883,11 @@ function ProfilePage() {
             email: email.trim(),
         };
 
-        localStorage.setItem("oneservice_user", JSON.stringify(updatedUser));
+        localStorage.setItem(
+            "oneservice_user",
+            JSON.stringify(updatedUser),
+        );
+
         setUser(updatedUser);
         window.dispatchEvent(new Event("oneservice-auth-change"));
         setActiveModal(null);
@@ -718,6 +911,10 @@ function ProfilePage() {
         window.dispatchEvent(new Event("oneservice-auth-change"));
         navigate("/login", { replace: true });
     };
+
+    /* =====================================================
+       ORDER FILTERS
+    ===================================================== */
 
     const clearOrderFilters = () => {
         setOrderTypeFilter("all");
@@ -784,6 +981,10 @@ function ProfilePage() {
 
     if (!user) return null;
 
+    /* =====================================================
+       ACCOUNT DATA
+    ===================================================== */
+
     const application = professionalApplication;
     const seller = sellerApplication;
     const vendor = vendorApplication;
@@ -803,6 +1004,7 @@ function ProfilePage() {
                 detail: `Your professional application is ${applicationStatus.toLowerCase()}.`,
             }]
             : []),
+
         ...(seller
             ? [{
                 id: "seller",
@@ -811,6 +1013,7 @@ function ProfilePage() {
                 detail: `Your seller account application is ${sellerStatus.toLowerCase()}.`,
             }]
             : []),
+
         ...(vendor
             ? [{
                 id: "vendor",
@@ -819,6 +1022,7 @@ function ProfilePage() {
                 detail: `Your vendor account application is ${vendorStatus.toLowerCase()}.`,
             }]
             : []),
+
         ...(student
             ? [{
                 id: "student",
@@ -829,18 +1033,78 @@ function ProfilePage() {
             : []),
     ];
 
-    const unreadNotificationCount = profileNotifications.filter(
+    const currentMobile = normalizeMobile(user.mobile);
+
+    const currentAdminNotifications = adminNotifications
+        .filter(
+            (notification) =>
+                normalizeMobile(notification.recipientMobile) === currentMobile,
+        )
+        .sort(
+            (a, b) =>
+                getOrderTimestamp(b.createdAt) -
+                getOrderTimestamp(a.createdAt),
+        );
+
+    const unreadStatusCount = profileNotifications.filter(
         (item) => !readNotificationIds.includes(item.id),
     ).length;
 
+    const unreadAdminCount = currentAdminNotifications.filter(
+        (item) => !item.read,
+    ).length;
+
+    const unreadNotificationCount =
+        unreadStatusCount + unreadAdminCount;
+
+    /* =====================================================
+       ADMIN NOTIFICATION ACTIONS
+    ===================================================== */
+
+    const handleAdminNotificationClick = (
+        notification: AdminNotification,
+    ) => {
+        const updatedNotifications = readAdminNotifications().map((item) =>
+            item.id === notification.id
+                ? { ...item, read: true }
+                : item,
+        );
+
+        saveAdminNotifications(updatedNotifications);
+        setAdminNotifications(updatedNotifications);
+
+        navigate(getAdminNotificationPath(notification));
+    };
+
     const markAllNotificationsRead = () => {
         const allReadIds = profileNotifications.map((item) => item.id);
+
         setReadNotificationIds(allReadIds);
+
         localStorage.setItem(
             "oneservice_profile_read_notifications",
             JSON.stringify(allReadIds),
         );
+
+        const updatedAdminNotifications = readAdminNotifications().map(
+            (notification) => {
+                const belongsToCurrentUser =
+                    normalizeMobile(notification.recipientMobile) ===
+                    currentMobile;
+
+                return belongsToCurrentUser
+                    ? { ...notification, read: true }
+                    : notification;
+            },
+        );
+
+        saveAdminNotifications(updatedAdminNotifications);
+        setAdminNotifications(updatedAdminNotifications);
     };
+
+    /* =====================================================
+       ACCOUNT DISPLAY VALUES
+    ===================================================== */
 
     const sellerName =
         seller?.businessName ||
@@ -855,7 +1119,10 @@ function ProfilePage() {
         seller?.ownerName || seller?.fullName || seller?.name || "";
 
     const sellerReference =
-        seller?.sellerId || seller?.applicationId || seller?.id || "Submitted";
+        seller?.sellerId ||
+        seller?.applicationId ||
+        seller?.id ||
+        "Submitted";
 
     const vendorName =
         vendor?.businessName ||
@@ -881,12 +1148,18 @@ function ProfilePage() {
         application || seller || vendor || student,
     );
 
+    /* =====================================================
+       RENDER
+    ===================================================== */
+
     return (
         <main className="profile-page">
             <div className="profile-container">
                 <header className="profile-page-header">
                     <div>
-                        <span className="profile-eyebrow">NEED ONE SERVICE</span>
+                        <span className="profile-eyebrow">
+                            NEED ONE SERVICE
+                        </span>
                         <h1>My Profile</h1>
                         <p>
                             Manage your account, explore opportunities and view your
@@ -908,6 +1181,10 @@ function ProfilePage() {
                         </button>
                     </div>
                 )}
+
+                {/* =================================================
+                    PROFILE WELCOME AND NETWORK
+                ================================================= */}
 
                 <div className="profile-dashboard-top">
                     <section className="profile-welcome-card">
@@ -961,6 +1238,10 @@ function ProfilePage() {
                             </span>
                         </div>
 
+                        {/* =============================================
+                            NOTIFICATIONS
+                        ============================================= */}
+
                         <section
                             className="profile-notifications-card"
                             aria-labelledby="profile-notifications-title"
@@ -971,35 +1252,53 @@ function ProfilePage() {
                                         <Bell size={19} />
                                     </span>
                                     <div>
-                                        <h3 id="profile-notifications-title">Notifications</h3>
-                                        <p>Updates about your NeedOneService accounts</p>
+                                        <h3 id="profile-notifications-title">
+                                            Notifications
+                                        </h3>
+                                        <p>
+                                            Updates about your NeedOneService accounts
+                                        </p>
                                     </div>
                                 </div>
+
                                 {unreadNotificationCount > 0 && (
-                                    <span className="profile-notifications-count" aria-label={`${unreadNotificationCount} unread notifications`}>
+                                    <span
+                                        className="profile-notifications-count"
+                                        aria-label={`${unreadNotificationCount} unread notifications`}
+                                    >
                                         {unreadNotificationCount}
                                     </span>
                                 )}
                             </div>
 
-                            {profileNotifications.length > 0 ? (
+                            {profileNotifications.length > 0 ||
+                            currentAdminNotifications.length > 0 ? (
                                 <>
                                     <div className="profile-notifications-list">
+                                        {/* APPLICATION STATUS NOTIFICATIONS */}
+
                                         {profileNotifications.map((item) => {
-                                            const isRead = readNotificationIds.includes(item.id);
-                                            const normalizedStatus = item.status.toLowerCase();
-                                            const statusClass = normalizedStatus.includes("approv")
-                                                ? "approved"
-                                                : normalizedStatus.includes("reject")
-                                                    ? "rejected"
-                                                    : "pending";
+                                            const isRead =
+                                                readNotificationIds.includes(item.id);
+
+                                            const normalizedStatus =
+                                                item.status.toLowerCase();
+
+                                            const statusClass =
+                                                normalizedStatus.includes("approv")
+                                                    ? "approved"
+                                                    : normalizedStatus.includes("reject")
+                                                        ? "rejected"
+                                                        : "pending";
 
                                             return (
                                                 <article
                                                     className={`profile-notification-item ${isRead ? "is-read" : "is-unread"}`}
                                                     key={item.id}
                                                 >
-                                                    <span className={`profile-notification-status-icon is-${statusClass}`}>
+                                                    <span
+                                                        className={`profile-notification-status-icon is-${statusClass}`}
+                                                    >
                                                         {statusClass === "approved" ? (
                                                             <Check size={16} />
                                                         ) : statusClass === "rejected" ? (
@@ -1008,20 +1307,96 @@ function ProfilePage() {
                                                             <Bell size={15} />
                                                         )}
                                                     </span>
+
                                                     <div className="profile-notification-copy">
                                                         <div className="profile-notification-item-topline">
-                                                            <strong>{item.role} account</strong>
-                                                            <span className={`profile-notification-status is-${statusClass}`}>
+                                                            <strong>
+                                                                {item.role} account
+                                                            </strong>
+                                                            <span
+                                                                className={`profile-notification-status is-${statusClass}`}
+                                                            >
                                                                 {item.status}
                                                             </span>
                                                         </div>
+
                                                         <p>{item.detail}</p>
                                                     </div>
-                                                    {!isRead && <span className="profile-notification-unread-dot" aria-label="Unread" />}
+
+                                                    {!isRead && (
+                                                        <span
+                                                            className="profile-notification-unread-dot"
+                                                            aria-label="Unread"
+                                                        />
+                                                    )}
                                                 </article>
                                             );
                                         })}
+
+                                        {/* ADMIN REMARK / ACCOUNT NOTIFICATIONS */}
+
+                                        {currentAdminNotifications.map(
+                                            (notification) => {
+                                                const isRead = Boolean(
+                                                    notification.read,
+                                                );
+
+                                                return (
+                                                    <button
+                                                        type="button"
+                                                        key={notification.id}
+                                                        className={`profile-notification-item profile-admin-notification ${isRead ? "is-read" : "is-unread"}`}
+                                                        onClick={() =>
+                                                            handleAdminNotificationClick(
+                                                                notification,
+                                                            )
+                                                        }
+                                                    >
+                                                        <span className="profile-notification-status-icon is-pending">
+                                                            <Bell size={15} />
+                                                        </span>
+
+                                                        <span className="profile-notification-copy">
+                                                            <span className="profile-notification-item-topline">
+                                                                <strong>
+                                                                    {notification.title}
+                                                                </strong>
+
+                                                                <span className="profile-notification-status is-pending">
+                                                                    {getAdminRoleLabel(
+                                                                        notification.accountType,
+                                                                    )}
+                                                                </span>
+                                                            </span>
+
+                                                            <span className="profile-admin-notification-message">
+                                                                {notification.message}
+                                                            </span>
+
+                                                            <span className="profile-admin-notification-date">
+                                                                {formatAdminNotificationDate(
+                                                                    notification.createdAt,
+                                                                )}
+                                                            </span>
+
+                                                            <span className="profile-admin-notification-link">
+                                                                View account update
+                                                                <ArrowRight size={14} />
+                                                            </span>
+                                                        </span>
+
+                                                        {!isRead && (
+                                                            <span
+                                                                className="profile-notification-unread-dot"
+                                                                aria-label="Unread"
+                                                            />
+                                                        )}
+                                                    </button>
+                                                );
+                                            },
+                                        )}
                                     </div>
+
                                     {unreadNotificationCount > 0 && (
                                         <button
                                             type="button"
@@ -1035,15 +1410,25 @@ function ProfilePage() {
                             ) : (
                                 <div className="profile-notifications-empty">
                                     <Check size={17} />
-                                    <span>You’re all caught up. New account updates will appear here.</span>
+                                    <span>
+                                        You’re all caught up. New account updates will
+                                        appear here.
+                                    </span>
                                 </div>
                             )}
                         </section>
 
-                        <Link to="/services" className="profile-primary-button">
+                        <Link
+                            to="/services"
+                            className="profile-primary-button"
+                        >
                             View Services <ArrowRight size={18} />
                         </Link>
                     </section>
+
+                    {/* =================================================
+                        REGISTERED ACCOUNTS
+                    ================================================= */}
 
                     <section className="profile-network-section">
                         {hasApplications ? (
@@ -1054,21 +1439,30 @@ function ProfilePage() {
                                     </span>
                                     <h2>Your Registered Accounts</h2>
                                     <p>
-                                        View all the roles and applications linked to your account.
+                                        View all the roles and applications linked to
+                                        your account.
                                     </p>
                                 </div>
 
                                 <div className="profile-network-grid">
+                                    {/* PROFESSIONAL */}
+
                                     {application && (
-                                        <article className="professional-hub" key="professional">
+                                        <article
+                                            className="professional-hub"
+                                            key="professional"
+                                        >
                                             <div className="professional-hub-heading">
                                                 <div className="profile-section-heading">
                                                     <span className="profile-section-eyebrow">
                                                         YOUR PROFESSIONAL ACCOUNT
                                                     </span>
                                                     <h2>Professional Hub</h2>
-                                                    <p>Your professional application status.</p>
+                                                    <p>
+                                                        Your professional application status.
+                                                    </p>
                                                 </div>
+
                                                 <Link
                                                     to="/profile/professional-hub"
                                                     className="professional-hub-view-button"
@@ -1084,11 +1478,18 @@ function ProfilePage() {
                                                     <div className="professional-hub-avatar">
                                                         <Wrench size={24} />
                                                     </div>
+
                                                     <div className="professional-hub-identity">
                                                         <h3>{application.fullName}</h3>
-                                                        <p>{application.category || "Professional applicant"}</p>
+                                                        <p>
+                                                            {application.category ||
+                                                                "Professional applicant"}
+                                                        </p>
                                                     </div>
-                                                    <span className={`professional-status professional-status-${applicationStatus.toLowerCase().replace(/\s+/g, "-")}`}>
+
+                                                    <span
+                                                        className={`professional-status professional-status-${applicationStatus.toLowerCase().replace(/\s+/g, "-")}`}
+                                                    >
                                                         <span className="professional-status-dot" />
                                                         {applicationStatus}
                                                     </span>
@@ -1100,12 +1501,34 @@ function ProfilePage() {
                                                 </div>
 
                                                 <div className="professional-hub-summary-details">
-                                                    <div><Phone size={16} /><span>{application.mobile || "Not provided"}</span></div>
-                                                    <div><Mail size={16} /><span>{application.email || "Not provided"}</span></div>
-                                                    <div><MapPin size={16} /><span>{[application.city, application.state].filter(Boolean).join(", ") || "Location not provided"}</span></div>
+                                                    <div>
+                                                        <Phone size={16} />
+                                                        <span>
+                                                            {application.mobile || "Not provided"}
+                                                        </span>
+                                                    </div>
+                                                    <div>
+                                                        <Mail size={16} />
+                                                        <span>
+                                                            {application.email || "Not provided"}
+                                                        </span>
+                                                    </div>
+                                                    <div>
+                                                        <MapPin size={16} />
+                                                        <span>
+                                                            {[
+                                                                application.city,
+                                                                application.state,
+                                                            ].filter(Boolean).join(", ") ||
+                                                                "Location not provided"}
+                                                        </span>
+                                                    </div>
                                                 </div>
 
-                                                <Link to="/profile/professional-hub" className="professional-hub-open-link">
+                                                <Link
+                                                    to="/profile/professional-hub"
+                                                    className="professional-hub-open-link"
+                                                >
                                                     <LayoutDashboard size={16} />
                                                     View Your Account
                                                     <ArrowRight size={16} />
@@ -1114,18 +1537,26 @@ function ProfilePage() {
                                         </article>
                                     )}
 
+                                    {/* SELLER */}
+
                                     {seller && (
-                                        <article className="professional-hub seller-hub" key="seller">
+                                        <article
+                                            className="professional-hub seller-hub"
+                                            key="seller"
+                                        >
                                             <div className="professional-hub-heading">
                                                 <div className="profile-section-heading">
                                                     <span className="profile-section-eyebrow">
                                                         YOUR SELLER ACCOUNT
                                                     </span>
                                                     <h2>Seller Hub</h2>
-                                                    <p>Your seller application status.</p>
+                                                    <p>
+                                                        Your seller application status.
+                                                    </p>
                                                 </div>
+
                                                 <Link
-                                                    to="/profile/seller-hub"
+                                                    to="/seller-hub"
                                                     className="professional-hub-view-button"
                                                     aria-label="View your Seller Hub"
                                                     title="View your Seller Hub"
@@ -1139,14 +1570,26 @@ function ProfilePage() {
                                                     <div className="professional-hub-avatar">
                                                         <ShoppingBag size={24} />
                                                     </div>
+
                                                     <div className="professional-hub-identity">
                                                         <h3>{sellerName}</h3>
-                                                        <p>{seller.category || seller.businessType || "Registered Seller"}</p>
-                                                        {sellerOwnerName && sellerOwnerName !== sellerName && (
-                                                            <p>Owner: {sellerOwnerName}</p>
-                                                        )}
+                                                        <p>
+                                                            {seller.category ||
+                                                                seller.businessType ||
+                                                                "Registered Seller"}
+                                                        </p>
+
+                                                        {sellerOwnerName &&
+                                                            sellerOwnerName !== sellerName && (
+                                                                <p>
+                                                                    Owner: {sellerOwnerName}
+                                                                </p>
+                                                            )}
                                                     </div>
-                                                    <span className={`professional-status professional-status-${sellerStatus.toLowerCase().replace(/\s+/g, "-")}`}>
+
+                                                    <span
+                                                        className={`professional-status professional-status-${sellerStatus.toLowerCase().replace(/\s+/g, "-")}`}
+                                                    >
                                                         <span className="professional-status-dot" />
                                                         {sellerStatus}
                                                     </span>
@@ -1158,12 +1601,37 @@ function ProfilePage() {
                                                 </div>
 
                                                 <div className="professional-hub-summary-details">
-                                                    <div><Phone size={16} /><span>{seller.mobile || seller.phone || "Not provided"}</span></div>
-                                                    <div><Mail size={16} /><span>{seller.email || "Not provided"}</span></div>
-                                                    <div><MapPin size={16} /><span>{[seller.city, seller.state].filter(Boolean).join(", ") || seller.address || "Location not provided"}</span></div>
+                                                    <div>
+                                                        <Phone size={16} />
+                                                        <span>
+                                                            {seller.mobile ||
+                                                                seller.phone ||
+                                                                "Not provided"}
+                                                        </span>
+                                                    </div>
+                                                    <div>
+                                                        <Mail size={16} />
+                                                        <span>
+                                                            {seller.email || "Not provided"}
+                                                        </span>
+                                                    </div>
+                                                    <div>
+                                                        <MapPin size={16} />
+                                                        <span>
+                                                            {[
+                                                                seller.city,
+                                                                seller.state,
+                                                            ].filter(Boolean).join(", ") ||
+                                                                seller.address ||
+                                                                "Location not provided"}
+                                                        </span>
+                                                    </div>
                                                 </div>
 
-                                                <Link to="/seller-hub" className="professional-hub-open-link">
+                                                <Link
+                                                    to="/seller-hub"
+                                                    className="professional-hub-open-link"
+                                                >
                                                     <LayoutDashboard size={16} />
                                                     View Your Seller Account
                                                     <ArrowRight size={16} />
@@ -1172,16 +1640,24 @@ function ProfilePage() {
                                         </article>
                                     )}
 
+                                    {/* VENDOR */}
+
                                     {vendor && (
-                                        <article className="professional-hub" key="vendor">
+                                        <article
+                                            className="professional-hub"
+                                            key="vendor"
+                                        >
                                             <div className="professional-hub-heading">
                                                 <div className="profile-section-heading">
                                                     <span className="profile-section-eyebrow">
                                                         YOUR VENDOR ACCOUNT
                                                     </span>
                                                     <h2>Vendor Hub</h2>
-                                                    <p>Your vendor application status.</p>
+                                                    <p>
+                                                        Your vendor application status.
+                                                    </p>
                                                 </div>
+
                                                 <Link
                                                     to="/vendor-hub"
                                                     className="professional-hub-view-button"
@@ -1197,11 +1673,19 @@ function ProfilePage() {
                                                     <div className="professional-hub-avatar">
                                                         <Store size={24} />
                                                     </div>
+
                                                     <div className="professional-hub-identity">
                                                         <h3>{vendorName}</h3>
-                                                        <p>{vendor.businessCategory || vendor.businessType || "Registered Vendor"}</p>
+                                                        <p>
+                                                            {vendor.businessCategory ||
+                                                                vendor.businessType ||
+                                                                "Registered Vendor"}
+                                                        </p>
                                                     </div>
-                                                    <span className={`professional-status professional-status-${vendorStatus.toLowerCase().replace(/\s+/g, "-")}`}>
+
+                                                    <span
+                                                        className={`professional-status professional-status-${vendorStatus.toLowerCase().replace(/\s+/g, "-")}`}
+                                                    >
                                                         <span className="professional-status-dot" />
                                                         {vendorStatus}
                                                     </span>
@@ -1213,12 +1697,37 @@ function ProfilePage() {
                                                 </div>
 
                                                 <div className="professional-hub-summary-details">
-                                                    <div><Phone size={16} /><span>{vendor.mobile || vendor.phone || "Not provided"}</span></div>
-                                                    <div><Mail size={16} /><span>{vendor.email || "Not provided"}</span></div>
-                                                    <div><MapPin size={16} /><span>{[vendor.city, vendor.state].filter(Boolean).join(", ") || vendor.businessAddress || "Location not provided"}</span></div>
+                                                    <div>
+                                                        <Phone size={16} />
+                                                        <span>
+                                                            {vendor.mobile ||
+                                                                vendor.phone ||
+                                                                "Not provided"}
+                                                        </span>
+                                                    </div>
+                                                    <div>
+                                                        <Mail size={16} />
+                                                        <span>
+                                                            {vendor.email || "Not provided"}
+                                                        </span>
+                                                    </div>
+                                                    <div>
+                                                        <MapPin size={16} />
+                                                        <span>
+                                                            {[
+                                                                vendor.city,
+                                                                vendor.state,
+                                                            ].filter(Boolean).join(", ") ||
+                                                                vendor.businessAddress ||
+                                                                "Location not provided"}
+                                                        </span>
+                                                    </div>
                                                 </div>
 
-                                                <Link to="/vendor-hub" className="professional-hub-open-link">
+                                                <Link
+                                                    to="/vendor-hub"
+                                                    className="professional-hub-open-link"
+                                                >
                                                     <LayoutDashboard size={16} />
                                                     View Your Vendor Account
                                                     <ArrowRight size={16} />
@@ -1227,16 +1736,24 @@ function ProfilePage() {
                                         </article>
                                     )}
 
+                                    {/* STUDENT */}
+
                                     {student && (
-                                        <article className="professional-hub" key="student">
+                                        <article
+                                            className="professional-hub"
+                                            key="student"
+                                        >
                                             <div className="professional-hub-heading">
                                                 <div className="profile-section-heading">
                                                     <span className="profile-section-eyebrow">
                                                         YOUR STUDENT ACCOUNT
                                                     </span>
                                                     <h2>Student Hub</h2>
-                                                    <p>Your student registration status.</p>
+                                                    <p>
+                                                        Your student registration status.
+                                                    </p>
                                                 </div>
+
                                                 <Link
                                                     to="/student-hub"
                                                     className="professional-hub-view-button"
@@ -1252,11 +1769,15 @@ function ProfilePage() {
                                                     <div className="professional-hub-avatar">
                                                         <GraduationCap size={24} />
                                                     </div>
+
                                                     <div className="professional-hub-identity">
                                                         <h3>{studentName}</h3>
                                                         <p>Registered Student</p>
                                                     </div>
-                                                    <span className={`professional-status professional-status-${studentStatus.toLowerCase().replace(/\s+/g, "-")}`}>
+
+                                                    <span
+                                                        className={`professional-status professional-status-${studentStatus.toLowerCase().replace(/\s+/g, "-")}`}
+                                                    >
                                                         <span className="professional-status-dot" />
                                                         {studentStatus}
                                                     </span>
@@ -1268,12 +1789,36 @@ function ProfilePage() {
                                                 </div>
 
                                                 <div className="professional-hub-summary-details">
-                                                    <div><Phone size={16} /><span>{student.mobile || student.phone || "Not provided"}</span></div>
-                                                    <div><Mail size={16} /><span>{student.email || "Not provided"}</span></div>
-                                                    <div><MapPin size={16} /><span>{[student.city, student.state].filter(Boolean).join(", ") || "Location not provided"}</span></div>
+                                                    <div>
+                                                        <Phone size={16} />
+                                                        <span>
+                                                            {student.mobile ||
+                                                                student.phone ||
+                                                                "Not provided"}
+                                                        </span>
+                                                    </div>
+                                                    <div>
+                                                        <Mail size={16} />
+                                                        <span>
+                                                            {student.email || "Not provided"}
+                                                        </span>
+                                                    </div>
+                                                    <div>
+                                                        <MapPin size={16} />
+                                                        <span>
+                                                            {[
+                                                                student.city,
+                                                                student.state,
+                                                            ].filter(Boolean).join(", ") ||
+                                                                "Location not provided"}
+                                                        </span>
+                                                    </div>
                                                 </div>
 
-                                                <Link to="/student-hub" className="professional-hub-open-link">
+                                                <Link
+                                                    to="/student-hub"
+                                                    className="professional-hub-open-link"
+                                                >
                                                     <LayoutDashboard size={16} />
                                                     View Your Student Account
                                                     <ArrowRight size={16} />
@@ -1285,12 +1830,16 @@ function ProfilePage() {
 
                                 <div className="profile-section-heading profile-add-another-role">
                                     <h2>Join in another role</h2>
-                                    <p>You can register for more than one NeedOneService opportunity.</p>
+                                    <p>
+                                        You can register for more than one NeedOneService
+                                        opportunity.
+                                    </p>
                                 </div>
 
                                 <div className="profile-network-grid">
                                     {NETWORK_OPTIONS.filter((option) => {
                                         const title = option.title.toLowerCase();
+
                                         return !(
                                             (title === "professional" && application) ||
                                             (title === "seller" && seller) ||
@@ -1308,12 +1857,20 @@ function ProfilePage() {
                                             >
                                                 <div className="profile-network-card-top">
                                                     <span className="profile-network-icon">
-                                                        <Icon size={20} strokeWidth={1.8} />
+                                                        <Icon
+                                                            size={20}
+                                                            strokeWidth={1.8}
+                                                        />
                                                     </span>
-                                                    <ArrowRight className="profile-network-arrow" size={17} />
+                                                    <ArrowRight
+                                                        className="profile-network-arrow"
+                                                        size={17}
+                                                    />
                                                 </div>
+
                                                 <h3>Join as a {option.title}</h3>
                                                 <p>{option.description}</p>
+
                                                 <span className="profile-network-link">
                                                     Get started <ArrowRight size={14} />
                                                 </span>
@@ -1325,9 +1882,13 @@ function ProfilePage() {
                         ) : (
                             <>
                                 <div className="profile-section-heading">
-                                    <span className="profile-section-eyebrow">GROW WITH US</span>
+                                    <span className="profile-section-eyebrow">
+                                        GROW WITH US
+                                    </span>
                                     <h2>Join the NeedOneService Network</h2>
-                                    <p>Choose how you want to be part of our community.</p>
+                                    <p>
+                                        Choose how you want to be part of our community.
+                                    </p>
                                 </div>
 
                                 <div className="profile-network-grid">
@@ -1342,12 +1903,20 @@ function ProfilePage() {
                                             >
                                                 <div className="profile-network-card-top">
                                                     <span className="profile-network-icon">
-                                                        <Icon size={20} strokeWidth={1.8} />
+                                                        <Icon
+                                                            size={20}
+                                                            strokeWidth={1.8}
+                                                        />
                                                     </span>
-                                                    <ArrowRight className="profile-network-arrow" size={17} />
+                                                    <ArrowRight
+                                                        className="profile-network-arrow"
+                                                        size={17}
+                                                    />
                                                 </div>
+
                                                 <h3>Join as a {option.title}</h3>
                                                 <p>{option.description}</p>
+
                                                 <span className="profile-network-link">
                                                     Get started <ArrowRight size={14} />
                                                 </span>
@@ -1360,8 +1929,13 @@ function ProfilePage() {
                     </section>
                 </div>
 
-                {/* Order History */}
-                <section className={`profile-content-section profile-order-section ${showAllOrders ? "profile-order-section-expanded" : ""}`}>
+                {/* =================================================
+                    ORDER HISTORY
+                ================================================= */}
+
+                <section
+                    className={`profile-content-section profile-order-section ${showAllOrders ? "profile-order-section-expanded" : ""}`}
+                >
                     <div className="profile-order-heading-row">
                         <div className="profile-content-heading">
                             <div className="profile-heading-icon">
@@ -1369,7 +1943,10 @@ function ProfilePage() {
                             </div>
                             <div>
                                 <h2>Order History</h2>
-                                <p>Keep track of your service bookings and product orders.</p>
+                                <p>
+                                    Keep track of your service bookings and product
+                                    orders.
+                                </p>
                             </div>
                         </div>
 
@@ -1379,23 +1956,36 @@ function ProfilePage() {
                                 <input
                                     type="search"
                                     value={orderSearch}
-                                    onChange={(event) => setOrderSearch(event.target.value)}
+                                    onChange={(event) =>
+                                        setOrderSearch(event.target.value)
+                                    }
                                     placeholder="Search orders..."
                                     aria-label="Search orders by name or ID"
                                 />
+
                                 {orderSearch && (
-                                    <button type="button" onClick={() => setOrderSearch("")} aria-label="Clear search">
+                                    <button
+                                        type="button"
+                                        onClick={() => setOrderSearch("")}
+                                        aria-label="Clear search"
+                                    >
                                         <X size={15} />
                                     </button>
                                 )}
                             </div>
 
                             <div className="profile-order-filter-field">
-                                <label htmlFor="profile-order-type">Order type</label>
+                                <label htmlFor="profile-order-type">
+                                    Order type
+                                </label>
                                 <select
                                     id="profile-order-type"
                                     value={orderTypeFilter}
-                                    onChange={(event) => setOrderTypeFilter(event.target.value as OrderTypeFilter)}
+                                    onChange={(event) =>
+                                        setOrderTypeFilter(
+                                            event.target.value as OrderTypeFilter,
+                                        )
+                                    }
                                 >
                                     <option value="all">All orders</option>
                                     <option value="service">Service bookings</option>
@@ -1404,14 +1994,21 @@ function ProfilePage() {
                             </div>
 
                             <div className="profile-order-filter-field">
-                                <label htmlFor="profile-order-status">Status</label>
+                                <label htmlFor="profile-order-status">
+                                    Status
+                                </label>
                                 <select
                                     id="profile-order-status"
                                     value={orderStatusFilter}
-                                    onChange={(event) => setOrderStatusFilter(event.target.value)}
+                                    onChange={(event) =>
+                                        setOrderStatusFilter(event.target.value)
+                                    }
                                 >
                                     {ORDER_STATUS_OPTIONS.map((option) => (
-                                        <option key={option.value} value={option.value}>
+                                        <option
+                                            key={option.value}
+                                            value={option.value}
+                                        >
                                             {option.label}
                                         </option>
                                     ))}
@@ -1419,11 +2016,17 @@ function ProfilePage() {
                             </div>
 
                             <div className="profile-order-filter-field">
-                                <label htmlFor="profile-order-sort">Sort by date</label>
+                                <label htmlFor="profile-order-sort">
+                                    Sort by date
+                                </label>
                                 <select
                                     id="profile-order-sort"
                                     value={orderDateSort}
-                                    onChange={(event) => setOrderDateSort(event.target.value as OrderDateSort)}
+                                    onChange={(event) =>
+                                        setOrderDateSort(
+                                            event.target.value as OrderDateSort,
+                                        )
+                                    }
                                 >
                                     <option value="newest">Newest first</option>
                                     <option value="oldest">Oldest first</option>
@@ -1446,7 +2049,9 @@ function ProfilePage() {
                             <span>
                                 Showing <strong>{visibleOrders.length}</strong> of{" "}
                                 <strong>{filteredOrders.length}</strong>{" "}
-                                {filteredOrders.length === 1 ? "matching order" : "matching orders"}
+                                {filteredOrders.length === 1
+                                    ? "matching order"
+                                    : "matching orders"}
                             </span>
 
                             {orderHistory.length > 0 && (
@@ -1475,8 +2080,15 @@ function ProfilePage() {
                                     <Search size={25} />
                                 </div>
                                 <h3>No matching orders</h3>
-                                <p>Try changing your search or selecting different filters.</p>
-                                <button type="button" className="profile-outline-button" onClick={clearOrderFilters}>
+                                <p>
+                                    Try changing your search or selecting different
+                                    filters.
+                                </p>
+                                <button
+                                    type="button"
+                                    className="profile-outline-button"
+                                    onClick={clearOrderFilters}
+                                >
                                     Clear filters
                                 </button>
                             </div>
@@ -1484,24 +2096,48 @@ function ProfilePage() {
                             <div className="profile-order-list">
                                 <div className="profile-order-items">
                                     {visibleOrders.map((order) => {
-                                        const isService = ["service", "booking"].includes(
+                                        const isService = [
+                                            "service",
+                                            "booking",
+                                        ].includes(
                                             (order.type ?? "").toLowerCase(),
                                         );
-                                        const amount = order.amount === undefined ? "" : formatOrderAmount(order.amount);
+
+                                        const amount =
+                                            order.amount === undefined
+                                                ? ""
+                                                : formatOrderAmount(order.amount);
 
                                         return (
-                                            <article className="profile-order-item" key={order.id}>
+                                            <article
+                                                className="profile-order-item"
+                                                key={order.id}
+                                            >
                                                 <div className="profile-order-item-icon">
-                                                    {isService ? <Wrench size={21} /> : <Package size={21} />}
+                                                    {isService ? (
+                                                        <Wrench size={21} />
+                                                    ) : (
+                                                        <Package size={21} />
+                                                    )}
                                                 </div>
+
                                                 <div className="profile-order-item-details">
                                                     <h4>{order.title}</h4>
                                                     <p>Order ID: {order.id}</p>
-                                                    {order.date && <p>{formatOrderDate(order.date)}</p>}
-                                                    <p>{isService ? "Service booking" : "Product order"}</p>
+                                                    {order.date && (
+                                                        <p>{formatOrderDate(order.date)}</p>
+                                                    )}
+                                                    <p>
+                                                        {isService
+                                                            ? "Service booking"
+                                                            : "Product order"}
+                                                    </p>
                                                 </div>
+
                                                 <div className="profile-order-item-meta">
-                                                    <span className="profile-order-status">{order.status}</span>
+                                                    <span className="profile-order-status">
+                                                        {order.status}
+                                                    </span>
                                                     {amount && <strong>{amount}</strong>}
                                                 </div>
                                             </article>
@@ -1517,6 +2153,7 @@ function ProfilePage() {
                             Showing {visibleOrders.length} of {filteredOrders.length}{" "}
                             {filteredOrders.length === 1 ? "order" : "orders"}
                         </span>
+
                         <button
                             type="button"
                             className="profile-outline-button profile-view-all-orders"
@@ -1525,13 +2162,22 @@ function ProfilePage() {
                             disabled={filteredOrders.length === 0}
                         >
                             {showAllOrders ? "Show Less" : "View All"}
-                            <ChevronRight size={17} className={showAllOrders ? "profile-orders-chevron-open" : ""} />
+                            <ChevronRight
+                                size={17}
+                                className={
+                                    showAllOrders
+                                        ? "profile-orders-chevron-open"
+                                        : ""
+                                }
+                            />
                         </button>
                     </div>
                 </section>
 
+                {/* =================================================
+                    RECENT ACTIVITY AND PAGE HISTORY
+                ================================================= */}
 
-                {/* Recent Activity and Visited Page History */}
                 <div className="profile-activity-history-grid">
                     {(() => {
                         type ActivityItem = {
@@ -1545,65 +2191,60 @@ function ProfilePage() {
 
                         const applicationActivities: ActivityItem[] = [
                             ...(application
-                                ? [
-                                    {
-                                        id: "application-professional",
-                                        title: "Professional application",
-                                        detail: `Professional Hub · ${applicationStatus}`,
-                                        date: application.submittedAt ?? "",
-                                        kind: "application" as const,
-                                        path: "/profile/professional-hub",
-                                    },
-                                ]
+                                ? [{
+                                    id: "application-professional",
+                                    title: "Professional application",
+                                    detail: `Professional Hub · ${applicationStatus}`,
+                                    date: application.submittedAt ?? "",
+                                    kind: "application" as const,
+                                    path: "/profile/professional-hub",
+                                }]
                                 : []),
 
                             ...(seller
-                                ? [
-                                    {
-                                        id: "application-seller",
-                                        title: "Seller account",
-                                        detail: `Seller Hub · ${sellerStatus}`,
-                                        date: seller.submittedAt ?? "",
-                                        kind: "application" as const,
-                                        path: "/seller-hub",
-                                    },
-                                ]
+                                ? [{
+                                    id: "application-seller",
+                                    title: "Seller account",
+                                    detail: `Seller Hub · ${sellerStatus}`,
+                                    date: seller.submittedAt ?? "",
+                                    kind: "application" as const,
+                                    path: "/seller-hub",
+                                }]
                                 : []),
 
                             ...(vendor
-                                ? [
-                                    {
-                                        id: "application-vendor",
-                                        title: "Vendor account",
-                                        detail: `Vendor Hub · ${vendorStatus}`,
-                                        date: vendor.registeredAt ?? "",
-                                        kind: "application" as const,
-                                        path: "/vendor-hub",
-                                    },
-                                ]
+                                ? [{
+                                    id: "application-vendor",
+                                    title: "Vendor account",
+                                    detail: `Vendor Hub · ${vendorStatus}`,
+                                    date: vendor.registeredAt ?? "",
+                                    kind: "application" as const,
+                                    path: "/vendor-hub",
+                                }]
                                 : []),
 
                             ...(student
-                                ? [
-                                    {
-                                        id: "application-student",
-                                        title: "Student registration",
-                                        detail: `Student Hub · ${studentStatus}`,
-                                        date:
-                                            student.submittedAt ??
-                                            student.registeredAt ??
-                                            "",
-                                        kind: "application" as const,
-                                        path: "/student-hub",
-                                    },
-                                ]
+                                ? [{
+                                    id: "application-student",
+                                    title: "Student registration",
+                                    detail: `Student Hub · ${studentStatus}`,
+                                    date:
+                                        student.submittedAt ??
+                                        student.registeredAt ??
+                                        "",
+                                    kind: "application" as const,
+                                    path: "/student-hub",
+                                }]
                                 : []),
                         ];
 
                         const activityItems: ActivityItem[] = [
                             ...pageHistory.map((visit) => ({
                                 id: `visit-${visit.id}`,
-                                title: getReadablePageTitle(visit.path, visit.title),
+                                title: getReadablePageTitle(
+                                    visit.path,
+                                    visit.title,
+                                ),
                                 detail: "Page visited",
                                 date: visit.visitedAt,
                                 kind: "page" as const,
@@ -1622,7 +2263,11 @@ function ProfilePage() {
                                 return {
                                     id: `order-${order.id}`,
                                     title: order.title,
-                                    detail: `${isService ? "Service booking" : "Product order"} · ${order.status}`,
+                                    detail: `${
+                                        isService
+                                            ? "Service booking"
+                                            : "Product order"
+                                    } · ${order.status}`,
                                     date: order.date ?? "",
                                     kind: "order" as const,
                                 };
@@ -1650,16 +2295,17 @@ function ProfilePage() {
                         return (
                             <>
                                 {/* RECENT ACTIVITY */}
+
                                 <section className="profile-content-section profile-activity-panel profile-activity-card">
                                     <div className="profile-content-heading">
                                         <div className="profile-heading-icon">
                                             <Activity size={21} />
                                         </div>
-
                                         <div>
                                             <h2>Recent Activity</h2>
                                             <p>
-                                                Your latest account, application and order activity.
+                                                Your latest account, application and
+                                                order activity.
                                             </p>
                                         </div>
                                     </div>
@@ -1672,12 +2318,13 @@ function ProfilePage() {
                                                     key={item.id}
                                                 >
                                                     <span
-                                                        className={`profile-timeline-dot ${item.kind === "order"
+                                                        className={`profile-timeline-dot ${
+                                                            item.kind === "order"
                                                                 ? "is-order"
                                                                 : item.kind === "application"
                                                                     ? "is-application"
                                                                     : "is-page"
-                                                            }`}
+                                                        }`}
                                                     >
                                                         {item.kind === "order" ? (
                                                             <Package size={16} />
@@ -1716,9 +2363,9 @@ function ProfilePage() {
                                         <div className="profile-history-empty">
                                             <Activity size={21} />
                                             <p>
-                                                Your recent activity will appear here as you
-                                                browse NeedOneService, register for an opportunity
-                                                or place an order.
+                                                Your recent activity will appear here as
+                                                you browse NeedOneService, register for
+                                                an opportunity or place an order.
                                             </p>
                                         </div>
                                     )}
@@ -1741,15 +2388,18 @@ function ProfilePage() {
                                 </section>
 
                                 {/* VISITED PAGE HISTORY */}
+
                                 <section className="profile-content-section profile-page-history-panel profile-history-card">
                                     <div className="profile-content-heading">
                                         <div className="profile-heading-icon">
                                             <History size={21} />
                                         </div>
-
                                         <div>
                                             <h2>History</h2>
-                                            <p>Your recently visited NeedOneService pages.</p>
+                                            <p>
+                                                Your recently visited NeedOneService
+                                                pages.
+                                            </p>
                                         </div>
                                     </div>
 
@@ -1771,11 +2421,13 @@ function ProfilePage() {
                                                                 visit.title,
                                                             )}
                                                         </strong>
-
-                                                        <small>Visited on NeedOneService</small>
-
+                                                        <small>
+                                                            Visited on NeedOneService
+                                                        </small>
                                                         <time dateTime={visit.visitedAt}>
-                                                            {formatVisitDate(visit.visitedAt)}
+                                                            {formatVisitDate(
+                                                                visit.visitedAt,
+                                                            )}
                                                         </time>
                                                     </div>
 
@@ -1794,8 +2446,8 @@ function ProfilePage() {
                                         <div className="profile-history-empty">
                                             <History size={21} />
                                             <p>
-                                                Your visited pages will appear here when
-                                                page tracking records your activity.
+                                                Your visited pages will appear here
+                                                when page tracking records your activity.
                                             </p>
                                         </div>
                                     )}
@@ -1803,7 +2455,9 @@ function ProfilePage() {
                                     <div className="profile-activity-footer">
                                         <span>
                                             Showing {recentPages.length} latest{" "}
-                                            {recentPages.length === 1 ? "page" : "pages"}
+                                            {recentPages.length === 1
+                                                ? "page"
+                                                : "pages"}
                                         </span>
 
                                         <Link
@@ -1819,8 +2473,10 @@ function ProfilePage() {
                     })()}
                 </div>
 
+                {/* =================================================
+                    ACCOUNT SETTINGS
+                ================================================= */}
 
-                {/* Account Settings */}
                 <section className="profile-content-section profile-settings-section">
                     <div className="profile-content-heading">
                         <div className="profile-heading-icon">
@@ -1828,96 +2484,194 @@ function ProfilePage() {
                         </div>
                         <div>
                             <h2>Settings</h2>
-                            <p>Personalise your account and manage your preferences.</p>
+                            <p>
+                                Personalise your account and manage your preferences.
+                            </p>
                         </div>
                     </div>
 
                     <div className="profile-settings-layout">
+                        {/* ACCOUNT */}
+
                         <div className="profile-settings-group">
                             <h3>Account</h3>
 
-                            <button type="button" className="profile-setting-row" onClick={() => setActiveModal("personal")}>
-                                <span className="profile-setting-icon"><UserCog size={19} /></span>
+                            <button
+                                type="button"
+                                className="profile-setting-row"
+                                onClick={() => setActiveModal("personal")}
+                            >
+                                <span className="profile-setting-icon">
+                                    <UserCog size={19} />
+                                </span>
                                 <span className="profile-setting-copy">
                                     <strong>Personal details</strong>
-                                    <small>Update your name and email address</small>
+                                    <small>
+                                        Update your name and email address
+                                    </small>
                                 </span>
                                 <ChevronRight size={18} />
                             </button>
 
-                            <button type="button" className="profile-setting-row" onClick={() => setActiveModal("address")}>
-                                <span className="profile-setting-icon"><MapPin size={19} /></span>
+                            <button
+                                type="button"
+                                className="profile-setting-row"
+                                onClick={() => setActiveModal("address")}
+                            >
+                                <span className="profile-setting-icon">
+                                    <MapPin size={19} />
+                                </span>
                                 <span className="profile-setting-copy">
                                     <strong>Saved address</strong>
-                                    <small>{savedAddress || "Add your preferred service address"}</small>
+                                    <small>
+                                        {savedAddress ||
+                                            "Add your preferred service address"}
+                                    </small>
                                 </span>
                                 <ChevronRight size={18} />
                             </button>
 
-                            <button type="button" className="profile-setting-row" onClick={() => setActiveModal("privacy")}>
-                                <span className="profile-setting-icon"><LockKeyhole size={19} /></span>
+                            <button
+                                type="button"
+                                className="profile-setting-row"
+                                onClick={() => setActiveModal("privacy")}
+                            >
+                                <span className="profile-setting-icon">
+                                    <LockKeyhole size={19} />
+                                </span>
                                 <span className="profile-setting-copy">
                                     <strong>Privacy and security</strong>
-                                    <small>Review account and privacy information</small>
+                                    <small>
+                                        Review account and privacy information
+                                    </small>
                                 </span>
                                 <ChevronRight size={18} />
                             </button>
                         </div>
+
+                        {/* PREFERENCES */}
 
                         <div className="profile-settings-group">
                             <h3>Preferences</h3>
 
                             <div className="profile-setting-row">
-                                <span className="profile-setting-icon"><Bell size={19} /></span>
+                                <span className="profile-setting-icon">
+                                    <Bell size={19} />
+                                </span>
                                 <span className="profile-setting-copy">
                                     <strong>Service updates</strong>
-                                    <small>Receive important service notifications</small>
+                                    <small>
+                                        Receive important service notifications
+                                    </small>
                                 </span>
-                                <button type="button" role="switch" aria-checked={settings.serviceUpdates} aria-label="Service updates" className={`profile-toggle ${settings.serviceUpdates ? "is-on" : ""}`} onClick={() => updateSettings({ ...settings, serviceUpdates: !settings.serviceUpdates })}>
+                                <button
+                                    type="button"
+                                    role="switch"
+                                    aria-checked={settings.serviceUpdates}
+                                    aria-label="Service updates"
+                                    className={`profile-toggle ${settings.serviceUpdates ? "is-on" : ""}`}
+                                    onClick={() =>
+                                        updateSettings({
+                                            ...settings,
+                                            serviceUpdates: !settings.serviceUpdates,
+                                        })
+                                    }
+                                >
                                     <span />
                                 </button>
                             </div>
 
                             <div className="profile-setting-row">
-                                <span className="profile-setting-icon"><Package size={19} /></span>
+                                <span className="profile-setting-icon">
+                                    <Package size={19} />
+                                </span>
                                 <span className="profile-setting-copy">
                                     <strong>Order notifications</strong>
-                                    <small>Updates about bookings and product orders</small>
+                                    <small>
+                                        Updates about bookings and product orders
+                                    </small>
                                 </span>
-                                <button type="button" role="switch" aria-checked={settings.orderUpdates} aria-label="Order notifications" className={`profile-toggle ${settings.orderUpdates ? "is-on" : ""}`} onClick={() => updateSettings({ ...settings, orderUpdates: !settings.orderUpdates })}>
+                                <button
+                                    type="button"
+                                    role="switch"
+                                    aria-checked={settings.orderUpdates}
+                                    aria-label="Order notifications"
+                                    className={`profile-toggle ${settings.orderUpdates ? "is-on" : ""}`}
+                                    onClick={() =>
+                                        updateSettings({
+                                            ...settings,
+                                            orderUpdates: !settings.orderUpdates,
+                                        })
+                                    }
+                                >
                                     <span />
                                 </button>
                             </div>
 
                             <div className="profile-setting-row">
-                                <span className="profile-setting-icon"><Bell size={19} /></span>
+                                <span className="profile-setting-icon">
+                                    <Bell size={19} />
+                                </span>
                                 <span className="profile-setting-copy">
                                     <strong>Offers and promotions</strong>
-                                    <small>Hear about offers and new services</small>
+                                    <small>
+                                        Hear about offers and new services
+                                    </small>
                                 </span>
-                                <button type="button" role="switch" aria-checked={settings.promotionalUpdates} aria-label="Offers and promotions" className={`profile-toggle ${settings.promotionalUpdates ? "is-on" : ""}`} onClick={() => updateSettings({ ...settings, promotionalUpdates: !settings.promotionalUpdates })}>
+                                <button
+                                    type="button"
+                                    role="switch"
+                                    aria-checked={settings.promotionalUpdates}
+                                    aria-label="Offers and promotions"
+                                    className={`profile-toggle ${settings.promotionalUpdates ? "is-on" : ""}`}
+                                    onClick={() =>
+                                        updateSettings({
+                                            ...settings,
+                                            promotionalUpdates:
+                                                !settings.promotionalUpdates,
+                                        })
+                                    }
+                                >
                                     <span />
                                 </button>
                             </div>
                         </div>
 
+                        {/* SUPPORT */}
+
                         <div className="profile-settings-group profile-support-group">
                             <h3>Support</h3>
 
-                            <button type="button" className="profile-setting-row" onClick={() => setActiveModal("help")}>
-                                <span className="profile-setting-icon"><CircleHelp size={19} /></span>
+                            <button
+                                type="button"
+                                className="profile-setting-row"
+                                onClick={() => setActiveModal("help")}
+                            >
+                                <span className="profile-setting-icon">
+                                    <CircleHelp size={19} />
+                                </span>
                                 <span className="profile-setting-copy">
                                     <strong>Help and support</strong>
-                                    <small>Get help with your NeedOneService account</small>
+                                    <small>
+                                        Get help with your NeedOneService account
+                                    </small>
                                 </span>
                                 <ChevronRight size={18} />
                             </button>
 
-                            <button type="button" className="profile-setting-row profile-logout-row" onClick={handleLogout}>
-                                <span className="profile-setting-icon"><LogOut size={19} /></span>
+                            <button
+                                type="button"
+                                className="profile-setting-row profile-logout-row"
+                                onClick={handleLogout}
+                            >
+                                <span className="profile-setting-icon">
+                                    <LogOut size={19} />
+                                </span>
                                 <span className="profile-setting-copy">
                                     <strong>Logout</strong>
-                                    <small>Sign out of your NeedOneService account</small>
+                                    <small>
+                                        Sign out of your NeedOneService account
+                                    </small>
                                 </span>
                                 <ChevronRight size={18} />
                             </button>
@@ -1931,7 +2685,10 @@ function ProfilePage() {
                 </footer>
             </div>
 
-            {/* Account Settings Modals */}
+            {/* =====================================================
+                ACCOUNT SETTINGS MODALS
+            ===================================================== */}
+
             {activeModal && (
                 <div
                     className="profile-modal-backdrop"
@@ -1941,51 +2698,138 @@ function ProfilePage() {
                         }
                     }}
                 >
-                    <section className="profile-modal" role="dialog" aria-modal="true" aria-labelledby="profile-modal-title">
+                    <section
+                        className="profile-modal"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="profile-modal-title"
+                    >
                         <div className="profile-modal-header">
                             <div>
-                                <span className="profile-section-eyebrow">ACCOUNT SETTINGS</span>
+                                <span className="profile-section-eyebrow">
+                                    ACCOUNT SETTINGS
+                                </span>
                                 <h2 id="profile-modal-title">
-                                    {activeModal === "personal" && "Personal details"}
-                                    {activeModal === "address" && "Saved address"}
-                                    {activeModal === "privacy" && "Privacy and security"}
-                                    {activeModal === "help" && "Help and support"}
+                                    {activeModal === "personal" &&
+                                        "Personal details"}
+                                    {activeModal === "address" &&
+                                        "Saved address"}
+                                    {activeModal === "privacy" &&
+                                        "Privacy and security"}
+                                    {activeModal === "help" &&
+                                        "Help and support"}
                                 </h2>
                             </div>
-                            <button type="button" className="profile-modal-close" aria-label="Close dialog" onClick={() => setActiveModal(null)}>
+
+                            <button
+                                type="button"
+                                className="profile-modal-close"
+                                aria-label="Close dialog"
+                                onClick={() => setActiveModal(null)}
+                            >
                                 <X size={20} />
                             </button>
                         </div>
 
+                        {/* PERSONAL DETAILS */}
+
                         {activeModal === "personal" && (
                             <div className="profile-modal-body">
-                                <label className="profile-form-label" htmlFor="profile-name">Full name</label>
-                                <input id="profile-name" className="profile-form-input" value={displayName} onChange={(event) => setDisplayName(event.target.value)} placeholder="Enter your full name" />
+                                <label
+                                    className="profile-form-label"
+                                    htmlFor="profile-name"
+                                >
+                                    Full name
+                                </label>
+                                <input
+                                    id="profile-name"
+                                    className="profile-form-input"
+                                    value={displayName}
+                                    onChange={(event) =>
+                                        setDisplayName(event.target.value)
+                                    }
+                                    placeholder="Enter your full name"
+                                />
 
-                                <label className="profile-form-label" htmlFor="profile-email">Email address</label>
-                                <input id="profile-email" type="email" className="profile-form-input" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="Enter your email address" />
+                                <label
+                                    className="profile-form-label"
+                                    htmlFor="profile-email"
+                                >
+                                    Email address
+                                </label>
+                                <input
+                                    id="profile-email"
+                                    type="email"
+                                    className="profile-form-input"
+                                    value={email}
+                                    onChange={(event) =>
+                                        setEmail(event.target.value)
+                                    }
+                                    placeholder="Enter your email address"
+                                />
 
-                                <label className="profile-form-label" htmlFor="profile-mobile">Registered mobile number</label>
-                                <input id="profile-mobile" className="profile-form-input is-readonly" value={`+91 ${user.mobile}`} readOnly />
+                                <label
+                                    className="profile-form-label"
+                                    htmlFor="profile-mobile"
+                                >
+                                    Registered mobile number
+                                </label>
+                                <input
+                                    id="profile-mobile"
+                                    className="profile-form-input is-readonly"
+                                    value={`+91 ${user.mobile}`}
+                                    readOnly
+                                />
 
-                                <button type="button" className="profile-primary-button profile-modal-submit" onClick={handlePersonalSave}>
+                                <button
+                                    type="button"
+                                    className="profile-primary-button profile-modal-submit"
+                                    onClick={handlePersonalSave}
+                                >
                                     Save details <Check size={17} />
                                 </button>
                             </div>
                         )}
 
+                        {/* SAVED ADDRESS */}
+
                         {activeModal === "address" && (
                             <div className="profile-modal-body">
                                 <p className="profile-modal-description">
-                                    Add the address you usually use for home services and deliveries.
+                                    Add the address you usually use for home services
+                                    and deliveries.
                                 </p>
-                                <label className="profile-form-label" htmlFor="profile-address">Complete address</label>
-                                <textarea id="profile-address" className="profile-form-input profile-address-input" value={address} onChange={(event) => setAddress(event.target.value)} placeholder="House/flat, street, area, city and PIN code" rows={4} />
-                                <button type="button" className="profile-primary-button profile-modal-submit" disabled={!address.trim()} onClick={handleAddressSave}>
+
+                                <label
+                                    className="profile-form-label"
+                                    htmlFor="profile-address"
+                                >
+                                    Complete address
+                                </label>
+
+                                <textarea
+                                    id="profile-address"
+                                    className="profile-form-input profile-address-input"
+                                    value={address}
+                                    onChange={(event) =>
+                                        setAddress(event.target.value)
+                                    }
+                                    placeholder="House/flat, street, area, city and PIN code"
+                                    rows={4}
+                                />
+
+                                <button
+                                    type="button"
+                                    className="profile-primary-button profile-modal-submit"
+                                    disabled={!address.trim()}
+                                    onClick={handleAddressSave}
+                                >
                                     Save address <Check size={17} />
                                 </button>
                             </div>
                         )}
+
+                        {/* PRIVACY */}
 
                         {activeModal === "privacy" && (
                             <div className="profile-modal-body">
@@ -1994,10 +2838,14 @@ function ProfilePage() {
                                     <div>
                                         <strong>Account protection</strong>
                                         <p>
-                                            Your account is currently signed in on this device. Keep your login details private and sign out when using a shared device.
+                                            Your account is currently signed in on
+                                            this device. Keep your login details
+                                            private and sign out when using a
+                                            shared device.
                                         </p>
                                     </div>
                                 </div>
+
                                 <div className="profile-info-panel">
                                     <Phone size={22} />
                                     <div>
@@ -2010,29 +2858,48 @@ function ProfilePage() {
                                         </small>
                                     </div>
                                 </div>
+
                                 <p className="profile-modal-description">
-                                    This frontend page does not change server-side security, password, or authentication settings.
+                                    This frontend page does not change server-side
+                                    security, password, or authentication settings.
                                 </p>
                             </div>
                         )}
+
+                        {/* HELP */}
 
                         {activeModal === "help" && (
                             <div className="profile-modal-body">
                                 <div className="profile-info-panel">
                                     <CircleHelp size={23} />
                                     <div>
-                                        <strong>Need help with NeedOneService?</strong>
-                                        <p>For booking, order or account assistance, visit our Contact page.</p>
-                                        <Link to="/contact" className="profile-modal-text-link" onClick={() => setActiveModal(null)}>
-                                            Contact NeedOneService <ArrowRight size={15} />
+                                        <strong>
+                                            Need help with NeedOneService?
+                                        </strong>
+                                        <p>
+                                            For booking, order or account assistance,
+                                            visit our Contact page.
+                                        </p>
+                                        <Link
+                                            to="/contact"
+                                            className="profile-modal-text-link"
+                                            onClick={() => setActiveModal(null)}
+                                        >
+                                            Contact NeedOneService{" "}
+                                            <ArrowRight size={15} />
                                         </Link>
                                     </div>
                                 </div>
+
                                 <div className="profile-info-panel">
                                     <MapPin size={22} />
                                     <div>
                                         <strong>Before booking</strong>
-                                        <p>Keep your contact number and service address up to date so providers can reach you.</p>
+                                        <p>
+                                            Keep your contact number and service
+                                            address up to date so providers can
+                                            reach you.
+                                        </p>
                                     </div>
                                 </div>
                             </div>

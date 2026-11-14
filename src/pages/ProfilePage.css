@@ -3785,3 +3785,76 @@ button.profile-setting-row:hover .profile-setting-copy strong {
         align-items: flex-start;
     }
 }
+
+/* =========================================================
+   ADMIN NOTIFICATIONS — PROFILE
+========================================================= */
+
+.profile-admin-notification {
+    width: 100%;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    text-align: left;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    border: 0;
+    border-bottom: 1px solid #e8edf5;
+    background: transparent;
+    transition: background 0.2s ease;
+}
+
+.profile-admin-notification:hover {
+    background: #f7faff;
+}
+
+.profile-admin-notification:focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: -2px;
+}
+
+.profile-admin-notification .profile-notification-copy {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.profile-admin-notification-message {
+    display: block;
+    margin-top: 5px;
+    color: #5f6d80;
+    font-size: 13px;
+    line-height: 1.55;
+    overflow-wrap: anywhere;
+}
+
+.profile-admin-notification-date {
+    display: block;
+    margin-top: 6px;
+    color: #8491a5;
+    font-size: 11px;
+}
+
+.profile-admin-notification-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 8px;
+    color: #2563eb;
+    font-size: 12px;
+    font-weight: 650;
+}
+
+.profile-admin-notification.is-read {
+    opacity: 0.78;
+}
+
+.profile-admin-notification.is-unread {
+    background: #f7faff;
+}
+
+.profile-admin-notification.is-unread:hover {
+    background: #eff6ff;
+}
