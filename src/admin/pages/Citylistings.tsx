@@ -37,7 +37,14 @@ import "./Citylistings.css";
    TYPES
 ========================================================= */
 
-type VendorStatus = "Approved" | "Pending" | "Rejected" | "Suspended";
+type VendorStatus =
+  | "Approved"
+  | "Pending"
+  | "Rejected"
+  | "Suspended"
+  | "Banned";
+
+type AdminDirectoryTab = "onboarding" | "vendors" | "analytics";
 type RegistrationStatus = "Paid" | "Pending";
 
 type VendorRecord = Record<string, unknown> & {
@@ -94,10 +101,28 @@ type VendorRecord = Record<string, unknown> & {
   paymentStatus?: string;
   status?: string;
   vendorStatus?: string;
+  listingStatus?: string;
+  adminStatusUpdatedAt?: string;
   registeredAt?: string;
   createdAt?: string;
   established?: string;
   yearEstablished?: string;
+  applicationStatus?: string;
+
+  suspensionCount?: number;
+  suspensionReason?: string;
+  suspendedAt?: string;
+  reactivationDate?: string;
+  suspensionHistory?: {
+    reason: string;
+    suspendedAt: string;
+    reactivationDate: string;
+    suspendedBy?: string;
+  }[];
+
+  banned?: boolean;
+  bannedAt?: string;
+  banReason?: string;
 };
 
 type Business = {
@@ -308,6 +333,9 @@ const writeStoredVendors = (vendors: VendorRecord[]) => {
 const normalizeStatus = (status: unknown): VendorStatus => {
   const value = readText(status, "Pending").toLowerCase();
 
+  if (value.includes("ban")) return "Banned";
+  if (value.includes("suspend")) return "Suspended";
+
   if (
     value.includes("approved") ||
     value === "active" ||
@@ -317,7 +345,6 @@ const normalizeStatus = (status: unknown): VendorStatus => {
   }
 
   if (value.includes("reject")) return "Rejected";
-  if (value.includes("suspend")) return "Suspended";
 
   return "Pending";
 };
@@ -336,6 +363,21 @@ const normalizeRegistrationStatus = (
   return ["paid", "completed", "success"].includes(value)
     ? "Paid"
     : "Pending";
+};
+
+const getDateInputValue = (date: Date): string => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+};
+
+const getDefaultReactivationDate = (): string => {
+  const date = new Date();
+  date.setDate(date.getDate() + 7);
+
+  return getDateInputValue(date);
 };
 
 /* =========================================================
@@ -399,7 +441,13 @@ const normalizeBusiness = (vendor: VendorRecord): Business => {
     followers: readNumber(vendor.followers),
 
     registrationStatus: normalizeRegistrationStatus(vendor),
-    vendorStatus: normalizeStatus(vendor.status ?? vendor.vendorStatus),
+    vendorStatus: vendor.banned
+      ? "Banned"
+      : normalizeStatus(
+        vendor.listingStatus ??
+        vendor.vendorStatus ??
+        vendor.status,
+      ),
 
     registeredAt: readText(vendor.registeredAt ?? vendor.createdAt),
     projects: readText(vendor.projects ?? vendor.portfolioDescription),
@@ -437,6 +485,7 @@ const registrationExcludedKeys = new Set([
   "vendorId",
   "status",
   "vendorStatus",
+  "listingStatus",
   "registrationStatus",
   "registrationFeeStatus",
   "feeStatus",
@@ -498,6 +547,15 @@ const registrationExcludedKeys = new Set([
   "portfolioDescription",
   "established",
   "yearEstablished",
+  "applicationStatus",
+  "suspensionCount",
+  "suspensionReason",
+  "suspendedAt",
+  "reactivationDate",
+  "suspensionHistory",
+  "banned",
+  "bannedAt",
+  "banReason",
 ]);
 
 const isSensitiveRegistrationKey = (key: string) =>
@@ -866,12 +924,65 @@ export default function Businesses() {
   const [remarks, setRemarks] = useState<Record<string, string>>({});
   const [remarkInput, setRemarkInput] = useState("");
 
+  const [activeDirectoryTab, setActiveDirectoryTab] =
+    useState<AdminDirectoryTab>("onboarding");
+
+  const [showSuspensionModal, setShowSuspensionModal] =
+    useState(false);
+
+  const [suspensionReason, setSuspensionReason] = useState("");
+
+  const [reactivationDate, setReactivationDate] = useState(
+    getDefaultReactivationDate(),
+  );
+
   /* =====================================================
      LOAD DATA
   ===================================================== */
 
   const loadVendors = useCallback(() => {
-    setRegisteredVendors(readStoredVendors());
+    const storedVendors = readStoredVendors();
+    const today = getDateInputValue(new Date());
+
+    let hasReactivatedVendor = false;
+
+    const synchronizedVendors = storedVendors.map((vendor) => {
+      const status = normalizeStatus(
+        vendor.listingStatus ?? vendor.vendorStatus ?? vendor.status,
+      );
+
+      const expiryDate = readText(vendor.reactivationDate, "");
+
+      // Do not automatically reactivate permanently banned vendors.
+      if (
+        status === "Suspended" &&
+        vendor.banned !== true &&
+        expiryDate &&
+        expiryDate <= today
+      ) {
+        hasReactivatedVendor = true;
+
+        return {
+          ...vendor,
+          listingStatus: "Approved",
+          vendorStatus: "Approved",
+          status: "Approved",
+          applicationStatus: "Approved",
+          suspensionReason: "",
+          suspendedAt: "",
+          reactivationDate: "",
+          adminStatusUpdatedAt: new Date().toISOString(),
+        };
+      }
+
+      return vendor;
+    });
+
+    if (hasReactivatedVendor) {
+      writeStoredVendors(synchronizedVendors);
+    }
+
+    setRegisteredVendors(synchronizedVendors);
 
     try {
       const stored = localStorage.getItem(REMARKS_STORAGE_KEY);
@@ -934,6 +1045,34 @@ export default function Businesses() {
     [businesses],
   );
 
+  const onboardingBusinesses = useMemo(
+    () =>
+      businesses.filter(
+        (business) =>
+          business.vendorStatus === "Pending" ||
+          business.vendorStatus === "Rejected",
+      ),
+    [businesses],
+  );
+
+  const approvedVendors = useMemo(
+    () =>
+      businesses.filter(
+        (business) =>
+          business.vendorStatus === "Approved" ||
+          business.vendorStatus === "Suspended" ||
+          business.vendorStatus === "Banned",
+      ),
+    [businesses],
+  );
+
+  const directoryBusinesses =
+    activeDirectoryTab === "onboarding"
+      ? onboardingBusinesses
+      : activeDirectoryTab === "vendors"
+        ? approvedVendors
+        : [];
+
   /* =====================================================
      FILTERING
   ===================================================== */
@@ -941,7 +1080,7 @@ export default function Businesses() {
   const filteredBusinesses = useMemo(() => {
     const query = search.trim().toLowerCase();
 
-    return businesses.filter((business) => {
+    return directoryBusinesses.filter((business) => {
       const matchesSearch =
         !query ||
         business.name.toLowerCase().includes(query) ||
@@ -956,7 +1095,7 @@ export default function Businesses() {
 
       return matchesSearch && matchesType;
     });
-  }, [businesses, search, contractorType]);
+  }, [directoryBusinesses, search, contractorType]);
 
   /* =====================================================
      PAGINATION
@@ -1010,22 +1149,134 @@ export default function Businesses() {
      UPDATE VENDOR STATUS
   ===================================================== */
 
-  const updateVendorStatus = (status: VendorStatus) => {
+const updateVendorStatus = (status: VendorStatus) => {
+  if (!selectedBusiness) return;
+
+  const existingVendor = findVendorRecord(selectedBusiness);
+
+  const isPermanentlyBanned =
+    existingVendor?.banned === true ||
+    normalizeStatus(
+      existingVendor?.listingStatus ??
+      existingVendor?.vendorStatus ??
+      existingVendor?.status ??
+      selectedBusiness.vendorStatus,
+    ) === "Banned";
+
+  if (isPermanentlyBanned && status !== "Banned") {
+    window.alert(
+      "This vendor is permanently banned and cannot be reactivated.",
+    );
+    return;
+  }
+
+  const updatedAt = new Date().toISOString();
+
+  const updatedVendors = registeredVendors.map((vendor) => {
+    if (getVendorBusinessId(vendor) !== selectedBusiness.id) {
+      return vendor;
+    }
+
+    return {
+      ...vendor,
+      listingStatus: status,
+      vendorStatus: status,
+      status,
+      applicationStatus:
+        status === "Approved" ||
+        status === "Suspended" ||
+        status === "Banned"
+          ? "Approved"
+          : status,
+      banned: status === "Banned",
+      bannedAt:
+        status === "Banned"
+          ? vendor.bannedAt ?? updatedAt
+          : vendor.bannedAt,
+      adminStatusUpdatedAt: updatedAt,
+    };
+  });
+
+  writeStoredVendors(updatedVendors);
+  setRegisteredVendors(updatedVendors);
+
+  setSelectedBusiness((previous) =>
+    previous
+      ? {
+          ...previous,
+          vendorStatus: status,
+          registrationData: {
+            ...previous.registrationData,
+            listingStatus: status,
+            vendorStatus: status,
+            status,
+            applicationStatus:
+              status === "Approved" ||
+              status === "Suspended" ||
+              status === "Banned"
+                ? "Approved"
+                : status,
+            banned: status === "Banned",
+            adminStatusUpdatedAt: updatedAt,
+          },
+        }
+      : null,
+  );
+};
+
+  const confirmVendorSuspension = () => {
     if (!selectedBusiness) return;
 
-    const matchingVendor = findVendorRecord(selectedBusiness);
-    if (!matchingVendor) return;
+    const reason = suspensionReason.trim();
+
+    if (!reason) {
+      window.alert("Please enter a reason for suspending this vendor.");
+      return;
+    }
+
+    const today = getDateInputValue(new Date());
+
+    if (!reactivationDate || reactivationDate <= today) {
+      window.alert("Please select a reactivation date after today.");
+      return;
+    }
+
+    const updatedAt = new Date().toISOString();
 
     const updatedVendors = registeredVendors.map((vendor) => {
       if (getVendorBusinessId(vendor) !== selectedBusiness.id) {
         return vendor;
       }
 
+      const previousCount = readNumber(vendor.suspensionCount);
+      const nextCount = previousCount + 1;
+
+      const previousHistory = Array.isArray(vendor.suspensionHistory)
+        ? vendor.suspensionHistory
+        : [];
+
+      const newHistory = [
+        ...previousHistory,
+        {
+          reason,
+          suspendedAt: updatedAt,
+          reactivationDate,
+          suspendedBy: "Admin",
+        },
+      ];
+
       return {
         ...vendor,
-        status,
-        vendorStatus: status,
-        adminStatusUpdatedAt: new Date().toISOString(),
+        listingStatus: "Suspended",
+        vendorStatus: "Suspended",
+        status: "Suspended",
+        applicationStatus: "Approved",
+        suspensionCount: nextCount,
+        suspensionReason: reason,
+        suspendedAt: updatedAt,
+        reactivationDate,
+        suspensionHistory: newHistory,
+        adminStatusUpdatedAt: updatedAt,
       };
     });
 
@@ -1036,11 +1287,86 @@ export default function Businesses() {
       previous
         ? {
           ...previous,
-          vendorStatus: status,
+          vendorStatus: "Suspended",
           registrationData: {
             ...previous.registrationData,
-            status,
-            vendorStatus: status,
+            listingStatus: "Suspended",
+            vendorStatus: "Suspended",
+            status: "Suspended",
+            applicationStatus: "Approved",
+            suspensionCount:
+              readNumber(previous.registrationData.suspensionCount) + 1,
+            suspensionReason: reason,
+            suspendedAt: updatedAt,
+            reactivationDate,
+            adminStatusUpdatedAt: updatedAt,
+          },
+        }
+        : null,
+    );
+
+    setShowSuspensionModal(false);
+    setSuspensionReason("");
+    setReactivationDate(getDefaultReactivationDate());
+  };
+
+  const permanentlyBanVendor = () => {
+    if (!selectedBusiness) return;
+
+    const vendor = findVendorRecord(selectedBusiness);
+    const suspensionCount = readNumber(vendor?.suspensionCount);
+
+    if (suspensionCount < 3) {
+      window.alert(
+        "A vendor must have at least three recorded suspensions before this ban action is available.",
+      );
+      return;
+    }
+
+    const reason = window.prompt(
+      "Enter the reason for permanently banning this vendor:",
+    );
+
+    if (!reason?.trim()) return;
+
+    const updatedAt = new Date().toISOString();
+
+    const updatedVendors = registeredVendors.map((item) => {
+      if (getVendorBusinessId(item) !== selectedBusiness.id) {
+        return item;
+      }
+
+      return {
+        ...item,
+        listingStatus: "Banned",
+        vendorStatus: "Banned",
+        status: "Banned",
+        applicationStatus: "Approved",
+        banned: true,
+        bannedAt: updatedAt,
+        banReason: reason.trim(),
+        adminStatusUpdatedAt: updatedAt,
+      };
+    });
+
+    writeStoredVendors(updatedVendors);
+    setRegisteredVendors(updatedVendors);
+
+    setSelectedBusiness((previous) =>
+      previous
+        ? {
+          ...previous,
+          vendorStatus: "Banned",
+          registrationData: {
+            ...previous.registrationData,
+            listingStatus: "Banned",
+            vendorStatus: "Banned",
+            status: "Banned",
+            applicationStatus: "Approved",
+            banned: true,
+            bannedAt: updatedAt,
+            banReason: reason.trim(),
+            adminStatusUpdatedAt: updatedAt,
           },
         }
         : null,
@@ -1921,6 +2247,49 @@ export default function Businesses() {
         </div>
       </section>
 
+      <section className="businesses-admin-tabs">
+        <button
+          type="button"
+          className={activeDirectoryTab === "onboarding" ? "active" : ""}
+          onClick={() => {
+            setActiveDirectoryTab("onboarding");
+            setPage(1);
+            closeModal();
+          }}
+        >
+          <FileCheck size={16} />
+          Onboarding Requests
+          <span>{onboardingBusinesses.length}</span>
+        </button>
+
+        <button
+          type="button"
+          className={activeDirectoryTab === "vendors" ? "active" : ""}
+          onClick={() => {
+            setActiveDirectoryTab("vendors");
+            setPage(1);
+            closeModal();
+          }}
+        >
+          <Store size={16} />
+          Vendors
+          <span>{approvedVendors.length}</span>
+        </button>
+
+        <button
+          type="button"
+          className={activeDirectoryTab === "analytics" ? "active" : ""}
+          onClick={() => {
+            setActiveDirectoryTab("analytics");
+            setPage(1);
+            closeModal();
+          }}
+        >
+          <Activity size={16} />
+          Analytics
+        </button>
+      </section>
+
 
       {/* =================================================
           REDESIGNED VENDOR DETAILS MODAL
@@ -2082,7 +2451,7 @@ export default function Businesses() {
                 </div>
 
                 <div className="vendor-admin-actions">
-                  {currentStatus !== "Approved" && (
+                  {currentStatus !== "Approved" && currentStatus !== "Banned" && (
                     <button
                       type="button"
                       className="vendor-admin-approve"
@@ -2110,7 +2479,11 @@ export default function Businesses() {
                     <button
                       type="button"
                       className="vendor-admin-suspend"
-                      onClick={() => updateVendorStatus("Suspended")}
+                      onClick={() => {
+                        setSuspensionReason("");
+                        setReactivationDate(getDefaultReactivationDate());
+                        setShowSuspensionModal(true);
+                      }}
                     >
                       <PauseCircle size={15} />
                       Suspend Listing
@@ -2127,6 +2500,37 @@ export default function Businesses() {
                       Review Again
                     </button>
                   )}
+
+                  {currentStatus === "Banned" && (
+                    <div className="vendor-suspension-summary">
+                      <ShieldCheck size={16} />
+                      <span>This vendor is permanently banned.</span>
+                    </div>
+                  )}
+
+                  {currentStatus === "Suspended" && (
+                    <div className="vendor-suspension-summary">
+                      <PauseCircle size={16} />
+                      <span>
+                        Suspensions: {selectedBusiness.registrationData.suspensionCount ?? 0}
+                        {selectedBusiness.registrationData.reactivationDate && (
+                          <> · Reactivation date: {selectedBusiness.registrationData.reactivationDate}</>
+                        )}
+                      </span>
+                    </div>
+                  )}
+
+                  {(selectedBusiness.registrationData.suspensionCount ?? 0) >= 3 &&
+                    currentStatus !== "Banned" && (
+                      <button
+                        type="button"
+                        className="vendor-admin-reject"
+                        onClick={permanentlyBanVendor}
+                      >
+                        <ShieldCheck size={15} />
+                        Permanently Ban Vendor
+                      </button>
+                    )}
                 </div>
               </div>
 
@@ -2135,6 +2539,73 @@ export default function Businesses() {
                 Vendor-submitted information is read-only. Status changes
                 are saved to the shared vendor collection.
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showSuspensionModal && selectedBusiness && (
+        <div
+          className="business-modal-backdrop"
+          onClick={() => setShowSuspensionModal(false)}
+        >
+          <div
+            className="business-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="suspension-modal-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="business-modal-header">
+              <div>
+                <span>VENDOR LISTING</span>
+                <h2 id="suspension-modal-title">Suspend listing</h2>
+                <small>{selectedBusiness.name}</small>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowSuspensionModal(false)}
+                aria-label="Close suspension dialog"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="business-modal-content">
+              <label htmlFor="suspension-reason">Reason for suspension</label>
+              <textarea
+                id="suspension-reason"
+                value={suspensionReason}
+                onChange={(event) => setSuspensionReason(event.target.value)}
+                placeholder="Enter a reason"
+                required
+              />
+
+              <label htmlFor="reactivation-date">Reactivation date</label>
+              <input
+                id="reactivation-date"
+                type="date"
+                value={reactivationDate}
+                min={getDateInputValue(new Date())}
+                onChange={(event) => setReactivationDate(event.target.value)}
+                required
+              />
+            </div>
+
+            <div className="business-modal-footer">
+              <button
+                type="button"
+                className="business-modal-cancel"
+                onClick={() => setShowSuspensionModal(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmVendorSuspension}
+              >
+                Confirm suspension
+              </button>
             </div>
           </div>
         </div>

@@ -3073,3 +3073,279 @@
         transform: rotate(360deg);
     }
 }
+
+/* =========================================================
+   VENDOR HUB — NEW ACCESS CONTROL + SUBSCRIPTION ADDITIONS
+   Append this block to the END of VendorHub.css.
+   Existing CSS remains unchanged.
+========================================================= */
+.vh-access-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 32px 18px;
+  background: #f5f8ff;
+}
+.vh-access-card {
+  width: min(100%, 620px);
+  padding: 42px;
+  border: 1px solid #e3eaf5;
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 18px 55px rgba(24, 50, 90, .09);
+  text-align: center;
+}
+.vh-access-icon {
+  width: 68px;
+  height: 68px;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 20px;
+  border-radius: 20px;
+  color: #2563eb;
+  background: #eff6ff;
+}
+.vh-access-card.is-suspended .vh-access-icon,
+.vh-access-card.is-banned .vh-access-icon,
+.vh-access-card.is-rejected .vh-access-icon { color: #dc2626; background: #fef2f2; }
+.vh-access-eyebrow { color: #64748b; font-size: 11px; font-weight: 800; letter-spacing: .12em; }
+.vh-access-card h1 { margin: 12px 0 10px; color: #172033; font-size: clamp(24px, 4vw, 32px); }
+.vh-access-card > p { max-width: 480px; margin: 0 auto 24px; color: #64748b; line-height: 1.7; }
+.vh-access-detail { display: grid; gap: 7px; margin: 14px 0; padding: 16px 18px; border: 1px solid #e7edf6; border-radius: 13px; background: #f8fafc; text-align: left; }
+.vh-access-detail strong { color: #334155; font-size: 13px; }
+.vh-access-detail span { color: #172033; line-height: 1.6; }
+.vh-access-detail small { color: #b45309; line-height: 1.55; }
+.vh-access-actions { display: flex; justify-content: center; align-items: center; gap: 18px; flex-wrap: wrap; margin-top: 25px; }
+.vh-access-back { padding: 11px 18px; border: 0; border-radius: 10px; color: #fff; background: #2563eb; font: inherit; font-weight: 700; cursor: pointer; }
+.vh-access-actions a { color: #2563eb; font-size: 14px; font-weight: 700; text-decoration: none; }
+.vh-vendor-subscription { margin-top: 24px; padding: 26px; }
+.vh-vendor-subscription-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; }
+.vh-vendor-subscription-heading h2 { display: flex; align-items: center; gap: 9px; margin: 7px 0; color: #172033; }
+.vh-vendor-subscription-heading h2 svg { color: #2563eb; }
+.vh-vendor-subscription-heading p { margin: 0; color: #64748b; font-size: 14px; }
+.vh-vendor-subscription-status { flex: 0 0 auto; padding: 7px 11px; border-radius: 30px; color: #1d4ed8; background: #eff6ff; font-size: 12px; font-weight: 800; }
+.vh-vendor-subscription-status.free-trial, .vh-vendor-subscription-status.active { color: #15803d; background: #f0fdf4; }
+.vh-vendor-subscription-status.trial-expired, .vh-vendor-subscription-status.expired { color: #b45309; background: #fffbeb; }
+.vh-vendor-trial, .vh-vendor-active, .vh-vendor-expired { display: flex; align-items: center; gap: 13px; margin: 22px 0; padding: 16px; border-radius: 13px; background: #f0fdf4; color: #166534; }
+.vh-vendor-trial > div, .vh-vendor-active > div { flex: 1; }
+.vh-vendor-trial p, .vh-vendor-active p { margin: 5px 0 0; color: #64748b; font-size: 13px; }
+.vh-vendor-trial > strong { font-size: 23px; }
+.vh-vendor-expired { color: #92400e; background: #fffbeb; }
+.vh-vendor-plan-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 22px; }
+.vh-vendor-plan { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; min-width: 0; padding: 18px; border: 1px solid #e2e8f0; border-radius: 15px; background: #fff; color: #172033; text-align: left; cursor: pointer; transition: border-color .2s, box-shadow .2s, transform .2s; }
+.vh-vendor-plan:hover, .vh-vendor-plan.selected { border-color: #2563eb; box-shadow: 0 8px 24px rgba(37, 99, 235, .10); transform: translateY(-2px); }
+.vh-vendor-plan > span { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; color: #2563eb; background: #eff6ff; }
+.vh-vendor-plan > b { font-size: 25px; }
+.vh-vendor-plan > b small { color: #64748b; font-size: 12px; font-weight: 500; }
+.vh-vendor-plan p { margin: 0; color: #64748b; font-size: 13px; line-height: 1.55; }
+.vh-vendor-plan em { display: flex; align-items: center; gap: 4px; margin-top: auto; color: #2563eb; font-size: 12px; font-style: normal; font-weight: 800; }
+.vh-vendor-payment { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; margin-top: 20px; padding: 17px; border-radius: 13px; background: #f8fafc; }
+.vh-vendor-payment > div { display: grid; gap: 5px; }
+.vh-vendor-payment small, .vh-vendor-pending { color: #64748b; font-size: 12px; }
+.vh-vendor-payment > button { margin-left: auto; }
+.vh-vendor-subscription-message { padding: 12px 14px; border-radius: 10px; color: #1d4ed8; background: #eff6ff; font-size: 13px; }
+.vh-vendor-subscription-note { display: block; margin-top: 18px; color: #94a3b8; line-height: 1.5; }
+.vh-vendor-plan-overlay { position: fixed; z-index: 10000; inset: 0; display: grid; place-items: center; overflow-y: auto; padding: 22px; background: rgba(15, 23, 42, .58); }
+.vh-vendor-plan-dialog { position: relative; width: min(100%, 560px); max-height: calc(100vh - 44px); overflow-y: auto; padding: 30px; border-radius: 20px; background: #fff; box-shadow: 0 24px 70px rgba(0,0,0,.22); }
+.vh-vendor-plan-close { position: absolute; top: 17px; right: 17px; display: grid; place-items: center; width: 36px; height: 36px; border: 0; border-radius: 10px; color: #475569; background: #f1f5f9; cursor: pointer; }
+.vh-vendor-plan-dialog h2 { margin: 10px 0 6px; color: #172033; }
+.vh-vendor-plan-dialog > p { color: #64748b; line-height: 1.6; }
+.vh-vendor-plan-modal-price { display: block; margin: 18px 0; color: #172033; font-size: 30px; }
+.vh-vendor-plan-modal-price small { color: #64748b; font-size: 13px; font-weight: 500; }
+.vh-vendor-plan-dialog h3 { margin: 20px 0 12px; font-size: 16px; }
+.vh-vendor-plan-dialog ul { display: grid; gap: 11px; margin: 0; padding: 0; list-style: none; }
+.vh-vendor-plan-dialog li { display: flex; gap: 9px; color: #475569; font-size: 14px; line-height: 1.5; }
+.vh-vendor-plan-dialog li svg { flex: 0 0 auto; color: #16a34a; }
+.vh-vendor-plan-discounts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; margin-top: 20px; }
+.vh-vendor-plan-discounts span { display: grid; gap: 5px; padding: 12px 8px; border-radius: 10px; background: #f8fafc; text-align: center; }
+.vh-vendor-plan-discounts b { color: #2563eb; font-size: 13px; }
+.vh-vendor-plan-discounts small { color: #64748b; font-size: 11px; }
+.vh-vendor-plan-actions { display: flex; justify-content: flex-end; gap: 10px; margin: 22px 0 14px; }
+.vh-vendor-plan-dialog > small { color: #94a3b8; line-height: 1.5; }
+@media (max-width: 760px) {
+  .vh-access-card { padding: 28px 20px; }
+  .vh-vendor-subscription { padding: 19px; }
+  .vh-vendor-subscription-heading { flex-direction: column; }
+  .vh-vendor-plan-grid { grid-template-columns: 1fr; }
+  .vh-vendor-payment { align-items: stretch; flex-direction: column; gap: 13px; }
+  .vh-vendor-payment > button { margin-left: 0; justify-content: center; }
+  .vh-vendor-plan-discounts { grid-template-columns: 1fr; }
+  .vh-vendor-plan-actions { flex-direction: column-reverse; }
+}
+
+
+/* =========================================================
+   VENDOR LISTING PREVIEW — ADDITIONAL STYLES
+========================================================= */
+
+.vh-listing-preview {
+    position: relative;
+    width: min(900px, 94vw);
+    max-height: 88vh;
+    overflow-y: auto;
+    padding: 28px;
+    border-radius: 18px;
+    background: #fff;
+    color: #172033;
+    box-shadow: 0 24px 70px rgba(15, 23, 42, 0.2);
+}
+
+.vh-preview-header {
+    padding-right: 42px;
+    margin-bottom: 22px;
+}
+
+.vh-preview-header > span {
+    color: #2563eb;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.vh-preview-header h2 {
+    margin: 8px 0;
+    font-size: 27px;
+}
+
+.vh-preview-header p,
+.vh-preview-content p {
+    color: #64748b;
+    line-height: 1.6;
+}
+
+.vh-preview-gallery {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 24px;
+}
+
+.vh-preview-gallery img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 10px;
+}
+
+.vh-preview-gallery img:first-child {
+    grid-row: span 2;
+    height: 310px;
+}
+
+.vh-preview-content {
+    display: grid;
+    gap: 20px;
+}
+
+.vh-preview-content h3 {
+    margin: 0 0 10px;
+    color: #172033;
+}
+
+.vh-preview-category {
+    color: #2563eb;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.vh-preview-contact {
+    display: grid;
+    gap: 12px;
+    padding: 16px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+}
+
+.vh-preview-contact span {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #475569;
+    font-size: 13px;
+}
+
+.vh-preview-item {
+    padding: 12px 0;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.vh-preview-products {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.vh-preview-products article {
+    display: grid;
+    gap: 8px;
+    padding: 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+}
+
+.vh-preview-products img {
+    width: 100%;
+    height: 125px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.vh-preview-products span {
+    color: #2563eb;
+    font-weight: 700;
+}
+
+.vh-preview-content ul {
+    display: grid;
+    gap: 8px;
+    padding-left: 20px;
+    color: #475569;
+}
+
+.vh-preview-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding-top: 22px;
+    margin-top: 22px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.vh-publication-status {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.vh-publication-status p {
+    margin: 5px 0 0;
+    color: #64748b;
+    font-size: 13px;
+}
+
+@media (max-width: 650px) {
+    .vh-listing-preview {
+        padding: 18px;
+    }
+
+    .vh-preview-gallery {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .vh-preview-gallery img:first-child {
+        grid-column: 1 / -1;
+        grid-row: auto;
+        height: 190px;
+    }
+
+    .vh-preview-products {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .vh-preview-footer {
+        flex-direction: column;
+    }
+}

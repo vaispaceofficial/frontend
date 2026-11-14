@@ -12,6 +12,9 @@ import {
     Check,
     CheckCircle2,
     ChevronRight,
+    CreditCard,
+    Crown,
+    Sparkles,
     Clock3,
     Eye,
     FileText,
@@ -92,16 +95,19 @@ type ProductItem = {
 type ServiceDraft = Omit<ServiceItem, "id">;
 type ProductDraft = Omit<ProductItem, "id" | "isLocal">;
 
+
 type StoredVendorProfile = {
     id?: string;
     vendorId?: string;
     role?: string;
     accountType?: string;
+
     fullName?: string;
     name?: string;
     mobile?: string;
     phone?: string;
     email?: string;
+
     businessName?: string;
     businessType?: string;
     businessCategory?: string;
@@ -109,12 +115,172 @@ type StoredVendorProfile = {
     city?: string;
     state?: string;
     pincode?: string;
+
     productDescription?: string;
-    products?: string;
+    products?: ProductItem[] | string;
+
+    // Application review status
     status?: string;
+    vendorStatus?: string;
+    listingStatus?: string;
+    applicationStatus?: string;
+    reviewStatus?: string;
+    registrationStatus?: string;
+
+    // Admin-controlled account access
+    accountState?: string;
+    accountStatus?: string;
+    vendorAccountStatus?: string;
+
+    // Rejection information
+    rejectionReason?: string;
+
+    // Suspension information
+    suspensionReason?: string;
+    suspensionUntil?: string;
+    suspensionEndDate?: string;
+    suspendedAt?: string;
+    suspensionDuration?: string;
+    suspendedReason?: string;
+    suspendedUntil?: string;
+    suspendedUntilDate?: string;
+    reactivationDate?: string;
+    banReason?: string;
+
+    // Admin information
+    adminRemarks?: string;
+    adminStatusUpdatedAt?: string;
+
     registeredAt?: string;
+
+    // Subscription information
+    trialStartedAt?: string;
+    trialEndsAt?: string;
+    subscriptionPlan?: string;
+    subscriptionStartedAt?: string;
+    subscriptionEndsAt?: string;
+    subscriptionStatus?: string;
+
     [key: string]: unknown;
 };
+
+
+type VendorAccessState = "approved" | "pending" | "rejected" | "suspended" | "banned";
+type VendorPlanName = "Basic" | "Exclusive" | "Premium";
+
+const VENDOR_TRIAL_DAYS = 30;
+const VENDOR_PLANS: { name: VendorPlanName; displayName: string; price: number; description: string; features: string[] }[] = [
+    { name: "Basic", displayName: "Lite / Basic", price: 199, description: "For individual vendors and local businesses.", features: ["0% commission on customer enquiries", "1 primary business category", "Direct customer Call and WhatsApp connection", "Business verification badge", "Up to 3 gallery photos", "1 local PIN code coverage"] },
+    { name: "Exclusive", displayName: "Starter / Pro", price: 499, description: "For established vendors and growing local businesses.", features: ["0% commission on customer enquiries", "Up to 3 business categories", "Priority listing in search", "Up to 15 photos and video catalogue", "Customer enquiry alerts", "City-zone PIN code coverage"] },
+    { name: "Premium", displayName: "Growth / Biz", price: 999, description: "For larger businesses and expanding service providers.", features: ["0% commission on customer enquiries", "Featured listing placement", "Multiple categories and locations", "Premium trusted business seal", "Promotional banner eligibility", "Priority support"] },
+];
+
+const ADMIN_VENDOR_FIELDS = [
+    "status", "vendorStatus", "listingStatus", "applicationStatus", "reviewStatus", "registrationStatus",
+    "accountState", "accountStatus", "vendorAccountStatus", "rejectionReason",
+    "suspensionReason", "suspendedReason", "suspensionUntil", "suspensionEndDate", "suspendedUntil", "suspendedUntilDate", "reactivationDate", "suspendedAt", "suspensionDuration", "banReason",
+    "adminRemarks", "adminStatusUpdatedAt",
+] as const;
+
+function normalizeVendorStatus(value: unknown): string {
+    return typeof value === "string" ? value.trim().toLowerCase().replace(/[_-]+/g, " ") : "";
+}
+
+function getVendorAccessState(
+    profile: StoredVendorProfile | null,
+): VendorAccessState {
+    if (!profile) return "pending";
+
+    const normalize = (value: unknown) =>
+        normalizeVendorStatus(value);
+
+    // Restrictions always take priority.
+    const restrictionStatuses = [
+        profile.accountState,
+        profile.accountStatus,
+        profile.vendorAccountStatus,
+        profile.listingStatus,
+        profile.vendorStatus,
+        profile.status,
+    ].map(normalize);
+
+    if (
+        restrictionStatuses.some((status) =>
+            ["banned", "ban", "permanently banned", "blocked permanently"].includes(status),
+        )
+    ) {
+        return "banned";
+    }
+
+    if (
+        restrictionStatuses.some((status) =>
+            ["suspended", "temporarily suspended", "blocked", "disabled"].includes(status),
+        )
+    ) {
+        return "suspended";
+    }
+
+    // The Admin listing status is the primary approval authority.
+    const primaryStatus = normalize(
+        profile.listingStatus ||
+        profile.vendorStatus ||
+        profile.status ||
+        profile.applicationStatus ||
+        profile.reviewStatus ||
+        profile.registrationStatus,
+    );
+
+    if (["approved", "verified", "active", "reactivated"].includes(primaryStatus)) {
+        return "approved";
+    }
+
+    if (["rejected", "declined", "application rejected"].includes(primaryStatus)) {
+        return "rejected";
+    }
+
+    return "pending";
+}
+
+function getVendorSuspensionReason(profile: StoredVendorProfile | null): string {
+    if (!profile) return "No suspension details are available.";
+    const reason = profile.suspensionReason || profile.suspendedReason || profile.banReason || profile.rejectionReason || profile.adminRemarks;
+    return typeof reason === "string" && reason.trim() ? reason.trim() : "The Admin team has restricted access to this vendor account. Please contact support for more information.";
+}
+
+function getVendorSuspensionEnd(profile: StoredVendorProfile | null): string {
+    if (!profile) return "";
+    const value = profile.suspensionUntil || profile.suspensionEndDate || profile.suspendedUntil || profile.suspendedUntilDate || profile.reactivationDate;
+    return typeof value === "string" ? value : "";
+}
+
+function formatVendorDate(value: string): string {
+    if (!value) return "Not specified";
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" });
+}
+
+function mergeAdminVendorFields(local: StoredVendorProfile, admin: StoredVendorProfile): StoredVendorProfile {
+    const merged = { ...local } as StoredVendorProfile;
+    ADMIN_VENDOR_FIELDS.forEach((key) => {
+        if (Object.prototype.hasOwnProperty.call(admin, key)) merged[key] = admin[key];
+    });
+    return merged;
+}
+
+function getVendorSubscriptionStatus(profile: StoredVendorProfile | null, now: number): "Not Started" | "Free Trial" | "Trial Expired" | "Active" | "Expired" {
+    if (!profile) return "Not Started";
+    if (profile.subscriptionStartedAt && profile.subscriptionEndsAt) return new Date(profile.subscriptionEndsAt).getTime() > now ? "Active" : "Expired";
+    if (!profile.trialStartedAt || !profile.trialEndsAt) return "Not Started";
+    return new Date(profile.trialEndsAt).getTime() > now ? "Free Trial" : "Trial Expired";
+}
+
+function getVendorTrialRemaining(endDate: string | undefined, now: number) {
+    if (!endDate) return null;
+    const diff = new Date(endDate).getTime() - now;
+    if (!Number.isFinite(diff) || diff <= 0) return { days: 0, hours: 0, minutes: 0 };
+    const minutes = Math.floor(diff / 60000);
+    return { days: Math.floor(minutes / 1440), hours: Math.floor((minutes % 1440) / 60), minutes: minutes % 60 };
+}
 
 function readStoredVendorProfile(): StoredVendorProfile | null {
     try {
@@ -142,6 +308,8 @@ function readStoredVendorProfile(): StoredVendorProfile | null {
     }
 }
 
+
+
 function businessFromVendorProfile(
     profile: StoredVendorProfile | null,
 ): BusinessDetails {
@@ -159,7 +327,12 @@ function businessFromVendorProfile(
         .filter(Boolean)
         .join(", ");
 
-    const status = String(profile.status || "").toLowerCase();
+    const status = String(
+        profile.listingStatus ??
+        profile.vendorStatus ??
+        profile.status ??
+        "",
+    ).toLowerCase().trim();
 
     return {
         ...initialBusiness,
@@ -174,7 +347,9 @@ function businessFromVendorProfile(
             initialBusiness.category,
         description:
             profile.productDescription?.trim() ||
-            profile.products?.trim() ||
+            (typeof profile.products === "string"
+                ? profile.products.trim()
+                : "") ||
             initialBusiness.description,
         address: location || initialBusiness.address,
         phone:
@@ -206,26 +381,24 @@ const saveVendorToSharedCollection = (
         const existing: StoredVendorProfile[] =
             Array.isArray(parsed)
                 ? parsed.filter(
-                      (item): item is StoredVendorProfile =>
-                          item !== null &&
-                          typeof item === "object" &&
-                          !Array.isArray(item),
-                  )
+                    (item): item is StoredVendorProfile =>
+                        item !== null &&
+                        typeof item === "object" &&
+                        !Array.isArray(item),
+                )
                 : [];
 
         const identity = String(
             vendor.vendorId ||
-                vendor.id ||
-                vendor.mobile ||
-                vendor.phone ||
-                vendor.email ||
-                "",
+            vendor.id ||
+            vendor.mobile ||
+            vendor.phone ||
+            vendor.email ||
+            "",
         )
             .trim()
             .toLowerCase();
 
-        // Do not create duplicate records when a profile
-        // does not have a usable identity.
         if (!identity) {
             console.warn(
                 "Vendor synchronization skipped: no vendor ID, mobile number, or email found.",
@@ -236,11 +409,11 @@ const saveVendorToSharedCollection = (
         const index = existing.findIndex((item) => {
             const existingIdentity = String(
                 item.vendorId ||
-                    item.id ||
-                    item.mobile ||
-                    item.phone ||
-                    item.email ||
-                    "",
+                item.id ||
+                item.mobile ||
+                item.phone ||
+                item.email ||
+                "",
             )
                 .trim()
                 .toLowerCase();
@@ -254,20 +427,65 @@ const saveVendorToSharedCollection = (
         if (index >= 0) {
             const existingVendor = existing[index];
 
+            // Admin-managed status takes priority over the
+            // possibly outdated VendorHub profile.
+            const adminStatus =
+                existingVendor.listingStatus ||
+                existingVendor.vendorStatus ||
+                existingVendor.status ||
+                vendor.listingStatus ||
+                vendor.vendorStatus ||
+                vendor.status ||
+                "Pending";
+
+
             existing[index] = {
                 ...existingVendor,
                 ...vendor,
 
-                // Preserve the admin-managed status.
-                status:
-                    existingVendor.status ||
-                    vendor.status ||
-                    "Pending",
+                // Admin approval and account restrictions always win.
+                listingStatus: adminStatus,
+                vendorStatus: adminStatus,
+                status: adminStatus,
+
+                accountState: existingVendor.accountState,
+                accountStatus: existingVendor.accountStatus,
+                vendorAccountStatus: existingVendor.vendorAccountStatus,
+
+                applicationStatus:
+                    existingVendor.applicationStatus || vendor.applicationStatus,
+
+                rejectionReason: existingVendor.rejectionReason,
+
+                suspensionReason: existingVendor.suspensionReason,
+                suspensionUntil: existingVendor.suspensionUntil,
+                suspensionEndDate: existingVendor.suspensionEndDate,
+                suspendedAt: existingVendor.suspendedAt,
+                suspensionDuration: existingVendor.suspensionDuration,
+                reactivationDate: existingVendor.reactivationDate,
+                suspensionCount: existingVendor.suspensionCount,
+                suspensionHistory: existingVendor.suspensionHistory,
+
+                banned: existingVendor.banned,
+                bannedAt: existingVendor.bannedAt,
+                banReason: existingVendor.banReason,
+
+                adminRemarks: existingVendor.adminRemarks,
+                adminStatusUpdatedAt: existingVendor.adminStatusUpdatedAt,
             };
+
         } else {
+            const initialStatus =
+                vendor.listingStatus ||
+                vendor.vendorStatus ||
+                vendor.status ||
+                "Pending";
+
             existing.push({
                 ...vendor,
-                status: vendor.status || "Pending",
+                listingStatus: initialStatus,
+                vendorStatus: initialStatus,
+                status: initialStatus,
             });
         }
 
@@ -277,7 +495,7 @@ const saveVendorToSharedCollection = (
         );
 
         window.dispatchEvent(
-            new Event("oneservice-vendors-change"),
+            new CustomEvent("oneservice-vendors-change"),
         );
     } catch (error) {
         console.error(
@@ -410,15 +628,15 @@ const tabItems: {
     label: string;
     icon: typeof Building2;
 }[] = [
-    { id: "overview", label: "Overview", icon: Building2 },
-    { id: "about", label: "About", icon: Info },
-    { id: "gallery", label: "Media & Gallery", icon: ImageIcon },
-    { id: "services", label: "Services Offered", icon: ShieldCheck },
-    { id: "products", label: "Products / Catalogue", icon: Package },
-    { id: "location", label: "Location & Map", icon: MapPin },
-    { id: "reviews", label: "Customer Reviews", icon: MessageCircle },
-    { id: "performance", label: "Performance", icon: TrendingUp },
-];
+        { id: "overview", label: "Overview", icon: Building2 },
+        { id: "about", label: "About", icon: Info },
+        { id: "gallery", label: "Media & Gallery", icon: ImageIcon },
+        { id: "services", label: "Services Offered", icon: ShieldCheck },
+        { id: "products", label: "Products / Catalogue", icon: Package },
+        { id: "location", label: "Location & Map", icon: MapPin },
+        { id: "reviews", label: "Customer Reviews", icon: MessageCircle },
+        { id: "performance", label: "Performance", icon: TrendingUp },
+    ];
 
 const createId = (prefix: string) =>
     `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -517,6 +735,98 @@ function VendorHub() {
     const [deleteError, setDeleteError] = useState("");
 
     const localObjectUrls = useRef<Set<string>>(new Set());
+    const [subscriptionClock, setSubscriptionClock] = useState(Date.now());
+    const [selectedVendorPlan, setSelectedVendorPlan] = useState<VendorPlanName>("Exclusive");
+    const [viewingVendorPlan, setViewingVendorPlan] = useState<VendorPlanName | null>(null);
+    const [vendorSubscriptionMessage, setVendorSubscriptionMessage] = useState("");
+    const [showListingPreview, setShowListingPreview] = useState(false);
+
+    const vendorAccessState = getVendorAccessState(vendorProfile);
+    const vendorSubscriptionStatus = getVendorSubscriptionStatus(vendorProfile, subscriptionClock);
+    const vendorTrialRemaining = getVendorTrialRemaining(vendorProfile?.trialEndsAt, subscriptionClock);
+    const viewingVendorPlanDetails = VENDOR_PLANS.find(plan => plan.name === viewingVendorPlan) || null;
+
+    const publishVendorListing = () => {
+        if (profileCompletionPercentage < 100) {
+            showNotice(
+                `Complete your profile first. ${completedProfileFields} of ${profileCompletionItems.length} fields are complete.`
+            );
+            goToTab("about");
+            return;
+        }
+
+        if (!vendorProfile) return;
+
+        const publishedAt = new Date().toISOString();
+
+        const updatedProfile = {
+            ...vendorProfile,
+            isPublished: true,
+            publicationStatus: "Published",
+            publishedAt,
+            listingPublishedAt: publishedAt,
+        };
+
+        try {
+            localStorage.setItem(
+                "oneservice_vendor",
+                JSON.stringify(updatedProfile)
+            );
+
+            const userRaw = localStorage.getItem("oneservice_user");
+
+            if (userRaw) {
+                const user = JSON.parse(userRaw);
+
+                if (user?.role === "vendor") {
+                    localStorage.setItem(
+                        "oneservice_user",
+                        JSON.stringify({
+                            ...user,
+                            ...updatedProfile,
+                        })
+                    );
+                }
+            }
+
+            saveVendorToSharedCollection(updatedProfile);
+
+            setVendorProfile(updatedProfile);
+
+            window.dispatchEvent(
+                new Event("oneservice-vendor-change")
+            );
+
+            window.dispatchEvent(
+                new Event("oneservice-vendors-change")
+            );
+
+            showNotice("Your business listing has been published successfully.");
+        } catch (error) {
+            console.error("Unable to publish vendor listing:", error);
+            showNotice("Unable to publish your listing. Please try again.");
+        }
+    };
+
+    useEffect(() => {
+        const timer = window.setInterval(() => setSubscriptionClock(Date.now()), 60000);
+        return () => window.clearInterval(timer);
+    }, []);
+
+    useEffect(() => {
+        if (!vendorProfile || vendorAccessState !== "approved" || vendorProfile.trialStartedAt || vendorProfile.subscriptionStartedAt) return;
+        const startedAt = new Date().toISOString();
+        const end = new Date(startedAt);
+        end.setDate(end.getDate() + VENDOR_TRIAL_DAYS);
+        const updated = { ...vendorProfile, trialStartedAt: startedAt, trialEndsAt: end.toISOString(), subscriptionStatus: "Free Trial" };
+        setVendorProfile(updated);
+        try {
+            localStorage.setItem("oneservice_vendor", JSON.stringify(updated));
+            const userRaw = localStorage.getItem("oneservice_user");
+            if (userRaw) { const user = JSON.parse(userRaw); if (user?.role === "vendor") localStorage.setItem("oneservice_user", JSON.stringify({ ...user, ...updated })); }
+            saveVendorToSharedCollection(updated);
+        } catch (error) { console.error("Unable to start vendor trial:", error); }
+    }, [vendorProfile, vendorAccessState]);
 
     useEffect(() => {
         return () => {
@@ -528,16 +838,99 @@ function VendorHub() {
         };
     }, []);
 
-    // Keep the dashboard connected to the vendor profile created at registration.
+    // Keep VendorHub synchronized with the Admin vendor collection.
     useEffect(() => {
         const refreshVendorProfile = () => {
             const profile = readStoredVendorProfile();
 
-            setVendorProfile(profile);
 
-            if (profile) {
-                setBusiness(businessFromVendorProfile(profile));
+
+            if (!profile) {
+                setVendorProfile(null);
+                return;
             }
+
+            let sharedVendor: StoredVendorProfile | null = null;
+
+            try {
+                const parsed: unknown = JSON.parse(
+                    localStorage.getItem("oneservice_vendors") || "[]",
+                );
+
+                if (Array.isArray(parsed)) {
+                    const getIdentity = (vendor: StoredVendorProfile) =>
+                        String(
+                            vendor.vendorId ||
+                            vendor.id ||
+                            vendor.mobile ||
+                            vendor.phone ||
+                            vendor.email ||
+                            "",
+                        )
+                            .trim()
+                            .toLowerCase();
+
+                    const profileIdentity = getIdentity(profile);
+
+                    sharedVendor =
+                        parsed.find((item): item is StoredVendorProfile => {
+                            if (
+                                !item ||
+                                typeof item !== "object" ||
+                                Array.isArray(item)
+                            ) {
+                                return false;
+                            }
+
+                            return (
+                                getIdentity(item as StoredVendorProfile) ===
+                                profileIdentity
+                            );
+                        }) || null;
+                }
+            } catch (error) {
+                console.error(
+                    "Unable to read shared vendor status:",
+                    error,
+                );
+            }
+
+            if (!sharedVendor) return;
+
+            const adminStatus = sharedVendor.listingStatus || sharedVendor.vendorStatus || sharedVendor.status || "Pending";
+            const updatedProfile: StoredVendorProfile = {
+                ...mergeAdminVendorFields(profile, sharedVendor),
+                listingStatus: adminStatus,
+                vendorStatus: adminStatus,
+                status: adminStatus,
+            };
+            if (JSON.stringify(updatedProfile) === JSON.stringify(profile)) return;
+            try {
+                localStorage.setItem("oneservice_vendor", JSON.stringify(updatedProfile));
+                const userRaw = localStorage.getItem("oneservice_user");
+                if (userRaw) { const user = JSON.parse(userRaw); if (user?.role === "vendor") localStorage.setItem("oneservice_user", JSON.stringify({ ...user, ...updatedProfile })); }
+            } catch (error) { console.error("Unable to persist Admin vendor status:", error); }
+
+            setVendorProfile(updatedProfile);
+
+            setBusiness((previous) => {
+                const normalizedStatus = String(adminStatus)
+                    .toLowerCase()
+                    .trim();
+
+                const verified =
+                    normalizedStatus === "approved" ||
+                    normalizedStatus === "verified";
+
+                if (previous.verified === verified) {
+                    return previous;
+                }
+
+                return {
+                    ...previous,
+                    verified,
+                };
+            });
         };
 
         window.addEventListener(
@@ -547,6 +940,11 @@ function VendorHub() {
 
         window.addEventListener(
             "oneservice-vendor-change",
+            refreshVendorProfile,
+        );
+
+        window.addEventListener(
+            "oneservice-vendors-change",
             refreshVendorProfile,
         );
 
@@ -564,6 +962,11 @@ function VendorHub() {
             );
 
             window.removeEventListener(
+                "oneservice-vendors-change",
+                refreshVendorProfile,
+            );
+
+            window.removeEventListener(
                 "storage",
                 refreshVendorProfile,
             );
@@ -574,32 +977,98 @@ function VendorHub() {
        SAVE VENDOR PROFILE + SHARED ADMIN COLLECTION
     ===================================================== */
 
+
     useEffect(() => {
         if (!vendorProfile || vendorProfile.role !== "vendor") {
             return;
         }
 
         try {
+            const workingHoursText = hours
+                .filter((item) => item.day.trim() || item.hours.trim())
+                .map((item) => `${item.day}: ${item.hours}`)
+                .join(" | ");
+
+            const workingDaysText = hours
+                .filter((item) => item.day.trim())
+                .map((item) => item.day)
+                .join(", ");
+
+            const savedGallery = gallery.map((item) => ({
+                id: item.id,
+                title: item.title,
+                name: item.title,
+                image: item.image,
+                url: item.image,
+            }));
+
+            const savedProducts = products.map((item) => ({
+                ...item,
+                isLocal: undefined,
+            }));
+
+            const savedServices = services.map((item) => ({
+                ...item,
+            }));
+
             const updatedProfile: StoredVendorProfile = {
                 ...vendorProfile,
 
+                // Business profile
                 businessName: business.name,
-
                 name:
                     vendorProfile.name ||
                     vendorProfile.fullName ||
                     business.name,
-
+                businessType: business.category,
                 businessCategory: business.category,
                 productDescription: business.description,
+                businessDescription: business.description,
+                description: business.description,
                 businessAddress: business.address,
                 mobile: business.phone,
+                phone: business.phone,
                 email: business.email,
+                website: business.website,
 
-                // Preserve the existing account status.
-                // Admin approval/rejection must not be overwritten
-                // by ordinary vendor profile edits.
-                status: vendorProfile.status || "Pending",
+                // Products and services
+                products: savedProducts,
+                services: savedServices,
+                productCount: savedProducts.length,
+                serviceCount: savedServices.length,
+
+                // Gallery
+                gallery: savedGallery,
+                images: savedGallery,
+
+                // Operating information
+                operatingHours: hours,
+                workingHours: workingHoursText,
+                businessHours: workingHoursText,
+                workingDays: workingDaysText,
+
+                // Business highlights
+                highlights: highlights.filter((item) => item.trim()),
+                amenities: highlights.filter((item) => item.trim()),
+
+                // Preserve Admin-controlled status
+                listingStatus:
+                    vendorProfile.listingStatus ||
+                    vendorProfile.vendorStatus ||
+                    vendorProfile.status ||
+                    "Pending",
+                vendorStatus:
+                    vendorProfile.listingStatus ||
+                    vendorProfile.vendorStatus ||
+                    vendorProfile.status ||
+                    "Pending",
+                status:
+                    vendorProfile.listingStatus ||
+                    vendorProfile.vendorStatus ||
+                    vendorProfile.status ||
+                    "Pending",
+                adminStatusUpdatedAt:
+                    vendorProfile.adminStatusUpdatedAt,
             };
 
             // 1. Save the vendor's own profile.
@@ -608,42 +1077,32 @@ function VendorHub() {
                 JSON.stringify(updatedProfile),
             );
 
-            // 2. Keep the logged-in user profile synchronized.
+            // 2. Synchronize the logged-in vendor profile.
             const currentUserRaw =
                 localStorage.getItem("oneservice_user");
 
-            let currentUser: Record<string, unknown> = {};
-
             if (currentUserRaw) {
                 try {
-                    const parsed: unknown =
-                        JSON.parse(currentUserRaw);
+                    const currentUser = JSON.parse(currentUserRaw);
 
-                    if (
-                        parsed &&
-                        typeof parsed === "object" &&
-                        !Array.isArray(parsed)
-                    ) {
-                        currentUser =
-                            parsed as Record<string, unknown>;
+                    if (currentUser?.role === "vendor") {
+                        localStorage.setItem(
+                            "oneservice_user",
+                            JSON.stringify({
+                                ...currentUser,
+                                ...updatedProfile,
+                            }),
+                        );
                     }
-                } catch {
-                    // Recover from invalid demo profile data.
+                } catch (error) {
+                    console.error(
+                        "Unable to synchronize vendor user profile:",
+                        error,
+                    );
                 }
             }
 
-            if (currentUser.role === "vendor") {
-                localStorage.setItem(
-                    "oneservice_user",
-                    JSON.stringify({
-                        ...currentUser,
-                        ...updatedProfile,
-                    }),
-                );
-            }
-
-            // 3. Synchronize with the shared vendor collection.
-            // City Listings Admin should read this collection.
+            // 3. Synchronize the complete profile with City Listings Admin.
             saveVendorToSharedCollection({
                 ...updatedProfile,
 
@@ -651,14 +1110,12 @@ function VendorHub() {
                     updatedProfile.vendorId ||
                     updatedProfile.id ||
                     updatedProfile.mobile ||
-                    updatedProfile.phone ||
                     updatedProfile.email,
 
                 id:
                     updatedProfile.id ||
                     updatedProfile.vendorId ||
                     updatedProfile.mobile ||
-                    updatedProfile.phone ||
                     updatedProfile.email,
 
                 fullName:
@@ -667,26 +1124,39 @@ function VendorHub() {
                     business.name,
 
                 businessName: business.name,
-                businessType:
-                    updatedProfile.businessType ||
-                    business.category,
-
+                businessType: business.category,
                 businessCategory: business.category,
                 businessAddress: business.address,
-
                 phone: business.phone,
                 mobile: business.phone,
                 email: business.email,
-
                 productDescription: business.description,
             });
+
+            // 4. Notify Admin and other connected screens.
+            window.dispatchEvent(
+                new CustomEvent("oneservice-vendor-change"),
+            );
+
+            window.dispatchEvent(
+                new CustomEvent("oneservice-vendors-change"),
+            );
         } catch (error) {
             console.error(
-                "Unable to save vendor profile preview:",
+                "Unable to save complete vendor profile:",
                 error,
             );
         }
-    }, [business, vendorProfile]);
+    }, [
+        business,
+        vendorProfile,
+        hours,
+        highlights,
+        gallery,
+        services,
+        products,
+    ]);
+
 
     const visibleProducts = useMemo(() => {
         const term = search.trim().toLowerCase();
@@ -864,15 +1334,15 @@ function VendorHub() {
                 previous.map((service) =>
                     service.id === editingServiceId
                         ? {
-                              ...service,
-                              ...serviceDraft,
-                              title,
-                              category:
-                                  serviceDraft.category.trim() ||
-                                  "General service",
-                              description:
-                                  serviceDraft.description.trim(),
-                          }
+                            ...service,
+                            ...serviceDraft,
+                            title,
+                            category:
+                                serviceDraft.category.trim() ||
+                                "General service",
+                            description:
+                                serviceDraft.description.trim(),
+                        }
                         : service,
                 ),
             );
@@ -1076,7 +1546,7 @@ function VendorHub() {
 
                 throw new Error(
                     result?.message ||
-                        "We couldn't delete your account. Please try again.",
+                    "We couldn't delete your account. Please try again.",
                 );
             }
 
@@ -1089,11 +1559,11 @@ function VendorHub() {
             // Remove this vendor from the shared local collection too.
             const profileIdentity = String(
                 vendorProfile?.vendorId ||
-                    vendorProfile?.id ||
-                    vendorProfile?.mobile ||
-                    vendorProfile?.phone ||
-                    vendorProfile?.email ||
-                    "",
+                vendorProfile?.id ||
+                vendorProfile?.mobile ||
+                vendorProfile?.phone ||
+                vendorProfile?.email ||
+                "",
             )
                 .trim()
                 .toLowerCase();
@@ -1102,7 +1572,7 @@ function VendorHub() {
                 try {
                     const parsed: unknown = JSON.parse(
                         localStorage.getItem("oneservice_vendors") ||
-                            "[]",
+                        "[]",
                     );
 
                     if (Array.isArray(parsed)) {
@@ -1120,11 +1590,11 @@ function VendorHub() {
 
                                 const identity = String(
                                     vendor.vendorId ||
-                                        vendor.id ||
-                                        vendor.mobile ||
-                                        vendor.phone ||
-                                        vendor.email ||
-                                        "",
+                                    vendor.id ||
+                                    vendor.mobile ||
+                                    vendor.phone ||
+                                    vendor.email ||
+                                    "",
                                 )
                                     .trim()
                                     .toLowerCase();
@@ -1552,6 +2022,57 @@ function VendorHub() {
         </section>
     );
 
+
+    const isMeaningfulValue = (value: unknown) => {
+        if (typeof value !== "string") return false;
+
+        const cleaned = value.trim();
+
+        return Boolean(
+            cleaned &&
+            ![
+                "Your Business Name",
+                "Business & Professional Services",
+                "Tell customers about your business, what makes you different, and how your products or services can help them.",
+            ].includes(cleaned)
+        );
+    };
+
+    const profileCompletionItems = [
+        isMeaningfulValue(business.name),
+        isMeaningfulValue(business.category),
+        isMeaningfulValue(vendorProfile?.fullName || vendorProfile?.name),
+        isMeaningfulValue(business.phone),
+        isMeaningfulValue(business.email),
+        isMeaningfulValue(business.address),
+        isMeaningfulValue(business.description),
+        isMeaningfulValue(business.website),
+        hours.some(item =>
+            isMeaningfulValue(item.day) &&
+            isMeaningfulValue(item.hours)
+        ),
+        services.some(item =>
+            isMeaningfulValue(item.title) &&
+            isMeaningfulValue(item.description)
+        ),
+        products.some(item =>
+            isMeaningfulValue(item.name) &&
+            isMeaningfulValue(item.price)
+        ),
+        gallery.some(item =>
+            isMeaningfulValue(item.image) &&
+            !item.image.startsWith("blob:")
+        ),
+        highlights.some(item => isMeaningfulValue(item)),
+    ];
+
+    const completedProfileFields = profileCompletionItems.filter(Boolean).length;
+
+    const profileCompletionPercentage = Math.round(
+        (completedProfileFields / profileCompletionItems.length) * 100
+    );
+
+
     const renderOverview = () => (
         <>
             <div className="vh-overview-grid">
@@ -1664,11 +2185,11 @@ function VendorHub() {
                         {highlights.every(
                             (item) => !item.trim(),
                         ) && (
-                            <li>
-                                <Info size={15} />
-                                <span>No highlights added yet.</span>
-                            </li>
-                        )}
+                                <li>
+                                    <Info size={15} />
+                                    <span>No highlights added yet.</span>
+                                </li>
+                            )}
                     </ul>
                 </section>
 
@@ -2142,9 +2663,25 @@ function VendorHub() {
                     </div>
 
                     <div className="vh-completion-heading">
-                        <strong>75%</strong>
-                        <span>Demo progress</span>
+                        <strong>{profileCompletionPercentage}%</strong>
+                        <span>
+                            {completedProfileFields} of {profileCompletionItems.length} completed
+                        </span>
                     </div>
+
+                    <div className="vh-progress-track">
+                        <span
+                            style={{
+                                width: `${profileCompletionPercentage}%`,
+                            }}
+                        />
+                    </div>
+
+                    <p>
+                        {profileCompletionPercentage === 100
+                            ? "Your business profile is complete and ready for publishing."
+                            : "Complete the remaining business details, operating hours, products, services and gallery information."}
+                    </p>
 
                     <div className="vh-progress-track">
                         <span style={{ width: "75%" }} />
@@ -2668,6 +3205,34 @@ function VendorHub() {
         </section>
     );
 
+    const saveVendorPlanSelection = () => {
+        const plan = VENDOR_PLANS.find(item => item.name === selectedVendorPlan);
+        if (!plan || !vendorProfile) return;
+        setVendorSubscriptionMessage(`${plan.displayName} selected for ₹${plan.price}/month. Payment gateway integration is required before activation.`);
+    };
+
+    const renderVendorAccessScreen = () => {
+        const isSuspended = vendorAccessState === "suspended";
+        const isBanned = vendorAccessState === "banned";
+        const isRejected = vendorAccessState === "rejected";
+        const title = isBanned ? "Vendor Account Banned" : isSuspended ? "Vendor Account Suspended" : isRejected ? "Application Not Approved" : "Application Under Review";
+        const description = isBanned ? "Admin has permanently restricted access to this vendor account." : isSuspended ? "Your vendor dashboard is temporarily unavailable while this account restriction is active." : isRejected ? "Your vendor application was not approved. Please contact the Admin team for clarification." : "Your vendor registration is being reviewed by the NeedOneService team. Your dashboard will become available after approval.";
+        return (
+            <main className="vh-access-page">
+                <section className={`vh-access-card ${isBanned ? "is-banned" : isSuspended ? "is-suspended" : isRejected ? "is-rejected" : "is-pending"}`}>
+                    <div className="vh-access-icon">{isBanned || isSuspended ? <Ban size={30} /> : isRejected ? <X size={30} /> : <Clock3 size={30} />}</div>
+                    <span className="vh-access-eyebrow">NEEDONESERVICE · VENDOR ACCOUNT</span>
+                    <h1>{title}</h1>
+                    <p>{description}</p>
+                    {(isSuspended || isBanned) && <div className="vh-access-detail"><strong>Admin reason</strong><span>{getVendorSuspensionReason(vendorProfile)}</span></div>}
+                    {isSuspended && <div className="vh-access-detail"><strong>Suspension end date</strong><span>{formatVendorDate(getVendorSuspensionEnd(vendorProfile))}</span><small>Your dashboard will remain blocked after this date until Admin explicitly reactivates your account.</small></div>}
+                    {isRejected && vendorProfile?.rejectionReason && <div className="vh-access-detail"><strong>Admin feedback</strong><span>{vendorProfile.rejectionReason}</span></div>}
+                    <div className="vh-access-actions"><button type="button" className="vh-access-back" onClick={() => navigate("/profile")}>Back to Profile</button><a href="mailto:support@needoneservice.com">Contact Support</a></div>
+                </section>
+            </main>
+        );
+    };
+
     const renderActiveTab = () => {
         switch (activeTab) {
             case "about":
@@ -2695,6 +3260,8 @@ function VendorHub() {
                 return renderOverview();
         }
     };
+
+    if (vendorAccessState !== "approved") return renderVendorAccessScreen();
 
     return (
         <main className="vendor-hub-page">
@@ -2724,7 +3291,7 @@ function VendorHub() {
                             aria-label={business.name}
                         >
                             {business.name.trim() &&
-                            business.name !== "Your Business Name" ? (
+                                business.name !== "Your Business Name" ? (
                                 <span className="vh-business-initials">
                                     {formatInitials(business.name)}
                                 </span>
@@ -2795,10 +3362,10 @@ function VendorHub() {
                         <div className="vh-banner-buttons">
                             <button
                                 className="vh-button vh-button-primary"
-                                onClick={handleEditBusiness}
+                                onClick={publishVendorListing}
                                 type="button"
                             >
-                                <Pencil size={14} /> Edit Business
+                                <CheckCircle2 size={15} /> Publish
                             </button>
 
                             <button
@@ -2911,6 +3478,19 @@ function VendorHub() {
                 </div>
 
                 {renderActiveTab()}
+
+                <section className="vh-card vh-vendor-subscription" id="vendor-subscription">
+                    <div className="vh-vendor-subscription-heading"><div><span className="vh-eyebrow">MEMBERSHIP &amp; VISIBILITY</span><h2><CreditCard size={20} /> Vendor Subscription</h2><p>Manage your 30-day trial and choose a business visibility plan.</p></div><span className={`vh-vendor-subscription-status ${vendorSubscriptionStatus.toLowerCase().replaceAll(" ", "-")}`}>{vendorSubscriptionStatus}</span></div>
+                    {vendorSubscriptionStatus === "Free Trial" && vendorTrialRemaining && <div className="vh-vendor-trial"><Sparkles size={19} /><div><strong>30-day free trial</strong><p>{vendorTrialRemaining.days} days, {vendorTrialRemaining.hours} hours and {vendorTrialRemaining.minutes} minutes remaining · Ends {formatVendorDate(vendorProfile?.trialEndsAt || "")}</p></div><strong>₹0</strong></div>}
+                    {(vendorSubscriptionStatus === "Trial Expired" || vendorSubscriptionStatus === "Expired") && <div className="vh-vendor-expired"><Clock3 size={18} /><span>Your free trial has expired. Choose a plan to continue your vendor membership.</span></div>}
+                    {(vendorSubscriptionStatus === "Free Trial" || vendorSubscriptionStatus === "Trial Expired" || vendorSubscriptionStatus === "Expired") && <><div className="vh-vendor-plan-grid">{VENDOR_PLANS.map(plan => <button type="button" key={plan.name} className={`vh-vendor-plan ${plan.name.toLowerCase()} ${selectedVendorPlan === plan.name ? "selected" : ""}`} onClick={() => { setSelectedVendorPlan(plan.name); setViewingVendorPlan(plan.name); setVendorSubscriptionMessage(""); }}><span>{plan.name === "Basic" ? <ShieldCheck size={18} /> : plan.name === "Exclusive" ? <Sparkles size={18} /> : <Crown size={18} />}</span><strong>{plan.displayName}</strong><b>₹{plan.price}<small> / month</small></b><p>{plan.description}</p><em>View plan details <ChevronRight size={14} /></em></button>)}</div>{vendorSubscriptionStatus !== "Free Trial" && <div className="vh-vendor-payment"><div><small>Selected plan</small><strong>{VENDOR_PLANS.find(plan => plan.name === selectedVendorPlan)?.displayName}</strong></div><div><small>Monthly price</small><strong>₹{VENDOR_PLANS.find(plan => plan.name === selectedVendorPlan)?.price}</strong></div><button type="button" className="vh-button vh-button-primary" onClick={saveVendorPlanSelection}><CreditCard size={16} /> Proceed to Payment</button></div>}</>}
+                    {vendorSubscriptionStatus === "Active" && <div className="vh-vendor-active"><CheckCircle2 size={20} /><div><strong>{vendorProfile?.subscriptionPlan || "Vendor"} plan active</strong><p>Expires {formatVendorDate(vendorProfile?.subscriptionEndsAt || "")}</p></div></div>}
+                    {vendorSubscriptionStatus === "Not Started" && <p className="vh-vendor-pending">Your free trial will begin when your vendor account is approved.</p>}
+                    {vendorSubscriptionMessage && <p className="vh-vendor-subscription-message" role="status">{vendorSubscriptionMessage}</p>}
+                    <small className="vh-vendor-subscription-note">No charge is made during the free trial. A paid plan is activated only after successful payment verification.</small>
+                </section>
+
+                {viewingVendorPlanDetails && <div className="vh-vendor-plan-overlay" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setViewingVendorPlan(null); }}><section className="vh-vendor-plan-dialog" role="dialog" aria-modal="true" aria-labelledby="vh-vendor-plan-title"><button type="button" className="vh-vendor-plan-close" onClick={() => setViewingVendorPlan(null)} aria-label="Close plan details"><X size={19} /></button><span className="vh-eyebrow">VENDOR MEMBERSHIP</span><h2 id="vh-vendor-plan-title">{viewingVendorPlanDetails.displayName}</h2><p>{viewingVendorPlanDetails.description}</p><strong className="vh-vendor-plan-modal-price">₹{viewingVendorPlanDetails.price.toLocaleString("en-IN")} <small>/ month</small></strong><h3>Membership Benefits</h3><ul>{viewingVendorPlanDetails.features.map((feature, index) => <li key={`${viewingVendorPlanDetails.name}-${index}`}><Check size={15} />{feature}</li>)}</ul><div className="vh-vendor-plan-discounts"><span><b>10% OFF</b><small>3 months</small></span><span><b>15% OFF</b><small>6 months</small></span><span><b>2 Months FREE</b><small>12 months</small></span></div><div className="vh-vendor-plan-actions"><button type="button" className="vh-button vh-button-outline" onClick={() => setViewingVendorPlan(null)}>Close</button><button type="button" className="vh-button vh-button-primary" onClick={() => { setSelectedVendorPlan(viewingVendorPlanDetails.name); setViewingVendorPlan(null); }}>Select This Plan</button></div><small>Your 30-day free trial remains unchanged. Subscription activation requires successful payment verification.</small></section></div>}
 
                 <footer className="vh-footer">
                     <button
@@ -3256,83 +3836,83 @@ function VendorHub() {
             {(galleryDeleteId ||
                 serviceDeleteId ||
                 productDeleteId) && (
-                <div
-                    className="vh-modal-backdrop"
-                    onMouseDown={(event) => {
-                        if (
-                            event.target === event.currentTarget
-                        ) {
-                            setGalleryDeleteId(null);
-                            setServiceDeleteId(null);
-                            setProductDeleteId(null);
-                        }
-                    }}
-                >
-                    <section
-                        className="vh-delete-modal"
-                        role="dialog"
-                        aria-modal="true"
-                        aria-labelledby="vh-item-delete-title"
-                    >
-                        <button
-                            className="vh-modal-close"
-                            type="button"
-                            aria-label="Close dialog"
-                            onClick={() => {
+                    <div
+                        className="vh-modal-backdrop"
+                        onMouseDown={(event) => {
+                            if (
+                                event.target === event.currentTarget
+                            ) {
                                 setGalleryDeleteId(null);
                                 setServiceDeleteId(null);
                                 setProductDeleteId(null);
-                            }}
+                            }
+                        }}
+                    >
+                        <section
+                            className="vh-delete-modal"
+                            role="dialog"
+                            aria-modal="true"
+                            aria-labelledby="vh-item-delete-title"
                         >
-                            <X size={18} />
-                        </button>
-
-                        <div className="vh-delete-icon">
-                            <Trash2 size={25} />
-                        </div>
-
-                        <h2 id="vh-item-delete-title">
-                            Delete this item?
-                        </h2>
-
-                        <p>
-                            This removes the selected item from the
-                            current dashboard preview. This action
-                            cannot be undone here.
-                        </p>
-
-                        <div className="vh-modal-actions">
                             <button
-                                className="vh-button vh-button-outline"
+                                className="vh-modal-close"
                                 type="button"
+                                aria-label="Close dialog"
                                 onClick={() => {
                                     setGalleryDeleteId(null);
                                     setServiceDeleteId(null);
                                     setProductDeleteId(null);
                                 }}
                             >
-                                Cancel
+                                <X size={18} />
                             </button>
 
-                            <button
-                                className="vh-button vh-button-danger"
-                                type="button"
-                                onClick={() => {
-                                    if (galleryDeleteId) {
-                                        confirmGalleryDelete();
-                                    } else if (serviceDeleteId) {
-                                        confirmServiceDelete();
-                                    } else if (productDeleteId) {
-                                        confirmProductDelete();
-                                    }
-                                }}
-                            >
-                                <Trash2 size={15} /> Delete
-                            </button>
-                        </div>
-                    </section>
-                </div>
-            )}
+                            <div className="vh-delete-icon">
+                                <Trash2 size={25} />
+                            </div>
+
+                            <h2 id="vh-item-delete-title">
+                                Delete this item?
+                            </h2>
+
+                            <p>
+                                This removes the selected item from the
+                                current dashboard preview. This action
+                                cannot be undone here.
+                            </p>
+
+                            <div className="vh-modal-actions">
+                                <button
+                                    className="vh-button vh-button-outline"
+                                    type="button"
+                                    onClick={() => {
+                                        setGalleryDeleteId(null);
+                                        setServiceDeleteId(null);
+                                        setProductDeleteId(null);
+                                    }}
+                                >
+                                    Cancel
+                                </button>
+
+                                <button
+                                    className="vh-button vh-button-danger"
+                                    type="button"
+                                    onClick={() => {
+                                        if (galleryDeleteId) {
+                                            confirmGalleryDelete();
+                                        } else if (serviceDeleteId) {
+                                            confirmServiceDelete();
+                                        } else if (productDeleteId) {
+                                            confirmProductDelete();
+                                        }
+                                    }}
+                                >
+                                    <Trash2 size={15} /> Delete
+                                </button>
+                            </div>
+                        </section>
+                    </div>
+                )}
 
             {deleteModalOpen && (
                 <div
@@ -3426,6 +4006,150 @@ function VendorHub() {
                     </section>
                 </div>
             )}
+
+
+            {showListingPreview && (
+                <div
+                    className="vh-modal-backdrop"
+                    onMouseDown={(event) => {
+                        if (event.target === event.currentTarget) {
+                            setShowListingPreview(false);
+                        }
+                    }}
+                >
+                    <section
+                        className="vh-listing-preview"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="vh-preview-title"
+                    >
+                        <button
+                            className="vh-modal-close"
+                            type="button"
+                            onClick={() => setShowListingPreview(false)}
+                            aria-label="Close preview"
+                        >
+                            <X size={18} />
+                        </button>
+
+                        <div className="vh-preview-header">
+                            <span>LISTING PREVIEW</span>
+                            <h2 id="vh-preview-title">
+                                {business.name}
+                            </h2>
+                            <p>
+                                This is how your business information will
+                                appear to customers on City Listings.
+                            </p>
+                        </div>
+
+                        <div className="vh-preview-gallery">
+                            {gallery
+                                .filter(item => item.image)
+                                .slice(0, 4)
+                                .map(item => (
+                                    <img
+                                        key={item.id}
+                                        src={item.image}
+                                        alt={item.title}
+                                    />
+                                ))}
+                        </div>
+
+                        <div className="vh-preview-content">
+                            <span className="vh-preview-category">
+                                {business.category}
+                            </span>
+
+                            <h3>{business.name}</h3>
+
+                            <p>{business.description}</p>
+
+                            <div className="vh-preview-contact">
+                                <span>
+                                    <MapPin size={15} />
+                                    {business.address}
+                                </span>
+                                <span>
+                                    <Phone size={15} />
+                                    {business.phone || "Contact not provided"}
+                                </span>
+                                <span>
+                                    <Mail size={15} />
+                                    {business.email || "Email not provided"}
+                                </span>
+                            </div>
+
+                            {services.length > 0 && (
+                                <div>
+                                    <h3>Services Offered</h3>
+                                    {services.map(item => (
+                                        <div key={item.id} className="vh-preview-item">
+                                            <strong>{item.title}</strong>
+                                            <p>{item.description}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {products.length > 0 && (
+                                <div>
+                                    <h3>Products & Catalogue</h3>
+                                    <div className="vh-preview-products">
+                                        {products.map(item => (
+                                            <article key={item.id}>
+                                                {item.image && (
+                                                    <img
+                                                        src={item.image}
+                                                        alt={item.name}
+                                                    />
+                                                )}
+                                                <strong>{item.name}</strong>
+                                                <span>₹{item.price}</span>
+                                            </article>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {highlights.length > 0 && (
+                                <div>
+                                    <h3>Business Highlights</h3>
+                                    <ul>
+                                        {highlights
+                                            .filter(item => item.trim())
+                                            .map((item, index) => (
+                                                <li key={index}>{item}</li>
+                                            ))}
+                                    </ul>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="vh-preview-footer">
+                            <button
+                                className="vh-button vh-button-outline"
+                                type="button"
+                                onClick={() => {
+                                    setShowListingPreview(false);
+                                    goToTab("about");
+                                }}
+                            >
+                                <Pencil size={14} /> Edit Details
+                            </button>
+
+                            <button
+                                className="vh-button vh-button-primary"
+                                type="button"
+                                onClick={() => setShowListingPreview(false)}
+                            >
+                                Close Preview
+                            </button>
+                        </div>
+                    </section>
+                </div>
+            )}
+
         </main>
     );
 }

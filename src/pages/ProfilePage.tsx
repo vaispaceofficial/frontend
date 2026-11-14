@@ -100,6 +100,7 @@ type VendorApplication = {
     vendorId?: string;
     fullName?: string;
     name?: string;
+    ownerName?: string;
     mobile?: string;
     phone?: string;
     email?: string;
@@ -109,8 +110,13 @@ type VendorApplication = {
     businessAddress?: string;
     city?: string;
     state?: string;
+    pincode?: string;
     status?: string;
+    vendorStatus?: string;
+    listingStatus?: string;
+    adminStatusUpdatedAt?: string;
     registeredAt?: string;
+    [key: string]: unknown;
 };
 
 type StudentApplication = {
@@ -383,10 +389,14 @@ function readSellerApplication(): SellerApplication | null {
 function readVendorApplication(): VendorApplication | null {
     try {
         const saved = localStorage.getItem(VENDOR_APPLICATION_KEY);
+
         if (!saved) return null;
 
         const application = JSON.parse(saved) as VendorApplication;
-        if (!application || typeof application !== "object") return null;
+
+        if (!application || typeof application !== "object") {
+            return null;
+        }
 
         const hasVendorDetails = Boolean(
             application.businessName?.trim() ||
@@ -396,8 +406,78 @@ function readVendorApplication(): VendorApplication | null {
             application.phone?.trim(),
         );
 
-        return hasVendorDetails ? application : null;
-    } catch {
+        if (!hasVendorDetails) return null;
+
+        // Read the shared vendor collection updated by Admin.
+        const sharedSaved = localStorage.getItem("oneservice_vendors");
+
+        if (!sharedSaved) return application;
+
+        const parsedShared: unknown = JSON.parse(sharedSaved);
+
+        if (!Array.isArray(parsedShared)) return application;
+
+        const getIdentity = (vendor: VendorApplication): string =>
+            String(
+                vendor.vendorId ||
+                vendor.id ||
+                vendor.mobile ||
+                vendor.phone ||
+                vendor.email ||
+                "",
+            )
+                .trim()
+                .toLowerCase();
+
+        const applicationIdentity = getIdentity(application);
+
+        if (!applicationIdentity) return application;
+
+        const sharedVendor = parsedShared.find((item) => {
+            if (
+                !item ||
+                typeof item !== "object" ||
+                Array.isArray(item)
+            ) {
+                return false;
+            }
+
+            return (
+                getIdentity(item as VendorApplication) ===
+                applicationIdentity
+            );
+        }) as VendorApplication | undefined;
+
+        if (!sharedVendor) return application;
+
+        // Admin's shared collection is the source of truth for status.
+        const adminStatus =
+            sharedVendor.listingStatus ||
+            sharedVendor.vendorStatus ||
+            sharedVendor.status ||
+            application.listingStatus ||
+            application.vendorStatus ||
+            application.status ||
+            "Pending";
+
+        return {
+            ...application,
+            ...sharedVendor,
+
+            listingStatus: adminStatus,
+            vendorStatus: adminStatus,
+            status: adminStatus,
+
+            adminStatusUpdatedAt:
+                sharedVendor.adminStatusUpdatedAt ||
+                application.adminStatusUpdatedAt,
+        };
+    } catch (error) {
+        console.error(
+            "Unable to load vendor application:",
+            error,
+        );
+
         return null;
     }
 }
@@ -775,6 +855,11 @@ function ProfilePage() {
         );
 
         window.addEventListener(
+            "oneservice-vendors-change",
+            refreshVendorApplication,
+        );
+
+        window.addEventListener(
             "oneservice-student-change",
             refreshStudentApplication,
         );
@@ -820,6 +905,11 @@ function ProfilePage() {
 
             window.removeEventListener(
                 "oneservice-vendor-change",
+                refreshVendorApplication,
+            );
+
+            window.removeEventListener(
+                "oneservice-vendors-change",
                 refreshVendorApplication,
             );
 
@@ -1272,7 +1362,7 @@ function ProfilePage() {
                             </div>
 
                             {profileNotifications.length > 0 ||
-                            currentAdminNotifications.length > 0 ? (
+                                currentAdminNotifications.length > 0 ? (
                                 <>
                                     <div className="profile-notifications-list">
                                         {/* APPLICATION STATUS NOTIFICATIONS */}
@@ -2263,11 +2353,10 @@ function ProfilePage() {
                                 return {
                                     id: `order-${order.id}`,
                                     title: order.title,
-                                    detail: `${
-                                        isService
-                                            ? "Service booking"
-                                            : "Product order"
-                                    } · ${order.status}`,
+                                    detail: `${isService
+                                        ? "Service booking"
+                                        : "Product order"
+                                        } · ${order.status}`,
                                     date: order.date ?? "",
                                     kind: "order" as const,
                                 };
@@ -2318,13 +2407,12 @@ function ProfilePage() {
                                                     key={item.id}
                                                 >
                                                     <span
-                                                        className={`profile-timeline-dot ${
-                                                            item.kind === "order"
-                                                                ? "is-order"
-                                                                : item.kind === "application"
-                                                                    ? "is-application"
-                                                                    : "is-page"
-                                                        }`}
+                                                        className={`profile-timeline-dot ${item.kind === "order"
+                                                            ? "is-order"
+                                                            : item.kind === "application"
+                                                                ? "is-application"
+                                                                : "is-page"
+                                                            }`}
                                                     >
                                                         {item.kind === "order" ? (
                                                             <Package size={16} />

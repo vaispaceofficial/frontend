@@ -44,62 +44,233 @@ export default function VendorRegisterPage() {
     case 4: content = <><Heading kicker="stepVerification" title="verificationTitle" desc="verificationTitle" t={t} /><div className="vendor-form-grid">{select("idType", [["aadhaar", "aadhaar"], ["pan", "panCard"], ["passport", "passport"], ["driving-license", "drivingLicense"], ["voter-id", "voterId"]], "selectIdType")}{field("idNumber")}{fileField("idDocument")}{fileField("businessDocument")}</div><div className="vendor-info-note"><ShieldCheck size={18} /><span>{t("securityNote")}</span></div></>; break;
     default: content = <><Heading kicker="stepBank" title="bankTitle" desc="bankTitle" t={t} /><div className="vendor-form-grid">{field("bankName")}{field("accountHolder")}{field("accountNumber")}{field("confirmAccountNumber")}{field("ifscCode")}{field("branchName", { optional: true })}{password("password", showPassword, () => setShowPassword(v => !v))}{password("confirmPassword", showConfirm, () => setShowConfirm(v => !v))}</div><div className="vendor-consent-list"><label className="vendor-consent"><input type="checkbox" checked={data.terms} onChange={e => update("terms", e.target.checked)} /><span>{t("agreeTerms")}</span></label><label className="vendor-consent"><input type="checkbox" checked={data.privacy} onChange={e => update("privacy", e.target.checked)} /><span>{t("agreePrivacy")}</span></label>{errors.terms && <span className="vendor-error-text">{errors.terms}</span>}</div></>
   }
+
   const submit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
     if (submitting) return;
-    if (!validate(5)) { setGeneralError(t("requiredFields")); return; }
+
+    if (!validate(5)) {
+      setGeneralError(t("requiredFields"));
+      return;
+    }
+
     setSubmitting(true);
     setGeneralError("");
+
     try {
       const registeredAt = new Date().toISOString();
       const vendorId = `VND-${Date.now()}`;
-      // Keep only profile-safe fields in browser storage. Identity numbers,
-      // tax identifiers, bank details, passwords, and uploaded documents are
-      // deliberately excluded and should be sent to a secure backend.
+
+      // Read existing vendor directory.
+      let existingVendors: Record<string, unknown>[] = [];
+
+      try {
+        const rawVendors = localStorage.getItem("oneservice_vendors");
+
+        if (rawVendors) {
+          const parsed: unknown = JSON.parse(rawVendors);
+
+          if (Array.isArray(parsed)) {
+            existingVendors = parsed.filter(
+              (item): item is Record<string, unknown> =>
+                !!item &&
+                typeof item === "object" &&
+                !Array.isArray(item)
+            );
+          }
+        }
+      } catch {
+        console.error("Unable to read existing vendor directory.");
+      }
+
+      // Identify an existing vendor using stable contact details.
+      const normalizedMobile = data.mobile.trim();
+      const normalizedEmail = data.email.trim().toLowerCase();
+
+      const existingIndex = existingVendors.findIndex((vendor) => {
+        const vendorMobile = String(
+          vendor.mobile || vendor.phone || ""
+        ).trim();
+
+        const vendorEmail = String(vendor.email || "")
+          .trim()
+          .toLowerCase();
+
+        return (
+          vendorMobile === normalizedMobile ||
+          (!!normalizedEmail && vendorEmail === normalizedEmail)
+        );
+      });
+
+      const existingVendor =
+        existingIndex >= 0 ? existingVendors[existingIndex] : null;
+
+      // Public/profile-safe vendor information.
       const vendorProfile = {
-        id: vendorId, role: "vendor", accountType: "vendor",
-        fullName: data.fullName.trim(), name: data.fullName.trim(),
-        mobile: data.mobile.trim(), phone: data.mobile.trim(),
-        email: data.email.trim().toLowerCase(),
+        ...existingVendor,
+
+        id: existingVendor?.id || vendorId,
+        vendorId:
+          existingVendor?.vendorId ||
+          existingVendor?.id ||
+          vendorId,
+
+        role: "vendor",
+        accountType: "vendor",
+
+        fullName: data.fullName.trim(),
+        name: data.fullName.trim(),
+
+        mobile: normalizedMobile,
+        phone: normalizedMobile,
+        email: normalizedEmail,
         alternateMobile: data.alternateMobile.trim(),
-        businessName: data.businessName.trim(), businessType: data.businessType,
+
+        businessName: data.businessName.trim(),
+        businessType: data.businessType,
         businessCategory: data.businessCategory,
-        businessAddress: data.businessAddress.trim(), city: data.city.trim(),
-        state: data.state.trim(), pincode: data.pincode.trim(),
-        products: data.products.trim(), productBrands: data.productBrands.trim(),
+
+        businessAddress: data.businessAddress.trim(),
+        city: data.city.trim(),
+        state: data.state.trim(),
+        pincode: data.pincode.trim(),
+
+        products: data.products.trim(),
+        productBrands: data.productBrands.trim(),
         productDescription: data.productDescription.trim(),
-        minimumOrder: data.minimumOrder, deliveryAvailable: data.deliveryAvailable,
-        deliveryRadius: data.deliveryRadius.trim(), shippingMethod: data.shippingMethod,
-        returnPolicy: data.returnPolicy.trim(), status: "Pending Verification",
-        registeredAt
+        minimumOrder: data.minimumOrder,
+
+        deliveryAvailable: data.deliveryAvailable,
+        deliveryRadius: data.deliveryRadius.trim(),
+        shippingMethod: data.shippingMethod,
+        returnPolicy: data.returnPolicy.trim(),
+
+        // Admin approval status is preserved on profile updates.
+        status: existingVendor?.status || "Pending",
+
+        // Registration verification is tracked separately.
+        registrationStatus:
+          existingVendor?.registrationStatus ||
+          "Pending Verification",
+
+        registeredAt:
+          existingVendor?.registeredAt || registeredAt,
+
+        updatedAt: registeredAt,
       };
-      localStorage.setItem("oneservice_vendor", JSON.stringify(vendorProfile));
+
+      // Add a new vendor or update the existing vendor.
+      if (existingIndex >= 0) {
+        existingVendors[existingIndex] = {
+          ...existingVendors[existingIndex],
+          ...vendorProfile,
+        };
+      } else {
+        existingVendors.unshift(vendorProfile);
+      }
+
+      // Main shared vendor directory:
+      // Admin Onboarding and City Listings read this key.
+      localStorage.setItem(
+        "oneservice_vendors",
+        JSON.stringify(existingVendors)
+      );
+
+      // Preserve the individual vendor profile integration.
+      localStorage.setItem(
+        "oneservice_vendor",
+        JSON.stringify(vendorProfile)
+      );
+
+      // Update the currently logged-in account.
       let existingUser: Record<string, unknown> = {};
+
       try {
         const rawUser = localStorage.getItem("oneservice_user");
-        if (rawUser) { const parsed: unknown = JSON.parse(rawUser); if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) existingUser = parsed as Record<string, unknown>; }
-      } catch { /* Replace malformed local account data with a clean profile. */ }
+
+        if (rawUser) {
+          const parsed: unknown = JSON.parse(rawUser);
+
+          if (
+            parsed &&
+            typeof parsed === "object" &&
+            !Array.isArray(parsed)
+          ) {
+            existingUser = parsed as Record<string, unknown>;
+          }
+        }
+      } catch {
+        console.error("Unable to read existing user profile.");
+      }
+
       const activeAccount = {
-        ...existingUser, id: vendorId, role: "vendor", accountType: "vendor",
-        fullName: data.fullName.trim(), name: data.fullName.trim(),
-        email: data.email.trim().toLowerCase(), mobile: data.mobile.trim(), phone: data.mobile.trim(),
-        businessName: data.businessName.trim(), city: data.city.trim(), state: data.state.trim(),
-        status: "Pending Verification", registeredAt
+        ...existingUser,
+
+        // Preserve the actual account ID.
+        id: existingUser.id || vendorProfile.vendorId,
+
+        role: "vendor",
+        accountType: "vendor",
+
+        fullName: data.fullName.trim(),
+        name: data.fullName.trim(),
+
+        email: normalizedEmail,
+        mobile: normalizedMobile,
+        phone: normalizedMobile,
+
+        vendorId: vendorProfile.vendorId,
+        businessName: data.businessName.trim(),
+        businessCategory: data.businessCategory,
+
+        city: data.city.trim(),
+        state: data.state.trim(),
+
+        status: "Pending Verification",
+        registeredAt,
       };
-      localStorage.setItem("oneservice_user", JSON.stringify(activeAccount));
-      localStorage.setItem("oneservice_workspace_role", "vendor");
-      window.dispatchEvent(new Event("oneservice-auth-change"));
-      window.dispatchEvent(new Event("oneservice-vendor-change"));
-      window.dispatchEvent(new Event("oneservice-workspace-change"));
-      // The storage event is normally browser-generated for other tabs; this
-      // manual event helps same-tab listeners in this frontend prototype.
-      window.dispatchEvent(new Event("storage"));
+
+      localStorage.setItem(
+        "oneservice_user",
+        JSON.stringify(activeAccount)
+      );
+
+      localStorage.setItem(
+        "oneservice_workspace_role",
+        "vendor"
+      );
+
+      // Notify all connected OneService frontend modules.
+      window.dispatchEvent(
+        new Event("oneservice-vendors-change")
+      );
+
+      window.dispatchEvent(
+        new Event("oneservice-vendor-change")
+      );
+
+      window.dispatchEvent(
+        new Event("oneservice-auth-change")
+      );
+
+      window.dispatchEvent(
+        new Event("oneservice-workspace-change")
+      );
+
       navigate("/profile", { replace: true });
+
     } catch (error) {
       console.error("Vendor registration failed:", error);
-      setGeneralError("Unable to save your vendor registration. Please try again.");
-    } finally { setSubmitting(false); }
+
+      setGeneralError(
+        "Unable to save your vendor registration. Please try again."
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
+
   const languagePicker = <div className="vendor-language-switcher"><Globe size={16} /><label htmlFor="vendor-language">{t("language")}</label><select id="vendor-language" value={language} onChange={e => setLanguage(e.target.value as Language)} className="vendor-language-select"><option value="en">English</option><option value="te">తెలుగు</option><option value="hi">हिन्दी</option></select></div>;
   if (submitted) return <main className="vendor-register-page"><div className="vendor-wizard"><header className="vendor-register-header vendor-success-header">{languagePicker}</header><section className="vendor-register-card vendor-success-card"><div className="vendor-success-icon"><CheckCircle2 size={42} /></div><span className="vendor-eyebrow">{t("pageEyebrow")}</span><h1>{t("successTitle")}</h1><p className="vendor-success-description">{t("successDescription")}</p><div className="vendor-summary"><h3>{t("applicationSummary")}</h3><p><strong>{t("vendorName")}:</strong> {data.fullName}</p><p><strong>{t("vendorBusiness")}:</strong> {data.businessName}</p><p><strong>{t("vendorEmail")}:</strong> {data.email}</p><p><strong>{t("vendorLocation")}:</strong> {[data.city, data.state, data.pincode].filter(Boolean).join(", ")}</p></div><p className="vendor-success-note">{t("successNote")}</p><button type="button" className="vendor-primary-button" onClick={() => { setData(initial); setErrors({}); setStep(0); setSubmitted(false) }}>{t("startAgain")}<ArrowRight size={17} /></button></section></div></main>;
   const ActiveIcon = icons[step]; return <main className="vendor-register-page"><div className="vendor-wizard"><header className="vendor-register-header"><div className="vendor-header-topline"><div className="vendor-header-spacer" /><div className="vendor-header-actions">{languagePicker}<span className="vendor-signin-prompt">Already registered? <a href="/login">Sign in</a></span></div></div><div className="vendor-hero-row"><div className="vendor-header-copy"><span className="vendor-eyebrow">PRODUCT &amp; SPARE-PARTS SELLER REGISTRATION</span><h1>Grow your sales with <span>OneService.</span></h1><p>Register your business to sell products and spare parts through OneService.</p></div><div className="vendor-secure-badge"><LockKeyhole size={17} /><span>Secure registration</span></div></div></header><section className="vendor-register-card"><div className="vendor-progress-header"><div className="vendor-progress-copy"><span>{t("step")} {step + 1} {t("of")} 6</span><strong>{t(steps[step])}</strong></div><span className="vendor-progress-percentage">{Math.round((step + 1) / 6 * 100)}%</span></div><div className="vendor-progress-track" role="progressbar" aria-valuenow={step + 1} aria-valuemin={1} aria-valuemax={6}><div className="vendor-progress-fill" style={{ width: `${(step + 1) / 6 * 100}%` }} /></div><nav className="vendor-step-navigation" aria-label="Registration steps">{steps.map((key, i) => { const done = i < step, active = i === step; return <button type="button" key={key} className={`vendor-step-indicator ${active ? "active" : ""} ${done ? "completed" : ""}`} disabled={i >= step} onClick={() => { setStep(i); setErrors({}); setGeneralError("") }} aria-current={active ? "step" : undefined}><span className="vendor-step-icon">{done ? <Check size={15} /> : i + 1}</span><span className="vendor-step-label">{t(key)}</span></button> })}</nav><form onSubmit={submit} noValidate><div className="vendor-form-content"><div className="vendor-current-step-icon"><ActiveIcon size={22} /></div>{content}{generalError && <div className="vendor-general-error" role="alert"><X size={17} /><span>{generalError}</span></div>}<div className="vendor-form-actions">{step > 0 ? <button type="button" className="vendor-secondary-button" onClick={back}><ArrowLeft size={17} />{t("back")}</button> : <span />}{step < 5 ? <button type="button" className="vendor-primary-button" onClick={next}>{t("next")}<ArrowRight size={17} /></button> : <button type="submit" className="vendor-primary-button" disabled={submitting}>{submitting ? t("submitting") : t("submit")}{submitting ? <span className="vendor-button-spinner" /> : <CheckCircle2 size={17} />}</button>}</div></div></form></section><footer className="vendor-register-footer"><LockKeyhole size={14} /><span>{t("securityNote")}</span></footer></div></main>
