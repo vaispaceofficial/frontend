@@ -17,7 +17,7 @@ const dict: Record<Language, Record<string, string>> = {
 const placeholders: Record<string, string> = { fullName: "Enter your full name", mobile: "10-digit mobile number", email: "you@example.com", alternateMobile: "Optional alternate number", businessName: "Enter your registered business name", gstNumber: "Enter GST number (if applicable)", panNumber: "Enter PAN number", businessAddress: "Street, building, area", city: "Enter city", state: "Enter state", pincode: "6-digit PIN code", products: "Select or describe the products you sell", productBrands: "Enter brand names, separated by commas", productDescription: "Describe your products, quality, and specialities", minimumOrder: "e.g. 500", deliveryRadius: "e.g. Within 20 km / Andhra Pradesh", returnPolicy: "Describe your return or replacement policy", idNumber: "Enter document number", bankName: "Enter bank name", accountHolder: "As printed on your bank account", accountNumber: "Enter account number", confirmAccountNumber: "Re-enter account number", ifscCode: "e.g. SBIN0001234", branchName: "Enter branch name", password: "At least 8 characters", confirmPassword: "Re-enter your password" };
 export default function VendorRegisterPage() {
   const navigate = useNavigate();
-  const [language, setLanguage] = useState<Language>("en"), [step, setStep] = useState(0), [data, setData] = useState<FormData>(initial), [errors, setErrors] = useState<Record<string, string>>({}), [generalError, setGeneralError] = useState(""), [showPassword, setShowPassword] = useState(false), [showConfirm, setShowConfirm] = useState(false), [submitting, setSubmitting] = useState(false), [submitted, setSubmitted] = useState(false);
+  const [language, setLanguage] = useState<Language>("en"), [step, setStep] = useState(0), [data, setData] = useState<FormData>(initial), [errors, setErrors] = useState<Record<string, string>>({}), [generalError, setGeneralError] = useState(""), [showPassword, setShowPassword] = useState(false), [showConfirm, setShowConfirm] = useState(false), [submitting, setSubmitting] = useState(false), [submitted, setSubmitted] = useState(false), [showPreview, setShowPreview] = useState(false);
   const t = (key: string) => dict[language][key] ?? dict.en[key] ?? key;
   const update = (name: keyof FormData, value: string | boolean | File | null) => { setData(p => ({ ...p, [name]: value })); setErrors(p => ({ ...p, [name]: "" })); setGeneralError("") };
   const onChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => update(e.target.name as keyof FormData, e.target.value);
@@ -29,7 +29,24 @@ export default function VendorRegisterPage() {
     if (s === 5) { ["bankName", "accountHolder", "accountNumber", "confirmAccountNumber", "ifscCode", "password", "confirmPassword"].forEach(k => req(k as keyof FormData)); if (data.accountNumber && data.confirmAccountNumber && data.accountNumber !== data.confirmAccountNumber) e.confirmAccountNumber = t("accountMismatch"); if (data.ifscCode && !/^[A-Z]{4}0[A-Z0-9]{6}$/i.test(data.ifscCode.trim())) e.ifscCode = t("invalidIfsc"); if (data.password && data.password.length < 8) e.password = t("passwordLength"); if (data.password && data.confirmPassword && data.password !== data.confirmPassword) e.confirmPassword = t("passwordMismatch"); if (!data.terms || !data.privacy) e.terms = t("termsRequired") }
     setErrors(e); return Object.keys(e).length === 0
   };
-  const next = () => { if (!validate(step)) { setGeneralError(t("requiredFields")); return } setGeneralError(""); setStep(s => Math.min(5, s + 1)); window.scrollTo({ top: 0, behavior: "smooth" }) }; const back = () => { setErrors({}); setGeneralError(""); setStep(s => Math.max(0, s - 1)); window.scrollTo({ top: 0, behavior: "smooth" }) };
+  const next = () => { if (!validate(step)) { setGeneralError(t("requiredFields")); return } setGeneralError(""); setStep(s => Math.min(5, s + 1)); window.scrollTo({ top: 0, behavior: "smooth" }) };
+  const openPreview = () => {
+    if (!validate(5)) {
+      setGeneralError(t("requiredFields"));
+      return;
+    }
+
+    setGeneralError("");
+    setShowPreview(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const editDetails = () => {
+    setShowPreview(false);
+    setGeneralError("");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+  const back = () => { setErrors({}); setGeneralError(""); setStep(s => Math.max(0, s - 1)); window.scrollTo({ top: 0, behavior: "smooth" }) };
   const fileChange = (e: ChangeEvent<HTMLInputElement>, key: "idDocument" | "businessDocument") => { const f = e.target.files?.[0]; if (!f) return; if (!["application/pdf", "image/jpeg", "image/png"].includes(f.type)) { setErrors(p => ({ ...p, [key]: t("invalidFile") })); e.target.value = ""; return } if (f.size > 5 * 1024 * 1024) { setErrors(p => ({ ...p, [key]: t("fileTooLarge") })); e.target.value = ""; return } update(key, f) };
   const field = (name: keyof FormData, options: { type?: string; textarea?: boolean; optional?: boolean } = {}) => { const value = data[name]; return <div className="vendor-form-group" key={name}><label className="vendor-label" htmlFor={name}>{t(name)}{options.optional && <span className="vendor-optional"> ({t("optional")})</span>}</label>{options.textarea ? <textarea id={name} name={name} className={`vendor-input vendor-textarea ${errors[name] ? "vendor-input-error" : ""}`} placeholder={placeholders[name] ?? t(name)} value={String(value ?? "")} onChange={onChange} rows={3} /> : <input id={name} name={name} type={options.type ?? "text"} className={`vendor-input ${errors[name] ? "vendor-input-error" : ""}`} placeholder={placeholders[name] ?? t(name)} value={String(value ?? "")} onChange={onChange} />}{errors[name] && <span className="vendor-error-text">{errors[name]}</span>}</div> };
   const select = (name: keyof FormData, opts: [string, string][], placeholder?: string) => <div className="vendor-form-group" key={name}><label className="vendor-label" htmlFor={name}>{t(name)}</label><select id={name} name={name} className={`vendor-input vendor-select ${errors[name] ? "vendor-input-error" : ""}`} value={String(data[name] ?? "")} onChange={onChange}><option value="">{t(placeholder ?? "selectOption")}</option>{opts.map(([v, k]) => <option key={v} value={v}>{t(k)}</option>)}</select>{errors[name] && <span className="vendor-error-text">{errors[name]}</span>}</div>;
@@ -258,7 +275,7 @@ export default function VendorRegisterPage() {
         new Event("oneservice-workspace-change")
       );
 
-      navigate("/profile", { replace: true });
+      navigate("/city-listings", { replace: true });
 
     } catch (error) {
       console.error("Vendor registration failed:", error);
@@ -273,6 +290,238 @@ export default function VendorRegisterPage() {
 
   const languagePicker = <div className="vendor-language-switcher"><Globe size={16} /><label htmlFor="vendor-language">{t("language")}</label><select id="vendor-language" value={language} onChange={e => setLanguage(e.target.value as Language)} className="vendor-language-select"><option value="en">English</option><option value="te">తెలుగు</option><option value="hi">हिन्दी</option></select></div>;
   if (submitted) return <main className="vendor-register-page"><div className="vendor-wizard"><header className="vendor-register-header vendor-success-header">{languagePicker}</header><section className="vendor-register-card vendor-success-card"><div className="vendor-success-icon"><CheckCircle2 size={42} /></div><span className="vendor-eyebrow">{t("pageEyebrow")}</span><h1>{t("successTitle")}</h1><p className="vendor-success-description">{t("successDescription")}</p><div className="vendor-summary"><h3>{t("applicationSummary")}</h3><p><strong>{t("vendorName")}:</strong> {data.fullName}</p><p><strong>{t("vendorBusiness")}:</strong> {data.businessName}</p><p><strong>{t("vendorEmail")}:</strong> {data.email}</p><p><strong>{t("vendorLocation")}:</strong> {[data.city, data.state, data.pincode].filter(Boolean).join(", ")}</p></div><p className="vendor-success-note">{t("successNote")}</p><button type="button" className="vendor-primary-button" onClick={() => { setData(initial); setErrors({}); setStep(0); setSubmitted(false) }}>{t("startAgain")}<ArrowRight size={17} /></button></section></div></main>;
-  const ActiveIcon = icons[step]; return <main className="vendor-register-page"><div className="vendor-wizard"><header className="vendor-register-header"><div className="vendor-header-topline"><div className="vendor-header-spacer" /><div className="vendor-header-actions">{languagePicker}<span className="vendor-signin-prompt">Already registered? <a href="/login">Sign in</a></span></div></div><div className="vendor-hero-row"><div className="vendor-header-copy"><span className="vendor-eyebrow">PRODUCT &amp; SPARE-PARTS SELLER REGISTRATION</span><h1>Grow your sales with <span>OneService.</span></h1><p>Register your business to sell products and spare parts through OneService.</p></div><div className="vendor-secure-badge"><LockKeyhole size={17} /><span>Secure registration</span></div></div></header><section className="vendor-register-card"><div className="vendor-progress-header"><div className="vendor-progress-copy"><span>{t("step")} {step + 1} {t("of")} 6</span><strong>{t(steps[step])}</strong></div><span className="vendor-progress-percentage">{Math.round((step + 1) / 6 * 100)}%</span></div><div className="vendor-progress-track" role="progressbar" aria-valuenow={step + 1} aria-valuemin={1} aria-valuemax={6}><div className="vendor-progress-fill" style={{ width: `${(step + 1) / 6 * 100}%` }} /></div><nav className="vendor-step-navigation" aria-label="Registration steps">{steps.map((key, i) => { const done = i < step, active = i === step; return <button type="button" key={key} className={`vendor-step-indicator ${active ? "active" : ""} ${done ? "completed" : ""}`} disabled={i >= step} onClick={() => { setStep(i); setErrors({}); setGeneralError("") }} aria-current={active ? "step" : undefined}><span className="vendor-step-icon">{done ? <Check size={15} /> : i + 1}</span><span className="vendor-step-label">{t(key)}</span></button> })}</nav><form onSubmit={submit} noValidate><div className="vendor-form-content"><div className="vendor-current-step-icon"><ActiveIcon size={22} /></div>{content}{generalError && <div className="vendor-general-error" role="alert"><X size={17} /><span>{generalError}</span></div>}<div className="vendor-form-actions">{step > 0 ? <button type="button" className="vendor-secondary-button" onClick={back}><ArrowLeft size={17} />{t("back")}</button> : <span />}{step < 5 ? <button type="button" className="vendor-primary-button" onClick={next}>{t("next")}<ArrowRight size={17} /></button> : <button type="submit" className="vendor-primary-button" disabled={submitting}>{submitting ? t("submitting") : t("submit")}{submitting ? <span className="vendor-button-spinner" /> : <CheckCircle2 size={17} />}</button>}</div></div></form></section><footer className="vendor-register-footer"><LockKeyhole size={14} /><span>{t("securityNote")}</span></footer></div></main>
+  const ActiveIcon = icons[step]; return <main className="vendor-register-page"><div className="vendor-wizard"><header className="vendor-register-header"><div className="vendor-header-topline"><div className="vendor-header-spacer" /><div className="vendor-header-actions">{languagePicker}<span className="vendor-signin-prompt">Already registered? <a href="/login">Sign in</a></span></div></div><div className="vendor-hero-row"><div className="vendor-header-copy"><span className="vendor-eyebrow">PRODUCT &amp; SPARE-PARTS SELLER REGISTRATION</span><h1>Grow your sales with <span>OneService.</span></h1><p>Register your business to sell products and spare parts through OneService.</p></div><div className="vendor-secure-badge"><LockKeyhole size={17} /><span>Secure registration</span></div></div></header><section className="vendor-register-card"><div className="vendor-progress-header"><div className="vendor-progress-copy"><span>{t("step")} {step + 1} {t("of")} 6</span><strong>{t(steps[step])}</strong></div><span className="vendor-progress-percentage">{Math.round((step + 1) / 6 * 100)}%</span></div><div className="vendor-progress-track" role="progressbar" aria-valuenow={step + 1} aria-valuemin={1} aria-valuemax={6}><div className="vendor-progress-fill" style={{ width: `${(step + 1) / 6 * 100}%` }} /></div><nav className="vendor-step-navigation" aria-label="Registration steps">{steps.map((key, i) => { const done = i < step, active = i === step; return <button type="button" key={key} className={`vendor-step-indicator ${active ? "active" : ""} ${done ? "completed" : ""}`} disabled={i >= step} onClick={() => { setStep(i); setErrors({}); setGeneralError("") }} aria-current={active ? "step" : undefined}><span className="vendor-step-icon">{done ? <Check size={15} /> : i + 1}</span><span className="vendor-step-label">{t(key)}</span></button> })}</nav>
+<form onSubmit={submit} noValidate>
+  {showPreview ? (
+    <div className="vendor-preview-content">
+      <div className="vendor-step-heading">
+        <span className="vendor-heading-number">06</span>
+        <div className="vendor-heading-copy">
+          <span className="vendor-section-kicker">
+            Registration Preview
+          </span>
+          <h2>Review your business listing</h2>
+          <p>
+            Check your details before publishing your vendor registration.
+          </p>
+        </div>
+      </div>
+
+      {/* Contact details */}
+      <div className="vendor-preview-section">
+        <h3>Contact details</h3>
+        <div className="vendor-preview-grid">
+          <PreviewItem label="Full name" value={data.fullName} />
+          <PreviewItem label="Mobile number" value={data.mobile} />
+          <PreviewItem label="Email address" value={data.email} />
+          <PreviewItem
+            label="Alternate mobile"
+            value={data.alternateMobile}
+          />
+        </div>
+      </div>
+
+      {/* Business details */}
+      <div className="vendor-preview-section">
+        <h3>Business details</h3>
+        <div className="vendor-preview-grid">
+          <PreviewItem label="Business name" value={data.businessName} />
+          <PreviewItem label="Business type" value={data.businessType} />
+          <PreviewItem
+            label="Business category"
+            value={data.businessCategory}
+          />
+          <PreviewItem label="GST number" value={data.gstNumber} />
+          <PreviewItem label="PAN number" value={data.panNumber} />
+          <PreviewItem
+            label="Business address"
+            value={data.businessAddress}
+          />
+          <PreviewItem label="City" value={data.city} />
+          <PreviewItem label="State" value={data.state} />
+          <PreviewItem label="PIN code" value={data.pincode} />
+        </div>
+      </div>
+
+      {/* Products */}
+      <div className="vendor-preview-section">
+        <h3>Products and brands</h3>
+        <div className="vendor-preview-grid">
+          <PreviewItem label="Products" value={data.products} />
+          <PreviewItem label="Brands" value={data.productBrands} />
+          <PreviewItem
+            label="Product description"
+            value={data.productDescription}
+          />
+          <PreviewItem
+            label="Minimum order value"
+            value={data.minimumOrder ? `₹${data.minimumOrder}` : ""}
+          />
+        </div>
+      </div>
+
+      {/* Delivery */}
+      <div className="vendor-preview-section">
+        <h3>Delivery and returns</h3>
+        <div className="vendor-preview-grid">
+          <PreviewItem
+            label="Delivery available"
+            value={
+              data.deliveryAvailable === "yes"
+                ? "Yes"
+                : data.deliveryAvailable === "no"
+                  ? "No"
+                  : ""
+            }
+          />
+          <PreviewItem label="Delivery coverage" value={data.deliveryRadius} />
+          <PreviewItem label="Shipping method" value={data.shippingMethod} />
+          <PreviewItem label="Return policy" value={data.returnPolicy} />
+        </div>
+      </div>
+
+      {/* Documents */}
+      <div className="vendor-preview-section">
+        <h3>Uploaded documents</h3>
+        <div className="vendor-preview-grid">
+          <PreviewItem
+            label="Identity document type"
+            value={data.idType}
+          />
+          <PreviewItem
+            label="Identity document"
+            value={data.idDocument?.name ?? "Not uploaded"}
+          />
+          <PreviewItem
+            label="Business registration document"
+            value={data.businessDocument?.name ?? "Not uploaded"}
+          />
+        </div>
+      </div>
+
+      {/* Bank information - show only non-sensitive details */}
+      <div className="vendor-preview-section">
+        <h3>Payment details</h3>
+        <div className="vendor-preview-grid">
+          <PreviewItem label="Bank name" value={data.bankName} />
+          <PreviewItem
+            label="Account holder"
+            value={data.accountHolder}
+          />
+          <PreviewItem label="Bank branch" value={data.branchName} />
+          <PreviewItem
+            label="IFSC code"
+            value={data.ifscCode}
+          />
+        </div>
+        <p className="vendor-preview-security-note">
+          <ShieldCheck size={16} />
+          Account number and password are kept private and are not shown in
+          this preview.
+        </p>
+      </div>
+
+      {generalError && (
+        <div className="vendor-general-error" role="alert">
+          <X size={17} />
+          <span>{generalError}</span>
+        </div>
+      )}
+
+      <div className="vendor-form-actions">
+        <button
+          type="button"
+          className="vendor-secondary-button"
+          onClick={editDetails}
+          disabled={submitting}
+        >
+          <ArrowLeft size={17} />
+          Edit Details
+        </button>
+
+        <button
+          type="submit"
+          className="vendor-primary-button"
+          disabled={submitting}
+        >
+          {submitting ? "Publishing..." : "Publish Listing"}
+          {submitting ? (
+            <span className="vendor-button-spinner" />
+          ) : (
+            <CheckCircle2 size={17} />
+          )}
+        </button>
+      </div>
+    </div>
+  ) : (
+    <div className="vendor-form-content">
+      <div className="vendor-current-step-icon">
+        <ActiveIcon size={22} />
+      </div>
+
+      {content}
+
+      {generalError && (
+        <div className="vendor-general-error" role="alert">
+          <X size={17} />
+          <span>{generalError}</span>
+        </div>
+      )}
+
+      <div className="vendor-form-actions">
+        {step > 0 ? (
+          <button
+            type="button"
+            className="vendor-secondary-button"
+            onClick={back}
+          >
+            <ArrowLeft size={17} />
+            {t("back")}
+          </button>
+        ) : (
+          <span />
+        )}
+
+        {step < 5 ? (
+          <button
+            type="button"
+            className="vendor-primary-button"
+            onClick={next}
+          >
+            {t("next")}
+            <ArrowRight size={17} />
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="vendor-primary-button"
+            onClick={openPreview}
+          >
+            Preview Listing
+            <Eye size={17} />
+          </button>
+        )}
+      </div>
+    </div>
+  )}
+</form>
+</section > <footer className="vendor-register-footer"><LockKeyhole size={14} /><span>{t("securityNote")}</span></footer></div ></main >
 }
 function Heading({ kicker, title, desc, t }: { kicker: string; title: string; desc: string; t: (key: string) => string }) { const number = ({ stepContact: "01", stepBusiness: "02", stepProducts: "03", stepDelivery: "04", stepVerification: "05", stepBank: "06" } as Record<string, string>)[kicker] ?? "01"; return <div className="vendor-step-heading"><span className="vendor-heading-number">{number}</span><div className="vendor-heading-copy"><span className="vendor-section-kicker">{t(kicker)}</span><h2>{t(title)}</h2><p>{t(desc)}</p></div></div> }
+
+function PreviewItem({
+  label,
+  value,
+}: {
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="vendor-preview-item">
+      <span className="vendor-preview-label">{label}</span>
+      <strong className="vendor-preview-value">
+        {value?.trim() || "Not provided"}
+      </strong>
+    </div>
+  );
+}

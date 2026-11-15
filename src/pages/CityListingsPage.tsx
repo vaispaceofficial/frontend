@@ -998,76 +998,76 @@ function CityListingsPage() {
 
           {/* GENERAL FILTERS */}
           {activeCategory !== "find-my-property" && (
-          <div className="city-listings-subcategory">
-            <span className="city-listings-subcategory-label">
-              FILTER BY
-            </span>
+            <div className="city-listings-subcategory">
+              <span className="city-listings-subcategory-label">
+                FILTER BY
+              </span>
 
-            <div
-              className="city-listings-filters city-listings-subfilters"
-              role="group"
-              aria-label="Listing filters"
-            >
-              <button
-                type="button"
-                className={activeFilter === "all" ? "active" : ""}
-                onClick={() => chooseFilter("all")}
-                aria-pressed={activeFilter === "all"}
+              <div
+                className="city-listings-filters city-listings-subfilters"
+                role="group"
+                aria-label="Listing filters"
               >
-                <LayoutGrid size={14} />
-                All
-              </button>
+                <button
+                  type="button"
+                  className={activeFilter === "all" ? "active" : ""}
+                  onClick={() => chooseFilter("all")}
+                  aria-pressed={activeFilter === "all"}
+                >
+                  <LayoutGrid size={14} />
+                  All
+                </button>
 
-              <button
-                type="button"
-                className={
-                  activeFilter === "top-rated" ? "active" : ""
-                }
-                onClick={() => chooseFilter("top-rated")}
-                aria-pressed={activeFilter === "top-rated"}
-              >
-                <Star size={13} />
-                Top Rated
-              </button>
+                <button
+                  type="button"
+                  className={
+                    activeFilter === "top-rated" ? "active" : ""
+                  }
+                  onClick={() => chooseFilter("top-rated")}
+                  aria-pressed={activeFilter === "top-rated"}
+                >
+                  <Star size={13} />
+                  Top Rated
+                </button>
 
-              <button
-                type="button"
-                className={
-                  activeFilter === "verified" ? "active" : ""
-                }
-                onClick={() => chooseFilter("verified")}
-                aria-pressed={activeFilter === "verified"}
-              >
-                <ShieldCheck size={14} />
-                Verified Only
-              </button>
+                <button
+                  type="button"
+                  className={
+                    activeFilter === "verified" ? "active" : ""
+                  }
+                  onClick={() => chooseFilter("verified")}
+                  aria-pressed={activeFilter === "verified"}
+                >
+                  <ShieldCheck size={14} />
+                  Verified Only
+                </button>
 
-              <button
-                type="button"
-                className={
-                  activeFilter === "open" ? "active" : ""
-                }
-                onClick={() => chooseFilter("open")}
-                aria-pressed={activeFilter === "open"}
-              >
-                <Clock3 size={13} />
-                Open Now
-              </button>
+                <button
+                  type="button"
+                  className={
+                    activeFilter === "open" ? "active" : ""
+                  }
+                  onClick={() => chooseFilter("open")}
+                  aria-pressed={activeFilter === "open"}
+                >
+                  <Clock3 size={13} />
+                  Open Now
+                </button>
 
-              {(activeCategory !== "all" ||
-                activeFilter !== "all" ||
-                activeSubcategory !== "All Specialities" ||
-                search.trim() !== "") && (
-                  <button
-                    type="button"
-                    onClick={resetFilters}
-                  >
-                    <X size={13} />
-                    Reset Filters
-                  </button>
-                )}
+                {(activeCategory !== "all" ||
+                  activeFilter !== "all" ||
+                  activeSubcategory !== "All Specialities" ||
+                  search.trim() !== "") && (
+                    <button
+                      type="button"
+                      onClick={resetFilters}
+                    >
+                      <X size={13} />
+                      Reset Filters
+                    </button>
+                  )}
+              </div>
             </div>
-          </div>
           )}
 
           {/* CATEGORY-SPECIFIC FILTERS */}
@@ -1257,7 +1257,7 @@ function CityListingsPage() {
 
           <button
             type="button"
-            onClick={() => navigate("/join-our-network")}
+            onClick={() => navigate("/register-vendor")}
           >
             List Your Business
             <ArrowRight size={17} />
