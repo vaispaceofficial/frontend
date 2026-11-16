@@ -113,7 +113,10 @@ type VendorApplication = {
     pincode?: string;
     status?: string;
     vendorStatus?: string;
+    registrationStatus?: string;
+    profileCompletion?: number;
     listingStatus?: string;
+    isPublished?: boolean;
     adminStatusUpdatedAt?: string;
     registeredAt?: string;
     [key: string]: unknown;
@@ -386,10 +389,10 @@ function readSellerApplication(): SellerApplication | null {
     }
 }
 
+
 function readVendorApplication(): VendorApplication | null {
     try {
         const saved = localStorage.getItem(VENDOR_APPLICATION_KEY);
-
         if (!saved) return null;
 
         const application = JSON.parse(saved) as VendorApplication;
@@ -403,35 +406,41 @@ function readVendorApplication(): VendorApplication | null {
             application.fullName?.trim() ||
             application.name?.trim() ||
             application.mobile?.trim() ||
-            application.phone?.trim(),
+            application.phone?.trim()
         );
 
         if (!hasVendorDetails) return null;
 
-        // Read the shared vendor collection updated by Admin.
         const sharedSaved = localStorage.getItem("oneservice_vendors");
 
-        if (!sharedSaved) return application;
+        if (!sharedSaved) {
+            return {
+                ...application,
+                registrationStatus:
+                    application.registrationStatus ||
+                    application.vendorStatus ||
+                    application.status ||
+                    "Pending",
+                listingStatus: application.listingStatus || "Not submitted",
+            };
+        }
 
         const parsedShared: unknown = JSON.parse(sharedSaved);
 
         if (!Array.isArray(parsedShared)) return application;
 
-        const getIdentity = (vendor: VendorApplication): string =>
-            String(
-                vendor.vendorId ||
-                vendor.id ||
-                vendor.mobile ||
-                vendor.phone ||
-                vendor.email ||
-                "",
-            )
-                .trim()
-                .toLowerCase();
+        const normalizeIdentity = (value?: string) =>
+            (value || "").trim().toLowerCase();
 
-        const applicationIdentity = getIdentity(application);
+        const getIdentities = (vendor: VendorApplication) =>
+            [
+                vendor.vendorId,
+                vendor.id,
+                normalizeMobile(vendor.mobile || vendor.phone),
+                normalizeIdentity(vendor.email),
+            ].filter(Boolean).map(String);
 
-        if (!applicationIdentity) return application;
+        const applicationIdentities = getIdentities(application);
 
         const sharedVendor = parsedShared.find((item) => {
             if (
@@ -442,45 +451,70 @@ function readVendorApplication(): VendorApplication | null {
                 return false;
             }
 
-            return (
-                getIdentity(item as VendorApplication) ===
-                applicationIdentity
+            const sharedIdentities = getIdentities(
+                item as VendorApplication
+            );
+
+            return applicationIdentities.some((identity) =>
+                sharedIdentities.includes(identity)
             );
         }) as VendorApplication | undefined;
 
-        if (!sharedVendor) return application;
+        if (!sharedVendor) {
+            return {
+                ...application,
+                registrationStatus:
+                    application.registrationStatus ||
+                    application.vendorStatus ||
+                    application.status ||
+                    "Pending",
+                listingStatus: application.listingStatus || "Not submitted",
+            };
+        }
 
-        // Admin's shared collection is the source of truth for status.
-        const adminStatus =
-            sharedVendor.listingStatus ||
+        // Registration approval controls Vendor Dashboard access.
+        // Listing approval controls public City Listing visibility.
+        const registrationStatus =
+            sharedVendor.registrationStatus ||
             sharedVendor.vendorStatus ||
             sharedVendor.status ||
-            application.listingStatus ||
+            application.registrationStatus ||
             application.vendorStatus ||
             application.status ||
             "Pending";
 
+        const listingStatus =
+            sharedVendor.listingStatus ||
+            application.listingStatus ||
+            "Not submitted";
+
         return {
             ...application,
             ...sharedVendor,
-
-            listingStatus: adminStatus,
-            vendorStatus: adminStatus,
-            status: adminStatus,
-
+            registrationStatus,
+            vendorStatus: registrationStatus,
+            status: registrationStatus,
+            listingStatus,
+            profileCompletion:
+                typeof sharedVendor.profileCompletion === "number"
+                    ? sharedVendor.profileCompletion
+                    : application.profileCompletion ?? 0,
+            isPublished:
+                typeof sharedVendor.isPublished === "boolean"
+                    ? sharedVendor.isPublished
+                    : typeof application.isPublished === "boolean"
+                        ? application.isPublished
+                        : normalizeStatus(listingStatus) === "approved",
             adminStatusUpdatedAt:
                 sharedVendor.adminStatusUpdatedAt ||
                 application.adminStatusUpdatedAt,
         };
     } catch (error) {
-        console.error(
-            "Unable to load vendor application:",
-            error,
-        );
-
+        console.error("Unable to load vendor application:", error);
         return null;
     }
 }
+
 
 function readStudentApplication(): StudentApplication | null {
     try {
@@ -1082,7 +1116,17 @@ function ProfilePage() {
 
     const applicationStatus = getApplicationStatus(application?.status);
     const sellerStatus = getApplicationStatus(seller?.status);
-    const vendorStatus = getApplicationStatus(vendor?.status);
+    const vendorRegistrationStatus = getApplicationStatus(
+        vendor?.registrationStatus ?? vendor?.status ?? vendor?.vendorStatus,
+    );
+    const vendorListingStatus = vendor
+        ? vendor.listingStatus &&
+            normalizeStatus(vendor.listingStatus) !== "not submitted"
+            ? getApplicationStatus(vendor.listingStatus)
+            : "Not submitted"
+        : "Not submitted";
+    const vendorDashboardEnabled =
+        Boolean(vendor) && vendorRegistrationStatus === "Approved";
     const studentStatus = getApplicationStatus(student?.status);
 
     const profileNotifications = [
@@ -1108,8 +1152,8 @@ function ProfilePage() {
             ? [{
                 id: "vendor",
                 role: "Vendor",
-                status: vendorStatus,
-                detail: `Your vendor account application is ${vendorStatus.toLowerCase()}.`,
+                status: vendorRegistrationStatus,
+                detail: `Your vendor account application is ${vendorRegistrationStatus.toLowerCase()}.`,
             }]
             : []),
 
@@ -1748,14 +1792,25 @@ function ProfilePage() {
                                                     </p>
                                                 </div>
 
-                                                <Link
-                                                    to="/vendor-hub"
-                                                    className="professional-hub-view-button"
-                                                    aria-label="View your Vendor Hub"
-                                                    title="View your Vendor Hub"
-                                                >
-                                                    <Eye size={17} />
-                                                </Link>
+                                                {vendorDashboardEnabled ? (
+                                                    <Link
+                                                        to="/vendor-hub"
+                                                        className="professional-hub-view-button"
+                                                        aria-label="View your Vendor Hub"
+                                                        title="View your Vendor Hub"
+                                                    >
+                                                        <Eye size={17} />
+                                                    </Link>
+                                                ) : (
+                                                    <span
+                                                        className="professional-hub-view-button"
+                                                        aria-label="Vendor Dashboard locked until account approval"
+                                                        title="The Vendor Dashboard will be available after admin approval."
+                                                        aria-disabled="true"
+                                                    >
+                                                        <LockKeyhole size={17} />
+                                                    </span>
+                                                )}
                                             </div>
 
                                             <div className="professional-hub-summary">
@@ -1774,10 +1829,10 @@ function ProfilePage() {
                                                     </div>
 
                                                     <span
-                                                        className={`professional-status professional-status-${vendorStatus.toLowerCase().replace(/\s+/g, "-")}`}
+                                                        className={`professional-status professional-status-${vendorRegistrationStatus.toLowerCase().replace(/\s+/g, "-")}`}
                                                     >
                                                         <span className="professional-status-dot" />
-                                                        {vendorStatus}
+                                                        {vendorRegistrationStatus}
                                                     </span>
                                                 </div>
 
@@ -1785,6 +1840,40 @@ function ProfilePage() {
                                                     <span>Vendor Reference</span>
                                                     <strong>{vendorReference}</strong>
                                                 </div>
+
+                                                <div className="professional-hub-reference">
+                                                    <span>Public Listing Status</span>
+                                                    <strong>{vendorListingStatus}</strong>
+                                                </div>
+
+                                                {!vendorDashboardEnabled && (
+                                                    <div className="profile-vendor-activation-notice" role="status">
+                                                        <LockKeyhole size={16} />
+                                                        <span>
+                                                            Account activation is in progress. Your Vendor Dashboard will unlock after the admin approves your registration.
+                                                        </span>
+                                                    </div>
+                                                )}
+
+                                                {vendorDashboardEnabled &&
+                                                    vendorListingStatus === "Not submitted" && (
+                                                        <div className="profile-vendor-activation-notice" role="status">
+                                                            <Check size={16} />
+                                                            <span>
+                                                                Your vendor account is approved. Complete your Vendor Dashboard profile to submit your public listing for review.
+                                                            </span>
+                                                        </div>
+                                                    )}
+
+                                                {vendorDashboardEnabled &&
+                                                    vendorListingStatus === "Pending Review" && (
+                                                        <div className="profile-vendor-activation-notice" role="status">
+                                                            <Clock3 size={16} />
+                                                            <span>
+                                                                Your listing has been submitted. Please wait until the admin approves your listing before it appears in City Listings.
+                                                            </span>
+                                                        </div>
+                                                    )}
 
                                                 <div className="professional-hub-summary-details">
                                                     <div>
@@ -1814,14 +1903,25 @@ function ProfilePage() {
                                                     </div>
                                                 </div>
 
-                                                <Link
-                                                    to="/vendor-hub"
-                                                    className="professional-hub-open-link"
-                                                >
-                                                    <LayoutDashboard size={16} />
-                                                    View Your Vendor Account
-                                                    <ArrowRight size={16} />
-                                                </Link>
+                                                {vendorDashboardEnabled ? (
+                                                    <Link
+                                                        to="/vendor-hub"
+                                                        className="professional-hub-open-link"
+                                                    >
+                                                        <LayoutDashboard size={16} />
+                                                        View Your Vendor Account
+                                                        <ArrowRight size={16} />
+                                                    </Link>
+                                                ) : (
+                                                    <span
+                                                        className="professional-hub-open-link"
+                                                        aria-disabled="true"
+                                                        title="Available after initial admin approval"
+                                                    >
+                                                        <LockKeyhole size={16} />
+                                                        Awaiting Account Approval
+                                                    </span>
+                                                )}
                                             </div>
                                         </article>
                                     )}
@@ -2306,10 +2406,12 @@ function ProfilePage() {
                                 ? [{
                                     id: "application-vendor",
                                     title: "Vendor account",
-                                    detail: `Vendor Hub · ${vendorStatus}`,
+                                    detail: `Vendor account · ${vendorRegistrationStatus} · Listing: ${vendorListingStatus}`,
                                     date: vendor.registeredAt ?? "",
                                     kind: "application" as const,
-                                    path: "/vendor-hub",
+                                    ...(vendorDashboardEnabled
+                                        ? { path: "/vendor-hub" }
+                                        : {}),
                                 }]
                                 : []),
 

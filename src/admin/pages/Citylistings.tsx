@@ -45,7 +45,8 @@ type VendorStatus =
   | "Banned";
 
 type AdminDirectoryTab = "onboarding" | "vendors" | "analytics";
-type RegistrationStatus = "Paid" | "Pending";
+type RegistrationStatus = "Pending" | "Approved" | "Rejected";
+type RegistrationFeeStatus = "Paid" | "Pending";
 
 type VendorRecord = Record<string, unknown> & {
   id?: string;
@@ -108,7 +109,8 @@ type VendorRecord = Record<string, unknown> & {
   established?: string;
   yearEstablished?: string;
   applicationStatus?: string;
-
+  isPublished?: boolean;
+  publicationStatus?: string;
   suspensionCount?: number;
   suspensionReason?: string;
   suspendedAt?: string;
@@ -158,7 +160,9 @@ type Business = {
   phoneClicks: number;
   followers: number;
   registrationStatus: RegistrationStatus;
+  registrationFeeStatus: RegistrationFeeStatus;
   vendorStatus: VendorStatus;
+  isPublished: boolean;
   registeredAt: string;
   projects: string;
   documents: unknown[];
@@ -320,7 +324,76 @@ const readStoredVendors = (): VendorRecord[] => {
 const writeStoredVendors = (vendors: VendorRecord[]) => {
   try {
     localStorage.setItem(VENDORS_STORAGE_KEY, JSON.stringify(vendors));
-    window.dispatchEvent(new CustomEvent("oneservice-vendors-change"));
+
+    const storedSingleVendor = localStorage.getItem(
+      SINGLE_VENDOR_STORAGE_KEY,
+    );
+
+    if (storedSingleVendor) {
+      const parsed: unknown = JSON.parse(storedSingleVendor);
+
+      if (isRecord(parsed)) {
+        const nestedKey = isRecord(parsed.vendor)
+          ? "vendor"
+          : isRecord(parsed.profile)
+            ? "profile"
+            : null;
+
+        const singleVendor = nestedKey
+          ? (parsed[nestedKey] as VendorRecord)
+          : (parsed as VendorRecord);
+
+        const matchingVendor = vendors.find((vendor) => {
+          const identifiers = [
+            vendor.vendorId,
+            vendor.id,
+            vendor.mobile,
+            vendor.phone,
+            vendor.email,
+          ]
+            .filter(Boolean)
+            .map((value) => String(value).trim().toLowerCase());
+
+          const singleIdentifiers = [
+            singleVendor.vendorId,
+            singleVendor.id,
+            singleVendor.mobile,
+            singleVendor.phone,
+            singleVendor.email,
+          ]
+            .filter(Boolean)
+            .map((value) => String(value).trim().toLowerCase());
+
+          return identifiers.some((value) =>
+            singleIdentifiers.includes(value),
+          );
+        });
+
+        if (matchingVendor) {
+          const updatedSingle = {
+            ...singleVendor,
+            ...matchingVendor,
+          };
+
+          const updatedStoredValue = nestedKey
+            ? {
+                ...parsed,
+                [nestedKey]: updatedSingle,
+              }
+            : updatedSingle;
+
+          localStorage.setItem(
+            SINGLE_VENDOR_STORAGE_KEY,
+            JSON.stringify(updatedStoredValue),
+          );
+        }
+      }
+    }
+
+    window.dispatchEvent(new Event("oneservice-vendors-change"));
+    window.dispatchEvent(new Event("oneservice-vendor-change"));
+    window.dispatchEvent(new Event("oneservice-auth-change"));
+    window.dispatchEvent(new Event("oneservice-workspace-change"));
   } catch (error) {
     console.error("Unable to save vendors:", error);
   }
@@ -352,8 +425,45 @@ const normalizeStatus = (status: unknown): VendorStatus => {
 const normalizeRegistrationStatus = (
   vendor: VendorRecord,
 ): RegistrationStatus => {
+  const raw = readText(
+    vendor.registrationStatus,
+    "",
+  ).toLowerCase();
+
+  if (raw.includes("approved") || raw === "active") {
+    return "Approved";
+  }
+
+  if (raw.includes("reject")) {
+    return "Rejected";
+  }
+
+  if (raw.includes("pending") || raw.includes("review")) {
+    return "Pending";
+  }
+
+  // Legacy records may have stored payment status in registrationStatus.
+  // Use applicationStatus as a fallback for their initial admin approval.
+  const legacyStatus = readText(
+    vendor.applicationStatus,
+    "Pending",
+  ).toLowerCase();
+
+  if (legacyStatus.includes("approved") || legacyStatus === "active") {
+    return "Approved";
+  }
+
+  if (legacyStatus.includes("reject")) {
+    return "Rejected";
+  }
+
+  return "Pending";
+};
+
+const normalizeRegistrationFeeStatus = (
+  vendor: VendorRecord,
+): RegistrationFeeStatus => {
   const value = readText(
-    vendor.registrationStatus ??
     vendor.registrationFeeStatus ??
     vendor.feeStatus ??
     vendor.paymentStatus,
@@ -441,6 +551,9 @@ const normalizeBusiness = (vendor: VendorRecord): Business => {
     followers: readNumber(vendor.followers),
 
     registrationStatus: normalizeRegistrationStatus(vendor),
+
+    registrationFeeStatus: normalizeRegistrationFeeStatus(vendor),
+
     vendorStatus: vendor.banned
       ? "Banned"
       : normalizeStatus(
@@ -448,6 +561,8 @@ const normalizeBusiness = (vendor: VendorRecord): Business => {
         vendor.vendorStatus ??
         vendor.status,
       ),
+
+    isPublished: vendor.isPublished === true,
 
     registeredAt: readText(vendor.registeredAt ?? vendor.createdAt),
     projects: readText(vendor.projects ?? vendor.portfolioDescription),
@@ -967,7 +1082,9 @@ export default function Businesses() {
           listingStatus: "Approved",
           vendorStatus: "Approved",
           status: "Approved",
-          applicationStatus: "Approved",
+          isPublished: true,
+          publicationStatus: "Live",
+          listingStatusUpdatedAt: new Date().toISOString(),
           suspensionReason: "",
           suspendedAt: "",
           reactivationDate: "",
@@ -1044,13 +1161,12 @@ export default function Businesses() {
       ) as Record<string, VendorStatus>,
     [businesses],
   );
-
   const onboardingBusinesses = useMemo(
     () =>
       businesses.filter(
         (business) =>
-          business.vendorStatus === "Pending" ||
-          business.vendorStatus === "Rejected",
+          business.registrationStatus === "Pending" ||
+          business.registrationStatus === "Rejected",
       ),
     [businesses],
   );
@@ -1059,9 +1175,7 @@ export default function Businesses() {
     () =>
       businesses.filter(
         (business) =>
-          business.vendorStatus === "Approved" ||
-          business.vendorStatus === "Suspended" ||
-          business.vendorStatus === "Banned",
+          business.registrationStatus === "Approved",
       ),
     [businesses],
   );
@@ -1145,84 +1259,145 @@ export default function Businesses() {
       (vendor) => getVendorBusinessId(vendor) === business.id,
     );
 
+  const updateRegistrationStatus = (
+    status: RegistrationStatus,
+  ) => {
+    if (!selectedBusiness) return;
+
+    const updatedAt = new Date().toISOString();
+
+    const updatedVendors = registeredVendors.map((vendor) => {
+      if (getVendorBusinessId(vendor) !== selectedBusiness.id) {
+        return vendor;
+      }
+
+      return {
+        ...vendor,
+
+        // Initial vendor account approval only.
+        registrationStatus: status,
+
+        registrationStatusUpdatedAt: updatedAt,
+        adminStatusUpdatedAt: updatedAt,
+
+        // Do not approve or publish the public listing here.
+        isPublished: vendor.isPublished === true,
+      };
+    });
+
+    writeStoredVendors(updatedVendors);
+    setRegisteredVendors(updatedVendors);
+
+    setSelectedBusiness((previous) =>
+      previous
+        ? {
+          ...previous,
+          registrationStatus: status,
+          registrationData: {
+            ...previous.registrationData,
+            registrationStatus: status,
+            registrationStatusUpdatedAt: updatedAt,
+            adminStatusUpdatedAt: updatedAt,
+          },
+        }
+        : null,
+    );
+  };
+
   /* =====================================================
      UPDATE VENDOR STATUS
   ===================================================== */
 
-const updateVendorStatus = (status: VendorStatus) => {
-  if (!selectedBusiness) return;
+  const updateVendorStatus = (status: VendorStatus) => {
+    if (!selectedBusiness) return;
 
-  const existingVendor = findVendorRecord(selectedBusiness);
+    const existingVendor = findVendorRecord(selectedBusiness);
 
-  const isPermanentlyBanned =
-    existingVendor?.banned === true ||
-    normalizeStatus(
-      existingVendor?.listingStatus ??
-      existingVendor?.vendorStatus ??
-      existingVendor?.status ??
-      selectedBusiness.vendorStatus,
-    ) === "Banned";
-
-  if (isPermanentlyBanned && status !== "Banned") {
-    window.alert(
-      "This vendor is permanently banned and cannot be reactivated.",
-    );
-    return;
-  }
-
-  const updatedAt = new Date().toISOString();
-
-  const updatedVendors = registeredVendors.map((vendor) => {
-    if (getVendorBusinessId(vendor) !== selectedBusiness.id) {
-      return vendor;
+    if (
+      normalizeRegistrationStatus(
+        existingVendor ?? selectedBusiness.registrationData,
+      ) !== "Approved"
+    ) {
+      window.alert(
+        "The vendor's initial registration must be approved before managing the public listing.",
+      );
+      return;
     }
 
-    return {
-      ...vendor,
-      listingStatus: status,
-      vendorStatus: status,
-      status,
-      applicationStatus:
-        status === "Approved" ||
-        status === "Suspended" ||
-        status === "Banned"
-          ? "Approved"
-          : status,
-      banned: status === "Banned",
-      bannedAt:
-        status === "Banned"
-          ? vendor.bannedAt ?? updatedAt
-          : vendor.bannedAt,
-      adminStatusUpdatedAt: updatedAt,
-    };
-  });
+    const isPermanentlyBanned =
+      existingVendor?.banned === true ||
+      normalizeStatus(
+        existingVendor?.listingStatus ??
+        existingVendor?.vendorStatus ??
+        existingVendor?.status ??
+        selectedBusiness.vendorStatus,
+      ) === "Banned";
 
-  writeStoredVendors(updatedVendors);
-  setRegisteredVendors(updatedVendors);
+    if (isPermanentlyBanned && status !== "Banned") {
+      window.alert(
+        "This vendor is permanently banned and cannot be reactivated.",
+      );
+      return;
+    }
 
-  setSelectedBusiness((previous) =>
-    previous
-      ? {
+    const updatedAt = new Date().toISOString();
+    const isLive = status === "Approved";
+
+    const updatedVendors = registeredVendors.map((vendor) => {
+      if (getVendorBusinessId(vendor) !== selectedBusiness.id) {
+        return vendor;
+      }
+
+      return {
+        ...vendor,
+
+        // Second-stage public listing decision.
+        listingStatus: status,
+        vendorStatus: status,
+        status,
+
+        isPublished: isLive,
+        publicationStatus: isLive ? "Live" : status,
+
+        listingStatusUpdatedAt: updatedAt,
+        adminStatusUpdatedAt: updatedAt,
+
+        banned: status === "Banned",
+        bannedAt:
+          status === "Banned"
+            ? vendor.bannedAt ?? updatedAt
+            : vendor.bannedAt,
+      };
+    });
+
+    writeStoredVendors(updatedVendors);
+    setRegisteredVendors(updatedVendors);
+
+    setSelectedBusiness((previous) =>
+      previous
+        ? {
           ...previous,
           vendorStatus: status,
+          isPublished: isLive,
           registrationData: {
             ...previous.registrationData,
             listingStatus: status,
             vendorStatus: status,
             status,
-            applicationStatus:
-              status === "Approved" ||
-              status === "Suspended" ||
-              status === "Banned"
-                ? "Approved"
-                : status,
+            isPublished: isLive,
+            publicationStatus: isLive ? "Live" : status,
+            listingStatusUpdatedAt: updatedAt,
             banned: status === "Banned",
+            bannedAt:
+              status === "Banned"
+                ? previous.registrationData.bannedAt ?? updatedAt
+                : previous.registrationData.bannedAt,
             adminStatusUpdatedAt: updatedAt,
           },
         }
-      : null,
-  );
-};
+        : null,
+    );
+  };
 
   const confirmVendorSuspension = () => {
     if (!selectedBusiness) return;
@@ -1270,7 +1445,9 @@ const updateVendorStatus = (status: VendorStatus) => {
         listingStatus: "Suspended",
         vendorStatus: "Suspended",
         status: "Suspended",
-        applicationStatus: "Approved",
+        isPublished: false,
+        publicationStatus: "Suspended",
+        listingStatusUpdatedAt: updatedAt,
         suspensionCount: nextCount,
         suspensionReason: reason,
         suspendedAt: updatedAt,
@@ -1341,7 +1518,9 @@ const updateVendorStatus = (status: VendorStatus) => {
         listingStatus: "Banned",
         vendorStatus: "Banned",
         status: "Banned",
-        applicationStatus: "Approved",
+        isPublished: false,
+        publicationStatus: "Banned",
+        listingStatusUpdatedAt: updatedAt,
         banned: true,
         bannedAt: updatedAt,
         banReason: reason.trim(),
@@ -1409,6 +1588,10 @@ const updateVendorStatus = (status: VendorStatus) => {
   const currentStatus = selectedBusiness
     ? vendorStatuses[selectedBusiness.id] ??
     selectedBusiness.vendorStatus
+    : "Pending";
+
+  const currentRegistrationStatus = selectedBusiness
+    ? selectedBusiness.registrationStatus
     : "Pending";
 
   /* =====================================================
@@ -1491,7 +1674,7 @@ const updateVendorStatus = (status: VendorStatus) => {
                   <DetailItem label="Business ID" value={business.id} />
                   <DetailItem
                     label="Registration fee"
-                    value={business.registrationStatus}
+                    value={business.registrationFeeStatus}
                   />
                   <DetailItem
                     label="Listing status"
@@ -1958,7 +2141,7 @@ const updateVendorStatus = (status: VendorStatus) => {
                   />
                   <DetailItem
                     label="Registration payment"
-                    value={business.registrationStatus}
+                    value={business.registrationFeeStatus}
                   />
                 </div>
               </DetailCard>
@@ -2114,12 +2297,12 @@ const updateVendorStatus = (status: VendorStatus) => {
 
                   <td>
                     <span
-                      className={`business-payment-status ${business.registrationStatus.toLowerCase()}`}
+                      className={`business-payment-status ${business.registrationFeeStatus.toLowerCase()}`}
                     >
-                      {business.registrationStatus === "Paid" && (
+                      {business.registrationFeeStatus === "Paid" && (
                         <CheckCircle2 size={13} />
                       )}
-                      {business.registrationStatus}
+                      {business.registrationFeeStatus}
                     </span>
                   </td>
 
@@ -2437,100 +2620,157 @@ const updateVendorStatus = (status: VendorStatus) => {
                 <span
                   className={`vendor-status-badge ${statusClass(currentStatus)}`}
                 >
-                  {currentStatus}
+                  {activeDirectoryTab === "onboarding"
+                    ? currentRegistrationStatus
+                    : currentStatus}
                 </span>
               </div>
 
               <div className="vendor-verification-controls">
                 <div className="vendor-verification-current">
-                  <span>Current listing status</span>
-                  <strong>{currentStatus}</strong>
-                  <small>
-                    Registration fee: {selectedBusiness.registrationStatus}
-                  </small>
+                  {activeDirectoryTab === "onboarding" ? (
+                    <>
+                      <span>Initial registration status</span>
+                      <strong>{currentRegistrationStatus}</strong>
+                      <small>
+                        Registration fee: {selectedBusiness.registrationFeeStatus}
+                      </small>
+                    </>
+                  ) : (
+                    <>
+                      <span>Public listing status</span>
+                      <strong>{currentStatus}</strong>
+                      <small>
+                        Registration: {currentRegistrationStatus} · Fee:{" "}
+                        {selectedBusiness.registrationFeeStatus}
+                      </small>
+                    </>
+                  )}
                 </div>
 
                 <div className="vendor-admin-actions">
-                  {currentStatus !== "Approved" && currentStatus !== "Banned" && (
-                    <button
-                      type="button"
-                      className="vendor-admin-approve"
-                      onClick={() => updateVendorStatus("Approved")}
-                    >
-                      <CheckCircle2 size={15} />
-                      {currentStatus === "Suspended"
-                        ? "Reactivate Listing"
-                        : "Approve Vendor"}
-                    </button>
-                  )}
+                  {activeDirectoryTab === "onboarding" ? (
+                    <>
+                      {currentRegistrationStatus !== "Approved" && (
+                        <button
+                          type="button"
+                          className="vendor-admin-approve"
+                          onClick={() => updateRegistrationStatus("Approved")}
+                        >
+                          <CheckCircle2 size={15} />
+                          Approve Registration
+                        </button>
+                      )}
 
-                  {currentStatus === "Pending" && (
-                    <button
-                      type="button"
-                      className="vendor-admin-reject"
-                      onClick={() => updateVendorStatus("Rejected")}
-                    >
-                      <X size={15} />
-                      Reject Application
-                    </button>
-                  )}
+                      {currentRegistrationStatus !== "Rejected" && (
+                        <button
+                          type="button"
+                          className="vendor-admin-reject"
+                          onClick={() => updateRegistrationStatus("Rejected")}
+                        >
+                          <X size={15} />
+                          Reject Registration
+                        </button>
+                      )}
 
-                  {currentStatus === "Approved" && (
-                    <button
-                      type="button"
-                      className="vendor-admin-suspend"
-                      onClick={() => {
-                        setSuspensionReason("");
-                        setReactivationDate(getDefaultReactivationDate());
-                        setShowSuspensionModal(true);
-                      }}
-                    >
-                      <PauseCircle size={15} />
-                      Suspend Listing
-                    </button>
-                  )}
-
-                  {currentStatus === "Rejected" && (
-                    <button
-                      type="button"
-                      className="vendor-admin-approve"
-                      onClick={() => updateVendorStatus("Pending")}
-                    >
-                      <FileCheck size={15} />
-                      Review Again
-                    </button>
-                  )}
-
-                  {currentStatus === "Banned" && (
-                    <div className="vendor-suspension-summary">
-                      <ShieldCheck size={16} />
-                      <span>This vendor is permanently banned.</span>
-                    </div>
-                  )}
-
-                  {currentStatus === "Suspended" && (
-                    <div className="vendor-suspension-summary">
-                      <PauseCircle size={16} />
-                      <span>
-                        Suspensions: {selectedBusiness.registrationData.suspensionCount ?? 0}
-                        {selectedBusiness.registrationData.reactivationDate && (
-                          <> · Reactivation date: {selectedBusiness.registrationData.reactivationDate}</>
+                      {currentRegistrationStatus === "Approved" && (
+                        <div className="vendor-suspension-summary">
+                          <ShieldCheck size={16} />
+                          <span>
+                            Vendor account approved. Public listing approval is separate.
+                          </span>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      {currentStatus !== "Approved" &&
+                        currentStatus !== "Banned" && (
+                          <button
+                            type="button"
+                            className="vendor-admin-approve"
+                            onClick={() => updateVendorStatus("Approved")}
+                          >
+                            <CheckCircle2 size={15} />
+                            {currentStatus === "Suspended"
+                              ? "Reactivate Listing"
+                              : "Approve Listing"}
+                          </button>
                         )}
-                      </span>
-                    </div>
-                  )}
 
-                  {(selectedBusiness.registrationData.suspensionCount ?? 0) >= 3 &&
-                    currentStatus !== "Banned" && (
-                      <button
-                        type="button"
-                        className="vendor-admin-reject"
-                        onClick={permanentlyBanVendor}
-                      >
-                        <ShieldCheck size={15} />
-                        Permanently Ban Vendor
-                      </button>
-                    )}
+                      {currentStatus === "Pending" && (
+                        <button
+                          type="button"
+                          className="vendor-admin-reject"
+                          onClick={() => updateVendorStatus("Rejected")}
+                        >
+                          <X size={15} />
+                          Reject Listing
+                        </button>
+                      )}
+
+                      {currentStatus === "Approved" && (
+                        <button
+                          type="button"
+                          className="vendor-admin-suspend"
+                          onClick={() => {
+                            setSuspensionReason("");
+                            setReactivationDate(getDefaultReactivationDate());
+                            setShowSuspensionModal(true);
+                          }}
+                        >
+                          <PauseCircle size={15} />
+                          Suspend Listing
+                        </button>
+                      )}
+
+                      {currentStatus === "Rejected" && (
+                        <button
+                          type="button"
+                          className="vendor-admin-approve"
+                          onClick={() => updateVendorStatus("Pending")}
+                        >
+                          <FileCheck size={15} />
+                          Review Listing Again
+                        </button>
+                      )}
+
+                      {currentStatus === "Banned" && (
+                        <div className="vendor-suspension-summary">
+                          <ShieldCheck size={16} />
+                          <span>This vendor is permanently banned.</span>
+                        </div>
+                      )}
+
+                      {currentStatus === "Suspended" && (
+                        <div className="vendor-suspension-summary">
+                          <PauseCircle size={16} />
+                          <span>
+                            Suspensions:{" "}
+                            {selectedBusiness.registrationData.suspensionCount ?? 0}
+                            {selectedBusiness.registrationData.reactivationDate && (
+                              <>
+                                {" "}· Reactivation date:{" "}
+                                {selectedBusiness.registrationData.reactivationDate}
+                              </>
+                            )}
+                          </span>
+                        </div>
+                      )}
+
+                      {(selectedBusiness.registrationData.suspensionCount ?? 0) >= 3 &&
+                        currentStatus !== "Banned" && (
+                          <button
+                            type="button"
+                            className="vendor-admin-reject"
+                            onClick={permanentlyBanVendor}
+                          >
+                            <ShieldCheck size={15} />
+                            Permanently Ban Vendor
+                          </button>
+                        )}
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -2709,12 +2949,12 @@ const updateVendorStatus = (status: VendorStatus) => {
 
                     <div>
                       <span>FEE STATUS</span>
-                      <strong>{selectedBusiness.registrationStatus}</strong>
+                      <strong>{selectedBusiness.registrationFeeStatus}</strong>
                     </div>
 
                     <div>
                       <span>VENDOR STATUS</span>
-                      <strong>{currentStatus}</strong>
+                      <strong>{currentRegistrationStatus}</strong>
                     </div>
                   </div>
                 </>

@@ -275,7 +275,7 @@ export default function VendorRegisterPage() {
         new Event("oneservice-workspace-change")
       );
 
-      navigate("/city-listings", { replace: true });
+      navigate("/profile", { replace: true });
 
     } catch (error) {
       console.error("Vendor registration failed:", error);

@@ -8,7 +8,7 @@ import {
     BadgeCheck,
     Ban,
     Building2,
-    CalendarClock,
+    // CalendarClock,
     Check,
     CheckCircle2,
     ChevronRight,
@@ -17,12 +17,15 @@ import {
     Sparkles,
     Clock3,
     Eye,
-    FileText,
+    // FileText,
     Image as ImageIcon,
     Info,
     Mail,
     MapPin,
     MessageCircle,
+    Send,
+    ClipboardList,
+    ListChecks,
     Package,
     Pencil,
     Phone,
@@ -33,7 +36,7 @@ import {
     Trash2,
     TrendingUp,
     Upload,
-    UserRound,
+    // UserRound,
     X,
 } from "lucide-react";
 import "./VendorHub.css";
@@ -194,14 +197,12 @@ function getVendorAccessState(
     const normalize = (value: unknown) =>
         normalizeVendorStatus(value);
 
-    // Restrictions always take priority.
+    // Only account-level restrictions can block dashboard access.
+    // Listing approval is a separate, second review process.
     const restrictionStatuses = [
         profile.accountState,
         profile.accountStatus,
         profile.vendorAccountStatus,
-        profile.listingStatus,
-        profile.vendorStatus,
-        profile.status,
     ].map(normalize);
 
     if (
@@ -220,21 +221,28 @@ function getVendorAccessState(
         return "suspended";
     }
 
-    // The Admin listing status is the primary approval authority.
-    const primaryStatus = normalize(
-        profile.listingStatus ||
-        profile.vendorStatus ||
-        profile.status ||
-        profile.applicationStatus ||
-        profile.reviewStatus ||
-        profile.registrationStatus,
+    // First approval controls dashboard access. Never use listingStatus
+    // to decide whether the vendor account itself is approved.
+    const hasExplicitRegistrationStatus =
+        typeof profile.registrationStatus === "string" &&
+        profile.registrationStatus.trim() !== "";
+
+    const registrationStatus = normalize(
+        hasExplicitRegistrationStatus
+            ? profile.registrationStatus
+            : profile.listingStatus
+                ? "pending"
+                : profile.applicationStatus ||
+                profile.reviewStatus ||
+                profile.vendorStatus ||
+                profile.status,
     );
 
-    if (["approved", "verified", "active", "reactivated"].includes(primaryStatus)) {
+    if (["approved", "verified", "active", "reactivated"].includes(registrationStatus)) {
         return "approved";
     }
 
-    if (["rejected", "declined", "application rejected"].includes(primaryStatus)) {
+    if (["rejected", "declined", "application rejected"].includes(registrationStatus)) {
         return "rejected";
     }
 
@@ -370,6 +378,7 @@ function businessFromVendorProfile(
 
 const saveVendorToSharedCollection = (
     vendor: StoredVendorProfile,
+    forceListingStatus = false,
 ) => {
     const storageKey = "oneservice_vendors";
 
@@ -429,8 +438,9 @@ const saveVendorToSharedCollection = (
 
             // Admin-managed status takes priority over the
             // possibly outdated VendorHub profile.
-            const adminStatus =
-                existingVendor.listingStatus ||
+            const adminStatus = forceListingStatus
+                ? vendor.listingStatus || "Pending"
+                : existingVendor.listingStatus ||
                 existingVendor.vendorStatus ||
                 existingVendor.status ||
                 vendor.listingStatus ||
@@ -442,6 +452,15 @@ const saveVendorToSharedCollection = (
             existing[index] = {
                 ...existingVendor,
                 ...vendor,
+                // Preserve Admin-controlled registration approval.
+                registrationStatus:
+                    existingVendor.registrationStatus ||
+                    vendor.registrationStatus ||
+                    "Pending",
+
+                registrationStatusUpdatedAt:
+                    existingVendor.registrationStatusUpdatedAt ||
+                    vendor.registrationStatusUpdatedAt,
 
                 // Admin approval and account restrictions always win.
                 listingStatus: adminStatus,
@@ -510,118 +529,15 @@ const initialBusiness: BusinessDetails = {
     category: "Business & Professional Services",
     description:
         "Tell customers about your business, what makes you different, and how your products or services can help them.",
-    address: "Madhurawada, Visakhapatnam",
+    address: "",
     phone: "",
     email: "",
     website: "",
-    rating: 4.7,
-    reviewCount: 98,
-    verified: true,
+    rating: 0,
+    reviewCount: 0,
+    verified: false,
     open: true,
 };
-
-const initialOperatingHours: OperatingHour[] = [
-    {
-        id: "hours-mon-fri",
-        day: "Monday – Friday",
-        hours: "09:00 AM – 07:00 PM",
-    },
-    {
-        id: "hours-saturday",
-        day: "Saturday",
-        hours: "09:00 AM – 05:00 PM",
-    },
-    {
-        id: "hours-sunday",
-        day: "Sunday",
-        hours: "Closed",
-    },
-];
-
-const initialAmenities = [
-    "Customer support",
-    "Appointment assistance",
-    "Quality assurance",
-    "Professional service",
-];
-
-const initialServices: ServiceItem[] = [
-    {
-        id: "service-1",
-        title: "Primary Service",
-        category: "Featured service",
-        description: "Describe your main service offering here.",
-    },
-    {
-        id: "service-2",
-        title: "Additional Service",
-        category: "Business service",
-        description: "Add details about another service you provide.",
-    },
-    {
-        id: "service-3",
-        title: "Consultation",
-        category: "Customer support",
-        description: "Help customers understand your available options.",
-    },
-];
-
-const initialProducts: ProductItem[] = [
-    {
-        id: "product-1",
-        name: "Featured Product",
-        category: "Popular",
-        price: "499",
-        stock: "In stock",
-        image:
-            "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=700&q=80",
-    },
-    {
-        id: "product-2",
-        name: "Business Essential",
-        category: "Recommended",
-        price: "799",
-        stock: "In stock",
-        image:
-            "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=700&q=80",
-    },
-    {
-        id: "product-3",
-        name: "Premium Selection",
-        category: "Featured",
-        price: "1299",
-        stock: "Low stock",
-        image:
-            "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?auto=format&fit=crop&w=700&q=80",
-    },
-];
-
-const initialGallery: GalleryItem[] = [
-    {
-        id: "gallery-1",
-        title: "Business showcase",
-        image:
-            "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=900&q=80",
-    },
-    {
-        id: "gallery-2",
-        title: "Workspace",
-        image:
-            "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=900&q=80",
-    },
-    {
-        id: "gallery-3",
-        title: "Products and services",
-        image:
-            "https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?auto=format&fit=crop&w=900&q=80",
-    },
-    {
-        id: "gallery-4",
-        title: "Customer experience",
-        image:
-            "https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=900&q=80",
-    },
-];
 
 const tabItems: {
     id: TabId;
@@ -670,20 +586,44 @@ function VendorHub() {
         businessFromVendorProfile(readStoredVendorProfile()),
     );
 
-    const [hours, setHours] =
-        useState<OperatingHour[]>(initialOperatingHours);
+    const [hours, setHours] = useState<OperatingHour[]>(() => {
+        const profile = readStoredVendorProfile();
+        const saved = Array.isArray(profile?.operatingHours) ? profile.operatingHours as OperatingHour[] : [];
+        return saved.filter(item => !["hours-mon-fri", "hours-saturday", "hours-sunday"].includes(item.id));
+    });
 
-    const [highlights, setHighlights] =
-        useState<string[]>(initialAmenities);
+    const [highlights, setHighlights] = useState<string[]>(() => {
+        const profile = readStoredVendorProfile();
+        const saved = Array.isArray(profile?.highlights) ? profile.highlights : Array.isArray(profile?.amenities) ? profile.amenities : [];
+        const demoValues = ["Customer support", "Appointment assistance", "Quality assurance", "Professional service"];
+        return saved.filter((item): item is string => typeof item === "string" && !demoValues.includes(item));
+    });
 
-    const [gallery, setGallery] =
-        useState<GalleryItem[]>(initialGallery);
+    const [gallery, setGallery] = useState<GalleryItem[]>(() => {
+        const profile = readStoredVendorProfile();
+        const saved = Array.isArray(profile?.gallery) ? profile.gallery : Array.isArray(profile?.images) ? profile.images : [];
+        return saved.flatMap((raw, index) => {
+            if (!raw || typeof raw !== "object") return [];
+            const item = raw as Record<string, unknown>;
+            const id = typeof item.id === "string" ? item.id : `gallery-saved-${index}`;
+            const title = typeof item.title === "string" ? item.title : typeof item.name === "string" ? item.name : "Business image";
+            const image = typeof item.image === "string" ? item.image : typeof item.url === "string" ? item.url : "";
+            if (!image || ["gallery-1", "gallery-2", "gallery-3", "gallery-4"].includes(id) || ["Business showcase", "Workspace", "Products and services", "Customer experience"].includes(title)) return [];
+            return [{ id, title, image }];
+        });
+    });
 
-    const [services, setServices] =
-        useState<ServiceItem[]>(initialServices);
+    const [services, setServices] = useState<ServiceItem[]>(() => {
+        const profile = readStoredVendorProfile();
+        const saved = Array.isArray(profile?.services) ? profile.services : [];
+        return saved.filter((item): item is ServiceItem => Boolean(item && typeof item === "object" && !["service-1", "service-2", "service-3"].includes(String((item as ServiceItem).id)) && !["Primary Service", "Additional Service", "Consultation"].includes(String((item as ServiceItem).title))));
+    });
 
-    const [products, setProducts] =
-        useState<ProductItem[]>(initialProducts);
+    const [products, setProducts] = useState<ProductItem[]>(() => {
+        const profile = readStoredVendorProfile();
+        const saved = Array.isArray(profile?.products) ? profile.products : [];
+        return saved.filter((item): item is ProductItem => Boolean(item && typeof item === "object" && !["product-1", "product-2", "product-3"].includes(String((item as ProductItem).id)) && !["Featured Product", "Business Essential", "Premium Selection"].includes(String((item as ProductItem).name))));
+    });
 
     const [search, setSearch] = useState("");
     const [notice, setNotice] = useState("");
@@ -740,6 +680,9 @@ function VendorHub() {
     const [viewingVendorPlan, setViewingVendorPlan] = useState<VendorPlanName | null>(null);
     const [vendorSubscriptionMessage, setVendorSubscriptionMessage] = useState("");
     const [showListingPreview, setShowListingPreview] = useState(false);
+    const [supportOpen, setSupportOpen] = useState(false);
+    const [supportDraft, setSupportDraft] = useState("");
+    const [supportMessages, setSupportMessages] = useState<Array<{ id: string; sender: "vendor" | "admin"; text: string; createdAt: string }>>([]);
 
     const vendorAccessState = getVendorAccessState(vendorProfile);
     const vendorSubscriptionStatus = getVendorSubscriptionStatus(vendorProfile, subscriptionClock);
@@ -757,14 +700,19 @@ function VendorHub() {
 
         if (!vendorProfile) return;
 
-        const publishedAt = new Date().toISOString();
+        const submittedAt = new Date().toISOString();
 
+        // This is the second approval: submitting does not make the
+        // listing public. Admin must approve listingStatus separately.
         const updatedProfile = {
             ...vendorProfile,
-            isPublished: true,
-            publicationStatus: "Published",
-            publishedAt,
-            listingPublishedAt: publishedAt,
+            isPublished: false,
+            publicationStatus: "Pending Review",
+            listingStatus: "Pending",
+            listingSubmittedAt: submittedAt,
+            listingStatusUpdatedAt: submittedAt,
+            vendorStatus: "Pending",
+            status: "Pending",
         };
 
         try {
@@ -789,7 +737,7 @@ function VendorHub() {
                 }
             }
 
-            saveVendorToSharedCollection(updatedProfile);
+            saveVendorToSharedCollection(updatedProfile, true);
 
             setVendorProfile(updatedProfile);
 
@@ -801,7 +749,7 @@ function VendorHub() {
                 new Event("oneservice-vendors-change")
             );
 
-            showNotice("Your business listing has been published successfully.");
+            showNotice("Your listing has been submitted for Admin approval. It will become public only after approval.");
         } catch (error) {
             console.error("Unable to publish vendor listing:", error);
             showNotice("Unable to publish your listing. Please try again.");
@@ -812,6 +760,50 @@ function VendorHub() {
         const timer = window.setInterval(() => setSubscriptionClock(Date.now()), 60000);
         return () => window.clearInterval(timer);
     }, []);
+
+    const supportStorageKey = `oneservice_vendor_support_${vendorProfile?.id || vendorProfile?.vendorId || "current"}`;
+
+    useEffect(() => {
+        try {
+            const stored = localStorage.getItem(supportStorageKey);
+            setSupportMessages(stored ? JSON.parse(stored) : []);
+        } catch {
+            setSupportMessages([]);
+        }
+    }, [supportStorageKey]);
+
+    useEffect(() => {
+        const syncSupportMessages = (event: StorageEvent) => {
+            if (event.key !== supportStorageKey) return;
+            try {
+                setSupportMessages(event.newValue ? JSON.parse(event.newValue) : []);
+            } catch {
+                setSupportMessages([]);
+            }
+        };
+        window.addEventListener("storage", syncSupportMessages);
+        return () => window.removeEventListener("storage", syncSupportMessages);
+    }, [supportStorageKey]);
+
+    const sendSupportMessage = () => {
+        const text = supportDraft.trim();
+        if (!text) return;
+        const next = [...supportMessages, {
+            id: `vendor-${Date.now()}`,
+            sender: "vendor" as const,
+            text,
+            createdAt: new Date().toISOString(),
+        }];
+        setSupportMessages(next);
+        setSupportDraft("");
+        try {
+            localStorage.setItem(supportStorageKey, JSON.stringify(next));
+            window.dispatchEvent(new Event("oneservice-vendor-support-change"));
+        } catch (error) {
+            console.error("Unable to save support message", error);
+            showNotice("Your message could not be saved. Please try again.");
+        }
+    };
 
     useEffect(() => {
         if (!vendorProfile || vendorAccessState !== "approved" || vendorProfile.trialStartedAt || vendorProfile.subscriptionStartedAt) return;
@@ -2059,10 +2051,7 @@ function VendorHub() {
             isMeaningfulValue(item.name) &&
             isMeaningfulValue(item.price)
         ),
-        gallery.some(item =>
-            isMeaningfulValue(item.image) &&
-            !item.image.startsWith("blob:")
-        ),
+        gallery.some(item => isMeaningfulValue(item.image)),
         highlights.some(item => isMeaningfulValue(item)),
     ];
 
@@ -2073,636 +2062,131 @@ function VendorHub() {
     );
 
 
+    const profileCompletionLabels = [
+        "Business name",
+        "Business category",
+        "Owner / contact person",
+        "Phone number",
+        "Email address",
+        "Business address",
+        "Business description",
+        "Website or online presence",
+        "Operating hours",
+        "At least one service",
+        "At least one product",
+        "Business gallery photo",
+        "Business highlights",
+    ];
+    const missingProfileTasks = profileCompletionItems
+        .map((complete, index) => ({ complete, label: profileCompletionLabels[index] || `Profile detail ${index + 1}` }))
+        .filter(item => !item.complete);
+    const listingStatusText = String(vendorProfile?.listingStatus || vendorProfile?.publicationStatus || "Not submitted");
+    const listingStatusNormalized = normalizeVendorStatus(listingStatusText);
+    const listingIsLive = ["approved", "published", "live", "active"].includes(listingStatusNormalized) || vendorProfile?.isPublished === true;
+    const listingIsPending = ["pending", "pending review", "under review", "submitted"].includes(listingStatusNormalized);
+
+    const registrationDetails = [
+        ["Applicant name", vendorProfile?.fullName || vendorProfile?.name],
+        ["Registered mobile", vendorProfile?.mobile || vendorProfile?.phone],
+        ["Registered email", vendorProfile?.email],
+        ["Business name", vendorProfile?.businessName || business.name],
+        ["Business type", vendorProfile?.businessType],
+        ["Business category", vendorProfile?.businessCategory || business.category],
+        ["Address", vendorProfile?.businessAddress || business.address],
+        ["City", vendorProfile?.city],
+        ["State", vendorProfile?.state],
+        ["PIN code", vendorProfile?.pincode],
+        ["Products / brands supplied", vendorProfile?.productDescription || (typeof vendorProfile?.products === "string" ? vendorProfile.products : "")],
+    ].filter(([, value]) => value !== undefined && value !== null && String(value).trim() !== "");
+
     const renderOverview = () => (
-        <>
-            <div className="vh-overview-grid">
-                <section className="vh-card">
-                    <div className="vh-section-heading">
-                        <div className="vh-heading-title">
-                            <span className="vh-heading-icon">
-                                <Building2 size={18} />
-                            </span>
-                            <h3>About Business</h3>
-                        </div>
-
-                        <button
-                            className="vh-small-action"
-                            onClick={() => goToTab("about")}
-                            type="button"
-                        >
-                            <Pencil size={13} /> Edit
-                        </button>
+        <div className="vh-new-dashboard">
+            <section className="vh-welcome-panel">
+                <div className="vh-welcome-copy">
+                    <span className="vh-eyebrow">YOUR VENDOR WORKSPACE</span>
+                    <h2>Let’s get your business listed.</h2>
+                    <p>Your registration details are below. Complete the remaining profile steps to publish your business on NeedOneService City Listings.</p>
+                    <div className="vh-welcome-status">
+                        <span className="vh-status-dot" /> Vendor account approved
+                        <span className="vh-welcome-divider" />
+                        <span className={listingIsLive ? "is-live" : listingIsPending ? "is-pending" : "is-draft"}>{listingIsLive ? "Listing is live" : listingIsPending ? "Listing under admin review" : "Listing not submitted"}</span>
                     </div>
+                </div>
+                <div className="vh-welcome-mark"><Building2 size={34} /></div>
+            </section>
 
-                    <p className="vh-about-text">
-                        {business.description}
-                    </p>
-
-                    <div className="vh-two-detail">
-                        <div>
-                            <small>Business category</small>
-                            <strong>{business.category}</strong>
-                        </div>
-
-                        <div>
-                            <small>Listing status</small>
-                            <strong className="vh-open-label">
-                                <span
-                                    className={`vh-status-dot ${business.open ? "" : "is-closed"}`}
-                                />
-                                {business.open ? "Open" : "Closed"}
-                            </strong>
-                        </div>
-                    </div>
-                </section>
-
-                <section className="vh-card">
-                    <div className="vh-section-heading">
-                        <div className="vh-heading-title">
-                            <span className="vh-heading-icon">
-                                <Clock3 size={18} />
-                            </span>
-                            <h3>Operating Hours</h3>
-                        </div>
-
-                        <button
-                            className="vh-small-action"
-                            onClick={() => goToTab("about")}
-                            type="button"
-                        >
-                            <Pencil size={13} /> Edit hours
-                        </button>
-                    </div>
-
-                    <div className="vh-hours-list">
-                        {hours.map((item) => (
-                            <div key={item.id}>
-                                <span>
-                                    {item.day || "Day not specified"}
-                                </span>
-                                <strong>
-                                    {item.hours || "Hours not specified"}
-                                </strong>
-                            </div>
+            <section className="vh-registration-card">
+                <div className="vh-registration-heading">
+                    <div><span className="vh-eyebrow">STEP 1 · ALREADY PROVIDED</span><h3>Your registration details</h3><p>These are the details you submitted when you registered as a vendor.</p></div>
+                    <span className="vh-registration-lock"><ClipboardList size={19} /> Registration record</span>
+                </div>
+                {registrationDetails.length > 0 ? (
+                    <div className="vh-registration-grid">
+                        {registrationDetails.map(([label, value]) => (
+                            <div className="vh-registration-field" key={String(label)}><small>{String(label)}</small><strong>{String(value)}</strong></div>
                         ))}
-
-                        {hours.length === 0 && (
-                            <p className="vh-muted-line">
-                                No operating hours added yet.
-                            </p>
-                        )}
                     </div>
-                </section>
+                ) : (
+                    <p className="vh-empty-state">Your original registration details could not be found in this vendor profile.</p>
+                )}
+                <p className="vh-registration-note"><Info size={15} /> Your original registration information is shown here. Add any missing public-facing details in the profile completion section above.</p>
+            </section>
 
-                <section className="vh-card">
-                    <div className="vh-section-heading">
-                        <div className="vh-heading-title">
-                            <span className="vh-heading-icon">
-                                <CheckCircle2 size={18} />
-                            </span>
-                            <h3>Key Highlights & Amenities</h3>
-                        </div>
-
-                        <button
-                            className="vh-small-action"
-                            onClick={() => goToTab("about")}
-                            type="button"
-                        >
-                            <Pencil size={13} /> Edit
-                        </button>
+            <section className="vh-journey-card">
+                <div className="vh-journey-heading">
+                    <div>
+                        <span className="vh-eyebrow">YOUR NEXT STEP</span>
+                        <h3>{profileCompletionPercentage === 100 ? "Your profile is complete" : "Complete your business profile"}</h3>
+                        <p>{profileCompletionPercentage === 100 ? "Preview your listing and submit it for the final admin approval." : "A complete profile helps customers understand and trust your business."}</p>
                     </div>
-
-                    <ul className="vh-amenities-list">
-                        {highlights
-                            .filter((item) => item.trim())
-                            .map((item, index) => (
-                                <li key={`${item}-${index}`}>
-                                    <Check size={15} />
-                                    <span>{item}</span>
-                                </li>
+                    <div className="vh-completion-number"><strong>{profileCompletionPercentage}%</strong><span>completed</span></div>
+                </div>
+                <div className="vh-progress-track vh-progress-track-large" role="progressbar" aria-valuenow={profileCompletionPercentage} aria-valuemin={0} aria-valuemax={100}>
+                    <span style={{ width: `${profileCompletionPercentage}%` }} />
+                </div>
+                <div className="vh-journey-meta"><span>{completedProfileFields} of {profileCompletionItems.length} profile requirements complete</span><span>{missingProfileTasks.length} remaining</span></div>
+                {missingProfileTasks.length > 0 ? (
+                    <div className="vh-next-steps">
+                        <div className="vh-next-steps-title"><ListChecks size={17} /><strong>What you still need to complete</strong></div>
+                        <div className="vh-task-list">
+                            {missingProfileTasks.map((task, index) => (
+                                <div className="vh-task-item" key={`${task.label}-${index}`}><span className="vh-task-number">{index + 1}</span><span>{task.label}</span><CheckCircle2 size={16} /></div>
                             ))}
-
-                        {highlights.every(
-                            (item) => !item.trim(),
-                        ) && (
-                                <li>
-                                    <Info size={15} />
-                                    <span>No highlights added yet.</span>
-                                </li>
-                            )}
-                    </ul>
-                </section>
-
-                <section className="vh-card">
-                    <div className="vh-section-heading">
-                        <div className="vh-heading-title">
-                            <span className="vh-heading-icon">
-                                <UserRound size={18} />
-                            </span>
-                            <h3>Contact Details</h3>
                         </div>
-
-                        <button
-                            className="vh-small-action"
-                            onClick={() => goToTab("about")}
-                            type="button"
-                        >
-                            <Pencil size={13} /> Edit
-                        </button>
+                        <button type="button" className="vh-button vh-button-primary" onClick={handleEditBusiness}><Pencil size={15} /> Complete my profile <ArrowRight size={15} /></button>
                     </div>
-
-                    <ul className="vh-contact-list">
-                        <li>
-                            <MapPin size={16} />
-                            <span>
-                                {business.address ||
-                                    "Address not provided"}
-                            </span>
-                        </li>
-                        <li>
-                            <Phone size={16} />
-                            <span>
-                                {business.phone ||
-                                    "Phone number not provided"}
-                            </span>
-                        </li>
-                        <li>
-                            <Mail size={16} />
-                            <span>
-                                {business.email ||
-                                    "Email not provided"}
-                            </span>
-                        </li>
-                        <li>
-                            <ArrowRight size={16} />
-                            <span>
-                                {business.website ||
-                                    "Website not provided"}
-                            </span>
-                        </li>
-                    </ul>
-                </section>
-
-                <section className="vh-card">
-                    <div className="vh-section-heading">
-                        <div className="vh-heading-title">
-                            <span className="vh-heading-icon">
-                                <BadgeCheck size={18} />
-                            </span>
-                            <h3>Verification</h3>
-                        </div>
-
-                        <button
-                            className="vh-small-action"
-                            onClick={() =>
-                                showNotice(
-                                    "Verification document management is not connected yet.",
-                                )
-                            }
-                            type="button"
-                        >
-                            Details
-                        </button>
-                    </div>
-
-                    <div className="vh-verification-box">
-                        <BadgeCheck size={26} />
-                        <div>
-                            <strong>
-                                {business.verified
-                                    ? "Verified Business"
-                                    : "Verification pending"}
-                            </strong>
-                            <p>
-                                {business.verified
-                                    ? "Your listing is marked as verified."
-                                    : "Complete verification to build customer trust."}
-                            </p>
-                        </div>
-                    </div>
-
-                    <button
-                        className="vh-inline-link"
-                        onClick={() =>
-                            showNotice(
-                                "Verification document management is not connected yet.",
-                            )
-                        }
-                        type="button"
-                    >
-                        <FileText size={14} /> View verification details
-                    </button>
-                </section>
-
-                <section className="vh-card">
-                    <div className="vh-section-heading">
-                        <div className="vh-heading-title">
-                            <span className="vh-heading-icon">
-                                <ImageIcon size={18} />
-                            </span>
-                            <h3>Media & Gallery</h3>
-                        </div>
-
-                        <button
-                            className="vh-small-action"
-                            onClick={() => goToTab("gallery")}
-                            type="button"
-                        >
-                            <Pencil size={13} /> Edit media
-                        </button>
-                    </div>
-
-                    <div className="vh-gallery-strip">
-                        {gallery.slice(0, 3).map((item) => (
-                            <button
-                                key={item.id}
-                                onClick={() => {
-                                    setSelectedGalleryId(item.id);
-                                    goToTab("gallery");
-                                }}
-                                type="button"
-                                aria-label={`View ${item.title}`}
-                            >
-                                <img
-                                    src={item.image}
-                                    alt={item.title}
-                                    loading="lazy"
-                                />
-                            </button>
-                        ))}
-
-                        {gallery.length === 0 && (
-                            <p className="vh-muted-line">
-                                No gallery images yet.
-                            </p>
+                ) : (
+                    <div className="vh-publish-ready">
+                        <div><CheckCircle2 size={22} /><span><strong>Ready to publish</strong><small>Review how your listing will appear before submitting it for admin approval.</small></span></div>
+                        {listingIsLive ? (
+                            <button type="button" className="vh-button vh-button-primary" onClick={() => navigate("/city-listings")}><Eye size={15} /> View City Listings</button>
+                        ) : listingIsPending ? (
+                            <span className="vh-review-pending"><Clock3 size={16} /> Waiting for admin approval</span>
+                        ) : (
+                            <button type="button" className="vh-button vh-button-primary" onClick={() => setShowListingPreview(true)}><Eye size={15} /> Preview & publish listing</button>
                         )}
                     </div>
+                )}
+            </section>
 
-                    <p className="vh-muted-line">
-                        Showcase your business with quality images.
-                    </p>
+            <section className="vh-listing-status-card">
+                <div className="vh-listing-status-copy"><span className="vh-eyebrow">CITY LISTING</span><h3>{listingIsLive ? "Your business is visible to customers" : listingIsPending ? "Your listing is being reviewed" : "Your listing is not public yet"}</h3><p>{listingIsLive ? "Your approved listing is now available in City Listings." : listingIsPending ? "Your profile has been submitted. The listing will appear publicly only after the admin approves it." : "Complete your profile and submit it for the final listing review."}</p></div>
+                <span className={`vh-listing-state ${listingIsLive ? "live" : listingIsPending ? "pending" : "draft"}`}>{listingIsLive ? "Live" : listingIsPending ? "Pending approval" : "Draft"}</span>
+                {listingIsLive && <button type="button" className="vh-button vh-button-outline" onClick={() => navigate("/city-listings")}>Go to City Listings <ArrowRight size={15} /></button>}
+            </section>
 
-                    <button
-                        className="vh-inline-link"
-                        onClick={() => goToTab("gallery")}
-                        type="button"
-                    >
-                        <Upload size={14} /> Manage images
-                    </button>
-                </section>
-
-                <section className="vh-card">
-                    <div className="vh-section-heading">
-                        <div className="vh-heading-title">
-                            <span className="vh-heading-icon">
-                                <ShieldCheck size={18} />
-                            </span>
-                            <h3>Services Offered</h3>
-                        </div>
-
-                        <button
-                            className="vh-small-action"
-                            onClick={() => goToTab("services")}
-                            type="button"
-                        >
-                            <Pencil size={13} /> Edit services
-                        </button>
-                    </div>
-
-                    <ul className="vh-amenities-list">
-                        {services.map((service) => (
-                            <li key={service.id}>
-                                <Check size={15} />
-                                <span>{service.title}</span>
-                            </li>
-                        ))}
-
-                        {services.length === 0 && (
-                            <li>
-                                <Info size={15} />
-                                <span>No services added yet.</span>
-                            </li>
-                        )}
-                    </ul>
-
-                    <button
-                        className="vh-inline-link"
-                        onClick={() => goToTab("services")}
-                        type="button"
-                    >
-                        Manage services <ChevronRight size={14} />
-                    </button>
-                </section>
-
-                <section className="vh-card">
-                    <div className="vh-section-heading">
-                        <div className="vh-heading-title">
-                            <span className="vh-heading-icon">
-                                <Package size={18} />
-                            </span>
-                            <h3>Products / Catalogue</h3>
-                        </div>
-
-                        <button
-                            className="vh-small-action"
-                            onClick={() => goToTab("products")}
-                            type="button"
-                        >
-                            <Pencil size={13} /> Edit catalogue
-                        </button>
-                    </div>
-
-                    <div className="vh-product-strip">
-                        {products.slice(0, 4).map((product) => (
-                            <button
-                                className="vh-product-thumb"
-                                key={product.id}
-                                onClick={() => goToTab("products")}
-                                type="button"
-                                aria-label={`View ${product.name}`}
-                            >
-                                <img
-                                    src={product.image}
-                                    alt={product.name}
-                                    loading="lazy"
-                                />
-                            </button>
-                        ))}
-
-                        <button
-                            className="vh-product-add"
-                            onClick={() => {
-                                goToTab("products");
-                                openAddProduct();
-                            }}
-                            type="button"
-                            aria-label="Add product"
-                        >
-                            <Plus size={19} />
-                        </button>
-                    </div>
-
-                    <p className="vh-muted-line">
-                        Keep your catalogue and stock information updated.
-                    </p>
-                </section>
-
-                <section className="vh-card">
-                    <div className="vh-section-heading">
-                        <div className="vh-heading-title">
-                            <span className="vh-heading-icon">
-                                <Star size={18} />
-                            </span>
-                            <h3>Customer Reviews</h3>
-                        </div>
-
-                        <button
-                            className="vh-small-action"
-                            onClick={() => goToTab("reviews")}
-                            type="button"
-                        >
-                            <Pencil size={13} /> View reviews
-                        </button>
-                    </div>
-
-                    <div className="vh-review-summary">
-                        <div className="vh-review-score">
-                            <strong>{business.rating.toFixed(1)}</strong>
-                            <span className="vh-stars">★★★★★</span>
-                            <small>
-                                {business.reviewCount} reviews
-                            </small>
-                        </div>
-
-                        <div className="vh-review-bars">
-                            {[90, 65, 30, 12, 5].map(
-                                (value, index) => (
-                                    <div
-                                        className="vh-review-bar-row"
-                                        key={value}
-                                    >
-                                        <span>{5 - index} star</span>
-                                        <div>
-                                            <i
-                                                style={{
-                                                    width: `${value}%`,
-                                                }}
-                                            />
-                                        </div>
-                                    </div>
-                                ),
-                            )}
-                        </div>
-                    </div>
-
-                    <p className="vh-muted-line">
-                        Ratings shown are sample data until connected.
-                    </p>
-                </section>
-
-                <section className="vh-card">
-                    <div className="vh-section-heading">
-                        <div className="vh-heading-title">
-                            <span className="vh-heading-icon">
-                                <MapPin size={18} />
-                            </span>
-                            <h3>Location & Map</h3>
-                        </div>
-
-                        <button
-                            className="vh-small-action"
-                            onClick={() => goToTab("location")}
-                            type="button"
-                        >
-                            <Pencil size={13} /> Edit location
-                        </button>
-                    </div>
-
-                    <div className="vh-location-preview">
-                        <div className="vh-map-placeholder">
-                            <MapPin size={25} />
-                            <span>Map preview</span>
-                        </div>
-
-                        <div>
-                            <strong>
-                                {business.address ||
-                                    "Business address not provided"}
-                            </strong>
-
-                            <button
-                                className="vh-inline-link"
-                                onClick={() => goToTab("location")}
-                                type="button"
-                            >
-                                View location <ChevronRight size={14} />
-                            </button>
-                        </div>
-                    </div>
-                </section>
-
-                <section className="vh-card">
-                    <div className="vh-section-heading">
-                        <div className="vh-heading-title">
-                            <span className="vh-heading-icon">
-                                <TrendingUp size={18} />
-                            </span>
-                            <h3>Business Performance</h3>
-                        </div>
-
-                        <button
-                            className="vh-small-action"
-                            onClick={() => goToTab("performance")}
-                            type="button"
-                        >
-                            <Pencil size={13} /> View performance
-                        </button>
-                    </div>
-
-                    <div className="vh-metric-grid">
-                        {[
-                            ["128", "Listing views"],
-                            ["24", "Enquiries"],
-                            ["18", "Product clicks"],
-                            ["12", "New followers"],
-                        ].map(([value, label]) => (
-                            <div key={label}>
-                                <strong>{value}</strong>
-                                <small>{label}</small>
-                                <em>
-                                    <TrendingUp size={11} /> Demo metric
-                                </em>
-                            </div>
-                        ))}
-                    </div>
-
-                    <p className="vh-muted-line">
-                        Sample metrics; connect analytics for real figures.
-                    </p>
-                </section>
-            </div>
-
-            <div className="vh-bottom-grid">
-                <section className="vh-card">
-                    <div className="vh-section-heading">
-                        <div className="vh-heading-title">
-                            <span className="vh-heading-icon">
-                                <CalendarClock size={18} />
-                            </span>
-                            <h3>Recent Activity</h3>
-                        </div>
-                    </div>
-
-                    <div className="vh-activity-list">
-                        <div className="vh-activity-row">
-                            <span className="vh-activity-icon green">
-                                <CheckCircle2 size={16} />
-                            </span>
-                            <div>
-                                <strong>Business profile overview</strong>
-                                <small>
-                                    Review your public listing details and
-                                    contact information.
-                                </small>
-                            </div>
-                            <span className="vh-pill vh-pill-verified">
-                                Profile
-                            </span>
-                        </div>
-
-                        <div className="vh-activity-row">
-                            <span className="vh-activity-icon blue">
-                                <Package size={16} />
-                            </span>
-                            <div>
-                                <strong>Catalogue management</strong>
-                                <small>
-                                    Check product details, pricing, and
-                                    stock availability.
-                                </small>
-                            </div>
-                            <button
-                                className="vh-small-action"
-                                onClick={() => goToTab("products")}
-                                type="button"
-                            >
-                                Open
-                            </button>
-                        </div>
-
-                        <div className="vh-activity-row">
-                            <span className="vh-activity-icon orange">
-                                <MessageCircle size={16} />
-                            </span>
-                            <div>
-                                <strong>Customer feedback</strong>
-                                <small>
-                                    Review ratings and improve your
-                                    customer experience.
-                                </small>
-                            </div>
-                            <button
-                                className="vh-small-action"
-                                onClick={() => goToTab("reviews")}
-                                type="button"
-                            >
-                                Open
-                            </button>
-                        </div>
-                    </div>
-                </section>
-
-                <section className="vh-card vh-profile-completion">
-                    <div className="vh-section-heading">
-                        <div className="vh-heading-title">
-                            <span className="vh-heading-icon">
-                                <CheckCircle2 size={18} />
-                            </span>
-                            <h3>Profile Completion</h3>
-                        </div>
-                    </div>
-
-                    <div className="vh-completion-heading">
-                        <strong>{profileCompletionPercentage}%</strong>
-                        <span>
-                            {completedProfileFields} of {profileCompletionItems.length} completed
-                        </span>
-                    </div>
-
-                    <div className="vh-progress-track">
-                        <span
-                            style={{
-                                width: `${profileCompletionPercentage}%`,
-                            }}
-                        />
-                    </div>
-
-                    <p>
-                        {profileCompletionPercentage === 100
-                            ? "Your business profile is complete and ready for publishing."
-                            : "Complete the remaining business details, operating hours, products, services and gallery information."}
-                    </p>
-
-                    <div className="vh-progress-track">
-                        <span style={{ width: "75%" }} />
-                    </div>
-
-                    <p>
-                        Add accurate business details, operating hours,
-                        products, and gallery images to help customers
-                        understand your business.
-                    </p>
-
-                    <button
-                        className="vh-button vh-button-outline"
-                        onClick={handleEditBusiness}
-                        type="button"
-                    >
-                        <Pencil size={14} /> Complete profile
-                    </button>
-                </section>
-            </div>
-        </>
+            <section className="vh-card vh-registration-tools">
+                <div className="vh-section-heading"><div className="vh-heading-title"><span className="vh-heading-icon"><Building2 size={18} /></span><h3>Manage your business information</h3></div></div>
+                <div className="vh-tool-links">
+                    <button type="button" onClick={() => goToTab("about")}><Pencil size={17} /><span><strong>Business profile</strong><small>About, contact details and opening hours</small></span><ChevronRight size={17} /></button>
+                    <button type="button" onClick={() => goToTab("gallery")}><ImageIcon size={17} /><span><strong>Photos & gallery</strong><small>Show customers your business</small></span><ChevronRight size={17} /></button>
+                    <button type="button" onClick={() => goToTab("services")}><CheckCircle2 size={17} /><span><strong>Services</strong><small>Add what your business offers</small></span><ChevronRight size={17} /></button>
+                    <button type="button" onClick={() => goToTab("products")}><Package size={17} /><span><strong>Products</strong><small>Manage your products and catalogue</small></span><ChevronRight size={17} /></button>
+                    <button type="button" onClick={() => goToTab("location")}><MapPin size={17} /><span><strong>Location</strong><small>Help customers find your business</small></span><ChevronRight size={17} /></button>
+                    <button type="button" onClick={() => goToTab("reviews")}><Star size={17} /><span><strong>Customer reviews</strong><small>See feedback on your business</small></span><ChevronRight size={17} /></button>
+                </div>
+            </section>
+        </div>
     );
 
     const renderGallery = () => {
@@ -3326,19 +2810,13 @@ function VendorHub() {
 
                             <p>{business.description}</p>
 
-                            <div className="vh-rating-line">
-                                <Star
-                                    size={15}
-                                    fill="currentColor"
-                                />
-                                <strong>
-                                    {business.rating.toFixed(1)}
-                                </strong>
-                                <span>
-                                    ({business.reviewCount} reviews ·
-                                    sample data)
-                                </span>
-                            </div>
+                            {business.reviewCount > 0 && (
+                                <div className="vh-rating-line">
+                                    <Star size={15} fill="currentColor" />
+                                    <strong>{business.rating.toFixed(1)}</strong>
+                                    <span>({business.reviewCount} reviews)</span>
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -3362,19 +2840,15 @@ function VendorHub() {
                         <div className="vh-banner-buttons">
                             <button
                                 className="vh-button vh-button-primary"
-                                onClick={publishVendorListing}
+                                onClick={() => profileCompletionPercentage === 100 ? setShowListingPreview(true) : handleEditBusiness()}
                                 type="button"
                             >
-                                <CheckCircle2 size={15} /> Publish
+                                <CheckCircle2 size={15} /> {profileCompletionPercentage === 100 ? "Preview & publish" : "Complete profile"}
                             </button>
 
                             <button
                                 className="vh-button vh-button-outline"
-                                onClick={() =>
-                                    showNotice(
-                                        "Connect this button to your public City Listings preview route.",
-                                    )
-                                }
+                                onClick={() => setShowListingPreview(true)}
                                 type="button"
                             >
                                 <Eye size={15} /> Preview Listing
@@ -3447,48 +2921,30 @@ function VendorHub() {
                     })}
                 </nav>
 
-                <div className="vh-search-row">
-                    <label
-                        className="vh-search"
-                        htmlFor="vh-dashboard-search"
-                    >
-                        <Eye size={16} />
-
-                        <input
-                            id="vh-dashboard-search"
-                            type="search"
-                            value={search}
-                            onChange={(event) =>
-                                setSearch(event.target.value)
-                            }
-                            placeholder="Search products or services..."
-                        />
-
-                        {search && (
-                            <button
-                                className="vh-search-clear"
-                                type="button"
-                                onClick={() => setSearch("")}
-                                aria-label="Clear search"
-                            >
-                                <X size={14} />
-                            </button>
-                        )}
-                    </label>
-                </div>
+                {activeTab !== "overview" && (
+                    <div className="vh-search-row">
+                        <label className="vh-search" htmlFor="vh-dashboard-search">
+                            <Eye size={16} />
+                            <input id="vh-dashboard-search" type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search products or services..." />
+                            {search && <button className="vh-search-clear" type="button" onClick={() => setSearch("")} aria-label="Clear search"><X size={14} /></button>}
+                        </label>
+                    </div>
+                )}
 
                 {renderActiveTab()}
 
-                <section className="vh-card vh-vendor-subscription" id="vendor-subscription">
-                    <div className="vh-vendor-subscription-heading"><div><span className="vh-eyebrow">MEMBERSHIP &amp; VISIBILITY</span><h2><CreditCard size={20} /> Vendor Subscription</h2><p>Manage your 30-day trial and choose a business visibility plan.</p></div><span className={`vh-vendor-subscription-status ${vendorSubscriptionStatus.toLowerCase().replaceAll(" ", "-")}`}>{vendorSubscriptionStatus}</span></div>
-                    {vendorSubscriptionStatus === "Free Trial" && vendorTrialRemaining && <div className="vh-vendor-trial"><Sparkles size={19} /><div><strong>30-day free trial</strong><p>{vendorTrialRemaining.days} days, {vendorTrialRemaining.hours} hours and {vendorTrialRemaining.minutes} minutes remaining · Ends {formatVendorDate(vendorProfile?.trialEndsAt || "")}</p></div><strong>₹0</strong></div>}
-                    {(vendorSubscriptionStatus === "Trial Expired" || vendorSubscriptionStatus === "Expired") && <div className="vh-vendor-expired"><Clock3 size={18} /><span>Your free trial has expired. Choose a plan to continue your vendor membership.</span></div>}
-                    {(vendorSubscriptionStatus === "Free Trial" || vendorSubscriptionStatus === "Trial Expired" || vendorSubscriptionStatus === "Expired") && <><div className="vh-vendor-plan-grid">{VENDOR_PLANS.map(plan => <button type="button" key={plan.name} className={`vh-vendor-plan ${plan.name.toLowerCase()} ${selectedVendorPlan === plan.name ? "selected" : ""}`} onClick={() => { setSelectedVendorPlan(plan.name); setViewingVendorPlan(plan.name); setVendorSubscriptionMessage(""); }}><span>{plan.name === "Basic" ? <ShieldCheck size={18} /> : plan.name === "Exclusive" ? <Sparkles size={18} /> : <Crown size={18} />}</span><strong>{plan.displayName}</strong><b>₹{plan.price}<small> / month</small></b><p>{plan.description}</p><em>View plan details <ChevronRight size={14} /></em></button>)}</div>{vendorSubscriptionStatus !== "Free Trial" && <div className="vh-vendor-payment"><div><small>Selected plan</small><strong>{VENDOR_PLANS.find(plan => plan.name === selectedVendorPlan)?.displayName}</strong></div><div><small>Monthly price</small><strong>₹{VENDOR_PLANS.find(plan => plan.name === selectedVendorPlan)?.price}</strong></div><button type="button" className="vh-button vh-button-primary" onClick={saveVendorPlanSelection}><CreditCard size={16} /> Proceed to Payment</button></div>}</>}
-                    {vendorSubscriptionStatus === "Active" && <div className="vh-vendor-active"><CheckCircle2 size={20} /><div><strong>{vendorProfile?.subscriptionPlan || "Vendor"} plan active</strong><p>Expires {formatVendorDate(vendorProfile?.subscriptionEndsAt || "")}</p></div></div>}
-                    {vendorSubscriptionStatus === "Not Started" && <p className="vh-vendor-pending">Your free trial will begin when your vendor account is approved.</p>}
-                    {vendorSubscriptionMessage && <p className="vh-vendor-subscription-message" role="status">{vendorSubscriptionMessage}</p>}
-                    <small className="vh-vendor-subscription-note">No charge is made during the free trial. A paid plan is activated only after successful payment verification.</small>
-                </section>
+                {activeTab === "overview" && (
+                    <section className="vh-card vh-vendor-subscription" id="vendor-subscription">
+                        <div className="vh-vendor-subscription-heading"><div><span className="vh-eyebrow">MEMBERSHIP &amp; VISIBILITY</span><h2><CreditCard size={20} /> Vendor Subscription</h2><p>Manage your 30-day trial and choose a business visibility plan.</p></div><span className={`vh-vendor-subscription-status ${vendorSubscriptionStatus.toLowerCase().replaceAll(" ", "-")}`}>{vendorSubscriptionStatus}</span></div>
+                        {vendorSubscriptionStatus === "Free Trial" && vendorTrialRemaining && <div className="vh-vendor-trial"><Sparkles size={19} /><div><strong>30-day free trial</strong><p>{vendorTrialRemaining.days} days, {vendorTrialRemaining.hours} hours and {vendorTrialRemaining.minutes} minutes remaining · Ends {formatVendorDate(vendorProfile?.trialEndsAt || "")}</p></div><strong>₹0</strong></div>}
+                        {(vendorSubscriptionStatus === "Trial Expired" || vendorSubscriptionStatus === "Expired") && <div className="vh-vendor-expired"><Clock3 size={18} /><span>Your free trial has expired. Choose a plan to continue your vendor membership.</span></div>}
+                        {(vendorSubscriptionStatus === "Free Trial" || vendorSubscriptionStatus === "Trial Expired" || vendorSubscriptionStatus === "Expired") && <><div className="vh-vendor-plan-grid">{VENDOR_PLANS.map(plan => <button type="button" key={plan.name} className={`vh-vendor-plan ${plan.name.toLowerCase()} ${selectedVendorPlan === plan.name ? "selected" : ""}`} onClick={() => { setSelectedVendorPlan(plan.name); setViewingVendorPlan(plan.name); setVendorSubscriptionMessage(""); }}><span>{plan.name === "Basic" ? <ShieldCheck size={18} /> : plan.name === "Exclusive" ? <Sparkles size={18} /> : <Crown size={18} />}</span><strong>{plan.displayName}</strong><b>₹{plan.price}<small> / month</small></b><p>{plan.description}</p><em>View plan details <ChevronRight size={14} /></em></button>)}</div>{vendorSubscriptionStatus !== "Free Trial" && <div className="vh-vendor-payment"><div><small>Selected plan</small><strong>{VENDOR_PLANS.find(plan => plan.name === selectedVendorPlan)?.displayName}</strong></div><div><small>Monthly price</small><strong>₹{VENDOR_PLANS.find(plan => plan.name === selectedVendorPlan)?.price}</strong></div><button type="button" className="vh-button vh-button-primary" onClick={saveVendorPlanSelection}><CreditCard size={16} /> Proceed to Payment</button></div>}</>}
+                        {vendorSubscriptionStatus === "Active" && <div className="vh-vendor-active"><CheckCircle2 size={20} /><div><strong>{vendorProfile?.subscriptionPlan || "Vendor"} plan active</strong><p>Expires {formatVendorDate(vendorProfile?.subscriptionEndsAt || "")}</p></div></div>}
+                        {vendorSubscriptionStatus === "Not Started" && <p className="vh-vendor-pending">Your free trial will begin when your vendor account is approved.</p>}
+                        {vendorSubscriptionMessage && <p className="vh-vendor-subscription-message" role="status">{vendorSubscriptionMessage}</p>}
+                        <small className="vh-vendor-subscription-note">No charge is made during the free trial. A paid plan is activated only after successful payment verification.</small>
+                    </section>
+                )}
 
                 {viewingVendorPlanDetails && <div className="vh-vendor-plan-overlay" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setViewingVendorPlan(null); }}><section className="vh-vendor-plan-dialog" role="dialog" aria-modal="true" aria-labelledby="vh-vendor-plan-title"><button type="button" className="vh-vendor-plan-close" onClick={() => setViewingVendorPlan(null)} aria-label="Close plan details"><X size={19} /></button><span className="vh-eyebrow">VENDOR MEMBERSHIP</span><h2 id="vh-vendor-plan-title">{viewingVendorPlanDetails.displayName}</h2><p>{viewingVendorPlanDetails.description}</p><strong className="vh-vendor-plan-modal-price">₹{viewingVendorPlanDetails.price.toLocaleString("en-IN")} <small>/ month</small></strong><h3>Membership Benefits</h3><ul>{viewingVendorPlanDetails.features.map((feature, index) => <li key={`${viewingVendorPlanDetails.name}-${index}`}><Check size={15} />{feature}</li>)}</ul><div className="vh-vendor-plan-discounts"><span><b>10% OFF</b><small>3 months</small></span><span><b>15% OFF</b><small>6 months</small></span><span><b>2 Months FREE</b><small>12 months</small></span></div><div className="vh-vendor-plan-actions"><button type="button" className="vh-button vh-button-outline" onClick={() => setViewingVendorPlan(null)}>Close</button><button type="button" className="vh-button vh-button-primary" onClick={() => { setSelectedVendorPlan(viewingVendorPlanDetails.name); setViewingVendorPlan(null); }}>Select This Plan</button></div><small>Your 30-day free trial remains unchanged. Subscription activation requires successful payment verification.</small></section></div>}
 
@@ -3504,11 +2960,7 @@ function VendorHub() {
                     <div className="vh-footer-links">
                         <button
                             type="button"
-                            onClick={() =>
-                                showNotice(
-                                    "Connect Help & Support to your support page.",
-                                )
-                            }
+                            onClick={() => setSupportOpen(true)}
                         >
                             <MessageCircle size={13} />
                             Help & Support
@@ -4008,6 +3460,19 @@ function VendorHub() {
             )}
 
 
+            {supportOpen && (
+                <div className="vh-modal-backdrop vh-support-backdrop" onMouseDown={(event) => { if (event.target === event.currentTarget) setSupportOpen(false); }}>
+                    <section className="vh-support-dialog" role="dialog" aria-modal="true" aria-labelledby="vh-support-title">
+                        <header className="vh-support-header"><div className="vh-support-avatar"><MessageCircle size={20} /></div><div><h2 id="vh-support-title">Help & Support</h2><p>Message the NeedOneService admin team</p></div><button type="button" className="vh-modal-close" onClick={() => setSupportOpen(false)} aria-label="Close support"><X size={18} /></button></header>
+                        <div className="vh-support-thread" aria-live="polite">
+                            {supportMessages.length === 0 ? <div className="vh-support-empty"><MessageCircle size={28} /><strong>How can we help?</strong><p>Send your question and the admin team can respond in this conversation.</p></div> : supportMessages.map(message => <div key={message.id} className={`vh-support-message ${message.sender === "admin" ? "from-admin" : "from-vendor"}`}><span>{message.sender === "admin" ? "NeedOneService Admin" : "You"}</span><p>{message.text}</p><small>{formatVendorDate(message.createdAt)}</small></div>)}
+                        </div>
+                        <form className="vh-support-compose" onSubmit={(event) => { event.preventDefault(); sendSupportMessage(); }}><textarea value={supportDraft} onChange={(event) => setSupportDraft(event.target.value)} placeholder="Type your message..." rows={2} aria-label="Your support message" /><button type="submit" className="vh-button vh-button-primary" disabled={!supportDraft.trim()}><Send size={15} /> Send</button></form>
+                        <p className="vh-support-footnote">Admin replies will appear in this conversation when the support inbox is connected.</p>
+                    </section>
+                </div>
+            )}
+
             {showListingPreview && (
                 <div
                     className="vh-modal-backdrop"
@@ -4139,11 +3604,21 @@ function VendorHub() {
                             </button>
 
                             <button
-                                className="vh-button vh-button-primary"
+                                className="vh-button vh-button-outline"
                                 type="button"
                                 onClick={() => setShowListingPreview(false)}
                             >
-                                Close Preview
+                                Cancel
+                            </button>
+                            <button
+                                className="vh-button vh-button-primary"
+                                type="button"
+                                onClick={() => {
+                                    setShowListingPreview(false);
+                                    publishVendorListing();
+                                }}
+                            >
+                                <CheckCircle2 size={15} /> Submit for admin approval
                             </button>
                         </div>
                     </section>
