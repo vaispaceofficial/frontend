@@ -35,11 +35,13 @@ import {
     Star,
     Trash2,
     TrendingUp,
+    Megaphone,
     Upload,
     // UserRound,
     X,
 } from "lucide-react";
 import "./VendorHub.css";
+import { categories } from "./CityListingsPage";
 
 type TabId =
     | "overview"
@@ -49,7 +51,8 @@ type TabId =
     | "products"
     | "location"
     | "reviews"
-    | "performance";
+    | "performance"
+    | "ads";
 
 type BusinessDetails = {
     name: string;
@@ -149,6 +152,14 @@ type StoredVendorProfile = {
     suspendedUntilDate?: string;
     reactivationDate?: string;
     banReason?: string;
+
+    cityListingCategory?: string;
+    cityListingSubcategory?: string;
+    isPublished?: boolean;
+    publicationStatus?: string;
+    publishedAt?: string;
+    listingSubmittedAt?: string;
+    listingStatusUpdatedAt?: string;
 
     // Admin information
     adminRemarks?: string;
@@ -552,6 +563,7 @@ const tabItems: {
         { id: "location", label: "Location & Map", icon: MapPin },
         { id: "reviews", label: "Customer Reviews", icon: MessageCircle },
         { id: "performance", label: "Performance", icon: TrendingUp },
+        { id: "ads", label: "Ads", icon: Megaphone },
     ];
 
 const createId = (prefix: string) =>
@@ -584,6 +596,18 @@ function VendorHub() {
 
     const [business, setBusiness] = useState<BusinessDetails>(() =>
         businessFromVendorProfile(readStoredVendorProfile()),
+    );
+
+    const [cityListingCategory, setCityListingCategory] = useState(
+        () => String(readStoredVendorProfile()?.cityListingCategory || "")
+    );
+
+    const [cityListingSubcategory, setCityListingSubcategory] = useState(
+        () => String(readStoredVendorProfile()?.cityListingSubcategory || "")
+    );
+
+    const selectedCityListingCategory = categories.find(
+        (category) => category.id === cityListingCategory
     );
 
     const [hours, setHours] = useState<OperatingHour[]>(() => {
@@ -683,13 +707,53 @@ function VendorHub() {
     const [supportOpen, setSupportOpen] = useState(false);
     const [supportDraft, setSupportDraft] = useState("");
     const [supportMessages, setSupportMessages] = useState<Array<{ id: string; sender: "vendor" | "admin"; text: string; createdAt: string }>>([]);
+    const [adDraft, setAdDraft] = useState({
+        title: "",
+        description: "",
+        destinationUrl: "",
+        contactNumber: "",
+        image: "",
+    });
+    const [showAdsComingSoon, setShowAdsComingSoon] = useState(false);
 
     const vendorAccessState = getVendorAccessState(vendorProfile);
     const vendorSubscriptionStatus = getVendorSubscriptionStatus(vendorProfile, subscriptionClock);
     const vendorTrialRemaining = getVendorTrialRemaining(vendorProfile?.trialEndsAt, subscriptionClock);
     const viewingVendorPlanDetails = VENDOR_PLANS.find(plan => plan.name === viewingVendorPlan) || null;
 
+    // City Listings status — shared by the Vendor Hub UI
+    const listingApprovalStatusForUI = normalizeVendorStatus(
+        vendorProfile?.listingStatus
+    );
+
+    const publicationStatusForUI = normalizeVendorStatus(
+        vendorProfile?.publicationStatus
+    );
+
+    const listingIsLive =
+        vendorProfile?.isPublished === true &&
+        ["published", "live", "active"].includes(publicationStatusForUI);
+
+    const listingIsApproved = [
+        "approved",
+        "verified",
+        "active",
+    ].includes(listingApprovalStatusForUI);
+
+    const listingIsPending =
+        Boolean(vendorProfile?.listingSubmittedAt) &&
+        ["pending", "pending review", "under review", "submitted"]
+            .includes(listingApprovalStatusForUI);
+
     const publishVendorListing = () => {
+        if (!vendorProfile) return;
+
+        if (!cityListingCategory || !cityListingSubcategory) {
+            showNotice("Select a City Listings category and subcategory first.");
+            goToTab("about");
+            return;
+        }
+
         if (profileCompletionPercentage < 100) {
             showNotice(
                 `Complete your profile first. ${completedProfileFields} of ${profileCompletionItems.length} fields are complete.`
@@ -698,22 +762,56 @@ function VendorHub() {
             return;
         }
 
-        if (!vendorProfile) return;
+        const listingApprovalStatus = normalizeVendorStatus(
+            vendorProfile?.listingStatus
+        );
+
+
+        const isAdminApproved = [
+            "approved",
+            "verified",
+            "active",
+        ].includes(listingApprovalStatus);
+
+        const hasSubmittedListing = Boolean(
+            vendorProfile.listingSubmittedAt
+        );
+
+        const isAwaitingApproval =
+            hasSubmittedListing &&
+            ["pending", "pending review", "under review", "submitted"]
+                .includes(listingApprovalStatus);
 
         const submittedAt = new Date().toISOString();
 
-        // This is the second approval: submitting does not make the
-        // listing public. Admin must approve listingStatus separately.
-        const updatedProfile = {
-            ...vendorProfile,
-            isPublished: false,
-            publicationStatus: "Pending Review",
-            listingStatus: "Pending",
-            listingSubmittedAt: submittedAt,
-            listingStatusUpdatedAt: submittedAt,
-            vendorStatus: "Pending",
-            status: "Pending",
-        };
+        let updatedProfile: StoredVendorProfile;
+
+        if (isAdminApproved) {
+            // Admin has approved the listing. Vendor can now publish it.
+            updatedProfile = {
+                ...vendorProfile,
+                cityListingCategory,
+                cityListingSubcategory,
+                isPublished: true,
+                publicationStatus: "Published",
+                publishedAt: submittedAt,
+            };
+        } else if (isAwaitingApproval) {
+            showNotice("Your listing is waiting for Admin approval.");
+            return;
+        } else {
+            // First submission: send the listing for Admin review.
+            updatedProfile = {
+                ...vendorProfile,
+                cityListingCategory,
+                cityListingSubcategory,
+                isPublished: false,
+                publicationStatus: "Pending Review",
+                listingStatus: "Pending",
+                listingSubmittedAt: submittedAt,
+                listingStatusUpdatedAt: submittedAt,
+            };
+        }
 
         try {
             localStorage.setItem(
@@ -737,7 +835,8 @@ function VendorHub() {
                 }
             }
 
-            saveVendorToSharedCollection(updatedProfile, true);
+            // Do not force or overwrite Admin-controlled approval fields.
+            saveVendorToSharedCollection(updatedProfile);
 
             setVendorProfile(updatedProfile);
 
@@ -749,10 +848,14 @@ function VendorHub() {
                 new Event("oneservice-vendors-change")
             );
 
-            showNotice("Your listing has been submitted for Admin approval. It will become public only after approval.");
+            showNotice(
+                isAdminApproved
+                    ? "Your approved business listing is now published on City Listings."
+                    : "Your listing has been submitted for Admin approval."
+            );
         } catch (error) {
-            console.error("Unable to publish vendor listing:", error);
-            showNotice("Unable to publish your listing. Please try again.");
+            console.error("Unable to update vendor listing:", error);
+            showNotice("Unable to update your listing. Please try again.");
         }
     };
 
@@ -1678,17 +1781,41 @@ function VendorHub() {
                         </label>
 
                         <label className="vh-form-field">
-                            <span>Business Category</span>
-                            <input
-                                value={business.category}
+                            <span>City Listings Category *</span>
+                            <select
+                                value={cityListingCategory}
+                                onChange={(event) => {
+                                    setCityListingCategory(event.target.value);
+                                    setCityListingSubcategory("");
+                                }}
+                            >
+                                <option value="">Select category</option>
+                                {categories
+                                    .filter((category) => category.id !== "find-my-property")
+                                    .map((category) => (
+                                        <option key={category.id} value={category.id}>
+                                            {category.name}
+                                        </option>
+                                    ))}
+                            </select>
+                        </label>
+
+                        <label className="vh-form-field">
+                            <span>City Listings Subcategory *</span>
+                            <select
+                                value={cityListingSubcategory}
                                 onChange={(event) =>
-                                    updateBusiness(
-                                        "category",
-                                        event.target.value,
-                                    )
+                                    setCityListingSubcategory(event.target.value)
                                 }
-                                placeholder="Enter business category"
-                            />
+                                disabled={!selectedCityListingCategory}
+                            >
+                                <option value="">Select subcategory</option>
+                                {selectedCityListingCategory?.subcategories.map((subcategory) => (
+                                    <option key={subcategory} value={subcategory}>
+                                        {subcategory}
+                                    </option>
+                                ))}
+                            </select>
                         </label>
 
                         <label className="vh-form-field vh-form-field-full">
@@ -2078,13 +2205,11 @@ function VendorHub() {
         "Business highlights",
     ];
     const missingProfileTasks = profileCompletionItems
-        .map((complete, index) => ({ complete, label: profileCompletionLabels[index] || `Profile detail ${index + 1}` }))
+        .map((complete, index) => ({
+            complete,
+            label: profileCompletionLabels[index] || `Profile detail ${index + 1}`,
+        }))
         .filter(item => !item.complete);
-    const listingStatusText = String(vendorProfile?.listingStatus || vendorProfile?.publicationStatus || "Not submitted");
-    const listingStatusNormalized = normalizeVendorStatus(listingStatusText);
-    const listingIsLive = ["approved", "published", "live", "active"].includes(listingStatusNormalized) || vendorProfile?.isPublished === true;
-    const listingIsPending = ["pending", "pending review", "under review", "submitted"].includes(listingStatusNormalized);
-
     const registrationDetails = [
         ["Applicant name", vendorProfile?.fullName || vendorProfile?.name],
         ["Registered mobile", vendorProfile?.mobile || vendorProfile?.phone],
@@ -2159,11 +2284,26 @@ function VendorHub() {
                     <div className="vh-publish-ready">
                         <div><CheckCircle2 size={22} /><span><strong>Ready to publish</strong><small>Review how your listing will appear before submitting it for admin approval.</small></span></div>
                         {listingIsLive ? (
-                            <button type="button" className="vh-button vh-button-primary" onClick={() => navigate("/city-listings")}><Eye size={15} /> View City Listings</button>
+                            <button
+                                type="button"
+                                className="vh-button vh-button-primary"
+                                onClick={() => navigate("/city-listings")}
+                            >
+                                <Eye size={15} /> View City Listings
+                            </button>
                         ) : listingIsPending ? (
-                            <span className="vh-review-pending"><Clock3 size={16} /> Waiting for admin approval</span>
+                            <span className="vh-review-pending">
+                                <Clock3 size={16} /> Waiting for admin approval
+                            </span>
                         ) : (
-                            <button type="button" className="vh-button vh-button-primary" onClick={() => setShowListingPreview(true)}><Eye size={15} /> Preview & publish listing</button>
+                            <button
+                                type="button"
+                                className="vh-button vh-button-primary"
+                                onClick={() => setShowListingPreview(true)}
+                            >
+                                <Eye size={15} />
+                                {listingIsApproved ? "Preview & publish listing" : "Preview & submit listing"}
+                            </button>
                         )}
                     </div>
                 )}
@@ -2625,6 +2765,325 @@ function VendorHub() {
         </section>
     );
 
+    const submitAdvertisement = () => {
+        const title = adDraft.title.trim();
+        const description = adDraft.description.trim();
+
+        if (!title || !description) {
+            showNotice("Enter an advertisement title and short description to continue.");
+            return;
+        }
+
+        if (!vendorProfile) {
+            showNotice("Your vendor profile could not be found. Please sign in again.");
+            return;
+        }
+
+        const advertisementRequest = {
+            id: `ad_${Date.now()}`,
+            title: adDraft.title,
+            description: adDraft.description,
+            image: adDraft.image,
+            destinationUrl: adDraft.destinationUrl,
+            contactNumber: adDraft.contactNumber || business.phone,
+            status: "Subscription Coming Soon",
+            submittedAt: new Date().toISOString(),
+        };
+
+        const previousRequests = Array.isArray(vendorProfile.advertisementRequests)
+            ? vendorProfile.advertisementRequests
+            : [];
+
+        const updatedProfile: StoredVendorProfile = {
+            ...vendorProfile,
+            advertisementRequests: [...previousRequests, advertisementRequest],
+            latestAdvertisementRequest: advertisementRequest,
+        };
+
+        try {
+            localStorage.setItem("oneservice_vendor", JSON.stringify(updatedProfile));
+
+            const userRaw = localStorage.getItem("oneservice_user");
+            if (userRaw) {
+                const user = JSON.parse(userRaw);
+                if (user?.role === "vendor") {
+                    localStorage.setItem("oneservice_user", JSON.stringify({
+                        ...user,
+                        ...updatedProfile,
+                    }));
+                }
+            }
+
+            saveVendorToSharedCollection(updatedProfile);
+            setVendorProfile(updatedProfile);
+            window.dispatchEvent(new Event("oneservice-vendor-change"));
+            window.dispatchEvent(new Event("oneservice-vendors-change"));
+            setShowAdsComingSoon(true);
+            setNotice("");
+        } catch (error) {
+            console.error("Unable to save advertisement request:", error);
+            showNotice("We couldn't save your advertisement details. Please try again.");
+        }
+    };
+
+
+    const renderAds = () => (
+        <section className="vh-tab-content vh-ads-content">
+            {!showAdsComingSoon ? (
+                <>
+                    <div className="vh-content-header">
+                        <div>
+                            <h2>Advertise Your Business</h2>
+                            <p>
+                                Create an advertisement for your business and preview
+                                how it could appear on OneService.
+                            </p>
+                        </div>
+                    </div>
+
+                    <section className="vh-card vh-ads-form-card">
+                        <div className="vh-section-heading">
+                            <div className="vh-heading-title">
+                                <span className="vh-heading-icon">
+                                    <Megaphone size={18} />
+                                </span>
+                                <h3>Advertisement Details</h3>
+                            </div>
+                        </div>
+
+
+                        <div className="vh-form-grid">
+                            {/* Row 1 — two columns */}
+                            <label className="vh-form-field">
+                                <span>Advertisement title *</span>
+                                <input
+                                    value={adDraft.title}
+                                    onChange={(event) => setAdDraft(previous => ({
+                                        ...previous,
+                                        title: event.target.value,
+                                    }))}
+                                    placeholder="e.g. Special offers at your business"
+                                    maxLength={80}
+                                    required
+                                />
+                            </label>
+
+                            <label className="vh-form-field">
+                                <span>Website or destination link (optional)</span>
+                                <input
+                                    type="url"
+                                    value={adDraft.destinationUrl}
+                                    onChange={(event) => setAdDraft(previous => ({
+                                        ...previous,
+                                        destinationUrl: event.target.value,
+                                    }))}
+                                    placeholder="https://yourbusiness.com"
+                                />
+                            </label>
+
+                            {/* Row 2 — full width */}
+                            <label className="vh-form-field vh-form-field-full">
+                                <span>Short description *</span>
+                                <textarea
+                                    value={adDraft.description}
+                                    onChange={(event) => setAdDraft(previous => ({
+                                        ...previous,
+                                        description: event.target.value,
+                                    }))}
+                                    placeholder="Briefly describe the product, service, offer, or business you want to promote."
+                                    rows={4}
+                                    maxLength={300}
+                                    required
+                                />
+                            </label>
+
+                            {/* Row 3 — full-width image upload */}
+                            <div className="vh-form-field vh-form-field-full">
+                                <span>Advertisement image</span>
+
+                                <label className="vh-ads-upload">
+                                    <input
+                                        type="file"
+                                        accept="image/jpeg,image/png,image/webp"
+                                        onChange={(event) => {
+                                            const file = event.currentTarget.files?.[0];
+                                            if (!file) return;
+
+                                            if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+                                                window.alert("Please select a JPG, PNG, or WebP image.");
+                                                event.currentTarget.value = "";
+                                                return;
+                                            }
+
+                                            if (file.size > 5 * 1024 * 1024) {
+                                                window.alert("Please choose an image smaller than 5 MB.");
+                                                event.currentTarget.value = "";
+                                                return;
+                                            }
+
+                                            const reader = new FileReader();
+
+                                            reader.onload = () => {
+                                                if (typeof reader.result === "string") {
+                                                    setAdDraft(previous => ({
+                                                        ...previous,
+                                                        image: reader.result as string,
+                                                    }));
+                                                }
+                                            };
+
+                                            reader.readAsDataURL(file);
+                                        }}
+                                    />
+
+                                    <span className="vh-ads-upload-icon">
+                                        <ImageIcon size={23} />
+                                    </span>
+
+                                    <strong>Upload advertisement image</strong>
+                                    <small>JPG, PNG or WebP · Maximum 5 MB</small>
+
+                                    <span className="vh-ads-upload-button">
+                                        Choose Image
+                                    </span>
+                                </label>
+
+                                {adDraft.image && (
+                                    <div className="vh-ads-image-preview">
+                                        <img
+                                            src={adDraft.image}
+                                            alt="Advertisement preview"
+                                        />
+
+                                        <button
+                                            type="button"
+                                            className="vh-ads-remove-image"
+                                            onClick={() => setAdDraft(previous => ({
+                                                ...previous,
+                                                image: "",
+                                            }))}
+                                        >
+                                            <X size={15} /> Remove image
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Row 4 — half width */}
+                            <label className="vh-form-field">
+                                <span>Contact number (optional)</span>
+                                <input
+                                    type="tel"
+                                    value={adDraft.contactNumber}
+                                    onChange={(event) => setAdDraft(previous => ({
+                                        ...previous,
+                                        contactNumber: event.target.value,
+                                    }))}
+                                    placeholder={business.phone || "Enter contact number"}
+                                />
+                            </label>
+                        </div>
+
+
+                        <div className="vh-ads-form-actions">
+                            <p className="vh-form-help">
+                                Only the advertisement title and description are required at this stage.
+                            </p>
+                            <button
+                                className="vh-button vh-button-primary"
+                                type="button"
+                                onClick={submitAdvertisement}
+                            >
+                                Submit to Proceed <ArrowRight size={16} />
+                            </button>
+                        </div>
+                    </section>
+
+                    {/* Live sponsored advertisement preview */}
+                    <section className="vh-card vh-ads-preview-section">
+                        <div className="vh-section-heading">
+                            <div className="vh-heading-title">
+                                <span className="vh-heading-icon">
+                                    <Eye size={18} />
+                                </span>
+                                <h3>Advertisement Preview</h3>
+                            </div>
+                            <span className="vh-ads-preview-note">Live preview</span>
+                        </div>
+
+                        <div className="vh-sponsored-preview">
+                            <div className="vh-sponsored-top">
+                                <span>Sponsored</span>
+                                <small>ADVERTISEMENT</small>
+                            </div>
+
+                            <div className="vh-sponsored-body">
+                                <div className="vh-sponsored-icon">
+                                    <Building2 size={29} />
+                                </div>
+
+                                <div className="vh-sponsored-copy">
+                                    <h3>
+                                        {adDraft.title || "Promote your business on OneService"}
+                                    </h3>
+                                    <p>
+                                        {adDraft.description ||
+                                            "Reach more local customers and give your business greater visibility with a featured advertisement."}
+                                    </p>
+                                </div>
+
+                                {adDraft.image ? (
+                                    <div className="vh-sponsored-image">
+                                        <img
+                                            src={adDraft.image}
+                                            alt="Your advertisement"
+                                        />
+                                    </div>
+                                ) : (
+                                    <div className="vh-sponsored-image vh-sponsored-image-empty">
+                                        <ImageIcon size={27} />
+                                        <span>Your image</span>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="vh-sponsored-footer">
+                                <span>
+                                    {business.name || "Your Business"}
+                                </span>
+                                <span className="vh-sponsored-cta">
+                                    Featured promotion <ArrowRight size={16} />
+                                </span>
+                            </div>
+                        </div>
+                    </section>
+                </>
+            ) : (
+                <section className="vh-card vh-ads-coming-soon">
+                    <span className="vh-ads-coming-soon-icon">
+                        <Megaphone size={30} />
+                    </span>
+                    <span className="vh-eyebrow">NEEDONESERVICE ADVERTISING</span>
+                    <h2>Ads Subscription Plans</h2>
+                    <h3>Coming Soon!</h3>
+                    <p>
+                        Thank you. Your advertisement details have been saved.
+                        Our advertising subscription plans are currently being prepared
+                        and will be available soon.
+                    </p>
+                    <button
+                        className="vh-button vh-button-outline"
+                        type="button"
+                        onClick={() => setShowAdsComingSoon(false)}
+                    >
+                        <Pencil size={15} /> Edit advertisement details
+                    </button>
+                </section>
+            )}
+        </section>
+    );
+
+
     const renderPerformance = () => (
         <section className="vh-tab-content">
             <div className="vh-content-header">
@@ -2739,6 +3198,9 @@ function VendorHub() {
 
             case "performance":
                 return renderPerformance();
+
+            case "ads":
+                return renderAds();
 
             default:
                 return renderOverview();
@@ -3618,7 +4080,8 @@ function VendorHub() {
                                     publishVendorListing();
                                 }}
                             >
-                                <CheckCircle2 size={15} /> Submit for admin approval
+                                <CheckCircle2 size={15} />
+                                {listingIsApproved ? "Publish listing" : "Submit for admin approval"}
                             </button>
                         </div>
                     </section>

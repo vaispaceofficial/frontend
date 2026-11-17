@@ -1,4 +1,4 @@
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
 import {
@@ -19,6 +19,7 @@ import {
 
 import { categories, listings } from "./CityListingsPage";
 import type { CityListing } from "./CityListingsPage";
+import { getPublishedVendorCityListings } from "./cityListingVendorUtils";
 
 import CityBusinessProfileModal from "../components/CityBusinessProfileModal";
 import type { BusinessProfile } from "../components/CityBusinessProfileModal";
@@ -103,6 +104,62 @@ function CityListingAd() {
 }
 
 export default function CityListingsBrowsePage() {
+
+    /* =========================================================
+   VENDOR LISTINGS — APPROVED + PUBLISHED ONLY
+========================================================= */
+
+    const [vendorListings, setVendorListings] = useState<CityListing[]>(
+        () => getPublishedVendorCityListings(categories),
+    );
+
+    useEffect(() => {
+        const refreshVendorListings = () => {
+            setVendorListings(
+                getPublishedVendorCityListings(categories),
+            );
+        };
+
+        window.addEventListener(
+            "oneservice-vendors-change",
+            refreshVendorListings,
+        );
+
+        window.addEventListener(
+            "oneservice-vendor-change",
+            refreshVendorListings,
+        );
+
+        window.addEventListener(
+            "storage",
+            refreshVendorListings,
+        );
+
+        refreshVendorListings();
+
+        return () => {
+            window.removeEventListener(
+                "oneservice-vendors-change",
+                refreshVendorListings,
+            );
+
+            window.removeEventListener(
+                "oneservice-vendor-change",
+                refreshVendorListings,
+            );
+
+            window.removeEventListener(
+                "storage",
+                refreshVendorListings,
+            );
+        };
+    }, []);
+
+    const allCityListings = useMemo(
+        () => [...listings, ...vendorListings],
+        [vendorListings],
+    );
+
     const [searchParams, setSearchParams] = useSearchParams();
 
     const [search, setSearch] = useState(
@@ -254,7 +311,7 @@ export default function CityListingsBrowsePage() {
             category: categoryId,
             subcategory:
                 normalize(subcategory) === "all" ||
-                normalize(subcategory).startsWith("all ")
+                    normalize(subcategory).startsWith("all ")
                     ? null
                     : subcategory,
         });
@@ -400,7 +457,7 @@ export default function CityListingsBrowsePage() {
     const filteredListings = useMemo(() => {
         const query = normalize(search);
 
-        const filtered = listings.filter((listing) => {
+        const filtered = allCityListings.filter((listing) => {
             const matchesCategory =
                 activeCategory === "all" ||
                 listing.category === activeCategory;
@@ -468,6 +525,7 @@ export default function CityListingsBrowsePage() {
         openNowOnly,
         verifiedOnly,
         selectedListingFilter,
+        allCityListings,
     ]);
 
     /* =========================================================
@@ -503,9 +561,9 @@ export default function CityListingsBrowsePage() {
                 possiblePositions[i],
                 possiblePositions[j],
             ] = [
-                possiblePositions[j],
-                possiblePositions[i],
-            ];
+                    possiblePositions[j],
+                    possiblePositions[i],
+                ];
         }
 
         const selectedPositions: number[] = [];
@@ -669,9 +727,8 @@ export default function CityListingsBrowsePage() {
 
                     <button
                         type="button"
-                        className={`city-browse-category ${
-                            activeCategory === "all" ? "active" : ""
-                        }`}
+                        className={`city-browse-category ${activeCategory === "all" ? "active" : ""
+                            }`}
                         onClick={() => selectCategory("all")}
                     >
                         <span className="city-browse-category-name">
@@ -680,12 +737,12 @@ export default function CityListingsBrowsePage() {
                         </span>
 
                         <span className="city-browse-category-count">
-                            {listings.length}
+                            {allCityListings.length}
                         </span>
                     </button>
 
                     {categories.map((category) => {
-                        const count = listings.filter(
+                        const count = allCityListings.filter(
                             (listing) => listing.category === category.id,
                         ).length;
 
@@ -699,9 +756,8 @@ export default function CityListingsBrowsePage() {
                             >
                                 <button
                                     type="button"
-                                    className={`city-browse-category ${
-                                        isActiveCategory ? "active" : ""
-                                    }`}
+                                    className={`city-browse-category ${isActiveCategory ? "active" : ""
+                                        }`}
                                     onClick={() => toggleCategory(category.id)}
                                     aria-expanded={isExpanded}
                                 >
@@ -717,9 +773,8 @@ export default function CityListingsBrowsePage() {
 
                                         <ChevronDown
                                             size={15}
-                                            className={`city-browse-category-chevron ${
-                                                isExpanded ? "open" : ""
-                                            }`}
+                                            className={`city-browse-category-chevron ${isExpanded ? "open" : ""
+                                                }`}
                                         />
                                     </span>
                                 </button>
@@ -728,12 +783,11 @@ export default function CityListingsBrowsePage() {
                                     <div className="city-browse-subcategories">
                                         <button
                                             type="button"
-                                            className={`city-browse-subcategory ${
-                                                isActiveCategory &&
+                                            className={`city-browse-subcategory ${isActiveCategory &&
                                                 activeSubcategory === "all"
-                                                    ? "active"
-                                                    : ""
-                                            }`}
+                                                ? "active"
+                                                : ""
+                                                }`}
                                             onClick={() =>
                                                 selectCategory(category.id)
                                             }
@@ -748,30 +802,27 @@ export default function CityListingsBrowsePage() {
                                         {(category.subcategories ?? []).map(
                                             (subcategory) => {
                                                 const subcategoryCount =
-                                                    listings.filter(
+                                                    allCityListings.filter(
                                                         (listing) =>
-                                                            listing.category ===
-                                                                category.id &&
+                                                            listing.category === category.id &&
                                                             normalize(
-                                                                listing.subcategory ??
-                                                                    listing.label,
+                                                                listing.subcategory ?? listing.label,
                                                             ) === normalize(subcategory),
                                                     ).length;
 
                                                 const isActiveSubcategory =
                                                     isActiveCategory &&
                                                     normalize(activeSubcategory) ===
-                                                        normalize(subcategory);
+                                                    normalize(subcategory);
 
                                                 return (
                                                     <button
                                                         type="button"
                                                         key={subcategory}
-                                                        className={`city-browse-subcategory ${
-                                                            isActiveSubcategory
-                                                                ? "active"
-                                                                : ""
-                                                        }`}
+                                                        className={`city-browse-subcategory ${isActiveSubcategory
+                                                            ? "active"
+                                                            : ""
+                                                            }`}
                                                         onClick={() =>
                                                             selectSubcategory(
                                                                 category.id,
@@ -1011,8 +1062,8 @@ export default function CityListingsBrowsePage() {
                                                     ? ""
                                                     : propertyForm.listingType ===
                                                         "Rent"
-                                                      ? " / month"
-                                                      : " / lease"}
+                                                        ? " / month"
+                                                        : " / lease"}
                                             </p>
 
                                             <p className="city-property-preview-location">
@@ -1061,11 +1112,10 @@ export default function CityListingsBrowsePage() {
                                     >
                                         <button
                                             type="button"
-                                            className={`city-browse-filter-trigger ${
-                                                filtersOpen || activeFilterCount > 0
-                                                    ? "active"
-                                                    : ""
-                                            }`}
+                                            className={`city-browse-filter-trigger ${filtersOpen || activeFilterCount > 0
+                                                ? "active"
+                                                : ""
+                                                }`}
                                             onClick={() =>
                                                 setFiltersOpen((current) => !current)
                                             }
@@ -1083,9 +1133,8 @@ export default function CityListingsBrowsePage() {
 
                                             <ChevronDown
                                                 size={14}
-                                                className={`city-browse-filter-chevron ${
-                                                    filtersOpen ? "open" : ""
-                                                }`}
+                                                className={`city-browse-filter-chevron ${filtersOpen ? "open" : ""
+                                                    }`}
                                             />
                                         </button>
 
@@ -1131,21 +1180,20 @@ export default function CityListingsBrowsePage() {
                                                                         (option) => {
                                                                             const isChecked =
                                                                                 selectedListingFilter?.groupId ===
-                                                                                    group.id &&
+                                                                                group.id &&
                                                                                 normalize(
                                                                                     selectedListingFilter.option,
                                                                                 ) ===
-                                                                                    normalize(option);
+                                                                                normalize(option);
 
                                                                             return (
                                                                                 <button
                                                                                     type="button"
                                                                                     key={option}
-                                                                                    className={`city-browse-category-filter-chip ${
-                                                                                        isChecked
-                                                                                            ? "active"
-                                                                                            : ""
-                                                                                    }`}
+                                                                                    className={`city-browse-category-filter-chip ${isChecked
+                                                                                        ? "active"
+                                                                                        : ""
+                                                                                        }`}
                                                                                     onClick={() =>
                                                                                         chooseCategoryFilter(
                                                                                             group.id,
@@ -1276,63 +1324,63 @@ export default function CityListingsBrowsePage() {
                                 selectedListingFilter ||
                                 verifiedOnly ||
                                 openNowOnly) && (
-                                <div className="city-browse-active-filters">
-                                    <span>Active filters:</span>
+                                    <div className="city-browse-active-filters">
+                                        <span>Active filters:</span>
 
-                                    {activeSubcategory !== "all" && (
+                                        {activeSubcategory !== "all" && (
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    selectFilterSubcategory("all")
+                                                }
+                                                aria-label={`Remove ${activeSubcategory} filter`}
+                                            >
+                                                {activeSubcategory}
+                                                <X size={14} />
+                                            </button>
+                                        )}
+
+                                        {selectedListingFilter && (
+                                            <button
+                                                type="button"
+                                                onClick={() =>
+                                                    setSelectedListingFilter(null)
+                                                }
+                                                aria-label={`Remove ${selectedListingFilter.option} filter`}
+                                            >
+                                                {selectedListingFilter.option}
+                                                <X size={14} />
+                                            </button>
+                                        )}
+
+                                        {verifiedOnly && (
+                                            <button
+                                                type="button"
+                                                onClick={() => setVerifiedOnly(false)}
+                                            >
+                                                Verified
+                                                <X size={14} />
+                                            </button>
+                                        )}
+
+                                        {openNowOnly && (
+                                            <button
+                                                type="button"
+                                                onClick={() => setOpenNowOnly(false)}
+                                            >
+                                                Open now
+                                                <X size={14} />
+                                            </button>
+                                        )}
+
                                         <button
                                             type="button"
-                                            onClick={() =>
-                                                selectFilterSubcategory("all")
-                                            }
-                                            aria-label={`Remove ${activeSubcategory} filter`}
+                                            onClick={clearFilters}
                                         >
-                                            {activeSubcategory}
-                                            <X size={14} />
+                                            Clear filters
                                         </button>
-                                    )}
-
-                                    {selectedListingFilter && (
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                setSelectedListingFilter(null)
-                                            }
-                                            aria-label={`Remove ${selectedListingFilter.option} filter`}
-                                        >
-                                            {selectedListingFilter.option}
-                                            <X size={14} />
-                                        </button>
-                                    )}
-
-                                    {verifiedOnly && (
-                                        <button
-                                            type="button"
-                                            onClick={() => setVerifiedOnly(false)}
-                                        >
-                                            Verified
-                                            <X size={14} />
-                                        </button>
-                                    )}
-
-                                    {openNowOnly && (
-                                        <button
-                                            type="button"
-                                            onClick={() => setOpenNowOnly(false)}
-                                        >
-                                            Open now
-                                            <X size={14} />
-                                        </button>
-                                    )}
-
-                                    <button
-                                        type="button"
-                                        onClick={clearFilters}
-                                    >
-                                        Clear filters
-                                    </button>
-                                </div>
-                            )}
+                                    </div>
+                                )}
 
                             {/* BUSINESS LIST + RANDOM AD BLOCKS */}
 

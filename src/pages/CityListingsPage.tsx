@@ -1,5 +1,11 @@
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
@@ -34,6 +40,7 @@ import "./CityListingsPage.css";
 import CityListingsShowcase from "../components/CityListingsShowcase";
 import CityBusinessProfileModal from "../components/CityBusinessProfileModal";
 import type { BusinessProfile } from "../components/CityBusinessProfileModal";
+import { getPublishedVendorCityListings } from "./cityListingVendorUtils";
 
 type ListingFilter = "all" | "top-rated" | "verified" | "open";
 
@@ -628,6 +635,9 @@ function CityListingsPage() {
   const [search, setSearch] = useState("");
   const [selectedListing, setSelectedListing] =
     useState<CityListing | null>(null);
+  const [vendorListings, setVendorListings] = useState<CityListing[]>(
+    () => getPublishedVendorCityListings(categories),
+  );
 
   const selectedCategory = useMemo(
     () => categories.find((category) => category.id === activeCategory),
@@ -647,14 +657,21 @@ function CityListingsPage() {
     });
   }, []);
 
-  /* ---------------------------------------------------------
+   /* ---------------------------------------------------------
      FILTER LISTINGS
   --------------------------------------------------------- */
 
+  // Combine static listings with approved and published vendor listings.
+  const allCityListings = useMemo(
+    () => [...listings, ...vendorListings],
+    [vendorListings],
+  );
+
+  // Apply search, category, subcategory and filter selections.
   const filteredListings = useMemo(() => {
     const term = search.trim().toLowerCase();
 
-    return listings.filter((listing) => {
+    return allCityListings.filter((listing) => {
       const category = categories.find(
         (item) => item.id === listing.category,
       );
@@ -674,7 +691,7 @@ function CityListingsPage() {
       const matchesSearch =
         !term ||
         searchableValues.some((value) =>
-          value.toLowerCase().includes(term),
+          String(value).toLowerCase().includes(term),
         );
 
       const matchesCategory =
@@ -688,6 +705,7 @@ function CityListingsPage() {
         (activeFilter === "open" && listing.openNow === true);
 
       const selectedSubcategory = activeSubcategory.toLowerCase();
+
       const listingFilterValues = Object.values(
         listing.filterAttributes ?? {},
       ).flat();
@@ -697,7 +715,8 @@ function CityListingsPage() {
         listing.subcategory?.toLowerCase() === selectedSubcategory ||
         listing.label.toLowerCase() === selectedSubcategory ||
         listingFilterValues.some(
-          (value) => value.toLowerCase() === selectedSubcategory,
+          (value) =>
+            String(value).toLowerCase() === selectedSubcategory,
         );
 
       return (
@@ -712,8 +731,9 @@ function CityListingsPage() {
     activeFilter,
     activeSubcategory,
     search,
+    allCityListings,
   ]);
-
+  
   /* ---------------------------------------------------------
      FILTER ACTIONS
   --------------------------------------------------------- */
@@ -749,6 +769,44 @@ function CityListingsPage() {
   const closeProfile = useCallback(() => {
     setSelectedListing(null);
   }, []);
+
+  useEffect(() => {
+    const refreshVendorListings = () => {
+      setVendorListings(
+        getPublishedVendorCityListings(categories),
+      );
+    };
+
+    refreshVendorListings();
+
+    window.addEventListener(
+      "oneservice-vendors-change",
+      refreshVendorListings,
+    );
+
+    window.addEventListener(
+      "oneservice-vendor-change",
+      refreshVendorListings,
+    );
+
+    window.addEventListener("storage", refreshVendorListings);
+
+    return () => {
+      window.removeEventListener(
+        "oneservice-vendors-change",
+        refreshVendorListings,
+      );
+
+      window.removeEventListener(
+        "oneservice-vendor-change",
+        refreshVendorListings,
+      );
+
+      window.removeEventListener("storage", refreshVendorListings);
+    };
+  }, []);
+
+
 
   /* ---------------------------------------------------------
      MODAL DATA
