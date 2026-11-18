@@ -1,4 +1,3 @@
-
 import type {
     CityListing,
     ListingCategory,
@@ -218,7 +217,10 @@ export function getPublishedVendorCityListings(
                 location,
                 phone: getText(vendor.mobile, vendor.phone),
                 email: getText(vendor.email),
+                // The vendor profile photo is the primary listing image.
+                // Gallery/business imagery remains the fallback.
                 image:
+                    getText(vendor.profileImage) ||
                     gallery[0] ||
                     getText(vendor.businessImage, vendor.logo),
                 verified: true,

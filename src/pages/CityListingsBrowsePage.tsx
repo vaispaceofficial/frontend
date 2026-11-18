@@ -10,6 +10,7 @@ import {
     Phone,
     SlidersHorizontal,
     ArrowRight,
+    ExternalLink,
     Building2,
     X,
     ChevronDown,
@@ -64,11 +65,46 @@ const normalize = (value: string | undefined | null) =>
    Ads are rendered only between business listing cards.
 ========================================================= */
 
-function CityListingAd() {
+type CityAdvertisement = {
+    id: string;
+    vendorId?: string;
+    vendorIdentity?: string;
+    vendorName?: string;
+    title: string;
+    description?: string;
+    image?: string;
+    destinationUrl?: string;
+    contactNumber?: string;
+    category?: string;
+    subcategory?: string;
+    status?: string;
+    isPublished?: boolean;
+    publishedAt?: string;
+};
+
+function CityListingAd({ ad }: { ad: CityAdvertisement }) {
+    const hasImage = Boolean(ad.image?.trim());
+    const destination = ad.destinationUrl?.trim();
+
+    const handleAdClick = () => {
+        if (destination) {
+            window.open(
+                destination,
+                "_blank",
+                "noopener,noreferrer",
+            );
+        } else if (ad.contactNumber) {
+            window.location.href = `tel:${ad.contactNumber.replace(
+                /[^\d+]/g,
+                "",
+            )}`;
+        }
+    };
+
     return (
         <article
             className="city-listing-ad"
-            aria-label="Sponsored advertisement"
+            aria-label={`Sponsored advertisement by ${ad.vendorName || "local business"}`}
         >
             <div className="city-listing-ad-top">
                 <span className="city-listing-ad-label">
@@ -81,23 +117,42 @@ function CityListingAd() {
             </div>
 
             <div className="city-listing-ad-content">
-                <div className="city-listing-ad-icon">
-                    <Building2 size={25} />
-                </div>
+                {hasImage ? (
+                    <div className="city-listing-ad-image">
+                        <img
+                            src={ad.image}
+                            alt={ad.title}
+                            loading="lazy"
+                        />
+                    </div>
+                ) : (
+                    <div className="city-listing-ad-icon">
+                        <Building2 size={25} />
+                    </div>
+                )}
 
                 <div className="city-listing-ad-copy">
-                    <h3>Promote your business on OneService</h3>
+                    {ad.vendorName && (
+                        <span className="city-listing-ad-vendor">
+                            {ad.vendorName}
+                        </span>
+                    )}
 
-                    <p>
-                        Reach more local customers and give your business
-                        greater visibility with a featured advertisement.
-                    </p>
+                    <h3>{ad.title}</h3>
+
+                    <p>{ad.description}</p>
                 </div>
 
-                <span className="city-listing-ad-cta">
-                    Featured promotion
-                    <ArrowRight size={16} />
-                </span>
+                {(destination || ad.contactNumber) && (
+                    <button
+                        type="button"
+                        className="city-listing-ad-cta"
+                        onClick={handleAdClick}
+                    >
+                        {destination ? "Know More" : "Contact"}
+                        <ExternalLink size={15} />
+                    </button>
+                )}
             </div>
         </article>
     );
@@ -152,6 +207,41 @@ export default function CityListingsBrowsePage() {
                 "storage",
                 refreshVendorListings,
             );
+        };
+    }, []);
+
+
+    useEffect(() => {
+        const refreshAdvertisements = () => {
+            try {
+                const saved = JSON.parse(
+                    localStorage.getItem("oneservice_city_ads") || "[]",
+                );
+
+                setCityAdvertisements(
+                    Array.isArray(saved) ? saved : [],
+                );
+            } catch {
+                setCityAdvertisements([]);
+            }
+        };
+
+        window.addEventListener(
+            "oneservice-city-ads-change",
+            refreshAdvertisements,
+        );
+
+        window.addEventListener("storage", refreshAdvertisements);
+
+        refreshAdvertisements();
+
+        return () => {
+            window.removeEventListener(
+                "oneservice-city-ads-change",
+                refreshAdvertisements,
+            );
+
+            window.removeEventListener("storage", refreshAdvertisements);
         };
     }, []);
 
@@ -529,62 +619,154 @@ export default function CityListingsBrowsePage() {
     ]);
 
     /* =========================================================
-       RANDOM AD POSITIONS
+       CITY LISTING ADVERTISEMENTS
 
-       - Ads appear only between business cards.
-       - Ads are not rendered for property browsing.
-       - Show at most two ads per result list.
-       - Keep ads separated by at least one business card.
-       - Recalculate when the filtered results change.
+       - Load advertisements published from Vendor Hub.
+       - Show ads only when they are published and active.
+       - Match ads with the selected category/subcategory.
+       - Do not show ads while browsing properties.
+       - Insert ads between business cards.
+       - Randomly show after 2 or 4 business cards.
+       - Keep ad positions stable until the results change.
     ========================================================= */
 
-    const adPositions = useMemo(() => {
-        if (isPropertyCategory || filteredListings.length < 5) {
+    const [cityAdvertisements, setCityAdvertisements] = useState<CityAdvertisement[]>(() => {
+        try {
+            const saved = JSON.parse(
+                localStorage.getItem("oneservice_city_ads") || "[]",
+            );
+
+            return Array.isArray(saved) ? saved : [];
+        } catch {
+            return [];
+        }
+    });
+
+    useEffect(() => {
+        const refreshAdvertisements = () => {
+            try {
+                const saved = JSON.parse(
+                    localStorage.getItem("oneservice_city_ads") || "[]",
+                );
+
+                setCityAdvertisements(
+                    Array.isArray(saved) ? saved : [],
+                );
+            } catch {
+                setCityAdvertisements([]);
+            }
+        };
+
+        window.addEventListener(
+            "oneservice-city-ads-change",
+            refreshAdvertisements,
+        );
+
+        window.addEventListener("storage", refreshAdvertisements);
+
+        refreshAdvertisements();
+
+        return () => {
+            window.removeEventListener(
+                "oneservice-city-ads-change",
+                refreshAdvertisements,
+            );
+
+            window.removeEventListener(
+                "storage",
+                refreshAdvertisements,
+            );
+        };
+    }, []);
+
+    const normalizeAdValue = (value: unknown) =>
+        String(value ?? "")
+            .trim()
+            .toLowerCase()
+            .replace(/[\s_-]+/g, "");
+
+    const eligibleAdvertisements = useMemo(() => {
+        return cityAdvertisements.filter((ad) => {
+            const status = normalizeAdValue(ad.status);
+
+            const isPublished =
+                ad.isPublished === true &&
+                ["published", "live", "active"].includes(status);
+
+            if (!isPublished) {
+                return false;
+            }
+
+            const adCategory = normalizeAdValue(ad.category);
+            const adSubcategory = normalizeAdValue(ad.subcategory);
+
+            if (activeCategory === "all") {
+                return true;
+            }
+
+            if (
+                adCategory !== normalizeAdValue(activeCategory)
+            ) {
+                return false;
+            }
+
+            if (activeSubcategory !== "all") {
+                return (
+                    adSubcategory ===
+                    normalizeAdValue(activeSubcategory)
+                );
+            }
+
+            return true;
+        });
+    }, [
+        cityAdvertisements,
+        activeCategory,
+        activeSubcategory,
+    ]);
+
+    /* =========================================================
+       AD POSITIONS
+
+       - Ads appear between business cards.
+       - Ads are not shown for property browsing.
+       - Maximum two ads per result list.
+       - Ads are spaced by 2 or 4 business cards.
+    ========================================================= */
+
+    const adPlacements = useMemo(() => {
+        const totalCards = filteredListings.length;
+
+        if (
+            isPropertyCategory ||
+            totalCards < 3 ||
+            eligibleAdvertisements.length === 0
+        ) {
             return [];
         }
 
-        const totalCards = filteredListings.length;
+        // Display a maximum of two advertisements side by side.
+        const adsToShow = eligibleAdvertisements.slice(0, 2);
 
-        // Positions represent the number of cards shown before an ad.
-        // This avoids inserting an ad before the first card or after
-        // the final card.
-        const possiblePositions = Array.from(
-            { length: totalCards - 2 },
-            (_, index) => index + 2,
-        );
+        const groupSize =
+            totalCards >= 5 && Math.random() < 0.5 ? 4 : 2;
 
-        // Shuffle candidate positions.
-        for (let i = possiblePositions.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-
-            [
-                possiblePositions[i],
-                possiblePositions[j],
-            ] = [
-                    possiblePositions[j],
-                    possiblePositions[i],
-                ];
+        // Never insert an ad after the last business card.
+        if (groupSize >= totalCards) {
+            return [];
         }
 
-        const selectedPositions: number[] = [];
-
-        for (const position of possiblePositions) {
-            if (selectedPositions.length >= 2) {
-                break;
-            }
-
-            const sufficientlySpaced = selectedPositions.every(
-                (existingPosition) =>
-                    Math.abs(existingPosition - position) >= 2,
-            );
-
-            if (sufficientlySpaced) {
-                selectedPositions.push(position);
-            }
-        }
-
-        return selectedPositions.sort((a, b) => a - b);
-    }, [filteredListings, isPropertyCategory]);
+        return [
+            {
+                after: groupSize,
+                ads: adsToShow,
+            },
+        ];
+    }, [
+        filteredListings,
+        eligibleAdvertisements,
+        isPropertyCategory,
+    ]);
 
     /* BUSINESS PROFILE MODAL DATA */
 
@@ -1502,9 +1684,21 @@ export default function CityListingsBrowsePage() {
 
                                             {/* Ads are inserted directly after a card.
                                                 They cannot appear elsewhere on the page. */}
-                                            {adPositions.includes(index + 1) && (
-                                                <CityListingAd />
-                                            )}
+                                            {adPlacements
+                                                .filter((placement) => placement.after === index + 1)
+                                                .map((placement) => (
+                                                    <div
+                                                        className="city-listing-ad-row"
+                                                        key={`ad-row-${placement.after}`}
+                                                    >
+                                                        {placement.ads.map((ad) => (
+                                                            <CityListingAd
+                                                                key={ad.id}
+                                                                ad={ad}
+                                                            />
+                                                        ))}
+                                                    </div>
+                                                ))}
                                         </Fragment>
                                     ))}
                                 </div>

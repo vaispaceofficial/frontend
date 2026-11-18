@@ -2508,3 +2508,227 @@
 }
 
 
+
+/* =========================================================
+   CITY LISTING ADS — FULL CONTENT, NO CROPPING
+========================================================= */
+
+.city-listing-ad-row {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+    gap: 14px;
+    width: 100%;
+    min-width: 0;
+    margin: 5px 0;
+}
+
+/* Advertisement card */
+
+.city-listing-ad {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: auto;
+    min-height: 175px;
+    min-width: 0;
+    box-sizing: border-box;
+    padding: 12px 14px;
+    margin: 0;
+    overflow: visible;
+    background: #fff;
+    border: 1px solid #cfe0ff;
+    border-radius: 13px;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.04);
+}
+
+/* Top labels */
+
+.city-listing-ad-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-shrink: 0;
+    margin-bottom: 10px;
+}
+
+.city-listing-ad-top span:first-child {
+    padding: 5px 9px;
+    border-radius: 6px;
+    background: #eff6ff;
+    color: #2563eb;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.city-listing-ad-top span:last-child {
+    color: #94a3b8;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+}
+
+/* Image and information */
+
+.city-listing-ad-content {
+    display: grid;
+    grid-template-columns: 105px minmax(0, 1fr);
+    align-items: center;
+    gap: 13px;
+    width: 100%;
+    min-width: 0;
+    flex: 1;
+}
+
+/* Image — show complete image */
+
+.city-listing-ad-image {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 105px;
+    height: 105px;
+    min-width: 0;
+    overflow: hidden;
+    border-radius: 8px;
+    background: #f1f5f9;
+}
+
+.city-listing-ad-image img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+}
+
+/* Advertisement details */
+
+.city-listing-ad-details {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 5px;
+    width: 100%;
+    min-width: 0;
+    overflow: visible;
+}
+
+.city-listing-ad-details h3 {
+    display: block;
+    margin: 0;
+    color: #172554;
+    font-size: 15px;
+    line-height: 1.35;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.city-listing-ad-details p {
+    display: block;
+    margin: 0;
+    color: #64748b;
+    font-size: 12px;
+    line-height: 1.5;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    -webkit-line-clamp: unset;
+    -webkit-box-orient: initial;
+}
+
+/* Know More — separate space, no overlap */
+
+.city-listing-ad-cta {
+    position: static;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    align-self: flex-end;
+    gap: 6px;
+    width: fit-content;
+    min-height: 30px;
+    margin-top: 9px;
+    padding: 0 11px;
+    border: 1px solid #bfdbfe;
+    border-radius: 8px;
+    background: #fff;
+    color: #2563eb;
+    font-size: 11px;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.city-listing-ad-cta:hover {
+    background: #eff6ff;
+    border-color: #2563eb;
+}
+
+/* Single advertisement */
+
+.city-listing-ad-row > .city-listing-ad:only-child {
+    grid-column: 1 / -1;
+}
+
+/* Tablet */
+
+@media (max-width: 700px) {
+    .city-listing-ad-row {
+        gap: 10px;
+    }
+
+    .city-listing-ad {
+        min-height: 165px;
+        padding: 10px;
+    }
+
+    .city-listing-ad-content {
+        grid-template-columns: 85px minmax(0, 1fr);
+        gap: 9px;
+    }
+
+    .city-listing-ad-image {
+        width: 85px;
+        height: 95px;
+    }
+
+    .city-listing-ad-details h3 {
+        font-size: 13px;
+    }
+
+    .city-listing-ad-details p {
+        font-size: 11px;
+    }
+}
+
+/* Mobile */
+
+@media (max-width: 480px) {
+    .city-listing-ad-row {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .city-listing-ad {
+        min-height: 160px;
+        padding: 11px;
+    }
+
+    .city-listing-ad-content {
+        grid-template-columns: 95px minmax(0, 1fr);
+        gap: 11px;
+    }
+
+    .city-listing-ad-image {
+        width: 95px;
+        height: 100px;
+    }
+}
+

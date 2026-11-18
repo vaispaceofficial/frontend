@@ -1,5 +1,6 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import {
     ArrowDownRight,
@@ -118,6 +119,8 @@ type StoredVendorProfile = {
     businessType?: string;
     businessCategory?: string;
     businessAddress?: string;
+    // Vendor's primary profile photo, shared with City Listings.
+    profileImage?: string;
     city?: string;
     state?: string;
     pincode?: string;
@@ -577,6 +580,7 @@ function VendorHub() {
     const navigate = useNavigate();
 
     const galleryInputRef = useRef<HTMLInputElement>(null);
+    const profileImageInputRef = useRef<HTMLInputElement>(null);
     const productInputRef = useRef<HTMLInputElement>(null);
     const productEditImageRef = useRef<HTMLInputElement>(null);
 
@@ -1262,6 +1266,147 @@ function VendorHub() {
     }, [services, search]);
 
     const showNotice = (message: string) => setNotice(message);
+
+    const handleProfileImageChange = (
+        event: ChangeEvent<HTMLInputElement>,
+    ) => {
+        const file = event.currentTarget.files?.[0];
+        if (!file) return;
+
+        const allowedTypes = [
+            "image/jpeg",
+            "image/png",
+            "image/webp",
+        ];
+
+        if (!allowedTypes.includes(file.type)) {
+            showNotice("Please select a JPG, PNG, or WebP image.");
+            event.currentTarget.value = "";
+            return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+            showNotice("Please choose an image smaller than 5 MB.");
+            event.currentTarget.value = "";
+            return;
+        }
+
+        const reader = new FileReader();
+
+        reader.onload = () => {
+            if (typeof reader.result !== "string") {
+                showNotice("Unable to read the selected image.");
+                return;
+            }
+
+            const image = new Image();
+
+            image.onload = () => {
+                const maxDimension = 512;
+                const scale = Math.min(
+                    maxDimension / image.width,
+                    maxDimension / image.height,
+                    1,
+                );
+
+                const canvas = document.createElement("canvas");
+                canvas.width = Math.max(1, Math.round(image.width * scale));
+                canvas.height = Math.max(1, Math.round(image.height * scale));
+
+                const context = canvas.getContext("2d");
+                if (!context) {
+                    showNotice("Unable to process this image.");
+                    return;
+                }
+
+                context.drawImage(
+                    image,
+                    0,
+                    0,
+                    canvas.width,
+                    canvas.height,
+                );
+
+                const profileImage = canvas.toDataURL("image/jpeg", 0.82);
+                const currentProfile =
+                    vendorProfile ?? readStoredVendorProfile();
+
+                if (!currentProfile) {
+                    showNotice("Vendor profile could not be found.");
+                    return;
+                }
+
+                const updatedProfile: StoredVendorProfile = {
+                    ...currentProfile,
+                    profileImage,
+                };
+
+                try {
+                    // Save the same primary image to the vendor account.
+                    localStorage.setItem(
+                        "oneservice_vendor",
+                        JSON.stringify(updatedProfile),
+                    );
+
+                    // Keep the logged-in vendor record synchronized.
+                    const userRaw = localStorage.getItem("oneservice_user");
+                    if (userRaw) {
+                        try {
+                            const currentUser = JSON.parse(userRaw);
+                            if (currentUser?.role === "vendor") {
+                                localStorage.setItem(
+                                    "oneservice_user",
+                                    JSON.stringify({
+                                        ...currentUser,
+                                        profileImage,
+                                    }),
+                                );
+                            }
+                        } catch (error) {
+                            console.error(
+                                "Unable to synchronize vendor profile picture:",
+                                error,
+                            );
+                        }
+                    }
+
+                    // City Listings reads this shared vendor collection.
+                    saveVendorToSharedCollection(updatedProfile);
+                    setVendorProfile(updatedProfile);
+
+                    window.dispatchEvent(
+                        new Event("oneservice-vendor-change"),
+                    );
+                    window.dispatchEvent(
+                        new Event("oneservice-vendors-change"),
+                    );
+
+                    showNotice("Profile picture updated successfully.");
+                } catch (error) {
+                    console.error(
+                        "Unable to save vendor profile picture:",
+                        error,
+                    );
+                    showNotice(
+                        "Unable to save this image. Please try a smaller image.",
+                    );
+                }
+            };
+
+            image.onerror = () => {
+                showNotice("Unable to open the selected image.");
+            };
+
+            image.src = reader.result;
+        };
+
+        reader.onerror = () => {
+            showNotice("Unable to read the selected image.");
+        };
+
+        reader.readAsDataURL(file);
+        event.currentTarget.value = "";
+    };
 
     const goToTab = (tab: TabId) => {
         setActiveTab(tab);
@@ -3264,9 +3409,26 @@ function VendorHub() {
                     <div className="vh-business-main">
                         <div
                             className="vh-business-logo"
-                            aria-label={business.name}
+                            role="button"
+                            tabIndex={0}
+                            aria-label="Upload or change business profile picture"
+                            title="Click to upload or change profile picture"
+                            onClick={() => profileImageInputRef.current?.click()}
+                            onKeyDown={(event) => {
+                                if (event.key === "Enter" || event.key === " ") {
+                                    event.preventDefault();
+                                    profileImageInputRef.current?.click();
+                                }
+                            }}
                         >
-                            {business.name.trim() &&
+                            {typeof vendorProfile?.profileImage === "string" &&
+                            vendorProfile.profileImage ? (
+                                <img
+                                    className="vh-business-profile-image"
+                                    src={vendorProfile.profileImage}
+                                    alt={`${business.name} profile`}
+                                />
+                            ) : business.name.trim() &&
                                 business.name !== "Your Business Name" ? (
                                 <span className="vh-business-initials">
                                     {formatInitials(business.name)}
@@ -3274,6 +3436,14 @@ function VendorHub() {
                             ) : (
                                 <Building2 size={38} />
                             )}
+
+                            <input
+                                ref={profileImageInputRef}
+                                type="file"
+                                accept="image/jpeg,image/png,image/webp"
+                                hidden
+                                onChange={handleProfileImageChange}
+                            />
                         </div>
 
                         <div className="vh-business-copy">

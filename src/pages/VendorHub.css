@@ -1018,3 +1018,23 @@
     justify-content: center;
   }
 }
+
+/* Add these rules to VendorHub.css. Existing avatar dimensions/layout stay unchanged. */
+.vh-business-logo {
+    cursor: pointer;
+    overflow: hidden;
+    position: relative;
+}
+
+.vh-business-profile-image {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: inherit;
+}
+
+.vh-business-logo:focus-visible {
+    outline: 3px solid #2563eb;
+    outline-offset: 3px;
+}

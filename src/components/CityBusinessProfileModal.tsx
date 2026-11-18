@@ -99,8 +99,8 @@ function CityBusinessProfileModal({ listing, onClose }: Props) {
   const showReviewFormRef = useRef(showReviewForm);
   const showCallbackFormRef = useRef(showCallbackForm);
   const lightboxOpenRef = useRef(lightboxOpen);
-  const previousImageRef = useRef<() => void>(() => {});
-  const nextImageRef = useRef<() => void>(() => {});
+  const previousImageRef = useRef<() => void>(() => { });
+  const nextImageRef = useRef<() => void>(() => { });
   onCloseRef.current = onClose;
   showReviewFormRef.current = showReviewForm;
   showCallbackFormRef.current = showCallbackForm;
@@ -117,9 +117,12 @@ function CityBusinessProfileModal({ listing, onClose }: Props) {
     "Professional Consultation", "Experienced Staff", "Modern Facilities", "Customer Support", "Appointment Available",
   ];
   const services = listing.services ?? [listing.label, "Professional Consultation", "Customer Assistance"];
-  const gallery = listing.gallery?.length
-    ? listing.gallery.filter(Boolean)
-    : [listing.coverImage || listing.image, listing.image].filter(Boolean);
+  const gallery = [
+    listing.image,
+    ...(listing.gallery ?? []).filter(
+      (image) => Boolean(image) && image !== listing.image
+    ),
+  ];
   const activeImage = gallery[activeImageIndex] || gallery[0];
   const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}`;
   const mapEmbedUrl = `https://maps.google.com/maps?q=${encodeURIComponent(`${listing.name}, ${address}`)}&z=15&output=embed`;
@@ -262,7 +265,7 @@ function CityBusinessProfileModal({ listing, onClose }: Props) {
   };
 
   const coverStyle: CSSProperties = {
-    backgroundImage: `linear-gradient(90deg, rgba(8, 18, 38, 0.88) 0%, rgba(8, 18, 38, 0.54) 54%, rgba(8, 18, 38, 0.12) 100%), linear-gradient(0deg, rgba(8, 18, 38, 0.82) 0%, transparent 75%), url("${listing.coverImage || listing.image}")`,
+    backgroundImage: `linear-gradient(90deg, rgba(8, 18, 38, 0.88) 0%, rgba(8, 18, 38, 0.54) 54%, rgba(8, 18, 38, 0.12) 100%), linear-gradient(0deg, rgba(8, 18, 38, 0.82) 0%, transparent 75%), url("${listing.image}")`,
   };
 
   return (
@@ -278,7 +281,14 @@ function CityBusinessProfileModal({ listing, onClose }: Props) {
         <button type="button" className="business-profile-close" onClick={() => onCloseRef.current()} aria-label="Close business profile"><X size={20} /></button>
         <header className="business-profile-cover" style={coverStyle}>
           <div className="business-profile-identity">
-            <img className="business-profile-avatar" src={listing.avatar || "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&w=180&q=80"} alt={`${listing.name} profile`} />
+            <img
+              className="business-profile-avatar"
+              src={listing.image}
+              alt={`${listing.name} profile`}
+              onError={(event) => {
+                event.currentTarget.style.display = "none";
+              }}
+            />
             <div className="business-profile-heading">
               <div className="business-profile-badges">
                 <span className="business-profile-category-badge"><Building2 size={13} />{listing.category}</span>
