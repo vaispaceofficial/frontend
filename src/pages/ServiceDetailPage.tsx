@@ -56,12 +56,8 @@ type ProfessionalApplication = {
   status?: string;
   visitingFee?: string;
   about?: string;
-
-  // Profile image saved during registration
   profileImage?: string;
   image?: string;
-
-  // Optional rating and review data
   rating?: number | string;
   reviews?: number;
   reviewCount?: number;
@@ -89,6 +85,33 @@ type Professional = {
   servicePrices: RegisteredServicePrice[];
 };
 
+type ServiceRequestStatus =
+  | "pending"
+  | "accepted"
+  | "rejected"
+  | "completed";
+
+type ServiceRequest = {
+  id: string;
+  customerId: string | null;
+  customerName: string;
+  customerPhone: string;
+
+  serviceId: string;
+  serviceName: string;
+  commonIssue: string;
+  serviceType: string;
+
+  preferredProfessionalId: string | null;
+  preferredProfessionalName: string | null;
+
+  status: ServiceRequestStatus;
+  requestType: "booking" | "callback";
+
+  createdAt: string;
+  updatedAt: string;
+};
+
 /* =========================================================
    STORAGE KEYS
 ========================================================= */
@@ -99,7 +122,13 @@ const PROFESSIONALS_KEY = "oneservice_professionals";
 const PRICING_KEY = "oneservice_professional_service_prices";
 const AVAILABILITY_KEY = "oneservice_professional_accepting_calls";
 
-const DEFAULT_PROFESSIONAL_IMAGE = "/images/professionals/image1.avif";
+const SERVICE_REQUESTS_KEY = "oneservice_service_requests";
+
+const SERVICE_REQUESTS_CHANGE_EVENT =
+  "oneservice-service-requests-change";
+
+const DEFAULT_PROFESSIONAL_IMAGE =
+  "/images/professionals/image1.avif";
 
 /* =========================================================
    STORAGE HELPERS
@@ -189,6 +218,74 @@ function readPricesForProfessional(
 }
 
 /* =========================================================
+   CUSTOMER AND SERVICE REQUEST STORAGE
+========================================================= */
+
+function getLoggedInCustomerId(): string | null {
+  const user = safeReadJson<Record<string, unknown>>(
+    "oneservice_user"
+  );
+
+  if (!user) return null;
+
+  const id =
+    user.id ??
+    user.userId ??
+    user.uid ??
+    user.email ??
+    user.mobile ??
+    user.phone;
+
+  return id ? String(id) : null;
+}
+
+function createServiceRequestId(): string {
+  if (
+    typeof crypto !== "undefined" &&
+    typeof crypto.randomUUID === "function"
+  ) {
+    return crypto.randomUUID();
+  }
+
+  return `request-${Date.now()}-${Math.random()
+    .toString(36)
+    .slice(2, 10)}`;
+}
+
+function saveServiceRequest(
+  request: ServiceRequest
+): boolean {
+  try {
+    const existing =
+      safeReadJson<ServiceRequest[]>(SERVICE_REQUESTS_KEY);
+
+    const requests = Array.isArray(existing)
+      ? existing
+      : [];
+
+    localStorage.setItem(
+      SERVICE_REQUESTS_KEY,
+      JSON.stringify([request, ...requests])
+    );
+
+    window.dispatchEvent(
+      new CustomEvent(SERVICE_REQUESTS_CHANGE_EVENT, {
+        detail: request,
+      })
+    );
+
+    return true;
+  } catch (error) {
+    console.error(
+      "Unable to save service request:",
+      error
+    );
+
+    return false;
+  }
+}
+
+/* =========================================================
    PROFESSIONAL IMAGE
 ========================================================= */
 
@@ -255,13 +352,13 @@ function normalizeProfessional(
     application.customerReviews
   )
     ? application.customerReviews.filter(
-      (review) =>
-        review &&
-        typeof review.name === "string" &&
-        typeof review.comment === "string" &&
-        Number(review.rating) >= 1 &&
-        Number(review.rating) <= 5
-    )
+        (review) =>
+          review &&
+          typeof review.name === "string" &&
+          typeof review.comment === "string" &&
+          Number(review.rating) >= 1 &&
+          Number(review.rating) <= 5
+      )
     : [];
 
   const reviewCount =
@@ -273,7 +370,6 @@ function normalizeProfessional(
     id: String(application.id),
     name: application.fullName,
 
-    // Use the actual registered image first.
     image:
       application.profileImage ||
       application.image ||
@@ -447,16 +543,17 @@ function ServiceDetailPage() {
     () =>
       service
         ? registeredProfessionals.filter((professional) =>
-          matchesService(professional, service)
-        )
+            matchesService(professional, service)
+          )
         : [],
     [registeredProfessionals, service]
   );
 
   /* =======================================================
      FRONTEND DEMO PROFESSIONALS
-     Dummy profiles are for UI demonstration only and are
-     never written to localStorage or treated as real users.
+     Dummy profiles are for UI demonstration only.
+     They are never written to localStorage or treated as
+     real professionals for request assignment.
   ======================================================= */
 
   const matchingRealProfessional =
@@ -485,12 +582,22 @@ function ServiceDetailPage() {
     responseTime: "Usually responds within 30 minutes",
     customerReviews: [],
     category: service?.name ?? "Home Service",
-    services: service ? [service.name, service.shortName] : ["Home Services"],
+    services: service
+      ? [service.name, service.shortName]
+      : ["Home Services"],
     workType: "Home visit",
-    workingDays: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+    workingDays: [
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday",
+      "Saturday",
+    ],
     city: area.split(",")[0] || "",
     state: "Andhra Pradesh",
-    about: "Demo profile displayed for professional-card layout preview.",
+    about:
+      "Demo profile displayed for professional-card layout preview.",
     visitingFee: String(price),
     servicePrices: [
       {
@@ -597,15 +704,26 @@ function ServiceDetailPage() {
   ];
 
   const professionalGroups = [
-    { tier: "premium" as const, professionals: premiumProfessionals },
-    { tier: "exclusive" as const, professionals: exclusiveProfessionals },
-    { tier: "professional" as const, professionals: regularProfessionals },
+    {
+      tier: "premium" as const,
+      professionals: premiumProfessionals,
+    },
+    {
+      tier: "exclusive" as const,
+      professionals: exclusiveProfessionals,
+    },
+    {
+      tier: "professional" as const,
+      professionals: regularProfessionals,
+    },
   ];
 
-  // Flatten all tiers into one 3-column grid; category is shown by
-  // the small transparent icon at the top-left of each card.
-  const allDisplayedProfessionals = professionalGroups.flatMap((group) =>
-    group.professionals.map((professional) => ({ professional, tier: group.tier }))
+  const allDisplayedProfessionals = professionalGroups.flatMap(
+    (group) =>
+      group.professionals.map((professional) => ({
+        professional,
+        tier: group.tier,
+      }))
   );
 
   /* =======================================================
@@ -683,10 +801,6 @@ function ServiceDetailPage() {
     )?.professional ?? null;
 
   /* =======================================================
-     PROFESSIONAL GROUPS
-  ======================================================= */
-
-  /* =======================================================
      PROFESSIONAL POPUP HANDLERS
   ======================================================= */
 
@@ -742,6 +856,56 @@ function ServiceDetailPage() {
     closeBookingPopup();
     setCustomerName("");
     setCustomerPhone("");
+  };
+
+  /* =======================================================
+     CREATE AND SAVE SERVICE REQUEST
+  ======================================================= */
+
+  const submitServiceRequest = (
+    name: string,
+    phone: string,
+    requestType: "booking" | "callback"
+  ): boolean => {
+    if (!service || !selectedIssue || !selectedType) {
+      return false;
+    }
+
+    // A request can only be assigned to a genuine registered
+    // professional. Demo profiles are not eligible.
+    const realProfessional = registeredProfessionals.find(
+      (professional) =>
+        professional.id === confirmedProfessional
+    );
+
+    const now = new Date().toISOString();
+
+    const request: ServiceRequest = {
+      id: createServiceRequestId(),
+
+      customerId: getLoggedInCustomerId(),
+      customerName: name.trim(),
+      customerPhone: phone,
+
+      serviceId: service.id,
+      serviceName: service.name,
+      commonIssue: selectedIssue,
+      serviceType: selectedType,
+
+      preferredProfessionalId:
+        realProfessional?.id ?? null,
+
+      preferredProfessionalName:
+        realProfessional?.name ?? null,
+
+      status: "pending",
+      requestType,
+
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    return saveServiceRequest(request);
   };
 
   /* =======================================================
@@ -913,8 +1077,9 @@ function ServiceDetailPage() {
                   <button
                     type="button"
                     key={issue}
-                    className={`issue-item ${isSelected ? "selected" : ""
-                      }`}
+                    className={`issue-item ${
+                      isSelected ? "selected" : ""
+                    }`}
                     aria-pressed={isSelected}
                     onClick={() =>
                       setSelectedIssue(
@@ -950,8 +1115,9 @@ function ServiceDetailPage() {
                   <button
                     type="button"
                     key={type}
-                    className={`service-type-card ${isSelected ? "selected" : ""
-                      }`}
+                    className={`service-type-card ${
+                      isSelected ? "selected" : ""
+                    }`}
                     aria-pressed={isSelected}
                     onClick={() =>
                       setSelectedType(
@@ -984,145 +1150,170 @@ function ServiceDetailPage() {
             <h2>Choose your professional</h2>
 
             <p className="professional-section-description">
-              Select a professional based on their experience, ratings, and service area.
+              Select a professional based on their experience,
+              ratings, and service area.
             </p>
 
             <div className="professional-selection-grid professional-grid-animated professional-grid-compact">
-              {allDisplayedProfessionals.map(({ professional, tier }) => {
-                const isSelected =
-                  selectedProfessional === professional.id ||
-                  confirmedProfessional === professional.id;
+              {allDisplayedProfessionals.map(
+                ({ professional, tier }) => {
+                  const isSelected =
+                    selectedProfessional === professional.id ||
+                    confirmedProfessional === professional.id;
 
-                const lowestPrice = professional.servicePrices
-                  .map((item) => Number(item.price))
-                  .filter((price) => Number.isFinite(price) && price >= 0);
+                  const lowestPrice = professional.servicePrices
+                    .map((item) => Number(item.price))
+                    .filter(
+                      (price) =>
+                        Number.isFinite(price) && price >= 0
+                    );
 
-                const startingPrice =
-                  lowestPrice.length > 0
-                    ? Math.min(...lowestPrice)
-                    : Number(professional.visitingFee) || demoStartingPrice;
+                  const startingPrice =
+                    lowestPrice.length > 0
+                      ? Math.min(...lowestPrice)
+                      : Number(professional.visitingFee) ||
+                        demoStartingPrice;
 
-                const tierLabel =
-                  tier === "premium"
-                    ? "Premium"
-                    : tier === "exclusive"
-                      ? "Exclusive"
-                      : "Professional";
+                  const tierLabel =
+                    tier === "premium"
+                      ? "Premium"
+                      : tier === "exclusive"
+                        ? "Exclusive"
+                        : "Professional";
 
-                return (
-                  <button
-                    type="button"
-                    key={professional.id}
-                    className={`professional-selection-card professional-tier-${tier} professional-card-compact ${isSelected ? "selected" : ""
+                  return (
+                    <button
+                      type="button"
+                      key={professional.id}
+                      className={`professional-selection-card professional-tier-${tier} professional-card-compact ${
+                        isSelected ? "selected" : ""
                       }`}
-                    onMouseEnter={() => {
-                      cancelProfessionalPopupClose();
+                      onMouseEnter={() => {
+                        cancelProfessionalPopupClose();
 
-                      if (!isProfessionalPopupPinned) {
-                        setSelectedProfessional(professional.id);
-                      }
-                    }}
-                    onMouseLeave={() => {
-                      if (!isProfessionalPopupPinned) {
-                        scheduleProfessionalPopupClose();
-                      }
-                    }}
-                    onFocus={() => {
-                      cancelProfessionalPopupClose();
+                        if (!isProfessionalPopupPinned) {
+                          setSelectedProfessional(
+                            professional.id
+                          );
+                        }
+                      }}
+                      onMouseLeave={() => {
+                        if (!isProfessionalPopupPinned) {
+                          scheduleProfessionalPopupClose();
+                        }
+                      }}
+                      onFocus={() => {
+                        cancelProfessionalPopupClose();
 
-                      if (!isProfessionalPopupPinned) {
-                        setSelectedProfessional(professional.id);
+                        if (!isProfessionalPopupPinned) {
+                          setSelectedProfessional(
+                            professional.id
+                          );
+                        }
+                      }}
+                      onBlur={() => {
+                        if (!isProfessionalPopupPinned) {
+                          scheduleProfessionalPopupClose();
+                        }
+                      }}
+                      onClick={() => {
+                        cancelProfessionalPopupClose();
+                        setSelectedProfessional(
+                          professional.id
+                        );
+                        setIsProfessionalPopupPinned(true);
+                      }}
+                      aria-pressed={
+                        confirmedProfessional === professional.id
                       }
-                    }}
-                    onBlur={() => {
-                      if (!isProfessionalPopupPinned) {
-                        scheduleProfessionalPopupClose();
-                      }
-                    }}
-                    onClick={() => {
-                      cancelProfessionalPopupClose();
-                      setSelectedProfessional(professional.id);
-                      setIsProfessionalPopupPinned(true);
-                    }}
-                    aria-pressed={confirmedProfessional === professional.id}
-                  >
-                    {/* Tier icon: top-right */}
-
-                    <span
-                      className={`professional-tier-icon professional-tier-icon-${tier}`}
-                      title={`${tierLabel} Professional`}
-                      aria-label={`${tierLabel} Professional`}
                     >
-                      {tier === "premium" ? (
-                        <Diamond size={15} strokeWidth={2.1} />
-                      ) : tier === "exclusive" ? (
-                        <Crown size={15} strokeWidth={2.1} />
-                      ) : (
-                        <ShieldCheck size={15} strokeWidth={2.1} />
-                      )}
-                    </span>
+                      <span
+                        className={`professional-tier-icon professional-tier-icon-${tier}`}
+                        title={`${tierLabel} Professional`}
+                        aria-label={`${tierLabel} Professional`}
+                      >
+                        {tier === "premium" ? (
+                          <Diamond
+                            size={15}
+                            strokeWidth={2.1}
+                          />
+                        ) : tier === "exclusive" ? (
+                          <Crown
+                            size={15}
+                            strokeWidth={2.1}
+                          />
+                        ) : (
+                          <ShieldCheck
+                            size={15}
+                            strokeWidth={2.1}
+                          />
+                        )}
+                      </span>
 
-                    {/* Professional photo */}
+                      <div className="professional-selection-photo professional-photo-compact">
+                        <ProfessionalAvatar
+                          src={professional.image}
+                          name={professional.name}
+                        />
 
-                    <div className="professional-selection-photo professional-photo-compact">
-                      <ProfessionalAvatar
-                        src={professional.image}
-                        name={professional.name}
-                      />
-
-                      {isSelected && (
-                        <span className="professional-selected-badge">
-                          <CheckCircle2 size={11} />
-                          Selected
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Professional details */}
-
-                    <div className="professional-selection-info professional-info-compact">
-                      <h3>{professional.name}</h3>
-
-                      <div className="professional-verified-row">
-                        <span
-                          className="professional-verified-badge"
-                          title="Verified professional"
-                        >
-                          <BadgeCheck size={11} />
-                          Verified
-                        </span>
-                      </div>
-
-                      <div className="professional-selection-rating">
-                        <Star size={13} fill="currentColor" />
-
-                        <strong>
-                          {professional.rating > 0
-                            ? professional.rating.toFixed(1)
-                            : "New"}
-                        </strong>
-
-                        {professional.reviews > 0 && (
-                          <span>({professional.reviews})</span>
+                        {isSelected && (
+                          <span className="professional-selected-badge">
+                            <CheckCircle2 size={11} />
+                            Selected
+                          </span>
                         )}
                       </div>
 
-                      <p className="professional-selection-area">
-                        <MapPin size={12} />
-                        <span>{professional.area}</span>
-                      </p>
+                      <div className="professional-selection-info professional-info-compact">
+                        <h3>{professional.name}</h3>
 
-                      <span className="professional-experience">
-                        {professional.experience} experience
-                      </span>
+                        <div className="professional-verified-row">
+                          <span
+                            className="professional-verified-badge"
+                            title="Verified professional"
+                          >
+                            <BadgeCheck size={11} />
+                            Verified
+                          </span>
+                        </div>
 
-                      <span className="professional-card-price">
-                        Starts from ₹{startingPrice.toLocaleString("en-IN")}
-                      </span>
-                    </div>
-                  </button>
-                );
-              })}
+                        <div className="professional-selection-rating">
+                          <Star
+                            size={13}
+                            fill="currentColor"
+                          />
+
+                          <strong>
+                            {professional.rating > 0
+                              ? professional.rating.toFixed(1)
+                              : "New"}
+                          </strong>
+
+                          {professional.reviews > 0 && (
+                            <span>
+                              ({professional.reviews})
+                            </span>
+                          )}
+                        </div>
+
+                        <p className="professional-selection-area">
+                          <MapPin size={12} />
+                          <span>{professional.area}</span>
+                        </p>
+
+                        <span className="professional-experience">
+                          {professional.experience} experience
+                        </span>
+
+                        <span className="professional-card-price">
+                          Starts from ₹
+                          {startingPrice.toLocaleString("en-IN")}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                }
+              )}
             </div>
           </section>
 
@@ -1280,7 +1471,9 @@ function ServiceDetailPage() {
 
                     <div className="professional-rating">
                       <BadgeCheck size={13} />
-                      <strong>Registered Professional</strong>
+                      <strong>
+                        Registered Professional
+                      </strong>
                     </div>
                   </div>
                 </div>
@@ -1354,241 +1547,225 @@ function ServiceDetailPage() {
         </aside>
       </section>
 
-{/* =====================================================
-    SELECTED PROFESSIONAL DETAIL POPUP — RESTORED DESIGN
-===================================================== */}
+      {/* =====================================================
+          SELECTED PROFESSIONAL DETAIL POPUP
+      ===================================================== */}
 
-{selectedProfessionalDetails && (
-  <div
-    className={`professional-popup-backdrop ${
-      isProfessionalPopupPinned ? "pinned" : "preview"
-    }`}
-    onClick={
-      isProfessionalPopupPinned
-        ? closeProfessionalPopup
-        : undefined
-    }
-  >
-    <section
-      className="professional-detail-popup"
-      role="dialog"
-      aria-modal={isProfessionalPopupPinned}
-      aria-labelledby="professional-popup-title"
-      onMouseEnter={cancelProfessionalPopupClose}
-      onMouseLeave={() => {
-        if (!isProfessionalPopupPinned) {
-          scheduleProfessionalPopupClose();
-        }
-      }}
-      onClick={(event) => event.stopPropagation()}
-    >
-      {/* CLOSE BUTTON */}
+      {selectedProfessionalDetails && (
+        <div
+          className={`professional-popup-backdrop ${
+            isProfessionalPopupPinned ? "pinned" : "preview"
+          }`}
+          onClick={
+            isProfessionalPopupPinned
+              ? closeProfessionalPopup
+              : undefined
+          }
+        >
+          <section
+            className="professional-detail-popup"
+            role="dialog"
+            aria-modal={isProfessionalPopupPinned}
+            aria-labelledby="professional-popup-title"
+            onMouseEnter={cancelProfessionalPopupClose}
+            onMouseLeave={() => {
+              if (!isProfessionalPopupPinned) {
+                scheduleProfessionalPopupClose();
+              }
+            }}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              className="professional-popup-close"
+              aria-label="Close professional details"
+              onClick={closeProfessionalPopup}
+            >
+              <X size={19} />
+            </button>
 
-      <button
-        type="button"
-        className="professional-popup-close"
-        aria-label="Close professional details"
-        onClick={closeProfessionalPopup}
-      >
-        <X size={19} />
-      </button>
+            <span className="professional-popup-label">
+              <CheckCircle2 size={15} />
+              Professional Profile
+            </span>
 
-      {/* PROFILE LABEL */}
+            <div className="professional-popup-profile">
+              <ProfessionalAvatar
+                src={selectedProfessionalDetails.image}
+                name={selectedProfessionalDetails.name}
+                className="professional-popup-avatar"
+              />
 
-      <span className="professional-popup-label">
-        <CheckCircle2 size={15} />
-        Professional Profile
-      </span>
+              <div className="professional-popup-profile-info">
+                <h2 id="professional-popup-title">
+                  {selectedProfessionalDetails.name}
+                </h2>
 
-      {/* PROFILE HEADER */}
+                <p>{selectedProfessionalDetails.category}</p>
 
-      <div className="professional-popup-profile">
-        <ProfessionalAvatar
-          src={selectedProfessionalDetails.image}
-          name={selectedProfessionalDetails.name}
-          className="professional-popup-avatar"
-        />
+                <div className="professional-popup-header-rating">
+                  <Star size={17} fill="currentColor" />
 
-        <div className="professional-popup-profile-info">
-          <h2 id="professional-popup-title">
-            {selectedProfessionalDetails.name}
-          </h2>
+                  <strong>
+                    {selectedProfessionalDetails.rating > 0
+                      ? selectedProfessionalDetails.rating.toFixed(1)
+                      : "New"}
+                  </strong>
 
-          <p>{selectedProfessionalDetails.category}</p>
-
-          <div className="professional-popup-header-rating">
-            <Star size={17} fill="currentColor" />
-
-            <strong>
-              {selectedProfessionalDetails.rating > 0
-                ? selectedProfessionalDetails.rating.toFixed(1)
-                : "New"}
-            </strong>
-
-            {selectedProfessionalDetails.reviews > 0 && (
-              <span>
-                ({selectedProfessionalDetails.reviews} reviews)
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* DIVIDER */}
-
-      <div className="professional-popup-divider" />
-
-      {/* PROFESSIONAL INFORMATION */}
-
-      <div className="professional-popup-info-list">
-        <div className="professional-popup-info-row">
-          <Clock3 size={21} />
-
-          <div>
-            <span>Experience</span>
-            <strong>{selectedProfessionalDetails.experience}</strong>
-          </div>
-        </div>
-
-        <div className="professional-popup-info-row">
-          <MapPin size={21} />
-
-          <div>
-            <span>Service Area</span>
-            <strong>{selectedProfessionalDetails.area}</strong>
-          </div>
-        </div>
-
-        <div className="professional-popup-info-row">
-          <Wrench size={21} />
-
-          <div>
-            <span>Average Response Time</span>
-            <strong>{selectedProfessionalDetails.responseTime}</strong>
-          </div>
-        </div>
-      </div>
-
-      {/* DIVIDER */}
-
-      <div className="professional-popup-divider" />
-
-      {/* PROFESSIONAL SERVICE PRICING */}
-
-      <div className="professional-popup-pricing">
-        <h3>
-          <Wallet size={17} />
-          Service Pricing
-        </h3>
-
-        {selectedProfessionalDetails.servicePrices?.length > 0 ? (
-          selectedProfessionalDetails.servicePrices.map(
-            (item: { id: string; name: string; price: string | number }) => (
-              <div
-                className="professional-popup-price-row"
-                key={item.id}
-              >
-                <span>{item.name}</span>
-
-                <strong>
-                  ₹
-                  {Number(item.price).toLocaleString("en-IN")}
-                </strong>
-              </div>
-            )
-          )
-        ) : selectedProfessionalDetails.visitingFee ? (
-          <div className="professional-popup-price-row">
-            <span>Visiting Fee</span>
-
-            <strong>
-              ₹
-              {Number(
-                selectedProfessionalDetails.visitingFee
-              ).toLocaleString("en-IN")}
-            </strong>
-          </div>
-        ) : (
-          <div className="professional-popup-price-empty">
-            Service pricing has not been added yet.
-          </div>
-        )}
-      </div>
-
-      {/* DIVIDER */}
-
-      <div className="professional-popup-divider" />
-
-      {/* CUSTOMER REVIEWS */}
-
-      <div className="professional-popup-customer-reviews">
-        <div className="professional-popup-reviews-heading">
-          <h3>
-            <Star size={19} fill="currentColor" />
-            Customer Reviews
-          </h3>
-        </div>
-
-        {selectedProfessionalDetails.customerReviews.length > 0 ? (
-          selectedProfessionalDetails.customerReviews.map(
-            (review, index) => (
-              <div
-                className="professional-popup-review-item"
-                key={`${review.name}-${index}`}
-              >
-                <div className="professional-popup-review-top">
-                  <strong>{review.name}</strong>
-
-                  <span>
-                    <Star size={14} fill="currentColor" />
-                    {Number(review.rating).toFixed(1)}
-                  </span>
+                  {selectedProfessionalDetails.reviews > 0 && (
+                    <span>
+                      ({selectedProfessionalDetails.reviews} reviews)
+                    </span>
+                  )}
                 </div>
-
-                <p>{review.comment}</p>
               </div>
-            )
-          )
-        ) : (
-          <div className="professional-popup-no-reviews">
-            <strong>No customer reviews yet</strong>
+            </div>
 
-            <p>
-              Customer feedback will appear here after
-              completed services receive verified reviews.
-            </p>
-          </div>
-        )}
-      </div>
+            <div className="professional-popup-divider" />
 
-      {/* OVERALL RATING SUMMARY */}
+            <div className="professional-popup-info-list">
+              <div className="professional-popup-info-row">
+                <Clock3 size={21} />
 
-      <div className="professional-popup-overall-rating">
-        <strong>
-          {selectedProfessionalDetails.rating > 0
-            ? `${selectedProfessionalDetails.rating.toFixed(1)}/5`
-            : "New"}
-        </strong>
+                <div>
+                  <span>Experience</span>
+                  <strong>
+                    {selectedProfessionalDetails.experience}
+                  </strong>
+                </div>
+              </div>
 
-        <span>
-          Overall rating from{" "}
-          {selectedProfessionalDetails.reviews} reviews
-        </span>
-      </div>
+              <div className="professional-popup-info-row">
+                <MapPin size={21} />
 
-      {/* DONE BUTTON */}
+                <div>
+                  <span>Service Area</span>
+                  <strong>
+                    {selectedProfessionalDetails.area}
+                  </strong>
+                </div>
+              </div>
 
-      <button
-        type="button"
-        className="professional-popup-select-button"
-        onClick={confirmProfessionalSelection}
-      >
-        <CheckCircle2 size={17} />
-        Done
-      </button>
-    </section>
-  </div>
-)}
+              <div className="professional-popup-info-row">
+                <Wrench size={21} />
+
+                <div>
+                  <span>Average Response Time</span>
+                  <strong>
+                    {selectedProfessionalDetails.responseTime}
+                  </strong>
+                </div>
+              </div>
+            </div>
+
+            <div className="professional-popup-divider" />
+
+            <div className="professional-popup-pricing">
+              <h3>
+                <Wallet size={17} />
+                Service Pricing
+              </h3>
+
+              {selectedProfessionalDetails.servicePrices?.length > 0 ? (
+                selectedProfessionalDetails.servicePrices.map(
+                  (item) => (
+                    <div
+                      className="professional-popup-price-row"
+                      key={item.id}
+                    >
+                      <span>{item.name}</span>
+
+                      <strong>
+                        ₹
+                        {Number(item.price).toLocaleString("en-IN")}
+                      </strong>
+                    </div>
+                  )
+                )
+              ) : selectedProfessionalDetails.visitingFee ? (
+                <div className="professional-popup-price-row">
+                  <span>Visiting Fee</span>
+
+                  <strong>
+                    ₹
+                    {Number(
+                      selectedProfessionalDetails.visitingFee
+                    ).toLocaleString("en-IN")}
+                  </strong>
+                </div>
+              ) : (
+                <div className="professional-popup-price-empty">
+                  Service pricing has not been added yet.
+                </div>
+              )}
+            </div>
+
+            <div className="professional-popup-divider" />
+
+            <div className="professional-popup-customer-reviews">
+              <div className="professional-popup-reviews-heading">
+                <h3>
+                  <Star size={19} fill="currentColor" />
+                  Customer Reviews
+                </h3>
+              </div>
+
+              {selectedProfessionalDetails.customerReviews.length > 0 ? (
+                selectedProfessionalDetails.customerReviews.map(
+                  (review, index) => (
+                    <div
+                      className="professional-popup-review-item"
+                      key={`${review.name}-${index}`}
+                    >
+                      <div className="professional-popup-review-top">
+                        <strong>{review.name}</strong>
+
+                        <span>
+                          <Star size={14} fill="currentColor" />
+                          {Number(review.rating).toFixed(1)}
+                        </span>
+                      </div>
+
+                      <p>{review.comment}</p>
+                    </div>
+                  )
+                )
+              ) : (
+                <div className="professional-popup-no-reviews">
+                  <strong>No customer reviews yet</strong>
+
+                  <p>
+                    Customer feedback will appear here after
+                    completed services receive verified reviews.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <div className="professional-popup-overall-rating">
+              <strong>
+                {selectedProfessionalDetails.rating > 0
+                  ? `${selectedProfessionalDetails.rating.toFixed(1)}/5`
+                  : "New"}
+              </strong>
+
+              <span>
+                Overall rating from{" "}
+                {selectedProfessionalDetails.reviews} reviews
+              </span>
+            </div>
+
+            <button
+              type="button"
+              className="professional-popup-select-button"
+              onClick={confirmProfessionalSelection}
+            >
+              <CheckCircle2 size={17} />
+              Done
+            </button>
+          </section>
+        </div>
+      )}
 
       {/* =====================================================
           BOOKING POPUP
@@ -1689,6 +1866,19 @@ function ServiceDetailPage() {
                           return;
                         }
 
+                        const saved = submitServiceRequest(
+                          customerName,
+                          customerPhone,
+                          "booking"
+                        );
+
+                        if (!saved) {
+                          alert(
+                            "Unable to submit your request. Please try again."
+                          );
+                          return;
+                        }
+
                         setRequestSubmitted(true);
                       }}
                     >
@@ -1777,8 +1967,9 @@ function ServiceDetailPage() {
                 </p>
 
                 <p>
-                  Your request was submitted successfully. You
-                  will receive a call within 24 hours.
+                  Your service request has been saved
+                  successfully. You can track its status in
+                  your NEED ONE SERVICE profile.
                 </p>
 
                 <button
@@ -1827,8 +2018,8 @@ function ServiceDetailPage() {
                 </h2>
 
                 <p>
-                  Enter your details and our team will call you
-                  within 24 hours.
+                  Enter your details and our team will contact
+                  you about your service request.
                 </p>
 
                 <div className="booking-popup-selection">
@@ -1865,6 +2056,19 @@ function ServiceDetailPage() {
                       !callbackName.trim() ||
                       !/^[6-9]\d{9}$/.test(callbackPhone)
                     ) {
+                      return;
+                    }
+
+                    const saved = submitServiceRequest(
+                      callbackName,
+                      callbackPhone,
+                      "callback"
+                    );
+
+                    if (!saved) {
+                      alert(
+                        "Unable to submit your callback request. Please try again."
+                      );
                       return;
                     }
 
@@ -1944,8 +2148,9 @@ function ServiceDetailPage() {
                 </p>
 
                 <p>
-                  Your callback request has been submitted. You
-                  will receive a call within 24 hours.
+                  Your callback request has been saved
+                  successfully. You can track its status in
+                  your NEED ONE SERVICE profile.
                 </p>
 
                 <button

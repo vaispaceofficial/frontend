@@ -3122,3 +3122,359 @@
     font-size: 15px;
   }
 }
+
+
+/* =========================================================
+   PROFESSIONAL ADMIN OVERVIEW
+========================================================= */
+
+.professional-admin-overview {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin: 20px 0;
+}
+
+.professional-overview-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  padding: 19px;
+  border: 1px solid #e8edf5;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 3px 12px rgba(15, 23, 42, 0.025);
+}
+
+.professional-overview-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+}
+
+.professional-overview-icon.onboarding {
+  color: #2563eb;
+  background: #eff6ff;
+}
+
+.professional-overview-icon.approved {
+  color: #15803d;
+  background: #f0fdf4;
+}
+
+.professional-overview-icon.restricted {
+  color: #b45309;
+  background: #fffbeb;
+}
+
+.professional-overview-card > div:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.professional-overview-card span {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.professional-overview-card strong {
+  color: #172033;
+  font-size: 25px;
+  font-weight: 750;
+  line-height: 1.2;
+}
+
+.professional-overview-card small {
+  color: #94a3b8;
+  font-size: 11px;
+}
+
+/* =========================================================
+   PROFESSIONAL ADMIN TABS
+========================================================= */
+
+.professional-admin-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin: 22px 0;
+}
+
+.professional-admin-tab {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  padding: 18px 20px;
+  border: 1px solid #e5eaf2;
+  border-radius: 14px;
+  background: #ffffff;
+  color: #172033;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.professional-admin-tab:hover {
+  border-color: #93b4f8;
+  background: #f8fbff;
+  transform: translateY(-1px);
+}
+
+.professional-admin-tab.active {
+  border-color: #2563eb;
+  background: #eff6ff;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.07);
+}
+
+.professional-admin-tab-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.professional-admin-tab.active .professional-admin-tab-icon {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.professional-admin-tab-content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.professional-admin-tab-content strong {
+  color: #172033;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.professional-admin-tab-content small {
+  color: #718096;
+  font-size: 12px;
+}
+
+.professional-admin-tab-count {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  height: 30px;
+  padding: 0 9px;
+  border-radius: 20px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.professional-admin-tab.active .professional-admin-tab-count {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+/* =========================================================
+   ACTIVE SECTION HEADING
+========================================================= */
+
+.professional-admin-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 24px 0 15px;
+}
+
+.professional-admin-section-heading h2 {
+  margin: 0 0 5px;
+  color: #172033;
+  font-size: 19px;
+  font-weight: 750;
+}
+
+.professional-admin-section-heading p {
+  margin: 0;
+  color: #718096;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.professional-admin-section-total {
+  flex: 0 0 auto;
+  padding: 7px 12px;
+  border: 1px solid #e5eaf2;
+  border-radius: 20px;
+  background: #ffffff;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 900px) {
+  .professional-admin-overview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 650px) {
+  .professional-admin-overview {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .professional-admin-tabs {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .professional-admin-tab {
+    padding: 15px;
+  }
+
+  .professional-admin-section-heading {
+    align-items: flex-start;
+  }
+
+  .professional-admin-section-heading h2 {
+    font-size: 17px;
+  }
+}
+
+
+
+/* =========================================================
+   PROFESSIONALS HEADER + RIGHT-SIDE NAVIGATION
+========================================================= */
+
+.professional-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 32px;
+  width: 100%;
+  margin-bottom: 22px;
+}
+
+.professional-page-heading {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.professional-page-heading h1 {
+  margin-bottom: 8px;
+}
+
+.professional-page-heading p {
+  max-width: 560px;
+}
+
+/* Navigation cards positioned on the right */
+
+.professional-page-header .professional-admin-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
+  flex: 0 1 540px;
+  width: 540px;
+  min-width: 0;
+  gap: 16px;
+  margin: 0;
+}
+
+/* Preserve card design while allowing compact alignment */
+
+.professional-page-header .professional-admin-tab {
+  min-width: 0;
+  padding: 15px 16px;
+  gap: 11px;
+}
+
+.professional-page-header .professional-admin-tab-icon {
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+}
+
+.professional-page-header .professional-admin-tab-content {
+  min-width: 0;
+}
+
+.professional-page-header .professional-admin-tab-content strong {
+  font-size: 13px;
+}
+
+.professional-page-header .professional-admin-tab-content small {
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.professional-page-header .professional-admin-tab-count {
+  flex-shrink: 0;
+}
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 1050px) {
+  .professional-page-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .professional-page-heading {
+    width: 100%;
+  }
+
+  .professional-page-header .professional-admin-tabs {
+    width: 100%;
+    max-width: 600px;
+    flex: 0 1 auto;
+  }
+}
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 600px) {
+  .professional-page-header {
+    gap: 16px;
+  }
+
+  .professional-page-header .professional-admin-tabs {
+    grid-template-columns: 1fr;
+    max-width: none;
+    gap: 10px;
+  }
+
+  .professional-page-header .professional-admin-tab {
+    padding: 14px;
+  }
+}

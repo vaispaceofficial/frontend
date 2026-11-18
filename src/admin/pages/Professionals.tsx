@@ -2,13 +2,15 @@
 import { useEffect, useMemo, useState } from "react";
 
 import {
-  CalendarDays,
+  AlertTriangle,
   Ban,
+  CalendarDays,
   Check,
   CheckCircle2,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  ClipboardCheck,
   Clock,
   CreditCard,
   Crown,
@@ -18,17 +20,15 @@ import {
   FileText,
   Mail,
   MapPin,
+  MessageSquare,
   Phone,
   Search,
+  Send,
   ShieldCheck,
   Sparkles,
   UsersRound,
   Wrench,
   X,
-  MessageSquare,
-  AlertTriangle,
-  Send,
-  ClipboardCheck,
 } from "lucide-react";
 
 import "./Professionals.css";
@@ -41,6 +41,7 @@ type ProviderStatus = "Verified" | "Pending";
 type DocumentStatus = "Verified" | "Pending" | "Rejected";
 type AccountState = "Active" | "Suspended" | "Blocked" | "Rejected";
 type ReviewAction = "suspend" | "block" | "reject";
+type ProfessionalAdminTab = "onboarding" | "professionals";
 
 type SubscriptionPlan = "Basic" | "Exclusive" | "Premium";
 
@@ -65,8 +66,6 @@ type AdminRemark = {
   adminReviewStatus?: "Pending" | "Reviewed";
   reviewedAt?: string;
 };
-
-/* Professional service pricing */
 
 type ProfessionalServicePrice = {
   id?: string;
@@ -96,7 +95,6 @@ type ProfessionalApplication = {
   designation?: string;
   services?: string[];
 
-  /* Pricing fields */
   servicePrices?: unknown;
   servicePricing?: unknown;
   servicePricesByService?: unknown;
@@ -207,6 +205,7 @@ const ADMIN_DISPLAY_NAME = "Edmund";
 const APPLICATION_KEY = "oneservice_professional_application";
 const APPLICATIONS_KEY = "oneservice_professional_applications";
 const PROFESSIONALS_KEY = "oneservice_professionals";
+
 const CHANGE_EVENT = "oneservice-professional-change";
 const REMARK_EVENT = "oneservice-professional-remark";
 
@@ -312,6 +311,10 @@ function getInitials(name: string): string {
   );
 }
 
+function normalizePhone(value?: string): string {
+  return String(value || "").replace(/\D/g, "");
+}
+
 function formatDate(value?: string): string {
   if (!value) return "—";
 
@@ -409,10 +412,7 @@ function normalizeServicePriceItems(
     }
 
     return {
-      id:
-        typeof record.id === "string"
-          ? record.id
-          : undefined,
+      id: typeof record.id === "string" ? record.id : undefined,
       name,
       price: price as string | number,
     };
@@ -422,19 +422,15 @@ function normalizeServicePriceItems(
     return value
       .map((item) => normalizeItem(item))
       .filter(
-        (item): item is ProfessionalServicePrice =>
-          item !== null,
+        (item): item is ProfessionalServicePrice => item !== null,
       );
   }
 
   if (typeof value === "object") {
-    return Object.entries(
-      value as Record<string, unknown>,
-    )
+    return Object.entries(value as Record<string, unknown>)
       .map(([name, item]) => normalizeItem(item, name))
       .filter(
-        (item): item is ProfessionalServicePrice =>
-          item !== null,
+        (item): item is ProfessionalServicePrice => item !== null,
       );
   }
 
@@ -446,22 +442,14 @@ function normalizeServicePrices(
 ): ProfessionalServicePrice[] {
   const id = application.id;
 
-  /*
-   * 1. Read prices saved directly in the professional application.
-   */
   const directPrices = normalizeServicePriceItems(
     application.servicePrices ??
     application.servicePricing ??
     application.servicePricesByService,
   );
 
-  if (directPrices.length > 0) {
-    return directPrices;
-  }
+  if (directPrices.length > 0) return directPrices;
 
-  /*
-   * 2. Read a per-professional price record.
-   */
   if (id) {
     const individualPrices = safeReadJson<unknown>(
       `oneservice_professional_service_prices_${id}`,
@@ -471,17 +459,9 @@ function normalizeServicePrices(
     const normalizedIndividual =
       normalizeServicePriceItems(individualPrices);
 
-    if (normalizedIndividual.length > 0) {
-      return normalizedIndividual;
-    }
+    if (normalizedIndividual.length > 0) return normalizedIndividual;
   }
 
-  /*
-   * 3. Read shared price storage.
-   * Supported formats:
-   * - Array of records containing professionalId/id
-   * - Object indexed by professional ID
-   */
   const sharedPrices = safeReadJson<unknown>(
     "oneservice_professional_service_prices",
     null,
@@ -503,9 +483,7 @@ function normalizeServicePrices(
     const normalizedShared =
       normalizeServicePriceItems(matchingRecords);
 
-    if (normalizedShared.length > 0) {
-      return normalizedShared;
-    }
+    if (normalizedShared.length > 0) return normalizedShared;
   }
 
   if (
@@ -521,15 +499,9 @@ function normalizeServicePrices(
     const normalizedShared =
       normalizeServicePriceItems(priceRecord);
 
-    if (normalizedShared.length > 0) {
-      return normalizedShared;
-    }
+    if (normalizedShared.length > 0) return normalizedShared;
   }
 
-  /*
-   * 4. Some registration forms store service prices
-   * inside the services array as objects.
-   */
   const servicePricesFromServices =
     normalizeServicePriceItems(application.services);
 
@@ -627,7 +599,7 @@ function normalizeDocuments(
 }
 
 /* =========================================================
-   PROVIDER NORMALIZATION
+   ACCOUNT STATUS AND PROVIDER NORMALIZATION
 ========================================================= */
 
 function normalizeAccountState(
@@ -666,7 +638,12 @@ function normalizeProvider(
     application.designation ||
     "Professional Services";
 
-  const id = application.id || `PRO-${index + 1}`;
+  const phone = application.mobile || application.phone || "—";
+
+  const id =
+    application.id ||
+    (phone !== "—" ? `PRO-${normalizePhone(phone)}` : `PRO-${index + 1}`);
+
   const accountState = normalizeAccountState(application);
   const isApproved = accountState === "Active";
 
@@ -709,7 +686,7 @@ function normalizeProvider(
     servicePrices: normalizeServicePrices(application),
     visitingFee: application.visitingFee,
 
-    phone: application.mobile || application.phone || "—",
+    phone,
     email: application.email || "—",
 
     profileImage:
@@ -744,8 +721,20 @@ function normalizeProvider(
 }
 
 /* =========================================================
-   READ APPLICATIONS
+   READ AND MERGE PROFESSIONAL RECORDS
 ========================================================= */
+
+function getApplicationIdentity(
+  record: ProfessionalApplication,
+  index: number,
+): string {
+  const phone = normalizePhone(record.mobile || record.phone);
+
+  if (phone) return `phone:${phone}`;
+  if (record.id) return `id:${record.id}`;
+
+  return `record:${record.fullName || record.name || "professional"}:${index}`;
+}
 
 function readApplications(): ProfessionalApplication[] {
   const multiple = safeReadJson<unknown>(APPLICATIONS_KEY, []);
@@ -758,8 +747,23 @@ function readApplications(): ProfessionalApplication[] {
     combined.push(...(multiple as ProfessionalApplication[]));
   }
 
+  /*
+   * The professional directory is the source of truth for existing
+   * accounts. Legacy directory entries without a status are treated
+   * as active unless explicitly marked pending or rejected.
+   */
   if (Array.isArray(professionals)) {
-    combined.push(...(professionals as ProfessionalApplication[]));
+    combined.push(
+      ...(professionals as ProfessionalApplication[]).map((record) => {
+        if (record.accountState || record.status) return record;
+
+        return {
+          ...record,
+          accountState: "Active" as AccountState,
+          status: "Approved",
+        };
+      }),
+    );
   }
 
   if (single && typeof single === "object" && !Array.isArray(single)) {
@@ -769,24 +773,38 @@ function readApplications(): ProfessionalApplication[] {
   const unique = new Map<string, ProfessionalApplication>();
 
   combined.forEach((record, index) => {
-    const id =
-      record.id ||
-      `${record.mobile || record.phone || record.fullName || record.name || "professional"}-${index}`;
+    const identity = getApplicationIdentity(record, index);
+    const previous = unique.get(identity);
 
-    unique.set(id, record);
+    unique.set(identity, {
+      ...previous,
+      ...record,
+    });
   });
 
   return Array.from(unique.values());
 }
 
 /* =========================================================
-   STATUS HELPERS
+   TAB CLASSIFICATION
 ========================================================= */
 
 function isPending(provider: Provider): boolean {
+  return provider.accountState === undefined;
+}
+
+function isOnboardingProvider(provider: Provider): boolean {
   return (
-    provider.idProofStatus === "Pending" &&
-    provider.accountState === undefined
+    provider.accountState === undefined ||
+    provider.accountState === "Rejected"
+  );
+}
+
+function isDirectoryProfessional(provider: Provider): boolean {
+  return (
+    provider.accountState === "Active" ||
+    provider.accountState === "Suspended" ||
+    provider.accountState === "Blocked"
   );
 }
 
@@ -894,22 +912,33 @@ function getSubscriptionStatus(
 }
 
 /* =========================================================
-   SHARED RECORD MATCHING AND PERSISTENCE
+   RECORD MATCHING
 ========================================================= */
 
 function matchesProvider(
   application: ProfessionalApplication,
   provider: Provider,
 ): boolean {
-  if (application.id && provider.id) {
-    return application.id === provider.id;
+  if (application.id && application.id === provider.id) {
+    return true;
   }
 
-  return (
-    provider.phone !== "—" &&
-    (application.mobile || application.phone) === provider.phone
+  const applicationPhone = normalizePhone(
+    application.mobile || application.phone,
+  );
+
+  const providerPhone = normalizePhone(provider.phone);
+
+  return Boolean(
+    applicationPhone &&
+    providerPhone &&
+    applicationPhone === providerPhone,
   );
 }
+
+/* =========================================================
+   PERSIST APPLICATION UPDATES
+========================================================= */
 
 function persistApplicationUpdates(
   provider: Provider,
@@ -964,6 +993,106 @@ function persistApplicationUpdates(
 }
 
 /* =========================================================
+   PROMOTE APPROVED APPLICANT TO PROFESSIONAL DIRECTORY
+========================================================= */
+
+function promoteProviderToDirectory(
+  provider: Provider,
+  updates: Partial<ProfessionalApplication>,
+) {
+  const allApplications = readApplications();
+
+  const sourceRecord =
+    allApplications.find((application) =>
+      matchesProvider(application, provider),
+    ) || {};
+
+  const promotedRecord: ProfessionalApplication = {
+    ...sourceRecord,
+    ...updates,
+
+    id: sourceRecord.id || provider.id,
+
+    fullName:
+      sourceRecord.fullName ||
+      sourceRecord.name ||
+      provider.name,
+
+    name: provider.name,
+
+    mobile:
+      sourceRecord.mobile ||
+      sourceRecord.phone ||
+      provider.phone,
+
+    email: provider.email,
+    category: provider.category,
+    designation: provider.designation,
+
+    services: provider.services,
+    servicePrices: provider.servicePrices,
+    visitingFee: provider.visitingFee,
+
+    experience: sourceRecord.experience || provider.experience,
+    about: provider.about,
+    profileImage: provider.profileImage,
+
+    status: "Approved",
+    accountState: "Active",
+
+    rejectionReason: undefined,
+    suspensionUntil: undefined,
+    suspensionDuration: undefined,
+
+    trialStartedAt: provider.trialStartedAt,
+    trialEndsAt: provider.trialEndsAt,
+
+    subscriptionPlan: provider.subscriptionPlan,
+    subscriptionStartedAt: provider.subscriptionStartedAt,
+    subscriptionEndsAt: provider.subscriptionEndsAt,
+    subscriptionStatus: provider.subscriptionStatus,
+
+    documents: provider.documents.map((document) => ({
+      id: document.id,
+      title: document.title,
+      subtitle: document.subtitle,
+      status: "Verified",
+      url: document.url,
+      fileName: document.fileName,
+    })),
+
+    adminRemarks: provider.adminRemarks,
+  };
+
+  const existingProfessionals = safeReadJson<
+    ProfessionalApplication[]
+  >(PROFESSIONALS_KEY, []);
+
+  const professionalIndex = existingProfessionals.findIndex(
+    (professional) =>
+      matchesProvider(professional, provider),
+  );
+
+  const updatedProfessionals = [...existingProfessionals];
+
+  if (professionalIndex >= 0) {
+    updatedProfessionals[professionalIndex] = {
+      ...updatedProfessionals[professionalIndex],
+      ...promotedRecord,
+    };
+  } else {
+    updatedProfessionals.push(promotedRecord);
+  }
+
+  localStorage.setItem(
+    PROFESSIONALS_KEY,
+    JSON.stringify(updatedProfessionals),
+  );
+
+  window.dispatchEvent(new Event(CHANGE_EVENT));
+}
+
+/* =========================================================
    PERSIST PROFESSIONAL STATUS
 ========================================================= */
 
@@ -1013,9 +1142,6 @@ function persistProfessionalRemark(
 ) {
   const isFinalWarning = remark.type === "final-warning";
 
-  /*
-   * Save the remark in all professional application records.
-   */
   persistApplicationUpdates(provider, {
     adminRemarks: updatedRemarks,
 
@@ -1029,12 +1155,6 @@ function persistProfessionalRemark(
       : {}),
   });
 
-  /*
-   * Notify other parts of the frontend that a remark was created.
-   *
-   * ProfilePage can listen for this event and add the remark
-   * to the professional's notification list.
-   */
   window.dispatchEvent(
     new CustomEvent(REMARK_EVENT, {
       detail: {
@@ -1047,7 +1167,7 @@ function persistProfessionalRemark(
 }
 
 /* =========================================================
-   MARK FINAL WARNING AS REVIEWED
+   COMPLETE FINAL WARNING ADMIN REVIEW
 ========================================================= */
 
 function persistAdminReviewCompleted(provider: Provider) {
@@ -1079,6 +1199,9 @@ function persistAdminReviewCompleted(provider: Provider) {
 ========================================================= */
 
 export default function BookServices() {
+  const [activeTab, setActiveTab] =
+    useState<ProfessionalAdminTab>("onboarding");
+
   const [serviceType, setServiceType] = useState("Service Type");
   const [location, setLocation] = useState("Location");
   const [status, setStatus] = useState("All statuses");
@@ -1106,15 +1229,15 @@ export default function BookServices() {
   const [providerList, setProviderList] = useState<Provider[]>([]);
   const [currentTime, setCurrentTime] = useState(Date.now());
 
-  /* REMARK MODAL STATE */
-
   const [remarkModalOpen, setRemarkModalOpen] = useState(false);
   const [remarkMessage, setRemarkMessage] = useState("");
   const [remarkType, setRemarkType] =
     useState<"note" | "warning">("note");
   const [remarkError, setRemarkError] = useState("");
 
-  /* LOAD PROFESSIONALS */
+  /* =====================================================
+     LOAD AND REFRESH PROFESSIONAL RECORDS
+  ===================================================== */
 
   useEffect(() => {
     const loadProviders = () => {
@@ -1131,8 +1254,9 @@ export default function BookServices() {
         if (!current) return current;
 
         return (
-          mappedProviders.find((provider) => provider.id === current.id) ??
-          current
+          mappedProviders.find(
+            (provider) => provider.id === current.id,
+          ) ?? current
         );
       });
     };
@@ -1148,7 +1272,9 @@ export default function BookServices() {
     };
   }, []);
 
-  /* LIVE COUNTDOWN */
+  /* =====================================================
+     LIVE SUBSCRIPTION COUNTDOWN
+  ===================================================== */
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -1158,12 +1284,47 @@ export default function BookServices() {
     return () => window.clearInterval(timer);
   }, []);
 
-  /* FILTER PROFESSIONALS */
+  /* =====================================================
+     TAB COUNTS
+  ===================================================== */
+
+  const onboardingCount = providerList.filter(
+    isOnboardingProvider,
+  ).length;
+
+  const pendingCount = providerList.filter(
+    (provider) => isPending(provider),
+  ).length;
+
+  const professionalsCount = providerList.filter(
+    isDirectoryProfessional,
+  ).length;
+
+  const activeProfessionalsCount = providerList.filter(
+    (provider) => provider.accountState === "Active",
+  ).length;
+
+  const restrictedProfessionalsCount = providerList.filter(
+    (provider) =>
+      provider.accountState === "Suspended" ||
+      provider.accountState === "Blocked",
+  ).length;
+
+  /* =====================================================
+     FILTER RECORDS BY ACTIVE TAB
+  ===================================================== */
 
   const filteredProviders = useMemo(() => {
     const query = search.trim().toLowerCase();
 
     return providerList.filter((provider) => {
+      const matchesTab =
+        activeTab === "onboarding"
+          ? isOnboardingProvider(provider)
+          : isDirectoryProfessional(provider);
+
+      if (!matchesTab) return false;
+
       const matchesService =
         serviceType === "Service Type" ||
         provider.category.toLowerCase() === serviceType.toLowerCase() ||
@@ -1205,9 +1366,18 @@ export default function BookServices() {
         matchesSearch
       );
     });
-  }, [providerList, serviceType, location, status, search]);
+  }, [
+    providerList,
+    activeTab,
+    serviceType,
+    location,
+    status,
+    search,
+  ]);
 
-  /* PAGINATION */
+  /* =====================================================
+     PAGINATION
+  ===================================================== */
 
   const pageCount = Math.max(
     1,
@@ -1251,7 +1421,17 @@ export default function BookServices() {
     setPage(1);
   };
 
-  /* UPDATE PROVIDER */
+  const changeTab = (tab: ProfessionalAdminTab) => {
+    setActiveTab(tab);
+    setPage(1);
+    clearFilters();
+    setSelectedProvider(null);
+    setNotice("");
+  };
+
+  /* =====================================================
+     UPDATE PROVIDER
+  ===================================================== */
 
   const updateProvider = (
     updated: Provider,
@@ -1292,7 +1472,9 @@ export default function BookServices() {
     setPage(1);
   };
 
-  /* OPEN PROFILE */
+  /* =====================================================
+     OPEN PROFILE
+  ===================================================== */
 
   const openProviderProfile = (provider: Provider) => {
     let updatedProvider = provider;
@@ -1329,7 +1511,9 @@ export default function BookServices() {
     setNotice("");
   };
 
-  /* REVIEW DIALOG */
+  /* =====================================================
+     REVIEW DIALOG
+  ===================================================== */
 
   const openReviewDialog = (
     provider: Provider,
@@ -1349,7 +1533,9 @@ export default function BookServices() {
     setSuspensionDuration("7");
   };
 
-  /* DOCUMENT ACTIONS */
+  /* =====================================================
+     DOCUMENT ACTIONS
+  ===================================================== */
 
   const openDocument = (document: ProviderDocument) => {
     if (!document.url) {
@@ -1412,7 +1598,9 @@ export default function BookServices() {
     }
   };
 
-  /* VERIFY PROFESSIONAL AND START TRIAL */
+  /* =====================================================
+     VERIFY AND APPROVE PROFESSIONAL
+  ===================================================== */
 
   const verifyProvider = (provider: Provider) => {
     const now = new Date().toISOString();
@@ -1440,17 +1628,50 @@ export default function BookServices() {
 
     updateProvider(updatedProvider, "Active");
 
-    setSelectedProvider({
-      ...updatedProvider,
-      accountState: "Active",
+    const documentUpdates = updatedProvider.documents.map(
+      (document) => ({
+        id: document.id,
+        title: document.title,
+        subtitle: document.subtitle,
+        status: "Verified" as DocumentStatus,
+        url: document.url,
+        fileName: document.fileName,
+      }),
+    );
+
+    persistApplicationUpdates(updatedProvider, {
+      documents: documentUpdates,
     });
 
+    /*
+     * Promote the approved registration into the professional directory.
+     * The applicant's original identity and registration details are kept.
+     */
+    promoteProviderToDirectory(updatedProvider, {
+      status: "Approved",
+      accountState: "Active",
+      rejectionReason: undefined,
+      trialStartedAt: now,
+      trialEndsAt,
+      subscriptionStatus: "Free Trial",
+      documents: documentUpdates,
+    });
+
+    const approvedProvider = {
+      ...updatedProvider,
+      accountState: "Active" as AccountState,
+    };
+
+    setSelectedProvider(approvedProvider);
+
     setNotice(
-      `${provider.name} has been verified. Their 30-day free trial has started.`,
+      `${provider.name} has been approved. Their professional account has been added to the Professionals directory and their 30-day free trial has started.`,
     );
   };
 
-  /* SUBMIT REVIEW ACTION */
+  /* =====================================================
+     REJECT / SUSPEND / BLOCK
+  ===================================================== */
 
   const submitReviewAction = () => {
     if (!reviewTarget) return;
@@ -1646,7 +1867,7 @@ export default function BookServices() {
       );
     } else if (isFormalWarning && warningNumber === 2) {
       setNotice(
-        `Second formal warning sent to ${selectedProvider.name}. The professional has been informed that the next warning will be a final warning requiring admin review.`,
+        `Second formal warning sent to ${selectedProvider.name}. The next warning will be a final warning requiring admin review.`,
       );
     } else if (isFormalWarning) {
       setNotice(
@@ -1691,7 +1912,9 @@ export default function BookServices() {
     );
   };
 
-  /* SUBSCRIPTION STATE */
+  /* =====================================================
+     SUBSCRIPTION STATE
+  ===================================================== */
 
   const selectedSubscriptionStatus = selectedProvider
     ? getSubscriptionStatus(selectedProvider, currentTime)
@@ -1717,7 +1940,9 @@ export default function BookServices() {
       )
       : 0;
 
-  /* PAYMENT SELECTION */
+  /* =====================================================
+     PAYMENT SELECTION
+  ===================================================== */
 
   const proceedToPayment = () => {
     if (!selectedProvider) return;
@@ -1740,20 +1965,135 @@ export default function BookServices() {
   return (
     <div className="book-services-page">
 
-      <section className="book-services-header">
-        <div>
+      {/* PAGE HEADER */}
+
+
+      {/* PAGE HEADER + NAVIGATION CARDS */}
+
+      <section className="book-services-header professional-page-header">
+
+        <div className="professional-page-heading">
           <div className="book-services-eyebrow">
-            PARTNER MANAGEMENT · TAB 1
+            PARTNER MANAGEMENT
           </div>
 
           <h1>Professionals</h1>
 
           <p>
-            Manage individual service providers such as technicians,
-            cleaners, tutors, tailors, and cooks.
+            Manage professional registrations, onboarding approvals,
+            and existing service provider accounts.
           </p>
         </div>
+
+        <div className="professional-admin-tabs">
+
+          <button
+            type="button"
+            className={`professional-admin-tab ${activeTab === "onboarding" ? "active" : ""
+              }`}
+            onClick={() => changeTab("onboarding")}
+          >
+            <span className="professional-admin-tab-icon">
+              <ClipboardCheck size={20} />
+            </span>
+
+            <span className="professional-admin-tab-content">
+              <strong>Onboarding Requests</strong>
+            </span>
+
+            <span className="professional-admin-tab-count">
+              {onboardingCount}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            className={`professional-admin-tab ${activeTab === "professionals" ? "active" : ""
+              }`}
+            onClick={() => changeTab("professionals")}
+          >
+            <span className="professional-admin-tab-icon">
+              <UsersRound size={20} />
+            </span>
+
+            <span className="professional-admin-tab-content">
+              <strong>Professionals</strong>
+            </span>
+
+            <span className="professional-admin-tab-count">
+              {professionalsCount}
+            </span>
+          </button>
+
+        </div>
+
       </section>
+
+
+      {/* OVERVIEW COUNTS */}
+
+      <section className="professional-admin-overview">
+
+        <div className="professional-overview-card">
+          <div className="professional-overview-icon onboarding">
+            <ClipboardCheck size={20} />
+          </div>
+
+          <div>
+            <span>Onboarding requests</span>
+            <strong>{onboardingCount}</strong>
+            <small>{pendingCount} awaiting approval</small>
+          </div>
+        </div>
+
+        <div className="professional-overview-card">
+          <div className="professional-overview-icon approved">
+            <UsersRound size={20} />
+          </div>
+
+          <div>
+            <span>Total professionals</span>
+            <strong>{professionalsCount}</strong>
+            <small>{activeProfessionalsCount} active accounts</small>
+          </div>
+        </div>
+
+        <div className="professional-overview-card">
+          <div className="professional-overview-icon restricted">
+            <ShieldCheck size={20} />
+          </div>
+
+          <div>
+            <span>Restricted accounts</span>
+            <strong>{restrictedProfessionalsCount}</strong>
+            <small>Suspended or blocked</small>
+          </div>
+        </div>
+
+      </section>
+
+
+      {/* ACTIVE TAB DESCRIPTION */}
+
+      <div className="professional-admin-section-heading">
+        <div>
+          <h2>
+            {activeTab === "onboarding"
+              ? "Professional Onboarding"
+              : "Professional Directory"}
+          </h2>
+
+          <p>
+            {activeTab === "onboarding"
+              ? "Review submitted registrations, check documents, and approve or reject new professionals."
+              : "View and manage approved professionals, their services, subscriptions, and account status."}
+          </p>
+        </div>
+
+        <span className="professional-admin-section-total">
+          {filteredProviders.length} records
+        </span>
+      </div>
 
       {/* FILTERS */}
 
@@ -1802,8 +2142,12 @@ export default function BookServices() {
 
           <input
             type="text"
-            placeholder="Search provider"
-            aria-label="Search providers"
+            placeholder={
+              activeTab === "onboarding"
+                ? "Search applicants"
+                : "Search professionals"
+            }
+            aria-label="Search professionals"
             value={search}
             onChange={(event) => {
               setSearch(event.target.value);
@@ -1859,7 +2203,11 @@ export default function BookServices() {
                 <th>CATEGORY</th>
                 <th>EXPERIENCE</th>
                 <th>STATUS</th>
-                <th>SUBSCRIPTION EXPIRY</th>
+                <th>
+                  {activeTab === "onboarding"
+                    ? "SUBMITTED ON"
+                    : "SUBSCRIPTION EXPIRY"}
+                </th>
                 <th>ACTIONS</th>
               </tr>
             </thead>
@@ -1899,10 +2247,7 @@ export default function BookServices() {
                         </span>
 
                         {warningCount > 0 && (
-                          <small
-                            className="professional-warning-count"
-                            title={`${warningCount} formal warning(s) recorded`}
-                          >
+                          <small className="professional-warning-count">
                             <AlertTriangle size={12} />
                             {warningCount}/{MAX_FORMAL_WARNINGS} warnings
                           </small>
@@ -1961,11 +2306,13 @@ export default function BookServices() {
                     <td>
                       <div className="book-services-expiry">
                         <span>
-                          {provider.subscriptionEndsAt
-                            ? formatDate(provider.subscriptionEndsAt)
-                            : provider.trialEndsAt
-                              ? formatDate(provider.trialEndsAt)
-                              : "—"}
+                          {activeTab === "onboarding"
+                            ? provider.joinedOn
+                            : provider.subscriptionEndsAt
+                              ? formatDate(provider.subscriptionEndsAt)
+                              : provider.trialEndsAt
+                                ? formatDate(provider.trialEndsAt)
+                                : "—"}
                         </span>
                       </div>
                     </td>
@@ -1982,7 +2329,7 @@ export default function BookServices() {
                           View Profile
                         </button>
 
-                        {pending && (
+                        {activeTab === "onboarding" && pending && (
                           <>
                             <button
                               type="button"
@@ -2006,24 +2353,46 @@ export default function BookServices() {
                           </>
                         )}
 
-                        {provider.accountState === "Active" && (
-                          <button
-                            type="button"
-                            className="book-services-action danger"
-                            onClick={() =>
-                              openReviewDialog(provider, "block")
-                            }
-                          >
-                            <Ban size={13} />
-                            Block
-                          </button>
-                        )}
+                        {activeTab === "professionals" &&
+                          provider.accountState === "Active" && (
+                            <>
+                              <button
+                                type="button"
+                                className="book-services-action warning"
+                                onClick={() =>
+                                  openReviewDialog(provider, "suspend")
+                                }
+                              >
+                                <Clock size={13} />
+                                Suspend
+                              </button>
 
-                        {["Suspended", "Blocked", "Rejected"].includes(
-                          provider.accountState ?? "",
-                        ) && (
+                              <button
+                                type="button"
+                                className="book-services-action danger"
+                                onClick={() =>
+                                  openReviewDialog(provider, "block")
+                                }
+                              >
+                                <Ban size={13} />
+                                Block
+                              </button>
+                            </>
+                          )}
+
+                        {activeTab === "professionals" &&
+                          ["Suspended", "Blocked"].includes(
+                            provider.accountState ?? "",
+                          ) && (
                             <span className="book-services-action-disabled">
                               {provider.accountState}
+                            </span>
+                          )}
+
+                        {activeTab === "onboarding" &&
+                          provider.accountState === "Rejected" && (
+                            <span className="book-services-action-disabled">
+                              Rejected
                             </span>
                           )}
 
@@ -2040,16 +2409,25 @@ export default function BookServices() {
                     <div className="book-services-empty">
                       <Search size={26} />
 
-                      <strong>No service providers found</strong>
+                      <strong>
+                        {activeTab === "onboarding"
+                          ? "No onboarding requests found"
+                          : "No professionals found"}
+                      </strong>
 
                       <span>
-                        {providerList.length === 0
-                          ? "Professional registrations will appear here when applicants submit their forms."
-                          : "Try changing your filters or search term."}
+                        {activeTab === "onboarding"
+                          ? providerList.length === 0
+                            ? "New professional registrations will appear here when applicants submit their forms."
+                            : "There are no pending or rejected applications matching these filters."
+                          : "Approved professional accounts will appear here after onboarding is completed."}
                       </span>
 
                       {hasFilters && (
-                        <button type="button" onClick={clearFilters}>
+                        <button
+                          type="button"
+                          onClick={clearFilters}
+                        >
                           Clear Filters
                         </button>
                       )}
@@ -2068,7 +2446,7 @@ export default function BookServices() {
 
           <span>
             Showing <strong>{firstItem}–{lastItem}</strong> of{" "}
-            <strong>{filteredProviders.length}</strong> matching providers
+            <strong>{filteredProviders.length}</strong> records
           </span>
 
           <div className="book-services-pagination-buttons">
@@ -2135,7 +2513,9 @@ export default function BookServices() {
         </div>
       )}
 
-      {/* VIEW PROFILE MODAL */}
+      {/* =====================================================
+         VIEW PROFILE MODAL
+      ===================================================== */}
 
       {selectedProvider && (
         <div
@@ -2204,10 +2584,12 @@ export default function BookServices() {
                   <h3>
                     {selectedProvider.name}
 
-                    <ShieldCheck
-                      className="book-services-name-shield"
-                      size={19}
-                    />
+                    {selectedProvider.accountState === "Active" && (
+                      <ShieldCheck
+                        className="book-services-name-shield"
+                        size={19}
+                      />
+                    )}
                   </h3>
 
                   <p>
@@ -2405,7 +2787,7 @@ export default function BookServices() {
 
               </section>
 
-              {/* SERVICES AND SERVICE-WISE PRICING */}
+              {/* SERVICES AND PRICING */}
 
               <section className="book-services-selected-services">
 
@@ -2495,224 +2877,228 @@ export default function BookServices() {
 
               {/* ADMIN REMARKS AND WARNINGS */}
 
-              <section className="professional-admin-remarks">
+              {selectedProvider.accountState !== undefined &&
+                selectedProvider.accountState !== "Rejected" && (
+                  <section className="professional-admin-remarks">
 
-                <div className="professional-admin-remarks-heading">
-                  <div>
-                    <h4>
-                      <MessageSquare size={19} />
-                      Admin Remarks &amp; Warnings
-                    </h4>
+                    <div className="professional-admin-remarks-heading">
+                      <div>
+                        <h4>
+                          <MessageSquare size={19} />
+                          Admin Remarks &amp; Warnings
+                        </h4>
 
-                    <p>
-                      Send an individual remark or formal warning to this
-                      professional.
-                    </p>
-                  </div>
-
-                  <button
-                    type="button"
-                    className="professional-send-remark-button"
-                    onClick={openRemarkModal}
-                  >
-                    <Send size={14} />
-                    Send Remark
-                  </button>
-                </div>
-
-                <div className="professional-warning-summary">
-
-                  <div>
-                    <span>Formal warnings</span>
-
-                    <strong>
-                      {getFormalWarningCount(
-                        selectedProvider.adminRemarks,
-                      )}{" "}
-                      / {MAX_FORMAL_WARNINGS}
-                    </strong>
-                  </div>
-
-                  <div>
-                    <span>General remarks</span>
-
-                    <strong>
-                      {
-                        selectedProvider.adminRemarks.filter(
-                          (remark) => remark.type === "note",
-                        ).length
-                      }
-                    </strong>
-                  </div>
-
-                  <div>
-                    <span>Admin review</span>
-
-                    <strong>
-                      {selectedProvider.adminReviewRequired
-                        ? "Required"
-                        : selectedProvider.adminReviewStatus === "Reviewed"
-                          ? "Reviewed"
-                          : "Not required"}
-                    </strong>
-                  </div>
-
-                </div>
-
-                {selectedProvider.adminReviewRequired && (
-                  <div className="professional-final-warning-review">
-
-                    <div className="professional-final-warning-review-icon">
-                      <AlertTriangle size={20} />
-                    </div>
-
-                    <div className="professional-final-warning-review-content">
-                      <strong>
-                        Final Warning — Admin Review Required
-                      </strong>
-
-                      <p>
-                        This professional has received three formal
-                        warnings. The account has not been automatically
-                        suspended or blocked. Please review the warning
-                        history and decide whether further action is
-                        necessary.
-                      </p>
-
-                      <span>
-                        Review requested:{" "}
-                        {formatDateTime(
-                          selectedProvider.adminReviewRequestedAt,
-                        )}
-                      </span>
+                        <p>
+                          Send an individual remark or formal warning to
+                          this professional.
+                        </p>
+                      </div>
 
                       <button
                         type="button"
-                        onClick={completeAdminReview}
+                        className="professional-send-remark-button"
+                        onClick={openRemarkModal}
                       >
-                        <ClipboardCheck size={15} />
-                        Mark Review Completed
+                        <Send size={14} />
+                        Send Remark
                       </button>
                     </div>
 
-                  </div>
-                )}
+                    <div className="professional-warning-summary">
 
-                {selectedProvider.adminReviewStatus === "Reviewed" &&
-                  !selectedProvider.adminReviewRequired && (
-                    <div className="professional-review-completed">
-                      <CheckCircle2 size={16} />
+                      <div>
+                        <span>Formal warnings</span>
 
-                      <span>
-                        Final warning review completed on{" "}
-                        {formatDateTime(
-                          selectedProvider.adminReviewCompletedAt,
-                        )}
-                      </span>
+                        <strong>
+                          {getFormalWarningCount(
+                            selectedProvider.adminRemarks,
+                          )}{" "}
+                          / {MAX_FORMAL_WARNINGS}
+                        </strong>
+                      </div>
+
+                      <div>
+                        <span>General remarks</span>
+
+                        <strong>
+                          {
+                            selectedProvider.adminRemarks.filter(
+                              (remark) => remark.type === "note",
+                            ).length
+                          }
+                        </strong>
+                      </div>
+
+                      <div>
+                        <span>Admin review</span>
+
+                        <strong>
+                          {selectedProvider.adminReviewRequired
+                            ? "Required"
+                            : selectedProvider.adminReviewStatus ===
+                              "Reviewed"
+                              ? "Reviewed"
+                              : "Not required"}
+                        </strong>
+                      </div>
+
                     </div>
-                  )}
 
-                <div className="professional-admin-remark-list">
+                    {selectedProvider.adminReviewRequired && (
+                      <div className="professional-final-warning-review">
 
-                  {selectedProvider.adminRemarks.length > 0 ? (
-                    [...selectedProvider.adminRemarks]
-                      .sort(
-                        (a, b) =>
-                          new Date(b.createdAt).getTime() -
-                          new Date(a.createdAt).getTime(),
-                      )
-                      .map((remark) => (
-                        <article
-                          key={remark.id}
-                          className={`professional-admin-remark-item ${remark.type}`}
-                        >
+                        <div className="professional-final-warning-review-icon">
+                          <AlertTriangle size={20} />
+                        </div>
 
-                          <div className="professional-admin-remark-top">
+                        <div className="professional-final-warning-review-content">
+                          <strong>
+                            Final Warning — Admin Review Required
+                          </strong>
 
-                            <div>
-                              {remark.type === "note" ? (
-                                <MessageSquare size={15} />
-                              ) : remark.type === "final-warning" ? (
-                                <AlertTriangle size={15} />
-                              ) : (
-                                <ShieldCheck size={15} />
-                              )}
+                          <p>
+                            This professional has received three formal
+                            warnings. The account has not been automatically
+                            suspended or blocked. Please review the warning
+                            history and decide whether further action is
+                            necessary.
+                          </p>
 
-                              <strong>
-                                {remark.type === "note"
-                                  ? "General Remark"
-                                  : remark.type === "final-warning"
-                                    ? "Final Warning"
-                                    : `Formal Warning ${remark.warningNumber}`}
-                              </strong>
-                            </div>
-
-                            <span>
-                              {formatDateTime(remark.createdAt)}
-                            </span>
-
-                          </div>
-
-                          <p>{remark.message}</p>
-
-                          <div className="professional-admin-remark-meta">
-                            <span>Sent by {remark.createdBy}</span>
-
-                            {remark.type === "final-warning" && (
-                              <span>
-                                {remark.adminReviewStatus === "Reviewed"
-                                  ? "Admin review completed"
-                                  : "Admin review pending"}
-                              </span>
+                          <span>
+                            Review requested:{" "}
+                            {formatDateTime(
+                              selectedProvider.adminReviewRequestedAt,
                             )}
-                          </div>
+                          </span>
 
-                        </article>
-                      ))
-                  ) : (
-                    <div className="professional-no-remarks">
-                      <MessageSquare size={22} />
+                          <button
+                            type="button"
+                            onClick={completeAdminReview}
+                          >
+                            <ClipboardCheck size={15} />
+                            Mark Review Completed
+                          </button>
+                        </div>
 
-                      <strong>No remarks yet</strong>
+                      </div>
+                    )}
 
-                      <span>
-                        Admin remarks and formal warnings sent to this
-                        professional will appear here.
-                      </span>
+                    {selectedProvider.adminReviewStatus === "Reviewed" &&
+                      !selectedProvider.adminReviewRequired && (
+                        <div className="professional-review-completed">
+                          <CheckCircle2 size={16} />
+
+                          <span>
+                            Final warning review completed on{" "}
+                            {formatDateTime(
+                              selectedProvider.adminReviewCompletedAt,
+                            )}
+                          </span>
+                        </div>
+                      )}
+
+                    <div className="professional-admin-remark-list">
+
+                      {selectedProvider.adminRemarks.length > 0 ? (
+                        [...selectedProvider.adminRemarks]
+                          .sort(
+                            (a, b) =>
+                              new Date(b.createdAt).getTime() -
+                              new Date(a.createdAt).getTime(),
+                          )
+                          .map((remark) => (
+                            <article
+                              key={remark.id}
+                              className={`professional-admin-remark-item ${remark.type}`}
+                            >
+
+                              <div className="professional-admin-remark-top">
+
+                                <div>
+                                  {remark.type === "note" ? (
+                                    <MessageSquare size={15} />
+                                  ) : remark.type === "final-warning" ? (
+                                    <AlertTriangle size={15} />
+                                  ) : (
+                                    <ShieldCheck size={15} />
+                                  )}
+
+                                  <strong>
+                                    {remark.type === "note"
+                                      ? "General Remark"
+                                      : remark.type === "final-warning"
+                                        ? "Final Warning"
+                                        : `Formal Warning ${remark.warningNumber}`}
+                                  </strong>
+                                </div>
+
+                                <span>
+                                  {formatDateTime(remark.createdAt)}
+                                </span>
+
+                              </div>
+
+                              <p>{remark.message}</p>
+
+                              <div className="professional-admin-remark-meta">
+                                <span>Sent by {remark.createdBy}</span>
+
+                                {remark.type === "final-warning" && (
+                                  <span>
+                                    {remark.adminReviewStatus === "Reviewed"
+                                      ? "Admin review completed"
+                                      : "Admin review pending"}
+                                  </span>
+                                )}
+                              </div>
+
+                            </article>
+                          ))
+                      ) : (
+                        <div className="professional-no-remarks">
+                          <MessageSquare size={22} />
+
+                          <strong>No remarks yet</strong>
+
+                          <span>
+                            Admin remarks and formal warnings sent to this
+                            professional will appear here.
+                          </span>
+                        </div>
+                      )}
+
                     </div>
-                  )}
 
-                </div>
+                    {getFormalWarningCount(
+                      selectedProvider.adminRemarks,
+                    ) === 2 && (
+                        <div className="professional-next-warning-notice">
+                          <AlertTriangle size={16} />
 
-                {getFormalWarningCount(
-                  selectedProvider.adminRemarks,
-                ) === 2 && (
-                    <div className="professional-next-warning-notice">
-                      <AlertTriangle size={16} />
+                          <span>
+                            One more formal warning will result in a final
+                            warning and mandatory admin review. It will not
+                            automatically suspend or block the account.
+                          </span>
+                        </div>
+                      )}
 
-                      <span>
-                        One more formal warning will result in a final
-                        warning and mandatory admin review. It will not
-                        automatically suspend or block the account.
-                      </span>
-                    </div>
-                  )}
+                    {getFormalWarningCount(
+                      selectedProvider.adminRemarks,
+                    ) >= MAX_FORMAL_WARNINGS && (
+                        <div className="professional-warning-limit-notice">
+                          <ShieldCheck size={16} />
 
-                {getFormalWarningCount(
-                  selectedProvider.adminRemarks,
-                ) >= MAX_FORMAL_WARNINGS && (
-                    <div className="professional-warning-limit-notice">
-                      <ShieldCheck size={16} />
+                          <span>
+                            The three-warning limit has been reached. Further
+                            formal warnings are disabled. The professional
+                            remains subject to admin review.
+                          </span>
+                        </div>
+                      )}
 
-                      <span>
-                        The three-warning limit has been reached. Further
-                        formal warnings are disabled. The professional
-                        remains subject to admin review.
-                      </span>
-                    </div>
-                  )}
-
-              </section>
+                  </section>
+                )}
 
               {/* SUBSCRIPTION */}
 
@@ -2734,10 +3120,10 @@ export default function BookServices() {
 
                     <span
                       className={`book-services-subscription-badge ${selectedSubscriptionStatus === "Free Trial"
-                        ? "trial"
-                        : selectedSubscriptionStatus === "Active"
-                          ? "active"
-                          : "expired"
+                          ? "trial"
+                          : selectedSubscriptionStatus === "Active"
+                            ? "active"
+                            : "expired"
                         }`}
                     >
                       {selectedSubscriptionStatus}
@@ -3035,7 +3421,6 @@ export default function BookServices() {
 
               {isPending(selectedProvider) && (
                 <>
-
                   <button
                     type="button"
                     className="book-services-action danger"
@@ -3055,13 +3440,11 @@ export default function BookServices() {
                     <Check size={13} />
                     Verify &amp; Approve
                   </button>
-
                 </>
               )}
 
               {selectedProvider.accountState === "Active" && (
                 <>
-
                   <button
                     type="button"
                     className="book-services-action warning"
@@ -3083,7 +3466,6 @@ export default function BookServices() {
                     <Ban size={13} />
                     Block
                   </button>
-
                 </>
               )}
 
@@ -3101,7 +3483,9 @@ export default function BookServices() {
         </div>
       )}
 
-      {/* SEND REMARK MODAL */}
+      {/* =====================================================
+         SEND REMARK MODAL
+      ===================================================== */}
 
       {remarkModalOpen && selectedProvider && (
         <div
@@ -3152,7 +3536,9 @@ export default function BookServices() {
                 id="professional-remark-type"
                 value={remarkType}
                 onChange={(event) => {
-                  setRemarkType(event.target.value as "note" | "warning");
+                  setRemarkType(
+                    event.target.value as "note" | "warning",
+                  );
                   setRemarkError("");
                 }}
               >
@@ -3256,7 +3642,9 @@ export default function BookServices() {
         </div>
       )}
 
-      {/* REJECT / SUSPEND / BLOCK DIALOG */}
+      {/* =====================================================
+         REJECT / SUSPEND / BLOCK DIALOG
+      ===================================================== */}
 
       {reviewTarget && (
         <div
