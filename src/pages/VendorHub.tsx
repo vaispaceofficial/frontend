@@ -159,6 +159,8 @@ type StoredVendorProfile = {
     publicationStatus?: string;
     publishedAt?: string;
     listingSubmittedAt?: string;
+    advertisementRequests?: Array<Record<string, unknown>>;
+    publishedAdvertisements?: Array<Record<string, unknown>>;
     listingStatusUpdatedAt?: string;
 
     // Admin information
@@ -387,9 +389,10 @@ function businessFromVendorProfile(
    Synchronizes VendorHub with City Listings Admin.
 ========================================================= */
 
+
 const saveVendorToSharedCollection = (
     vendor: StoredVendorProfile,
-    forceListingStatus = false,
+    options: { allowPublicationUpdate?: boolean } = {},
 ) => {
     const storageKey = "oneservice_vendors";
 
@@ -398,15 +401,14 @@ const saveVendorToSharedCollection = (
             localStorage.getItem(storageKey) || "[]",
         );
 
-        const existing: StoredVendorProfile[] =
-            Array.isArray(parsed)
-                ? parsed.filter(
-                    (item): item is StoredVendorProfile =>
-                        item !== null &&
-                        typeof item === "object" &&
-                        !Array.isArray(item),
-                )
-                : [];
+        const existing: StoredVendorProfile[] = Array.isArray(parsed)
+            ? parsed.filter(
+                (item): item is StoredVendorProfile =>
+                    item !== null &&
+                    typeof item === "object" &&
+                    !Array.isArray(item),
+            )
+            : [];
 
         const identity = String(
             vendor.vendorId ||
@@ -415,14 +417,10 @@ const saveVendorToSharedCollection = (
             vendor.phone ||
             vendor.email ||
             "",
-        )
-            .trim()
-            .toLowerCase();
+        ).trim().toLowerCase();
 
         if (!identity) {
-            console.warn(
-                "Vendor synchronization skipped: no vendor ID, mobile number, or email found.",
-            );
+            console.warn("Vendor synchronization skipped: no vendor identity found.");
             return;
         }
 
@@ -434,24 +432,17 @@ const saveVendorToSharedCollection = (
                 item.phone ||
                 item.email ||
                 "",
-            )
-                .trim()
-                .toLowerCase();
+            ).trim().toLowerCase();
 
-            return (
-                existingIdentity !== "" &&
-                existingIdentity === identity
-            );
+            return existingIdentity !== "" && existingIdentity === identity;
         });
 
         if (index >= 0) {
             const existingVendor = existing[index];
 
-            // Admin-managed status takes priority over the
-            // possibly outdated VendorHub profile.
-            const adminStatus = forceListingStatus
-                ? vendor.listingStatus || "Pending"
-                : existingVendor.listingStatus ||
+            // Admin-controlled moderation status always takes priority.
+            const adminStatus =
+                existingVendor.listingStatus ||
                 existingVendor.vendorStatus ||
                 existingVendor.status ||
                 vendor.listingStatus ||
@@ -459,34 +450,28 @@ const saveVendorToSharedCollection = (
                 vendor.status ||
                 "Pending";
 
-
             existing[index] = {
                 ...existingVendor,
                 ...vendor,
-                // Preserve Admin-controlled registration approval.
+
+                listingStatus: adminStatus,
+                vendorStatus: adminStatus,
+                status: adminStatus,
+
                 registrationStatus:
                     existingVendor.registrationStatus ||
                     vendor.registrationStatus ||
                     "Pending",
-
-                registrationStatusUpdatedAt:
-                    existingVendor.registrationStatusUpdatedAt ||
-                    vendor.registrationStatusUpdatedAt,
-
-                // Admin approval and account restrictions always win.
-                listingStatus: adminStatus,
-                vendorStatus: adminStatus,
-                status: adminStatus,
 
                 accountState: existingVendor.accountState,
                 accountStatus: existingVendor.accountStatus,
                 vendorAccountStatus: existingVendor.vendorAccountStatus,
 
                 applicationStatus:
-                    existingVendor.applicationStatus || vendor.applicationStatus,
+                    existingVendor.applicationStatus ||
+                    vendor.applicationStatus,
 
                 rejectionReason: existingVendor.rejectionReason,
-
                 suspensionReason: existingVendor.suspensionReason,
                 suspensionUntil: existingVendor.suspensionUntil,
                 suspensionEndDate: existingVendor.suspensionEndDate,
@@ -502,8 +487,21 @@ const saveVendorToSharedCollection = (
 
                 adminRemarks: existingVendor.adminRemarks,
                 adminStatusUpdatedAt: existingVendor.adminStatusUpdatedAt,
-            };
 
+                // Normal profile saves must not overwrite the latest Admin/shared
+                // publication state with stale local values. Explicit publish actions may.
+                ...(options.allowPublicationUpdate
+                    ? {
+                        isPublished: vendor.isPublished === true,
+                        publicationStatus: vendor.publicationStatus || "Draft",
+                        publishedAt: vendor.publishedAt,
+                    }
+                    : {
+                        isPublished: existingVendor.isPublished ?? vendor.isPublished,
+                        publicationStatus: existingVendor.publicationStatus ?? vendor.publicationStatus,
+                        publishedAt: existingVendor.publishedAt ?? vendor.publishedAt,
+                    }),
+            };
         } else {
             const initialStatus =
                 vendor.listingStatus ||
@@ -519,21 +517,16 @@ const saveVendorToSharedCollection = (
             });
         }
 
-        localStorage.setItem(
-            storageKey,
-            JSON.stringify(existing),
-        );
+        localStorage.setItem(storageKey, JSON.stringify(existing));
 
         window.dispatchEvent(
             new CustomEvent("oneservice-vendors-change"),
         );
     } catch (error) {
-        console.error(
-            "Unable to synchronize vendor with shared collection:",
-            error,
-        );
+        console.error("Unable to synchronize vendor with shared collection:", error);
     }
 };
+
 
 const initialBusiness: BusinessDetails = {
     name: "Your Business Name",
@@ -588,6 +581,7 @@ function VendorHub() {
     const productEditImageRef = useRef<HTMLInputElement>(null);
 
     const [activeTab, setActiveTab] = useState<TabId>("overview");
+    const hasShownProfileCompleteNotice = useRef(false);
 
     const [vendorProfile, setVendorProfile] =
         useState<StoredVendorProfile | null>(
@@ -746,116 +740,104 @@ function VendorHub() {
             .includes(listingApprovalStatusForUI);
 
     const publishVendorListing = () => {
-        if (!vendorProfile) return;
-
-        if (!cityListingCategory || !cityListingSubcategory) {
-            showNotice("Select a City Listings category and subcategory first.");
-            goToTab("about");
+        if (!vendorProfile) {
+            showNotice("Your vendor profile could not be found. Please sign in again.");
             return;
         }
 
         if (profileCompletionPercentage < 100) {
             showNotice(
-                `Complete your profile first. ${completedProfileFields} of ${profileCompletionItems.length} fields are complete.`
+                `Please complete your entire business profile (100%) before previewing and publishing. ${completedProfileFields} of ${profileCompletionItems.length} requirements are complete.`
             );
-            goToTab("about");
+            setShowListingPreview(false);
             return;
         }
 
-        const listingApprovalStatus = normalizeVendorStatus(
-            vendorProfile?.listingStatus
-        );
+        if (!cityListingCategory || !cityListingSubcategory) {
+            showNotice("Please choose a City Listings category and subcategory before publishing.");
+            setShowListingPreview(false);
+            return;
+        }
 
+        const listingApprovalStatus = normalizeVendorStatus(vendorProfile.listingStatus);
 
-        const isAdminApproved = [
-            "approved",
-            "verified",
-            "active",
-        ].includes(listingApprovalStatus);
+        if (["suspended", "banned", "rejected"].includes(listingApprovalStatus)) {
+            showNotice(
+                listingApprovalStatus === "suspended"
+                    ? "Your listing is suspended. Please contact the Admin team before publishing."
+                    : listingApprovalStatus === "banned"
+                        ? "This vendor listing is permanently banned and cannot be published."
+                        : "Your listing was rejected. Please contact the Admin team or resubmit it for review."
+            );
+            setShowListingPreview(false);
+            return;
+        }
 
-        const hasSubmittedListing = Boolean(
-            vendorProfile.listingSubmittedAt
-        );
+        const isAdminApproved = ["approved", "verified", "active"].includes(listingApprovalStatus);
+        const hasSubmittedListing = Boolean(vendorProfile.listingSubmittedAt);
+        const isAwaitingApproval = hasSubmittedListing &&
+            ["pending", "pending review", "under review", "submitted"].includes(listingApprovalStatus);
 
-        const isAwaitingApproval =
-            hasSubmittedListing &&
-            ["pending", "pending review", "under review", "submitted"]
-                .includes(listingApprovalStatus);
+        if (isAwaitingApproval) {
+            showNotice("Your listing has already been submitted and is waiting for Admin approval.");
+            setShowListingPreview(false);
+            return;
+        }
 
-        const submittedAt = new Date().toISOString();
-
-        let updatedProfile: StoredVendorProfile;
-
-        if (isAdminApproved) {
-            // Admin has approved the listing. Vendor can now publish it.
-            updatedProfile = {
+        const timestamp = new Date().toISOString();
+        const updatedProfile: StoredVendorProfile = isAdminApproved
+            ? {
                 ...vendorProfile,
                 cityListingCategory,
                 cityListingSubcategory,
                 isPublished: true,
                 publicationStatus: "Published",
-                publishedAt: submittedAt,
-            };
-        } else if (isAwaitingApproval) {
-            showNotice("Your listing is waiting for Admin approval.");
-            return;
-        } else {
-            // First submission: send the listing for Admin review.
-            updatedProfile = {
+                publishedAt: timestamp,
+            }
+            : {
                 ...vendorProfile,
                 cityListingCategory,
                 cityListingSubcategory,
                 isPublished: false,
                 publicationStatus: "Pending Review",
                 listingStatus: "Pending",
-                listingSubmittedAt: submittedAt,
-                listingStatusUpdatedAt: submittedAt,
+                listingSubmittedAt: timestamp,
+                listingStatusUpdatedAt: timestamp,
             };
-        }
 
         try {
-            localStorage.setItem(
-                "oneservice_vendor",
-                JSON.stringify(updatedProfile)
-            );
+            // Persist the same record to the vendor profile, logged-in user,
+            // and Admin's shared vendor collection.
+            localStorage.setItem("oneservice_vendor", JSON.stringify(updatedProfile));
 
             const userRaw = localStorage.getItem("oneservice_user");
-
             if (userRaw) {
                 const user = JSON.parse(userRaw);
-
                 if (user?.role === "vendor") {
-                    localStorage.setItem(
-                        "oneservice_user",
-                        JSON.stringify({
-                            ...user,
-                            ...updatedProfile,
-                        })
-                    );
+                    localStorage.setItem("oneservice_user", JSON.stringify({ ...user, ...updatedProfile }));
                 }
             }
 
-            // Do not force or overwrite Admin-controlled approval fields.
-            saveVendorToSharedCollection(updatedProfile);
+            saveVendorToSharedCollection(updatedProfile, {
+                allowPublicationUpdate: isAdminApproved,
+            });
 
             setVendorProfile(updatedProfile);
+            setCityListingCategory(String(updatedProfile.cityListingCategory || ""));
+            setCityListingSubcategory(String(updatedProfile.cityListingSubcategory || ""));
 
-            window.dispatchEvent(
-                new Event("oneservice-vendor-change")
-            );
+            window.dispatchEvent(new Event("oneservice-vendor-change"));
+            window.dispatchEvent(new Event("oneservice-vendors-change"));
 
-            window.dispatchEvent(
-                new Event("oneservice-vendors-change")
-            );
-
+            setShowListingPreview(false);
             showNotice(
                 isAdminApproved
-                    ? "Your approved business listing is now published on City Listings."
-                    : "Your listing has been submitted for Admin approval."
+                    ? "Success! Your business listing has been published and is now Live. It is available in City Listings."
+                    : "Your listing has been submitted successfully for final Admin approval."
             );
         } catch (error) {
-            console.error("Unable to update vendor listing:", error);
-            showNotice("Unable to update your listing. Please try again.");
+            console.error("Unable to publish vendor listing:", error);
+            showNotice("We couldn't publish your listing. Please try again.");
         }
     };
 
@@ -2121,8 +2103,7 @@ function VendorHub() {
 
                 <div className="vh-about-save-row">
                     <p>
-                        Changes update the dashboard preview immediately.
-                        Permanent saving requires backend integration.
+                        Your changes are saved to your vendor profile and shared City Listings record.
                     </p>
 
                     <button
@@ -2130,7 +2111,7 @@ function VendorHub() {
                         type="button"
                         onClick={() =>
                             showNotice(
-                                "Your business changes are reflected in this preview. Backend saving is not connected yet.",
+                                "Your business changes have been saved successfully.",
                             )
                         }
                     >
@@ -2187,6 +2168,18 @@ function VendorHub() {
     const profileCompletionPercentage = Math.round(
         (completedProfileFields / profileCompletionItems.length) * 100
     );
+
+    useEffect(() => {
+        if (profileCompletionPercentage < 100) {
+            hasShownProfileCompleteNotice.current = false;
+            return;
+        }
+
+        if (!hasShownProfileCompleteNotice.current) {
+            hasShownProfileCompleteNotice.current = true;
+            showNotice("Congratulations! Your business profile is 100% complete and ready for listing review.");
+        }
+    }, [profileCompletionPercentage]);
 
 
     const profileCompletionLabels = [
@@ -2282,7 +2275,7 @@ function VendorHub() {
                     </div>
                 ) : (
                     <div className="vh-publish-ready">
-                        <div><CheckCircle2 size={22} /><span><strong>Ready to publish</strong><small>Review how your listing will appear before submitting it for admin approval.</small></span></div>
+                        <div><CheckCircle2 size={22} /><span><strong>Ready to publish</strong><small>{listingIsApproved ? "Your listing is approved. Preview it before publishing it to City Listings." : "Review how your listing will appear before submitting it for Admin approval."}</small></span></div>
                         {listingIsLive ? (
                             <button
                                 type="button"
@@ -2310,8 +2303,12 @@ function VendorHub() {
             </section>
 
             <section className="vh-listing-status-card">
-                <div className="vh-listing-status-copy"><span className="vh-eyebrow">CITY LISTING</span><h3>{listingIsLive ? "Your business is visible to customers" : listingIsPending ? "Your listing is being reviewed" : "Your listing is not public yet"}</h3><p>{listingIsLive ? "Your approved listing is now available in City Listings." : listingIsPending ? "Your profile has been submitted. The listing will appear publicly only after the admin approves it." : "Complete your profile and submit it for the final listing review."}</p></div>
-                <span className={`vh-listing-state ${listingIsLive ? "live" : listingIsPending ? "pending" : "draft"}`}>{listingIsLive ? "Live" : listingIsPending ? "Pending approval" : "Draft"}</span>
+                <div className="vh-listing-status-copy">
+                    <span className="vh-eyebrow">CITY LISTING</span>
+                    <h3>{listingIsLive ? "Your business is visible to customers" : listingIsPending ? "Your listing is being reviewed" : listingIsApproved ? "Your listing is approved and ready to publish" : "Your listing is not public yet"}</h3>
+                    <p>{listingIsLive ? "Your approved listing is now available in City Listings." : listingIsPending ? "Your profile has been submitted and is waiting for Admin approval." : listingIsApproved ? "Admin has approved your listing. Preview and publish it to make it visible in City Listings." : "Complete your profile and submit it for the final listing review."}</p>
+                </div>
+                <span className={`vh-listing-state ${listingIsLive ? "live" : listingIsPending ? "pending" : listingIsApproved ? "approved" : "draft"}`}>{listingIsLive ? "Live" : listingIsPending ? "Pending approval" : listingIsApproved ? "Approved" : "Draft"}</span>
                 {listingIsLive && <button type="button" className="vh-button vh-button-outline" onClick={() => navigate("/city-listings")}>Go to City Listings <ArrowRight size={15} /></button>}
             </section>
 
@@ -2765,12 +2762,16 @@ function VendorHub() {
         </section>
     );
 
+    // TEMPORARY TEST MODE: ads can be published without an active subscription.
+    // Set this to false when the subscription/payment workflow is enabled.
+    const ADS_SUBSCRIPTION_BYPASS_FOR_TESTING = true;
+
     const submitAdvertisement = () => {
         const title = adDraft.title.trim();
         const description = adDraft.description.trim();
 
         if (!title || !description) {
-            showNotice("Enter an advertisement title and short description to continue.");
+            showNotice("Enter an advertisement title and short description before publishing.");
             return;
         }
 
@@ -2779,50 +2780,81 @@ function VendorHub() {
             return;
         }
 
-        const advertisementRequest = {
+        if (!ADS_SUBSCRIPTION_BYPASS_FOR_TESTING && vendorSubscriptionStatus !== "Active") {
+            showNotice("Choose an active advertising subscription before publishing this ad.");
+            return;
+        }
+
+        const timestamp = new Date().toISOString();
+        const vendorIdentity = String(
+            vendorProfile.vendorId || vendorProfile.id || vendorProfile.mobile || vendorProfile.phone || vendorProfile.email || ""
+        ).trim().toLowerCase();
+
+        if (!vendorIdentity) {
+            showNotice("We couldn't identify your vendor account. Please sign in again.");
+            return;
+        }
+
+        const publishedAd: Record<string, unknown> = {
             id: `ad_${Date.now()}`,
-            title: adDraft.title,
-            description: adDraft.description,
+            vendorId: vendorProfile.vendorId || vendorProfile.id || vendorIdentity,
+            vendorIdentity,
+            vendorName: business.name || vendorProfile.businessName || vendorProfile.name || "Local business",
+            title,
+            description,
             image: adDraft.image,
-            destinationUrl: adDraft.destinationUrl,
-            contactNumber: adDraft.contactNumber || business.phone,
-            status: "Subscription Coming Soon",
-            submittedAt: new Date().toISOString(),
-        };
-
-        const previousRequests = Array.isArray(vendorProfile.advertisementRequests)
-            ? vendorProfile.advertisementRequests
-            : [];
-
-        const updatedProfile: StoredVendorProfile = {
-            ...vendorProfile,
-            advertisementRequests: [...previousRequests, advertisementRequest],
-            latestAdvertisementRequest: advertisementRequest,
+            destinationUrl: adDraft.destinationUrl.trim(),
+            contactNumber: adDraft.contactNumber.trim() || business.phone,
+            category: cityListingCategory || vendorProfile.cityListingCategory || vendorProfile.businessCategory || "",
+            subcategory: cityListingSubcategory || vendorProfile.cityListingSubcategory || "",
+            status: "Published",
+            isPublished: true,
+            submittedAt: timestamp,
+            publishedAt: timestamp,
         };
 
         try {
-            localStorage.setItem("oneservice_vendor", JSON.stringify(updatedProfile));
+            const rawAds = localStorage.getItem("oneservice_city_ads") || "[]";
+            const parsedAds: unknown = JSON.parse(rawAds);
+            const existingAds: Record<string, unknown>[] = Array.isArray(parsedAds)
+                ? parsedAds.filter((item): item is Record<string, unknown> => Boolean(item && typeof item === "object" && !Array.isArray(item)))
+                : [];
+            const nextAds = [...existingAds.filter(ad => ad.id !== publishedAd.id), publishedAd];
+            localStorage.setItem("oneservice_city_ads", JSON.stringify(nextAds));
 
+            const previousRequests = Array.isArray(vendorProfile.advertisementRequests)
+                ? vendorProfile.advertisementRequests
+                : [];
+            const previousPublished = Array.isArray(vendorProfile.publishedAdvertisements)
+                ? vendorProfile.publishedAdvertisements
+                : [];
+
+            const updatedProfile: StoredVendorProfile = {
+                ...vendorProfile,
+                advertisementRequests: [...previousRequests, { ...publishedAd }],
+                publishedAdvertisements: [...previousPublished, { ...publishedAd }],
+                latestAdvertisementRequest: publishedAd,
+            };
+
+            localStorage.setItem("oneservice_vendor", JSON.stringify(updatedProfile));
             const userRaw = localStorage.getItem("oneservice_user");
             if (userRaw) {
                 const user = JSON.parse(userRaw);
                 if (user?.role === "vendor") {
-                    localStorage.setItem("oneservice_user", JSON.stringify({
-                        ...user,
-                        ...updatedProfile,
-                    }));
+                    localStorage.setItem("oneservice_user", JSON.stringify({ ...user, ...updatedProfile }));
                 }
             }
 
             saveVendorToSharedCollection(updatedProfile);
             setVendorProfile(updatedProfile);
+            window.dispatchEvent(new Event("oneservice-city-ads-change"));
             window.dispatchEvent(new Event("oneservice-vendor-change"));
             window.dispatchEvent(new Event("oneservice-vendors-change"));
             setShowAdsComingSoon(true);
-            setNotice("");
+            showNotice("Success! Your advertisement has been published for testing.");
         } catch (error) {
-            console.error("Unable to save advertisement request:", error);
-            showNotice("We couldn't save your advertisement details. Please try again.");
+            console.error("Unable to publish advertisement:", error);
+            showNotice("We couldn't publish your advertisement. Please try again.");
         }
     };
 
@@ -3064,12 +3096,10 @@ function VendorHub() {
                         <Megaphone size={30} />
                     </span>
                     <span className="vh-eyebrow">NEEDONESERVICE ADVERTISING</span>
-                    <h2>Ads Subscription Plans</h2>
-                    <h3>Coming Soon!</h3>
+                    <h2>Advertisement Published</h2>
+                    <h3>Live in testing mode</h3>
                     <p>
-                        Thank you. Your advertisement details have been saved.
-                        Our advertising subscription plans are currently being prepared
-                        and will be available soon.
+                        Your advertisement is published in testing mode. It has been saved to the shared City Listings ads collection. Subscription checks are temporarily disabled.
                     </p>
                     <button
                         className="vh-button vh-button-outline"
@@ -4093,3 +4123,4 @@ function VendorHub() {
 }
 
 export default VendorHub;
+

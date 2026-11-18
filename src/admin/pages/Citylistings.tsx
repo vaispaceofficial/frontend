@@ -125,6 +125,8 @@ type VendorRecord = Record<string, unknown> & {
   banned?: boolean;
   bannedAt?: string;
   banReason?: string;
+  wasPublishedBeforeSuspension?: boolean;
+  publicationStatusBeforeSuspension?: string;
 };
 
 type Business = {
@@ -377,9 +379,9 @@ const writeStoredVendors = (vendors: VendorRecord[]) => {
 
           const updatedStoredValue = nestedKey
             ? {
-                ...parsed,
-                [nestedKey]: updatedSingle,
-              }
+              ...parsed,
+              [nestedKey]: updatedSingle,
+            }
             : updatedSingle;
 
           localStorage.setItem(
@@ -1082,13 +1084,19 @@ export default function Businesses() {
           listingStatus: "Approved",
           vendorStatus: "Approved",
           status: "Approved",
-          isPublished: true,
-          publicationStatus: "Live",
+          isPublished: vendor.wasPublishedBeforeSuspension === true,
+          publicationStatus:
+            vendor.publicationStatusBeforeSuspension ||
+            (vendor.wasPublishedBeforeSuspension === true
+              ? "Published"
+              : "Draft"),
           listingStatusUpdatedAt: new Date().toISOString(),
           suspensionReason: "",
           suspendedAt: "",
           reactivationDate: "",
           adminStatusUpdatedAt: new Date().toISOString(),
+          wasPublishedBeforeSuspension: undefined,
+          publicationStatusBeforeSuspension: undefined,
         };
       }
 
@@ -1308,15 +1316,15 @@ export default function Businesses() {
      UPDATE VENDOR STATUS
   ===================================================== */
 
+
   const updateVendorStatus = (status: VendorStatus) => {
     if (!selectedBusiness) return;
 
     const existingVendor = findVendorRecord(selectedBusiness);
+    if (!existingVendor) return;
 
     if (
-      normalizeRegistrationStatus(
-        existingVendor ?? selectedBusiness.registrationData,
-      ) !== "Approved"
+      normalizeRegistrationStatus(existingVendor) !== "Approved"
     ) {
       window.alert(
         "The vendor's initial registration must be approved before managing the public listing.",
@@ -1324,14 +1332,15 @@ export default function Businesses() {
       return;
     }
 
+    const currentListingStatus = normalizeStatus(
+      existingVendor.listingStatus ??
+      existingVendor.vendorStatus ??
+      existingVendor.status,
+    );
+
     const isPermanentlyBanned =
-      existingVendor?.banned === true ||
-      normalizeStatus(
-        existingVendor?.listingStatus ??
-        existingVendor?.vendorStatus ??
-        existingVendor?.status ??
-        selectedBusiness.vendorStatus,
-      ) === "Banned";
+      existingVendor.banned === true ||
+      currentListingStatus === "Banned";
 
     if (isPermanentlyBanned && status !== "Banned") {
       window.alert(
@@ -1341,23 +1350,54 @@ export default function Businesses() {
     }
 
     const updatedAt = new Date().toISOString();
-    const isLive = status === "Approved";
+
+    const isReactivating =
+      currentListingStatus === "Suspended" &&
+      status === "Approved";
+
+    // Restore the publication state that existed before suspension.
+    // A listing that was never published must remain unpublished.
+    const restoredIsPublished = isReactivating
+      ? existingVendor.wasPublishedBeforeSuspension === true
+      : existingVendor.isPublished === true;
+
+    const restoredPublicationStatus = isReactivating
+      ? readText(
+        existingVendor.publicationStatusBeforeSuspension,
+        restoredIsPublished ? "Published" : "Draft",
+      )
+      : readText(
+        existingVendor.publicationStatus,
+        restoredIsPublished ? "Published" : "Draft",
+      );
 
     const updatedVendors = registeredVendors.map((vendor) => {
       if (getVendorBusinessId(vendor) !== selectedBusiness.id) {
         return vendor;
       }
 
+      const isBlocked =
+        status === "Suspended" ||
+        status === "Rejected" ||
+        status === "Banned";
+
       return {
         ...vendor,
 
-        // Second-stage public listing decision.
+        // Admin controls listing moderation.
         listingStatus: status,
         vendorStatus: status,
         status,
 
-        isPublished: isLive,
-        publicationStatus: isLive ? "Live" : status,
+        // Approval alone must not publish a listing.
+        isPublished: isBlocked ? false : restoredIsPublished,
+
+        publicationStatus: isBlocked
+          ? status
+          : restoredPublicationStatus,
+
+        // Retain the original publication timestamp.
+        publishedAt: vendor.publishedAt,
 
         listingStatusUpdatedAt: updatedAt,
         adminStatusUpdatedAt: updatedAt,
@@ -1367,37 +1407,49 @@ export default function Businesses() {
           status === "Banned"
             ? vendor.bannedAt ?? updatedAt
             : vendor.bannedAt,
+
+        // Clear the temporary suspension snapshot after reactivation.
+        ...(isReactivating
+          ? {
+            wasPublishedBeforeSuspension: undefined,
+            publicationStatusBeforeSuspension: undefined,
+          }
+          : {}),
       };
     });
 
     writeStoredVendors(updatedVendors);
     setRegisteredVendors(updatedVendors);
 
+    const updatedVendor = updatedVendors.find(
+      (vendor) => getVendorBusinessId(vendor) === selectedBusiness.id,
+    );
+
     setSelectedBusiness((previous) =>
-      previous
+      previous && updatedVendor
         ? {
           ...previous,
           vendorStatus: status,
-          isPublished: isLive,
+          isPublished: updatedVendor.isPublished === true,
           registrationData: {
             ...previous.registrationData,
             listingStatus: status,
             vendorStatus: status,
             status,
-            isPublished: isLive,
-            publicationStatus: isLive ? "Live" : status,
+            isPublished: updatedVendor.isPublished === true,
+            publicationStatus: updatedVendor.publicationStatus,
+            publishedAt: updatedVendor.publishedAt,
             listingStatusUpdatedAt: updatedAt,
             banned: status === "Banned",
-            bannedAt:
-              status === "Banned"
-                ? previous.registrationData.bannedAt ?? updatedAt
-                : previous.registrationData.bannedAt,
+            bannedAt: updatedVendor.bannedAt,
             adminStatusUpdatedAt: updatedAt,
           },
         }
-        : null,
+        : previous,
     );
   };
+
+
 
   const confirmVendorSuspension = () => {
     if (!selectedBusiness) return;
@@ -1424,8 +1476,6 @@ export default function Businesses() {
       }
 
       const previousCount = readNumber(vendor.suspensionCount);
-      const nextCount = previousCount + 1;
-
       const previousHistory = Array.isArray(vendor.suspensionHistory)
         ? vendor.suspensionHistory
         : [];
@@ -1442,13 +1492,23 @@ export default function Businesses() {
 
       return {
         ...vendor,
+
+        // Save the state before suspension so it can be restored later.
+        wasPublishedBeforeSuspension: vendor.isPublished === true,
+        publicationStatusBeforeSuspension:
+          vendor.publicationStatus ||
+          (vendor.isPublished === true ? "Published" : "Draft"),
+
+        // Suspend the public listing without destroying its history.
         listingStatus: "Suspended",
         vendorStatus: "Suspended",
         status: "Suspended",
+
         isPublished: false,
         publicationStatus: "Suspended",
+
         listingStatusUpdatedAt: updatedAt,
-        suspensionCount: nextCount,
+        suspensionCount: previousCount + 1,
         suspensionReason: reason,
         suspendedAt: updatedAt,
         reactivationDate,
@@ -1460,32 +1520,43 @@ export default function Businesses() {
     writeStoredVendors(updatedVendors);
     setRegisteredVendors(updatedVendors);
 
-    setSelectedBusiness((previous) =>
-      previous
-        ? {
-          ...previous,
+    setSelectedBusiness((previous) => {
+      if (!previous) return null;
+
+      const updatedVendor = updatedVendors.find(
+        (vendor) => getVendorBusinessId(vendor) === selectedBusiness.id,
+      );
+
+      return {
+        ...previous,
+        vendorStatus: "Suspended",
+        isPublished: false,
+        registrationData: {
+          ...previous.registrationData,
+          listingStatus: "Suspended",
           vendorStatus: "Suspended",
-          registrationData: {
-            ...previous.registrationData,
-            listingStatus: "Suspended",
-            vendorStatus: "Suspended",
-            status: "Suspended",
-            applicationStatus: "Approved",
-            suspensionCount:
-              readNumber(previous.registrationData.suspensionCount) + 1,
-            suspensionReason: reason,
-            suspendedAt: updatedAt,
-            reactivationDate,
-            adminStatusUpdatedAt: updatedAt,
-          },
-        }
-        : null,
-    );
+          status: "Suspended",
+          isPublished: false,
+          publicationStatus: "Suspended",
+          wasPublishedBeforeSuspension:
+            updatedVendor?.wasPublishedBeforeSuspension,
+          publicationStatusBeforeSuspension:
+            updatedVendor?.publicationStatusBeforeSuspension,
+          suspensionCount:
+            readNumber(previous.registrationData.suspensionCount) + 1,
+          suspensionReason: reason,
+          suspendedAt: updatedAt,
+          reactivationDate,
+          adminStatusUpdatedAt: updatedAt,
+        },
+      };
+    });
 
     setShowSuspensionModal(false);
     setSuspensionReason("");
     setReactivationDate(getDefaultReactivationDate());
   };
+
 
   const permanentlyBanVendor = () => {
     if (!selectedBusiness) return;
