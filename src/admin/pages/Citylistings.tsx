@@ -1188,6 +1188,121 @@ export default function Businesses() {
     [businesses],
   );
 
+  const analytics = useMemo(() => {
+    const total = businesses.length;
+
+    const approvedRegistrations = businesses.filter(
+      (business) => business.registrationStatus === "Approved",
+    ).length;
+
+    const pendingRegistrations = businesses.filter(
+      (business) => business.registrationStatus === "Pending",
+    ).length;
+
+    const rejectedRegistrations = businesses.filter(
+      (business) => business.registrationStatus === "Rejected",
+    ).length;
+
+    const publishedListings = businesses.filter(
+      (business) =>
+        business.isPublished &&
+        business.vendorStatus === "Approved",
+    ).length;
+
+    const unpublishedListings = businesses.filter(
+      (business) => !business.isPublished,
+    ).length;
+
+    const suspendedVendors = businesses.filter(
+      (business) => business.vendorStatus === "Suspended",
+    ).length;
+
+    const bannedVendors = businesses.filter(
+      (business) => business.vendorStatus === "Banned",
+    ).length;
+
+    const paidRegistrations = businesses.filter(
+      (business) => business.registrationFeeStatus === "Paid",
+    ).length;
+
+    const pendingPayments = businesses.filter(
+      (business) => business.registrationFeeStatus === "Pending",
+    ).length;
+
+    const totalViews = businesses.reduce(
+      (sum, business) => sum + business.views,
+      0,
+    );
+
+    const totalEnquiries = businesses.reduce(
+      (sum, business) => sum + business.enquiries,
+      0,
+    );
+
+    const totalPhoneClicks = businesses.reduce(
+      (sum, business) => sum + business.phoneClicks,
+      0,
+    );
+
+    const totalFollowers = businesses.reduce(
+      (sum, business) => sum + business.followers,
+      0,
+    );
+
+    const totalProducts = businesses.reduce(
+      (sum, business) => sum + business.productCount,
+      0,
+    );
+
+    const totalServices = businesses.reduce(
+      (sum, business) => sum + business.serviceCount,
+      0,
+    );
+
+    const categoryCounts = businesses.reduce<Record<string, number>>(
+      (counts, business) => {
+        const category = business.type || "Uncategorized";
+        counts[category] = (counts[category] || 0) + 1;
+        return counts;
+      },
+      {},
+    );
+
+    const areaCounts = businesses.reduce<Record<string, number>>(
+      (counts, business) => {
+        const area = business.locality || business.city || "Not specified";
+        counts[area] = (counts[area] || 0) + 1;
+        return counts;
+      },
+      {},
+    );
+
+    return {
+      total,
+      approvedRegistrations,
+      pendingRegistrations,
+      rejectedRegistrations,
+      publishedListings,
+      unpublishedListings,
+      suspendedVendors,
+      bannedVendors,
+      paidRegistrations,
+      pendingPayments,
+      totalViews,
+      totalEnquiries,
+      totalPhoneClicks,
+      totalFollowers,
+      totalProducts,
+      totalServices,
+      categoryCounts: Object.entries(categoryCounts).sort(
+        (a, b) => b[1] - a[1],
+      ),
+      areaCounts: Object.entries(areaCounts).sort(
+        (a, b) => b[1] - a[1],
+      ),
+    };
+  }, [businesses]);
+
   const directoryBusinesses =
     activeDirectoryTab === "onboarding"
       ? onboardingBusinesses
@@ -2252,6 +2367,261 @@ export default function Businesses() {
     }
   };
 
+  const renderAnalytics = () => (
+    <section className="city-analytics">
+      <div className="city-analytics-heading">
+        <div>
+          <span>CITY LISTINGS OVERVIEW</span>
+          <h2>Business Analytics</h2>
+          <p>
+            Registration, listing publication, payment and engagement
+            statistics from your registered vendor records.
+          </p>
+        </div>
+
+        <div className="city-analytics-total">
+          <span>Total registered businesses</span>
+          <strong>{analytics.total}</strong>
+        </div>
+      </div>
+
+      <div className="city-analytics-grid">
+        <div className="city-analytics-card">
+          <span>Total businesses</span>
+          <strong>{analytics.total}</strong>
+          <Building2 size={20} />
+          <small>All registered vendor records</small>
+        </div>
+
+        <div className="city-analytics-card">
+          <span>Approved registrations</span>
+          <strong>{analytics.approvedRegistrations}</strong>
+          <CheckCircle2 size={20} />
+          <small>Initial vendor approval completed</small>
+        </div>
+
+        <div className="city-analytics-card">
+          <span>Pending registrations</span>
+          <strong>{analytics.pendingRegistrations}</strong>
+          <Clock3 size={20} />
+          <small>Awaiting initial admin review</small>
+        </div>
+
+        <div className="city-analytics-card">
+          <span>Rejected registrations</span>
+          <strong>{analytics.rejectedRegistrations}</strong>
+          <X size={20} />
+          <small>Initial applications rejected</small>
+        </div>
+
+        <div className="city-analytics-card">
+          <span>Published listings</span>
+          <strong>{analytics.publishedListings}</strong>
+          <Store size={20} />
+          <small>Approved and published businesses</small>
+        </div>
+
+        <div className="city-analytics-card">
+          <span>Unpublished listings</span>
+          <strong>{analytics.unpublishedListings}</strong>
+          <Eye size={20} />
+          <small>Listings not currently published</small>
+        </div>
+
+        <div className="city-analytics-card">
+          <span>Suspended vendors</span>
+          <strong>{analytics.suspendedVendors}</strong>
+          <PauseCircle size={20} />
+          <small>Temporarily suspended listings</small>
+        </div>
+
+        <div className="city-analytics-card">
+          <span>Permanently banned</span>
+          <strong>{analytics.bannedVendors}</strong>
+          <ShieldCheck size={20} />
+          <small>Vendor records permanently banned</small>
+        </div>
+      </div>
+
+      <div className="city-analytics-section-grid">
+        <div className="city-analytics-panel">
+          <div className="city-analytics-panel-heading">
+            <div>
+              <h3>Registration payments</h3>
+              <p>Payment status across registered businesses</p>
+            </div>
+            <Wallet size={19} />
+          </div>
+
+          <div className="city-analytics-stat-row">
+            <span>Paid registrations</span>
+            <strong>{analytics.paidRegistrations}</strong>
+          </div>
+
+          <div className="city-analytics-progress">
+            <span
+              style={{
+                width: `${analytics.total
+                    ? (analytics.paidRegistrations / analytics.total) * 100
+                    : 0
+                  }%`,
+              }}
+            />
+          </div>
+
+          <div className="city-analytics-stat-row">
+            <span>Pending payments</span>
+            <strong>{analytics.pendingPayments}</strong>
+          </div>
+
+          <div className="city-analytics-progress pending">
+            <span
+              style={{
+                width: `${analytics.total
+                    ? (analytics.pendingPayments / analytics.total) * 100
+                    : 0
+                  }%`,
+              }}
+            />
+          </div>
+        </div>
+
+        <div className="city-analytics-panel">
+          <div className="city-analytics-panel-heading">
+            <div>
+              <h3>Listing engagement</h3>
+              <p>Engagement totals recorded in vendor profiles</p>
+            </div>
+            <Activity size={19} />
+          </div>
+
+          <div className="city-analytics-stat-row">
+            <span>Profile views</span>
+            <strong>{analytics.totalViews.toLocaleString()}</strong>
+          </div>
+
+          <div className="city-analytics-stat-row">
+            <span>Customer enquiries</span>
+            <strong>{analytics.totalEnquiries.toLocaleString()}</strong>
+          </div>
+
+          <div className="city-analytics-stat-row">
+            <span>Phone clicks</span>
+            <strong>{analytics.totalPhoneClicks.toLocaleString()}</strong>
+          </div>
+
+          <div className="city-analytics-stat-row">
+            <span>Followers</span>
+            <strong>{analytics.totalFollowers.toLocaleString()}</strong>
+          </div>
+        </div>
+
+        <div className="city-analytics-panel">
+          <div className="city-analytics-panel-heading">
+            <div>
+              <h3>Business offerings</h3>
+              <p>Products and services submitted by vendors</p>
+            </div>
+            <Package size={19} />
+          </div>
+
+          <div className="city-analytics-stat-row">
+            <span>Total products</span>
+            <strong>{analytics.totalProducts}</strong>
+          </div>
+
+          <div className="city-analytics-stat-row">
+            <span>Total services</span>
+            <strong>{analytics.totalServices}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div className="city-analytics-section-grid">
+        <div className="city-analytics-panel">
+          <div className="city-analytics-panel-heading">
+            <div>
+              <h3>Businesses by category</h3>
+              <p>Distribution of registered business categories</p>
+            </div>
+            <Building2 size={19} />
+          </div>
+
+          {analytics.categoryCounts.length ? (
+            analytics.categoryCounts.map(([category, count]) => (
+              <div className="city-analytics-breakdown" key={category}>
+                <div>
+                  <span>{category}</span>
+                  <strong>{count}</strong>
+                </div>
+                <div className="city-analytics-progress">
+                  <span
+                    style={{
+                      width: `${analytics.total
+                          ? (count / analytics.total) * 100
+                          : 0
+                        }%`,
+                    }}
+                  />
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="city-analytics-empty">
+              No category data available yet.
+            </p>
+          )}
+        </div>
+
+        <div className="city-analytics-panel">
+          <div className="city-analytics-panel-heading">
+            <div>
+              <h3>Businesses by area</h3>
+              <p>Distribution by registered locality or city</p>
+            </div>
+            <MapPin size={19} />
+          </div>
+
+          {analytics.areaCounts.length ? (
+            analytics.areaCounts.map(([area, count]) => (
+              <div className="city-analytics-breakdown" key={area}>
+                <div>
+                  <span>{area}</span>
+                  <strong>{count}</strong>
+                </div>
+                <div className="city-analytics-progress">
+                  <span
+                    style={{
+                      width: `${analytics.total
+                          ? (count / analytics.total) * 100
+                          : 0
+                        }%`,
+                    }}
+                  />
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="city-analytics-empty">
+              No location data available yet.
+            </p>
+          )}
+        </div>
+      </div>
+
+      {analytics.total === 0 && (
+        <div className="city-analytics-empty-state">
+          <Activity size={30} />
+          <strong>No analytics data available</strong>
+          <p>
+            Analytics will populate automatically when vendor registration
+            records are saved in the shared vendor collection.
+          </p>
+        </div>
+      )}
+    </section>
+  );
+
   /* =====================================================
      MAIN PAGE
   ===================================================== */
@@ -2268,212 +2638,476 @@ export default function Businesses() {
         </div>
       </section>
 
-      <section className="businesses-directory-card">
-        <div className="businesses-filter-bar">
-          <div className="businesses-search">
-            <Search size={17} />
 
-            <input
-              type="text"
-              value={search}
-              placeholder="Search business, contractor or ID"
-              onChange={(event) => {
-                setSearch(event.target.value);
-                setPage(1);
-              }}
-            />
+      {activeDirectoryTab === "analytics" ? (
+        <section className="businesses-directory-card businesses-analytics-card">
+          <div className="businesses-analytics-header">
+            <div>
+              <span className="businesses-eyebrow">CITY LISTINGS OVERVIEW</span>
+              <h2>Business Analytics</h2>
+              <p>
+                Track vendor registrations, listing approvals and business
+                performance across City Listings.
+              </p>
+            </div>
 
-            {search && (
-              <button
-                type="button"
-                onClick={() => {
-                  setSearch("");
+            <button
+              type="button"
+              className="businesses-clear-button"
+              onClick={loadVendors}
+            >
+              <Activity size={15} />
+              Refresh Analytics
+            </button>
+          </div>
+
+          {/* REGISTRATION METRICS */}
+          <div className="businesses-analytics-grid">
+            <div className="businesses-analytics-metric">
+              <span>
+                <Store size={18} />
+                Total Businesses
+              </span>
+              <strong>{businesses.length}</strong>
+              <small>All registered businesses</small>
+            </div>
+
+            <div className="businesses-analytics-metric">
+              <span>
+                <CheckCircle2 size={18} />
+                Approved Registrations
+              </span>
+              <strong>{approvedVendors.length}</strong>
+              <small>Vendor accounts approved</small>
+            </div>
+
+            <div className="businesses-analytics-metric">
+              <span>
+                <Clock3 size={18} />
+                Pending Registrations
+              </span>
+              <strong>
+                {
+                  businesses.filter(
+                    (business) => business.registrationStatus === "Pending"
+                  ).length
+                }
+              </strong>
+              <small>Awaiting admin review</small>
+            </div>
+
+            <div className="businesses-analytics-metric">
+              <span>
+                <X size={18} />
+                Rejected Registrations
+              </span>
+              <strong>
+                {
+                  businesses.filter(
+                    (business) => business.registrationStatus === "Rejected"
+                  ).length
+                }
+              </strong>
+              <small>Registrations rejected</small>
+            </div>
+
+            <div className="businesses-analytics-metric">
+              <span>
+                <Eye size={18} />
+                Published Listings
+              </span>
+              <strong>
+                {
+                  businesses.filter(
+                    (business) =>
+                      business.isPublished &&
+                      business.registrationStatus === "Approved" &&
+                      business.vendorStatus === "Approved"
+                  ).length
+                }
+              </strong>
+              <small>Approved and published businesses</small>
+            </div>
+
+            <div className="businesses-analytics-metric">
+              <span>
+                <FileText size={18} />
+                Unpublished Listings
+              </span>
+              <strong>
+                {
+                  businesses.filter(
+                    (business) => !business.isPublished
+                  ).length
+                }
+              </strong>
+              <small>Not currently published</small>
+            </div>
+
+            <div className="businesses-analytics-metric">
+              <span>
+                <PauseCircle size={18} />
+                Suspended Listings
+              </span>
+              <strong>
+                {
+                  businesses.filter(
+                    (business) => business.vendorStatus === "Suspended"
+                  ).length
+                }
+              </strong>
+              <small>Temporarily suspended</small>
+            </div>
+
+            <div className="businesses-analytics-metric">
+              <span>
+                <ShieldCheck size={18} />
+                Banned Vendors
+              </span>
+              <strong>
+                {
+                  businesses.filter(
+                    (business) => business.vendorStatus === "Banned"
+                  ).length
+                }
+              </strong>
+              <small>Permanently banned</small>
+            </div>
+          </div>
+
+          {/* BUSINESS PERFORMANCE */}
+          <div className="businesses-analytics-section">
+            <div className="businesses-analytics-section-heading">
+              <div>
+                <h3>Business Performance</h3>
+                <p>Engagement recorded across registered business profiles.</p>
+              </div>
+            </div>
+
+            <div className="businesses-analytics-grid businesses-performance-grid">
+              <div className="businesses-analytics-metric">
+                <span>
+                  <Eye size={18} />
+                  Total Profile Views
+                </span>
+                <strong>
+                  {businesses.reduce(
+                    (total, business) => total + business.views,
+                    0
+                  ).toLocaleString("en-IN")}
+                </strong>
+                <small>Combined business profile views</small>
+              </div>
+
+              <div className="businesses-analytics-metric">
+                <span>
+                  <MessageSquare size={18} />
+                  Total Enquiries
+                </span>
+                <strong>
+                  {businesses.reduce(
+                    (total, business) => total + business.enquiries,
+                    0
+                  ).toLocaleString("en-IN")}
+                </strong>
+                <small>Customer enquiries received</small>
+              </div>
+
+              <div className="businesses-analytics-metric">
+                <span>
+                  <UserRound size={18} />
+                  Total Phone Clicks
+                </span>
+                <strong>
+                  {businesses.reduce(
+                    (total, business) => total + business.phoneClicks,
+                    0
+                  ).toLocaleString("en-IN")}
+                </strong>
+                <small>Customer contact clicks</small>
+              </div>
+
+              <div className="businesses-analytics-metric">
+                <span>
+                  <Star size={18} />
+                  Total Reviews
+                </span>
+                <strong>
+                  {businesses.reduce(
+                    (total, business) => total + business.reviews,
+                    0
+                  ).toLocaleString("en-IN")}
+                </strong>
+                <small>Customer reviews recorded</small>
+              </div>
+            </div>
+          </div>
+
+          {/* REGISTRATION FEE SUMMARY */}
+          <div className="businesses-analytics-section">
+            <div className="businesses-analytics-section-heading">
+              <div>
+                <h3>Registration Fee Summary</h3>
+                <p>Payment status across all registered businesses.</p>
+              </div>
+            </div>
+
+            <div className="businesses-analytics-grid businesses-payment-grid">
+              <div className="businesses-analytics-metric">
+                <span>
+                  <CheckCircle2 size={18} />
+                  Paid Registrations
+                </span>
+                <strong>
+                  {
+                    businesses.filter(
+                      (business) =>
+                        business.registrationFeeStatus === "Paid"
+                    ).length
+                  }
+                </strong>
+                <small>Registration fee marked as paid</small>
+              </div>
+
+              <div className="businesses-analytics-metric">
+                <span>
+                  <Wallet size={18} />
+                  Pending Payments
+                </span>
+                <strong>
+                  {
+                    businesses.filter(
+                      (business) =>
+                        business.registrationFeeStatus === "Pending"
+                    ).length
+                  }
+                </strong>
+                <small>Registration fee not yet marked as paid</small>
+              </div>
+            </div>
+          </div>
+
+          {/* EMPTY STATE */}
+          {businesses.length === 0 && (
+            <div className="businesses-empty-state">
+              <Activity size={28} />
+              <strong>No analytics data available yet</strong>
+              <span>
+                Analytics will appear here after vendor registrations are
+                added to the shared vendor collection.
+              </span>
+            </div>
+          )}
+        </section>
+      ) : (
+        <section className="businesses-directory-card">
+          <div className="businesses-filter-bar">
+            <div className="businesses-search">
+              <Search size={17} />
+
+              <input
+                type="text"
+                value={search}
+                placeholder="Search business, contractor or ID"
+                onChange={(event) => {
+                  setSearch(event.target.value);
                   setPage(1);
                 }}
-                aria-label="Clear search"
+              />
+
+              {search && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearch("");
+                    setPage(1);
+                  }}
+                  aria-label="Clear search"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+
+            <div className="businesses-type-select">
+              <select
+                value={contractorType}
+                onChange={(event) => {
+                  setContractorType(event.target.value);
+                  setPage(1);
+                }}
               >
-                <X size={14} />
+                {contractorTypes.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown size={16} />
+            </div>
+
+            {(search || contractorType !== "All contractor types") && (
+              <button
+                type="button"
+                className="businesses-clear-button"
+                onClick={clearFilters}
+              >
+                Clear
               </button>
             )}
           </div>
 
-          <div className="businesses-type-select">
-            <select
-              value={contractorType}
-              onChange={(event) => {
-                setContractorType(event.target.value);
-                setPage(1);
-              }}
-            >
-              {contractorTypes.map((type) => (
-                <option key={type} value={type}>
-                  {type}
-                </option>
-              ))}
-            </select>
-            <ChevronDown size={16} />
+          <div className="businesses-table-wrapper">
+            <table className="businesses-table">
+              <thead>
+                <tr>
+                  <th>BUSINESS NAME</th>
+                  <th>CONTRACTOR TYPE</th>
+                  <th>PROJECTS PORTFOLIO</th>
+                  <th>CONTACT INFO</th>
+                  <th>REGISTRATION FEE</th>
+                  <th>ACTIONS</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {paginatedBusinesses.map((business) => (
+                  <tr key={business.id}>
+                    <td>
+                      <div className="business-name-cell">
+                        <strong>{business.name}</strong>
+                        <span>{business.id}</span>
+                      </div>
+                    </td>
+
+                    <td>
+                      <span className="business-type">
+                        {business.type}
+                      </span>
+                    </td>
+
+                    <td>
+                      <span className="business-projects">
+                        {business.projects}
+                      </span>
+                    </td>
+
+                    <td>
+                      <span className="business-contact">
+                        {business.phone}
+                      </span>
+                    </td>
+
+                    <td>
+                      <span
+                        className={`business-payment-status ${business.registrationFeeStatus.toLowerCase()}`}
+                      >
+                        {business.registrationFeeStatus === "Paid" && (
+                          <CheckCircle2 size={13} />
+                        )}
+                        {business.registrationFeeStatus}
+                      </span>
+                    </td>
+
+                    <td>
+                      <div className="business-actions">
+                        <button
+                          type="button"
+                          className="business-primary-action"
+                          onClick={() => openDetails(business)}
+                        >
+                          <Eye size={14} />
+                          View Details
+                        </button>
+
+                        <button
+                          type="button"
+                          className="business-secondary-action"
+                          onClick={() => {
+                            setSelectedBusiness(business);
+                            setAction("portfolio");
+                          }}
+                        >
+                          Portfolio
+                          <ExternalLink size={13} />
+                        </button>
+
+                        <button
+                          type="button"
+                          className="business-secondary-action subscription"
+                          onClick={() => {
+                            setSelectedBusiness(business);
+                            setAction("subscription");
+                          }}
+                        >
+                          Subscription
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+
+                {paginatedBusinesses.length === 0 && (
+                  <tr>
+                    <td colSpan={6}>
+                      <div className="businesses-empty-state">
+                        <Search size={26} />
+
+                        <strong>
+                          {registeredVendors.length === 0
+                            ? "No registered businesses yet"
+                            : "No businesses found"}
+                        </strong>
+
+                        <span>
+                          {registeredVendors.length === 0
+                            ? "New vendor registrations will appear here when added to the shared vendor collection."
+                            : "Try changing your search or contractor type."}
+                        </span>
+
+                        {(search ||
+                          contractorType !== "All contractor types") && (
+                            <button type="button" onClick={clearFilters}>
+                              Clear filters
+                            </button>
+                          )}
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
 
-          {(search || contractorType !== "All contractor types") && (
-            <button
-              type="button"
-              className="businesses-clear-button"
-              onClick={clearFilters}
-            >
-              Clear
-            </button>
-          )}
-        </div>
+          <div className="businesses-table-footer">
+            <span>
+              Showing{" "}
+              <strong>
+                {filteredBusinesses.length === 0
+                  ? 0
+                  : (page - 1) * pageSize + 1}
+                {"–"}
+                {Math.min(page * pageSize, filteredBusinesses.length)}
+              </strong>{" "}
+              of <strong>{filteredBusinesses.length}</strong> businesses
+            </span>
 
-        <div className="businesses-table-wrapper">
-          <table className="businesses-table">
-            <thead>
-              <tr>
-                <th>BUSINESS NAME</th>
-                <th>CONTRACTOR TYPE</th>
-                <th>PROJECTS PORTFOLIO</th>
-                <th>CONTACT INFO</th>
-                <th>REGISTRATION FEE</th>
-                <th>ACTIONS</th>
-              </tr>
-            </thead>
+            <div className="businesses-pagination">
+              <button
+                type="button"
+                disabled={page <= 1}
+                onClick={() =>
+                  setPage((current) => Math.max(1, current - 1))
+                }
+                aria-label="Previous page"
+              >
+                <ChevronLeft size={15} />
+              </button>
 
-            <tbody>
-              {paginatedBusinesses.map((business) => (
-                <tr key={business.id}>
-                  <td>
-                    <div className="business-name-cell">
-                      <strong>{business.name}</strong>
-                      <span>{business.id}</span>
-                    </div>
-                  </td>
-
-                  <td>
-                    <span className="business-type">
-                      {business.type}
-                    </span>
-                  </td>
-
-                  <td>
-                    <span className="business-projects">
-                      {business.projects}
-                    </span>
-                  </td>
-
-                  <td>
-                    <span className="business-contact">
-                      {business.phone}
-                    </span>
-                  </td>
-
-                  <td>
-                    <span
-                      className={`business-payment-status ${business.registrationFeeStatus.toLowerCase()}`}
-                    >
-                      {business.registrationFeeStatus === "Paid" && (
-                        <CheckCircle2 size={13} />
-                      )}
-                      {business.registrationFeeStatus}
-                    </span>
-                  </td>
-
-                  <td>
-                    <div className="business-actions">
-                      <button
-                        type="button"
-                        className="business-primary-action"
-                        onClick={() => openDetails(business)}
-                      >
-                        <Eye size={14} />
-                        View Details
-                      </button>
-
-                      <button
-                        type="button"
-                        className="business-secondary-action"
-                        onClick={() => {
-                          setSelectedBusiness(business);
-                          setAction("portfolio");
-                        }}
-                      >
-                        Portfolio
-                        <ExternalLink size={13} />
-                      </button>
-
-                      <button
-                        type="button"
-                        className="business-secondary-action subscription"
-                        onClick={() => {
-                          setSelectedBusiness(business);
-                          setAction("subscription");
-                        }}
-                      >
-                        Subscription
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-
-              {paginatedBusinesses.length === 0 && (
-                <tr>
-                  <td colSpan={6}>
-                    <div className="businesses-empty-state">
-                      <Search size={26} />
-
-                      <strong>
-                        {registeredVendors.length === 0
-                          ? "No registered businesses yet"
-                          : "No businesses found"}
-                      </strong>
-
-                      <span>
-                        {registeredVendors.length === 0
-                          ? "New vendor registrations will appear here when added to the shared vendor collection."
-                          : "Try changing your search or contractor type."}
-                      </span>
-
-                      {(search ||
-                        contractorType !== "All contractor types") && (
-                          <button type="button" onClick={clearFilters}>
-                            Clear filters
-                          </button>
-                        )}
-                    </div>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="businesses-table-footer">
-          <span>
-            Showing{" "}
-            <strong>
-              {filteredBusinesses.length === 0
-                ? 0
-                : (page - 1) * pageSize + 1}
-              {"–"}
-              {Math.min(page * pageSize, filteredBusinesses.length)}
-            </strong>{" "}
-            of <strong>{filteredBusinesses.length}</strong> businesses
-          </span>
-
-          <div className="businesses-pagination">
-            <button
-              type="button"
-              disabled={page <= 1}
-              onClick={() =>
-                setPage((current) => Math.max(1, current - 1))
-              }
-              aria-label="Previous page"
-            >
-              <ChevronLeft size={15} />
-            </button>
-
-            {Array.from({ length: totalPages }, (_, index) => index + 1).map(
-              (pageNumber) => (
+              {Array.from(
+                { length: totalPages },
+                (_, index) => index + 1
+              ).map((pageNumber) => (
                 <button
                   type="button"
                   key={pageNumber}
@@ -2482,24 +3116,25 @@ export default function Businesses() {
                 >
                   {pageNumber}
                 </button>
-              ),
-            )}
+              ))}
 
-            <button
-              type="button"
-              disabled={page >= totalPages}
-              onClick={() =>
-                setPage((current) =>
-                  Math.min(totalPages, current + 1),
-                )
-              }
-              aria-label="Next page"
-            >
-              <ChevronRight size={15} />
-            </button>
+              <button
+                type="button"
+                disabled={page >= totalPages}
+                onClick={() =>
+                  setPage((current) =>
+                    Math.min(totalPages, current + 1)
+                  )
+                }
+                aria-label="Next page"
+              >
+                <ChevronRight size={15} />
+              </button>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
+
 
       <section className="businesses-admin-tabs">
         <button
