@@ -2654,7 +2654,10 @@ export default function Businesses() {
             <button
               type="button"
               className="businesses-clear-button"
-              onClick={loadVendors}
+              onClick={() => {
+                loadVendors();
+                return renderAnalytics();
+              }}
             >
               <Activity size={15} />
               Refresh Analytics
