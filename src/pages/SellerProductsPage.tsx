@@ -32,6 +32,9 @@ import {
     X,
     Eye,
 } from "lucide-react";
+import {
+    notifySellerProductsUpdated,
+} from "../data/marketplaceProducts";
 import "./SellerProductsPage.css";
 
 type ProductStatus =
@@ -307,13 +310,8 @@ export default function SellerProductsPage() {
     const pageSize = 5;
 
     useEffect(() => {
-        try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
-        } catch {
-            setToast(
-                "Browser storage is full. Try using fewer or smaller product images.",
-            );
-        }
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
+        notifySellerProductsUpdated();
     }, [products]);
 
     useEffect(() => {
@@ -1602,7 +1600,7 @@ export default function SellerProductsPage() {
                                         {formProduct.description.length}/2000 characters
                                     </small>
                                 </label>
-                                                                <label className="sp-field sp-field-full">
+                                <label className="sp-field sp-field-full">
                                     <span>Technical Specifications</span>
                                     <textarea
                                         value={formProduct.description}

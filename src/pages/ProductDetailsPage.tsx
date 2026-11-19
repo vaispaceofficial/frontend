@@ -18,7 +18,11 @@ import {
   MapPin,
 } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
-import { accessoryProducts } from "../data/accessoriesProducts";
+import {
+  getMarketplaceProducts,
+  subscribeToSellerProducts,
+} from "../data/marketplaceProducts";
+
 import "./ProductDetailsPage.css";
 
 type CustomerReview = {
@@ -33,7 +37,22 @@ type CustomerReview = {
 function ProductDetailsPage() {
   const { productId } = useParams();
 
-  const product = accessoryProducts.find(
+  // Shared Marketplace catalogue
+  const [marketplaceProducts, setMarketplaceProducts] = useState(
+    () => getMarketplaceProducts()
+  );
+
+  // Refresh when Seller Products changes
+  useEffect(() => {
+    const refreshProducts = () => {
+      setMarketplaceProducts(getMarketplaceProducts());
+    };
+
+    return subscribeToSellerProducts(refreshProducts);
+  }, []);
+
+  // Find static or seller-listed product
+  const product = marketplaceProducts.find(
     (item) => String(item.id) === String(productId)
   );
 
@@ -56,9 +75,9 @@ function ProductDetailsPage() {
   /* PRODUCT IMAGES */
   const productImages = product
     ? (product.images?.length ? product.images : [product.image]).filter(
-        (image): image is string =>
-          typeof image === "string" && image.trim() !== ""
-      )
+      (image): image is string =>
+        typeof image === "string" && image.trim() !== ""
+    )
     : [];
 
   const currentImage =
@@ -198,15 +217,16 @@ function ProductDetailsPage() {
   const discount =
     product.oldPrice > 0
       ? Math.round(
-          ((product.oldPrice - product.price) / product.oldPrice) * 100
-        )
+        ((product.oldPrice - product.price) / product.oldPrice) * 100
+      )
       : 0;
 
-  const relatedProducts = accessoryProducts
+  const relatedProducts = marketplaceProducts
     .filter(
       (item) =>
-        item.id !== product.id &&
-        item.categorySlug === product.categorySlug
+        String(item.id) !== String(product.id) &&
+        item.categorySlug === product.categorySlug &&
+        item.inStock
     )
     .slice(0, 4);
 
@@ -236,9 +256,8 @@ function ProductDetailsPage() {
               <button
                 key={`${product.id}-${index}`}
                 type="button"
-                className={`product-thumbnail ${
-                  selectedImage === index ? "active" : ""
-                }`}
+                className={`product-thumbnail ${selectedImage === index ? "active" : ""
+                  }`}
                 onClick={() => setSelectedImage(index)}
                 aria-label={`View product image ${index + 1}`}
               >
@@ -282,9 +301,8 @@ function ProductDetailsPage() {
 
               {currentImage && (
                 <div
-                  className={`product-zoom-preview ${
-                    isZoomed ? "visible" : ""
-                  }`}
+                  className={`product-zoom-preview ${isZoomed ? "visible" : ""
+                    }`}
                   style={{
                     backgroundImage: `url("${currentImage}")`,
                     backgroundPosition: `${zoomPosition.x}% ${zoomPosition.y}%`,
@@ -945,10 +963,15 @@ function ProductDetailsPage() {
               className="related-product-card"
             >
               <div className="related-product-image">
-                <img
-                  src={relatedProduct.image}
-                  alt={relatedProduct.name}
-                />
+                {relatedProduct.image.startsWith("http") ||
+                  relatedProduct.image.startsWith("data:") ? (
+                  <img
+                    src={relatedProduct.image}
+                    alt={relatedProduct.name}
+                  />
+                ) : (
+                  <span>{relatedProduct.image}</span>
+                )}
               </div>
 
               <span>{relatedProduct.category}</span>

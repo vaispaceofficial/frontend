@@ -1,5 +1,5 @@
 export interface AccessoryProduct {
-  id: number;
+  id: string | number;
   name: string;
   category: string;
   categorySlug: string;

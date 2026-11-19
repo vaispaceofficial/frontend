@@ -19,9 +19,10 @@ import {
 } from "lucide-react";
 
 import {
-  accessoryCategories,
-  accessoryProducts,
-} from "../data/accessoriesProducts";
+  getMarketplaceProducts,
+  getMarketplaceCategories,
+  subscribeToSellerProducts,
+} from "../data/marketplaceProducts";
 
 import type { AccessoryProduct } from "../data/accessoriesProducts";
 
@@ -38,6 +39,23 @@ function AccessoriesProductsPage() {
 
   const location = useLocation();
   const navigate = useNavigate();
+
+  const [marketplaceProducts, setMarketplaceProducts] = useState(
+    () => getMarketplaceProducts()
+  );
+
+  const [marketplaceCategories, setMarketplaceCategories] = useState(
+    () => getMarketplaceCategories()
+  );
+
+  useEffect(() => {
+    const refreshProducts = () => {
+      setMarketplaceProducts(getMarketplaceProducts());
+      setMarketplaceCategories(getMarketplaceCategories());
+    };
+
+    return subscribeToSellerProducts(refreshProducts);
+  }, []);
 
   const [search, setSearch] = useState(() => {
     return new URLSearchParams(location.search).get("search") || "";
@@ -60,7 +78,7 @@ function AccessoriesProductsPage() {
 
   const activeCategory = categorySlug || "all";
 
-  const activeCategoryData = accessoryCategories.find(
+  const activeCategoryData = marketplaceCategories.find(
     (category) => category.slug === activeCategory,
   );
 
@@ -74,7 +92,7 @@ function AccessoriesProductsPage() {
       : activeCategoryData?.name || "Products";
 
   // Keep the product-detail route consistent with App.tsx.
-  const getProductUrl = (productId: number) =>
+  const getProductUrl = (productId: string | number) =>
     `/accessories-sales/products/${productId}`;
 
   const categoryUrl = (slug: string) =>
@@ -89,7 +107,7 @@ function AccessoriesProductsPage() {
   const filteredProducts = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
 
-    let result: AccessoryProduct[] = accessoryProducts.filter(
+    let result: AccessoryProduct[] = marketplaceProducts.filter(
       (product) => {
         const matchesCategory =
           activeCategory === "all" ||
@@ -146,6 +164,7 @@ function AccessoriesProductsPage() {
 
     return result;
   }, [
+    marketplaceProducts,
     activeCategory,
     subcategorySlug,
     search,
@@ -198,6 +217,8 @@ function AccessoriesProductsPage() {
     addToCart(product);
     navigate("/cart");
   };
+
+
 
   return (
     <main className="accessories-products-page">
@@ -273,9 +294,8 @@ function AccessoriesProductsPage() {
       {/* SIDEBAR AND PRODUCT RESULTS */}
       <section className="products-marketplace">
         <aside
-          className={`products-sidebar ${
-            showFilters ? "mobile-visible" : ""
-          }`}
+          className={`products-sidebar ${showFilters ? "mobile-visible" : ""
+            }`}
         >
           <div className="sidebar-heading">
             <strong>Categories</strong>
@@ -291,7 +311,7 @@ function AccessoriesProductsPage() {
               All Products
             </Link>
 
-            {accessoryCategories.map((category) => {
+            {marketplaceCategories.map((category) => {
               const isActive = activeCategory === category.slug;
 
               return (
@@ -491,12 +511,12 @@ function AccessoriesProductsPage() {
                   {mainProducts.map((product) => {
                     const discount =
                       product.oldPrice > product.price &&
-                      product.oldPrice > 0
+                        product.oldPrice > 0
                         ? Math.round(
-                            ((product.oldPrice - product.price) /
-                              product.oldPrice) *
-                              100,
-                          )
+                          ((product.oldPrice - product.price) /
+                            product.oldPrice) *
+                          100,
+                        )
                         : 0;
 
                     const productUrl = getProductUrl(product.id);
