@@ -1,5 +1,5 @@
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import {
   Link,
   useLocation,
@@ -40,22 +40,64 @@ function AccessoriesProductsPage() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const [marketplaceProducts, setMarketplaceProducts] = useState(
-    () => getMarketplaceProducts()
-  );
+  /* =========================================================
+     MARKETPLACE DATA
+  ========================================================= */
+
+  const [marketplaceProducts, setMarketplaceProducts] = useState<
+    AccessoryProduct[]
+  >(() => getMarketplaceProducts());
 
   const [marketplaceCategories, setMarketplaceCategories] = useState(
     () => getMarketplaceCategories()
   );
 
+  const refreshMarketplace = useCallback(() => {
+    setMarketplaceProducts(getMarketplaceProducts());
+    setMarketplaceCategories(getMarketplaceCategories());
+  }, []);
+
   useEffect(() => {
-    const refreshProducts = () => {
-      setMarketplaceProducts(getMarketplaceProducts());
-      setMarketplaceCategories(getMarketplaceCategories());
+    // Initial refresh.
+    refreshMarketplace();
+
+    // Listen for seller/admin marketplace changes.
+    const unsubscribe = subscribeToSellerProducts(refreshMarketplace);
+
+    // Refresh when the user returns to this browser tab.
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        refreshMarketplace();
+      }
     };
 
-    return subscribeToSellerProducts(refreshProducts);
-  }, []);
+    // Refresh when the page receives focus.
+    const handleWindowFocus = () => {
+      refreshMarketplace();
+    };
+
+    document.addEventListener(
+      "visibilitychange",
+      handleVisibilityChange
+    );
+
+    window.addEventListener("focus", handleWindowFocus);
+
+    return () => {
+      unsubscribe();
+
+      document.removeEventListener(
+        "visibilitychange",
+        handleVisibilityChange
+      );
+
+      window.removeEventListener("focus", handleWindowFocus);
+    };
+  }, [refreshMarketplace]);
+
+  /* =========================================================
+     SEARCH AND FILTER STATE
+  ========================================================= */
 
   const [search, setSearch] = useState(() => {
     return new URLSearchParams(location.search).get("search") || "";
@@ -68,7 +110,6 @@ function AccessoriesProductsPage() {
     useState(false);
   const [minimumRating, setMinimumRating] = useState(0);
 
-  // Synchronize search with URL query parameters.
   useEffect(() => {
     const urlSearch =
       new URLSearchParams(location.search).get("search") || "";
@@ -76,14 +117,18 @@ function AccessoriesProductsPage() {
     setSearch(urlSearch);
   }, [location.search]);
 
+  /* =========================================================
+     CATEGORY INFORMATION
+  ========================================================= */
+
   const activeCategory = categorySlug || "all";
 
   const activeCategoryData = marketplaceCategories.find(
-    (category) => category.slug === activeCategory,
+    (category) => category.slug === activeCategory
   );
 
   const activeSubcategory = activeCategoryData?.subcategories.find(
-    (subcategory) => subcategory.slug === subcategorySlug,
+    (subcategory) => subcategory.slug === subcategorySlug
   );
 
   const activeCategoryName =
@@ -91,7 +136,10 @@ function AccessoriesProductsPage() {
       ? "All Products"
       : activeCategoryData?.name || "Products";
 
-  // Keep the product-detail route consistent with App.tsx.
+  /* =========================================================
+     ROUTES
+  ========================================================= */
+
   const getProductUrl = (productId: string | number) =>
     `/accessories-sales/products/${productId}`;
 
@@ -100,62 +148,79 @@ function AccessoriesProductsPage() {
 
   const subcategoryUrl = (
     category: string,
-    subcategory: string,
+    subcategory: string
   ) => `/accessories/${category}/${subcategory}`;
 
-  // Filter and sort products.
+  /* =========================================================
+     FILTER AND SORT PRODUCTS
+  ========================================================= */
+
   const filteredProducts = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
 
-    let result: AccessoryProduct[] = marketplaceProducts.filter(
-      (product) => {
-        const matchesCategory =
-          activeCategory === "all" ||
-          product.categorySlug === activeCategory;
-
-        const matchesSubcategory =
-          !subcategorySlug ||
-          product.subcategorySlug === subcategorySlug;
-
-        const matchesSearch =
-          !normalizedSearch ||
-          product.name.toLowerCase().includes(normalizedSearch) ||
-          product.category.toLowerCase().includes(normalizedSearch) ||
-          (product.subcategorySlug || "")
-            .toLowerCase()
-            .includes(normalizedSearch) ||
-          product.description.toLowerCase().includes(normalizedSearch);
-
-        const matchesDelivery =
-          (!fastDelivery || product.fastDelivery === true) &&
-          (!installationAvailable ||
-            product.installationAvailable === true);
-
-        const matchesRating =
-          minimumRating === 0 ||
-          product.rating >= minimumRating;
-
-        return (
-          matchesCategory &&
-          matchesSubcategory &&
-          matchesSearch &&
-          matchesDelivery &&
-          matchesRating
-        );
-      },
+    // Remove duplicate IDs while preserving catalogue order.
+    const uniqueProducts = Array.from(
+      new Map(
+        marketplaceProducts.map((product) => [
+          String(product.id),
+          product,
+        ])
+      ).values()
     );
+
+    let result = uniqueProducts.filter((product) => {
+      const matchesCategory =
+        activeCategory === "all" ||
+        product.categorySlug === activeCategory;
+
+      const matchesSubcategory =
+        !subcategorySlug ||
+        product.subcategorySlug === subcategorySlug;
+
+      const matchesSearch =
+        !normalizedSearch ||
+        product.name.toLowerCase().includes(normalizedSearch) ||
+        product.category.toLowerCase().includes(normalizedSearch) ||
+        (product.subcategorySlug || "")
+          .toLowerCase()
+          .includes(normalizedSearch) ||
+        product.description.toLowerCase().includes(normalizedSearch);
+
+      const matchesDelivery =
+        (!fastDelivery || product.fastDelivery === true) &&
+        (!installationAvailable ||
+          product.installationAvailable === true);
+
+      const matchesRating =
+        minimumRating === 0 ||
+        product.rating >= minimumRating;
+
+      return (
+        matchesCategory &&
+        matchesSubcategory &&
+        matchesSearch &&
+        matchesDelivery &&
+        matchesRating
+      );
+    });
 
     switch (sort) {
       case "price-low":
-        result = [...result].sort((a, b) => a.price - b.price);
+        result = [...result].sort(
+          (a, b) => a.price - b.price
+        );
         break;
 
       case "price-high":
-        result = [...result].sort((a, b) => b.price - a.price);
+        result = [...result].sort(
+          (a, b) => b.price - a.price
+        );
         break;
 
       case "rating":
-        result = [...result].sort((a, b) => b.rating - a.rating);
+        result = [...result].sort(
+          (a, b) => b.rating - a.rating
+        );
         break;
 
       default:
@@ -174,10 +239,12 @@ function AccessoriesProductsPage() {
     minimumRating,
   ]);
 
-  // First three products appear in the main grid.
+  /* =========================================================
+     PRODUCT SECTIONS
+  ========================================================= */
+
   const mainProducts = filteredProducts.slice(0, 3);
 
-  // Remaining matching products appear in Suggested Products.
   const suggestedProducts = filteredProducts.slice(3);
 
   const hasActiveFilters =
@@ -186,7 +253,10 @@ function AccessoriesProductsPage() {
     installationAvailable ||
     minimumRating > 0;
 
-  // Clear filters and remove the search query from the URL.
+  /* =========================================================
+     FILTER ACTIONS
+  ========================================================= */
+
   const clearFilters = () => {
     setSearch("");
     setFastDelivery(false);
@@ -204,7 +274,7 @@ function AccessoriesProductsPage() {
         pathname: location.pathname,
         search: nextSearch ? `?${nextSearch}` : "",
       },
-      { replace: true },
+      { replace: true }
     );
   };
 
@@ -212,13 +282,18 @@ function AccessoriesProductsPage() {
     setSearch(value);
   };
 
-  // Add product to the shared cart and open the cart page.
+  /* =========================================================
+     CART
+  ========================================================= */
+
   const handleAddToCart = (product: AccessoryProduct) => {
     addToCart(product);
     navigate("/cart");
   };
 
-
+  /* =========================================================
+     RENDER
+  ========================================================= */
 
   return (
     <main className="accessories-products-page">
@@ -263,7 +338,7 @@ function AccessoriesProductsPage() {
                 pathname: location.pathname,
                 search: nextSearch ? `?${nextSearch}` : "",
               },
-              { replace: true },
+              { replace: true }
             );
           }}
         >
@@ -294,8 +369,9 @@ function AccessoriesProductsPage() {
       {/* SIDEBAR AND PRODUCT RESULTS */}
       <section className="products-marketplace">
         <aside
-          className={`products-sidebar ${showFilters ? "mobile-visible" : ""
-            }`}
+          className={`products-sidebar ${
+            showFilters ? "mobile-visible" : ""
+          }`}
         >
           <div className="sidebar-heading">
             <strong>Categories</strong>
@@ -335,7 +411,7 @@ function AccessoriesProductsPage() {
                           key={subcategory.slug}
                           to={subcategoryUrl(
                             category.slug,
-                            subcategory.slug,
+                            subcategory.slug
                           )}
                           className={
                             subcategorySlug === subcategory.slug
@@ -511,12 +587,12 @@ function AccessoriesProductsPage() {
                   {mainProducts.map((product) => {
                     const discount =
                       product.oldPrice > product.price &&
-                        product.oldPrice > 0
+                      product.oldPrice > 0
                         ? Math.round(
-                          ((product.oldPrice - product.price) /
-                            product.oldPrice) *
-                          100,
-                        )
+                            ((product.oldPrice - product.price) /
+                              product.oldPrice) *
+                              100
+                          )
                         : 0;
 
                     const productUrl = getProductUrl(product.id);
@@ -550,7 +626,9 @@ function AccessoriesProductsPage() {
                           </Link>
 
                           <div className="product-rating">
-                            <span>{product.rating.toFixed(1)}</span>
+                            <span>
+                              {product.rating.toFixed(1)}
+                            </span>
 
                             <Star
                               size={13}
@@ -571,7 +649,7 @@ function AccessoriesProductsPage() {
                                 <span>
                                   ₹
                                   {product.oldPrice.toLocaleString(
-                                    "en-IN",
+                                    "en-IN"
                                   )}
                                 </span>
 

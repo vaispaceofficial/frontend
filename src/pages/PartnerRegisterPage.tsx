@@ -673,6 +673,78 @@ const initialFormData: SellerFormData = {
 const businessRegistrationRequired = (type: string) =>
   ["partnership", "private-limited", "llp"].includes(type);
 
+const SELLER_APPLICATIONS_KEY = "oneservice_seller_applications";
+const SELLER_APPLICATION_KEY = "oneservice_seller_application";
+
+type SellerApplication = {
+  id: string;
+  role: "seller";
+  status: "Pending" | "Approved" | "Rejected";
+  submittedAt: string;
+  [key: string]: unknown;
+};
+
+function getSellerApplications(): SellerApplication[] {
+  try {
+    const savedApplications = localStorage.getItem(
+      SELLER_APPLICATIONS_KEY
+    );
+
+    if (savedApplications) {
+      const parsed = JSON.parse(savedApplications);
+
+      if (Array.isArray(parsed)) {
+        return parsed;
+      }
+
+      if (parsed && typeof parsed === "object") {
+        return [parsed as SellerApplication];
+      }
+    }
+
+    // Migrate the previous single-application format.
+    const oldApplication = localStorage.getItem(
+      SELLER_APPLICATION_KEY
+    );
+
+    if (oldApplication) {
+      const parsed = JSON.parse(oldApplication);
+
+      if (parsed && typeof parsed === "object") {
+        return [parsed as SellerApplication];
+      }
+    }
+
+    return [];
+  } catch (error) {
+    console.error("Unable to read seller applications:", error);
+    return [];
+  }
+}
+
+function saveSellerApplications(
+  applications: SellerApplication[]
+) {
+  localStorage.setItem(
+    SELLER_APPLICATIONS_KEY,
+    JSON.stringify(applications)
+  );
+
+  // Keep the latest application available for existing profile components.
+  const latestApplication = applications[applications.length - 1];
+
+  if (latestApplication) {
+    localStorage.setItem(
+      SELLER_APPLICATION_KEY,
+      JSON.stringify(latestApplication)
+    );
+  }
+
+  window.dispatchEvent(new Event("oneservice-seller-change"));
+  window.dispatchEvent(new Event("oneservice-workspace-change"));
+  window.dispatchEvent(new Event("storage"));
+}
+
 function PartnerRegisterPage() {
   const navigate = useNavigate();
   const [language, setLanguage] = useState<Language>("en");
@@ -859,7 +931,9 @@ function PartnerRegisterPage() {
     }
   };
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (
+    event: FormEvent<HTMLFormElement>
+  ) => {
     event.preventDefault();
 
     if (currentStep < t.steps.length - 1) {
@@ -878,19 +952,15 @@ function PartnerRegisterPage() {
     setIsSubmitting(true);
 
     try {
-      /*
-       * Frontend demo submission:
-       * - Save application details for the Seller Hub.
-       * - Never store the password, PAN/GSTIN values, or uploaded files
-       *   in localStorage.
-       * - Real registration and document storage require a backend API.
-       */
-      const application = {
+      const existingApplications = getSellerApplications();
+
+      const application: SellerApplication = {
         id: `SEL-${Date.now()}`,
         role: "seller",
         status: "Pending",
         submittedAt: new Date().toISOString(),
 
+        // STEP 1 — Contact details
         contactName: formData.contactName.trim(),
         fullName: formData.contactName.trim(),
         designation: formData.designation.trim(),
@@ -898,18 +968,21 @@ function PartnerRegisterPage() {
         whatsapp: formData.whatsapp,
         email: formData.email.trim(),
 
+        // STEP 2 — Business details
         sellerType: formData.sellerType,
         businessName: formData.businessName.trim(),
         businessType: formData.businessType,
         yearEstablished: formData.yearEstablished,
         website: formData.website.trim(),
 
+        // STEP 3 — Products and authenticity
         categories: [...formData.categories],
         brands: formData.brands.trim(),
         products: formData.products.trim(),
         productCondition: formData.productCondition,
         authorizedSeller: formData.authorizedSeller,
 
+        // STEP 4 — Fulfilment details
         address: formData.address.trim(),
         city: formData.city.trim(),
         state: formData.state.trim(),
@@ -919,7 +992,10 @@ function PartnerRegisterPage() {
         inventory: formData.inventory,
         returnPolicy: formData.returnPolicy,
 
-        hasBusinessRegistration: Boolean(formData.businessRegistration),
+        // STEP 5 — Document submission indicators
+        hasBusinessRegistration: Boolean(
+          formData.businessRegistration
+        ),
         hasPanDocument: Boolean(formData.panDocument),
         hasGstDocument: Boolean(formData.gstDocument),
         hasAddressProof: Boolean(formData.addressProof),
@@ -928,32 +1004,52 @@ function PartnerRegisterPage() {
         ),
         hasProductCatalogue: Boolean(formData.productCatalogue),
 
+        // Document names for admin reference.
+        // These are metadata only, not the actual uploaded files.
+        businessRegistrationFileName:
+          formData.businessRegistration?.name ?? "",
+        panDocumentFileName:
+          formData.panDocument?.name ?? "",
+        gstDocumentFileName:
+          formData.gstDocument?.name ?? "",
+        addressProofFileName:
+          formData.addressProof?.name ?? "",
+        brandAuthorizationFileName:
+          formData.brandAuthorizationDocument?.name ?? "",
+        productCatalogueFileName:
+          formData.productCatalogue?.name ?? "",
+
+        // STEP 6 — Consents
         termsAccepted: formData.terms,
         verificationConsent: formData.verificationConsent,
-        productAuthenticityConsent: formData.productAuthenticityConsent,
+        productAuthenticityConsent:
+          formData.productAuthenticityConsent,
       };
 
+      // Prevent accidental duplicate IDs.
+      const updatedApplications = [
+        ...existingApplications.filter(
+          (item) => item.id !== application.id
+        ),
+        application,
+      ];
+
+      // Save every seller application, not just the latest one.
+      saveSellerApplications(updatedApplications);
+
+      // Existing workspace role compatibility.
       localStorage.setItem(
-        "oneservice_partner_application",
-        JSON.stringify(application)
+        "oneservice_workspace_role",
+        "seller"
       );
-
-      // Keep this alias so other OneService pages can find the seller application.
-      localStorage.setItem(
-        "oneservice_seller_application",
-        JSON.stringify(application)
-      );
-
-      localStorage.setItem("oneservice_workspace_role", "seller");
-
-      // Notify profile/navigation components in the current browser tab.
-      window.dispatchEvent(new Event("oneservice-workspace-change"));
-      window.dispatchEvent(new Event("oneservice-seller-change"));
-      window.dispatchEvent(new Event("storage"));
 
       navigate("/profile", { replace: true });
     } catch (submissionError) {
-      console.error("Unable to save the seller application:", submissionError);
+      console.error(
+        "Unable to save the seller application:",
+        submissionError
+      );
+
       setError(t.submissionError);
     } finally {
       setIsSubmitting(false);
@@ -1046,9 +1142,8 @@ function PartnerRegisterPage() {
             {t.steps.map((step, index) => (
               <div
                 key={step[0]}
-                className={`partner-step-indicator ${
-                  index === currentStep ? "current" : ""
-                } ${index < currentStep ? "completed" : ""}`}
+                className={`partner-step-indicator ${index === currentStep ? "current" : ""
+                  } ${index < currentStep ? "completed" : ""}`}
               >
                 <span>
                   {index < currentStep ? (
@@ -1269,9 +1364,8 @@ function PartnerRegisterPage() {
                             key={category}
                             type="button"
                             aria-pressed={selected}
-                            className={`partner-service-chip ${
-                              selected ? "selected" : ""
-                            }`}
+                            className={`partner-service-chip ${selected ? "selected" : ""
+                              }`}
                             onClick={() => toggleCategory(category)}
                           >
                             {selected && <Check size={13} />}
@@ -1500,11 +1594,10 @@ function PartnerRegisterPage() {
                   </Field>
 
                   <FileUpload
-                    label={`${t.registration} (${
-                      businessRegistrationRequired(formData.businessType)
+                    label={`${t.registration} (${businessRegistrationRequired(formData.businessType)
                         ? t.required
                         : t.conditional
-                    })`}
+                      })`}
                     file={formData.businessRegistration}
                     onChange={(event) =>
                       handleFileChange(event, "businessRegistration")

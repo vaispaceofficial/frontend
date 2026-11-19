@@ -1,4 +1,5 @@
-// src/data/cart.ts
+
+ // src/data/cart.ts
 
 export interface CartItem {
   cartId: string;
@@ -8,6 +9,10 @@ export interface CartItem {
   image?: string;
   category?: string;
   quantity: number;
+
+  // Seller ownership for marketplace orders
+  sellerId?: string | number;
+  sellerName?: string;
 }
 
 const CART_STORAGE_KEY = "oneservice-cart";
@@ -23,8 +28,12 @@ export function getCart(): CartItem[] {
 }
 
 function saveCart(items: CartItem[]) {
-  localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
-  window.dispatchEvent(new Event(CART_EVENT));
+  try {
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+    window.dispatchEvent(new Event(CART_EVENT));
+  } catch (error) {
+    console.error("Unable to save cart:", error);
+  }
 }
 
 export function getCartCount(): number {
@@ -39,6 +48,8 @@ export function addToCart(product: {
   image?: string;
   category?: string;
   cartId?: string;
+  sellerId?: string | number;
+  sellerName?: string;
 }) {
   const numericPrice =
     typeof product.price === "number"
@@ -50,14 +61,27 @@ export function addToCart(product: {
   }
 
   const name = product.name ?? product.title ?? "Product";
+
+  const sellerPart =
+    product.sellerId !== undefined
+      ? `seller-${product.sellerId}-`
+      : "";
+
   const cartId =
-    product.cartId ?? `${product.category ?? "product"}-${product.id}`;
+    product.cartId ??
+    `${sellerPart}${product.category ?? "product"}-${product.id}`;
 
   const items = getCart();
   const existing = items.find((item) => item.cartId === cartId);
 
   if (existing) {
     existing.quantity += 1;
+
+    // Keep seller ownership information up to date.
+    existing.sellerId = product.sellerId ?? existing.sellerId;
+    existing.sellerName = product.sellerName ?? existing.sellerName;
+    existing.image = product.image ?? existing.image;
+    existing.category = product.category ?? existing.category;
   } else {
     items.push({
       cartId,
@@ -67,6 +91,8 @@ export function addToCart(product: {
       image: product.image,
       category: product.category,
       quantity: 1,
+      sellerId: product.sellerId,
+      sellerName: product.sellerName,
     });
   }
 

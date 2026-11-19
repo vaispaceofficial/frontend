@@ -1,3 +1,4 @@
+
 export interface AccessoryProduct {
   id: string | number;
   name: string;
@@ -17,8 +18,11 @@ export interface AccessoryProduct {
   inStock: boolean;
   fastDelivery?: boolean;
   installationAvailable?: boolean;
-}
 
+  // Seller ownership for marketplace orders
+  sellerId?: string | number;
+  sellerName?: string;
+}
 
 export interface AccessorySubcategory {
   name: string;
@@ -96,8 +100,6 @@ export const accessoryCategories: AccessoryCategory[] = [
   },
 ];
 
-
-
 export const accessoryProducts: AccessoryProduct[] = [
   {
     id: 1,
@@ -108,7 +110,9 @@ export const accessoryProducts: AccessoryProduct[] = [
     price: 499,
     oldPrice: 799,
     image: "🌬️",
-    images: ["https://www.aldahome.com/media/catalog/product/cache/a95cd6208f6f304d3ecd6458151997d3/b/a/baba-universal-remote-for-non-inverter-window-ac-.jpg"],
+    images: [
+      "https://www.aldahome.com/media/catalog/product/cache/a95cd6208f6f304d3ecd6458151997d3/b/a/baba-universal-remote-for-non-inverter-window-ac-.jpg",
+    ],
     rating: 4.5,
     reviews: 128,
     badge: "Popular",
@@ -136,7 +140,9 @@ export const accessoryProducts: AccessoryProduct[] = [
     price: 299,
     oldPrice: 449,
     image: "🌬️",
-    images: ["https://m.media-amazon.com/images/I/51gEQW5IZ+L._AC_UF894,1000_QL80_.jpg"],
+    images: [
+      "https://m.media-amazon.com/images/I/51gEQW5IZ+L._AC_UF894,1000_QL80_.jpg",
+    ],
     rating: 4.3,
     reviews: 86,
     badge: "Value Pick",
@@ -164,7 +170,9 @@ export const accessoryProducts: AccessoryProduct[] = [
     price: 399,
     oldPrice: 599,
     image: "🧺",
-    images: ["https://images.meesho.com/images/products/958520704/acv3n_512.jpg"],
+    images: [
+      "https://images.meesho.com/images/products/958520704/acv3n_512.jpg",
+    ],
     rating: 4.4,
     reviews: 94,
     badge: "Best Seller",
@@ -261,7 +269,10 @@ export const accessoryProducts: AccessoryProduct[] = [
     ],
     specifications: [
       { label: "Product type", value: "HDMI cable" },
-      { label: "Compatibility", value: "Devices with compatible HDMI ports" },
+      {
+        label: "Compatibility",
+        value: "Devices with compatible HDMI ports",
+      },
     ],
     inStock: true,
     fastDelivery: true,
@@ -289,7 +300,10 @@ export const accessoryProducts: AccessoryProduct[] = [
     ],
     specifications: [
       { label: "Product type", value: "AC support stand" },
-      { label: "Installation", value: "Professional installation recommended" },
+      {
+        label: "Installation",
+        value: "Professional installation recommended",
+      },
     ],
     inStock: true,
     fastDelivery: false,
@@ -317,11 +331,13 @@ export const accessoryProducts: AccessoryProduct[] = [
     ],
     specifications: [
       { label: "Product type", value: "Washing machine inlet hose" },
-      { label: "Compatibility", value: "Depends on connectors and length" },
+      {
+        label: "Compatibility",
+        value: "Depends on connectors and length",
+      },
     ],
     inStock: true,
     fastDelivery: true,
     installationAvailable: false,
   },
 ];
-
