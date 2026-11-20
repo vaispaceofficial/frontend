@@ -890,3 +890,74 @@
     flex: 1;
   }
 }
+
+
+/* ==========================================
+   LEGAL DOCUMENT MANAGEMENT
+========================================== */
+
+.compliance-header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.legal-documents-section {
+  margin-top: 24px;
+}
+
+.legal-document-editor {
+  width: min(850px, calc(100vw - 32px));
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.legal-document-editor .compliance-modal-body {
+  overflow-y: auto;
+}
+
+.legal-document-editor .compliance-form-field textarea {
+  min-height: 280px;
+  resize: vertical;
+  line-height: 1.7;
+  font-family: inherit;
+}
+
+.legal-document-editor .compliance-form-field small {
+  display: block;
+  margin-top: 7px;
+  color: #718096;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.legal-document-editor .compliance-modal-footer {
+  flex-wrap: wrap;
+}
+
+.legal-document-editor input:disabled {
+  background: #f4f7fb;
+  color: #64748b;
+  cursor: not-allowed;
+}
+
+.compliance-header-actions button {
+  white-space: nowrap;
+}
+
+@media (max-width: 700px) {
+  .compliance-header-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .compliance-header-actions button {
+    flex: 1;
+  }
+
+  .legal-document-editor .compliance-modal-footer {
+    justify-content: flex-end;
+  }
+}

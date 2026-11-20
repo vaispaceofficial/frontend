@@ -17,9 +17,16 @@ import {
   Filter,
   Save,
   BadgeCheck,
+  ArrowLeft,
+  FileCheck,
+  LockKeyhole,
 } from "lucide-react";
 
 import "./Compliance.css";
+
+// --------------------------------------------------
+// TYPES
+// --------------------------------------------------
 
 type ReviewStatus = "Reviewed" | "Pending" | "Rejected";
 
@@ -44,75 +51,64 @@ type ComplianceRecord = {
   reviewedBy: string;
 };
 
-const STORAGE_KEY = "oneservice_admin_compliance_records";
+type ApiComplianceRecord = {
+  id: number;
+  partner_type: PartnerType;
+  partner_id: string | null;
+  partner_name: string;
+  record_type: string;
+  created_at: string;
+  review_status: ReviewStatus;
+  detail: string | null;
+  document_number: string | null;
+  admin_notes: string | null;
+  reviewed_by: string | null;
+};
 
-const initialRecords: ComplianceRecord[] = [
-  {
-    id: "CMP-1001",
-    recordType: "Professional Terms & Conditions",
-    partnerType: "Professional",
-    partnerId: "P-1041",
-    partnerName: "Rajesh Kumar",
-    timestamp: "02 Oct 2026 · 09:20",
-    status: "Reviewed",
-    detail: "Professional terms and conditions accepted.",
-    documentReference: "PRO-TERMS-1041",
-    adminNotes: "Acceptance verified.",
-    reviewedBy: "Admin",
-  },
-  {
-    id: "CMP-1002",
-    recordType: "Intermediary Disclaimer",
-    partnerType: "Vendor",
-    partnerId: "V-208",
-    partnerName: "ABC Home Services",
-    timestamp: "02 Oct 2026 · 08:45",
-    status: "Pending",
-    detail: "Vendor acknowledgement awaiting review.",
-    documentReference: "VEN-DISC-208",
-    adminNotes: "",
-    reviewedBy: "",
-  },
-  {
-    id: "CMP-1003",
-    recordType: "Business Identity Verification",
-    partnerType: "Marketplace Seller",
-    partnerId: "S-302",
-    partnerName: "Sri Electronics",
-    timestamp: "01 Oct 2026 · 16:10",
-    status: "Pending",
-    detail: "Business verification documentation submitted.",
-    documentReference: "SELL-KYC-302",
-    adminNotes: "Documents submitted for verification.",
-    reviewedBy: "",
-  },
-  {
-    id: "CMP-1004",
-    recordType: "Vendor Declaration",
-    partnerType: "Vendor",
-    partnerId: "V-209",
-    partnerName: "QuickFix Services",
-    timestamp: "01 Oct 2026 · 14:35",
-    status: "Reviewed",
-    detail: "Vendor declaration recorded.",
-    documentReference: "VEN-DECL-209",
-    adminNotes: "Declaration checked.",
-    reviewedBy: "Admin",
-  },
-  {
-    id: "CMP-1005",
-    recordType: "Customer Privacy Consent",
-    partnerType: "Customer",
-    partnerId: "C-1038",
-    partnerName: "Customer Account",
-    timestamp: "30 Sep 2026 · 17:05",
-    status: "Reviewed",
-    detail: "Privacy policy consent recorded.",
-    documentReference: "CUS-PRIV-1038",
-    adminNotes: "Consent recorded.",
-    reviewedBy: "Admin",
-  },
-];
+type LegalDocumentType =
+  | "Terms & Conditions"
+  | "Privacy Policy";
+
+type LegalDocumentStatus =
+  | "Not configured"
+  | "Draft"
+  | "Published";
+
+type LegalDocument = {
+  id: string;
+  partnerType: PartnerType;
+  documentType: LegalDocumentType;
+  title: string;
+  content: string;
+  status: LegalDocumentStatus;
+  version: number;
+  updatedAt: string;
+};
+
+type ApiLegalDocument = {
+  id: number;
+  partner_type: PartnerType;
+  document_type: LegalDocumentType;
+  title: string;
+  content: string;
+  status: LegalDocumentStatus;
+  current_version: number;
+  updated_at: string;
+};
+
+// --------------------------------------------------
+// API CONFIGURATION
+// --------------------------------------------------
+
+const API_URL =
+  "http://localhost:5000/api/admin/compliance";
+
+const LEGAL_API_URL =
+  "http://localhost:5000/api/legal-documents";
+
+// --------------------------------------------------
+// EMPTY COMPLIANCE RECORD
+// --------------------------------------------------
 
 const emptyRecord: ComplianceRecord = {
   id: "",
@@ -128,6 +124,10 @@ const emptyRecord: ComplianceRecord = {
   reviewedBy: "",
 };
 
+// --------------------------------------------------
+// PARTNER TYPES
+// --------------------------------------------------
+
 const partnerTypes: PartnerType[] = [
   "Professional",
   "Vendor",
@@ -135,6 +135,37 @@ const partnerTypes: PartnerType[] = [
   "Customer",
   "Student",
 ];
+
+// --------------------------------------------------
+// LEGAL DOCUMENT TYPES
+// --------------------------------------------------
+
+const legalDocumentTypes: LegalDocumentType[] = [
+  "Terms & Conditions",
+  "Privacy Policy",
+];
+
+// --------------------------------------------------
+// INITIAL LEGAL DOCUMENTS
+// --------------------------------------------------
+
+const createInitialLegalDocuments = (): LegalDocument[] =>
+  partnerTypes.flatMap((partnerType) =>
+    legalDocumentTypes.map((documentType) => ({
+      id: `${partnerType}-${documentType}`,
+      partnerType,
+      documentType,
+      title: `${partnerType} ${documentType}`,
+      content: "",
+      status: "Not configured" as LegalDocumentStatus,
+      version: 0,
+      updatedAt: "",
+    }))
+  );
+
+// --------------------------------------------------
+// COMPLIANCE RECORD TYPES
+// --------------------------------------------------
 
 const recordTypes: Record<PartnerType, string[]> = {
   Professional: [
@@ -144,6 +175,7 @@ const recordTypes: Record<PartnerType, string[]> = {
     "Code of Conduct",
     "Intermediary Disclaimer",
   ],
+
   Vendor: [
     "Vendor Agreement",
     "Business Identity Verification",
@@ -151,6 +183,7 @@ const recordTypes: Record<PartnerType, string[]> = {
     "Intermediary Disclaimer",
     "Business Compliance",
   ],
+
   "Marketplace Seller": [
     "Seller Agreement",
     "Business Identity Verification",
@@ -158,12 +191,14 @@ const recordTypes: Record<PartnerType, string[]> = {
     "Seller Liability Declaration",
     "Marketplace Terms Acceptance",
   ],
+
   Customer: [
     "Terms & Conditions Acceptance",
     "Privacy Policy Consent",
     "Customer Declaration",
     "Refund Policy Acknowledgement",
   ],
+
   Student: [
     "Student Terms Acceptance",
     "Identity Verification",
@@ -172,29 +207,98 @@ const recordTypes: Record<PartnerType, string[]> = {
   ],
 };
 
+// --------------------------------------------------
+// DATE FORMATTER
+// --------------------------------------------------
+
+const formatTimestamp = (date: string) =>
+  new Date(date)
+    .toLocaleString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    })
+    .replace(",", " ·");
+
 const getCurrentTimestamp = () =>
-  new Date().toLocaleString("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  }).replace(",", " ·");
+  formatTimestamp(new Date().toISOString());
+
+// --------------------------------------------------
+// API RESPONSE MAPPERS
+// --------------------------------------------------
+
+const mapApiRecord = (
+  record: ApiComplianceRecord
+): ComplianceRecord => ({
+  id: String(record.id),
+  recordType: record.record_type,
+  partnerType: record.partner_type,
+  partnerId: record.partner_id || "",
+  partnerName: record.partner_name,
+  timestamp: formatTimestamp(record.created_at),
+  status: record.review_status,
+  detail: record.detail || "",
+  documentReference: record.document_number || "",
+  adminNotes: record.admin_notes || "",
+  reviewedBy: record.reviewed_by || "",
+});
+
+const mapApiLegalDocument = (
+  document: ApiLegalDocument
+): LegalDocument => ({
+  id: `${document.partner_type}-${document.document_type}`,
+  partnerType: document.partner_type,
+  documentType: document.document_type,
+  title: document.title,
+  content: document.content || "",
+  status: document.status,
+  version: Number(document.current_version) || 0,
+  updatedAt: document.updated_at || "",
+});
+
+// --------------------------------------------------
+// API REQUEST PAYLOAD
+// --------------------------------------------------
+
+const getApiPayload = (record: ComplianceRecord) => ({
+  partner_type: record.partnerType,
+  partner_id: record.partnerId.trim(),
+  partner_name: record.partnerName.trim(),
+  record_type: record.recordType,
+  detail: record.detail.trim(),
+  document_number: record.documentReference.trim(),
+  admin_notes: record.adminNotes.trim(),
+  review_status: record.status,
+  reviewed_by:
+    record.status === "Reviewed"
+      ? record.reviewedBy || "Admin"
+      : null,
+});
+
+// ==================================================
+// MAIN COMPONENT
+// ==================================================
 
 export default function Compliance() {
-  const [records, setRecords] = useState<ComplianceRecord[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      return saved ? JSON.parse(saved) : initialRecords;
-    } catch {
-      return initialRecords;
-    }
-  });
+  // ----------------------------------------------
+  // COMPLIANCE STATE
+  // ----------------------------------------------
+
+  const [records, setRecords] = useState<ComplianceRecord[]>([]);
+
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [apiError, setApiError] = useState("");
 
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("All statuses");
-  const [partnerFilter, setPartnerFilter] = useState("All partners");
+  const [statusFilter, setStatusFilter] =
+    useState("All statuses");
+
+  const [partnerFilter, setPartnerFilter] =
+    useState("All partners");
 
   const [visibleRecords, setVisibleRecords] = useState(5);
 
@@ -210,12 +314,134 @@ export default function Compliance() {
 
   const [formError, setFormError] = useState("");
 
-  // Persist admin changes locally.
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
-  }, [records]);
+  // ----------------------------------------------
+  // PAGE VIEW
+  // ----------------------------------------------
 
-  // Statistics.
+  const [activeView, setActiveView] = useState<
+    "register" | "documents"
+  >("register");
+
+  // ----------------------------------------------
+  // LEGAL DOCUMENT STATE
+  // ----------------------------------------------
+
+  const [legalDocuments, setLegalDocuments] = useState<
+    LegalDocument[]
+  >(createInitialLegalDocuments);
+
+  const [documentSearch, setDocumentSearch] = useState("");
+
+  const [editingLegalDocument, setEditingLegalDocument] =
+    useState<LegalDocument | null>(null);
+
+  const [legalDocumentContent, setLegalDocumentContent] =
+    useState("");
+
+  const [legalDocumentTitle, setLegalDocumentTitle] =
+    useState("");
+
+  const [legalDocumentError, setLegalDocumentError] =
+    useState("");
+
+  const [documentSaving, setDocumentSaving] = useState(false);
+
+  const [documentsLoading, setDocumentsLoading] = useState(false);
+
+  // ----------------------------------------------
+  // FETCH COMPLIANCE RECORDS
+  // ----------------------------------------------
+
+  const fetchRecords = async (showLoading = false) => {
+    if (showLoading) {
+      setLoading(true);
+    }
+
+    try {
+      setApiError("");
+
+      const response = await fetch(API_URL);
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(
+          data.message || "Unable to load compliance records."
+        );
+      }
+
+      const mappedRecords = (
+        data.records as ApiComplianceRecord[]
+      ).map(mapApiRecord);
+
+      setRecords(mappedRecords);
+    } catch (error) {
+      console.error("Compliance fetch error:", error);
+
+      setApiError(
+        error instanceof Error
+          ? error.message
+          : "Could not connect to the compliance server."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ----------------------------------------------
+  // FETCH LEGAL DOCUMENTS
+  // ----------------------------------------------
+
+  const fetchLegalDocuments = async () => {
+    try {
+      setDocumentsLoading(true);
+
+      const response = await fetch(
+        `${LEGAL_API_URL}/admin`
+      );
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(
+          data.message || "Unable to load legal documents."
+        );
+      }
+
+      const mappedDocuments = (
+        data.documents as ApiLegalDocument[]
+      ).map(mapApiLegalDocument);
+
+      setLegalDocuments(mappedDocuments);
+
+      return true;
+    } catch (error) {
+      console.error("Legal documents fetch error:", error);
+
+      setLegalDocumentError(
+        error instanceof Error
+          ? error.message
+          : "Could not load legal documents."
+      );
+
+      return false;
+    } finally {
+      setDocumentsLoading(false);
+    }
+  };
+
+  // ----------------------------------------------
+  // INITIAL PAGE LOAD
+  // ----------------------------------------------
+
+  useEffect(() => {
+    void fetchRecords(true);
+    void fetchLegalDocuments();
+  }, []);
+
+  // ----------------------------------------------
+  // COMPLIANCE STATISTICS
+  // ----------------------------------------------
+
   const totalRecords = records.length;
 
   const reviewedCount = records.filter(
@@ -230,7 +456,10 @@ export default function Compliance() {
     (record) => record.status === "Rejected"
   ).length;
 
-  // Search and filtering.
+  // ----------------------------------------------
+  // COMPLIANCE SEARCH AND FILTERING
+  // ----------------------------------------------
+
   const filteredRecords = useMemo(() => {
     return records.filter((record) => {
       const searchValue = search.toLowerCase();
@@ -258,37 +487,72 @@ export default function Compliance() {
     visibleRecords
   );
 
-  // Open add form.
+  // ----------------------------------------------
+  // LEGAL DOCUMENT SEARCH
+  // ----------------------------------------------
+
+  const filteredLegalDocuments = useMemo(() => {
+    const searchValue = documentSearch.toLowerCase().trim();
+
+    return legalDocuments.filter((document) => {
+      return (
+        document.partnerType.toLowerCase().includes(searchValue) ||
+        document.documentType.toLowerCase().includes(searchValue) ||
+        document.title.toLowerCase().includes(searchValue) ||
+        document.status.toLowerCase().includes(searchValue)
+      );
+    });
+  }, [legalDocuments, documentSearch]);
+
+  const publishedDocumentCount = legalDocuments.filter(
+    (document) => document.status === "Published"
+  ).length;
+
+  const draftDocumentCount = legalDocuments.filter(
+    (document) => document.status === "Draft"
+  ).length;
+
+  const unconfiguredDocumentCount = legalDocuments.filter(
+    (document) => document.status === "Not configured"
+  ).length;
+
+  // ----------------------------------------------
+  // COMPLIANCE MODAL FUNCTIONS
+  // ----------------------------------------------
+
   const openAddModal = () => {
     setFormData({
       ...emptyRecord,
       timestamp: getCurrentTimestamp(),
     });
+
     setFormError("");
     setModalMode("add");
   };
 
-  // Open edit form.
   const openEditModal = (record: ComplianceRecord) => {
     setFormData({ ...record });
     setFormError("");
     setModalMode("edit");
   };
 
-  // Open record details.
   const openViewModal = (record: ComplianceRecord) => {
     setSelectedRecord(record);
     setModalMode("view");
   };
 
-  // Close modal.
   const closeModal = () => {
+    if (saving) return;
+
     setModalMode(null);
     setSelectedRecord(null);
     setFormError("");
   };
 
-  // Update form.
+  // ----------------------------------------------
+  // UPDATE COMPLIANCE FORM FIELDS
+  // ----------------------------------------------
+
   const updateField = (
     field: keyof ComplianceRecord,
     value: string
@@ -299,8 +563,11 @@ export default function Compliance() {
     }));
   };
 
-  // Save new or edited record.
-  const saveRecord = () => {
+  // ----------------------------------------------
+  // ADD / EDIT COMPLIANCE RECORD
+  // ----------------------------------------------
+
+  const saveRecord = async () => {
     if (
       !formData.recordType.trim() ||
       !formData.partnerId.trim() ||
@@ -313,68 +580,275 @@ export default function Compliance() {
       return;
     }
 
-    if (modalMode === "add") {
-      const newRecord: ComplianceRecord = {
-        ...formData,
-        id: `CMP-${Date.now()}`,
-        timestamp: getCurrentTimestamp(),
-        reviewedBy:
-          formData.status === "Reviewed" ? "Admin" : "",
-      };
+    if (saving) return;
 
-      setRecords((current) => [newRecord, ...current]);
-    }
+    try {
+      setSaving(true);
+      setFormError("");
 
-    if (modalMode === "edit") {
-      setRecords((current) =>
-        current.map((record) =>
-          record.id === formData.id
-            ? {
-                ...formData,
-                reviewedBy:
-                  formData.status === "Reviewed"
-                    ? formData.reviewedBy || "Admin"
-                    : "",
-              }
-            : record
-        )
+      const isEditing = modalMode === "edit";
+
+      const url = isEditing
+        ? `${API_URL}/${formData.id}`
+        : API_URL;
+
+      const response = await fetch(url, {
+        method: isEditing ? "PUT" : "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(getApiPayload(formData)),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(
+          data.message || "Unable to save compliance record."
+        );
+      }
+
+      await fetchRecords();
+
+      setModalMode(null);
+      setSelectedRecord(null);
+      setFormError("");
+    } catch (error) {
+      console.error("Save compliance record error:", error);
+
+      setFormError(
+        error instanceof Error
+          ? error.message
+          : "Failed to save compliance record."
       );
+    } finally {
+      setSaving(false);
     }
-
-    closeModal();
   };
 
-  // Quick review action.
-  const updateStatus = (
+  // ----------------------------------------------
+  // UPDATE REVIEW STATUS
+  // ----------------------------------------------
+
+  const updateStatus = async (
     record: ComplianceRecord,
     status: ReviewStatus
   ) => {
-    setRecords((current) =>
-      current.map((item) =>
-        item.id === record.id
-          ? {
-              ...item,
-              status,
-              reviewedBy:
-                status === "Reviewed" ? "Admin" : "",
-            }
-          : item
-      )
-    );
+    try {
+      setApiError("");
+
+      const response = await fetch(
+        `${API_URL}/${record.id}/status`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            review_status: status,
+            reviewed_by:
+              status === "Reviewed" ? "Admin" : null,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(
+          data.message || "Unable to update review status."
+        );
+      }
+
+      await fetchRecords();
+
+      setModalMode(null);
+      setSelectedRecord(null);
+    } catch (error) {
+      console.error("Update compliance status error:", error);
+
+      setApiError(
+        error instanceof Error
+          ? error.message
+          : "Failed to update review status."
+      );
+    }
   };
 
-  // Delete record.
-  const deleteRecord = (record: ComplianceRecord) => {
+  // ----------------------------------------------
+  // DELETE COMPLIANCE RECORD
+  // ----------------------------------------------
+
+  const deleteRecord = async (record: ComplianceRecord) => {
     const confirmed = window.confirm(
       `Delete compliance record ${record.id}? This action cannot be undone.`
     );
 
     if (!confirmed) return;
 
-    setRecords((current) =>
-      current.filter((item) => item.id !== record.id)
-    );
+    try {
+      setApiError("");
+
+      const response = await fetch(
+        `${API_URL}/${record.id}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(
+          data.message || "Unable to delete compliance record."
+        );
+      }
+
+      await fetchRecords();
+    } catch (error) {
+      console.error("Delete compliance record error:", error);
+
+      setApiError(
+        error instanceof Error
+          ? error.message
+          : "Failed to delete compliance record."
+      );
+    }
   };
+
+  // ----------------------------------------------
+  // OPEN LEGAL DOCUMENT EDITOR
+  // ----------------------------------------------
+
+  const openLegalDocumentEditor = (
+    document: LegalDocument
+  ) => {
+    setEditingLegalDocument(document);
+    setLegalDocumentTitle(document.title);
+    setLegalDocumentContent(document.content);
+    setLegalDocumentError("");
+  };
+
+  // ----------------------------------------------
+  // CLOSE LEGAL DOCUMENT EDITOR
+  // ----------------------------------------------
+
+  const closeLegalDocumentEditor = () => {
+    if (documentSaving) return;
+
+    setEditingLegalDocument(null);
+    setLegalDocumentTitle("");
+    setLegalDocumentContent("");
+    setLegalDocumentError("");
+  };
+
+  // ----------------------------------------------
+  // SAVE / PUBLISH LEGAL DOCUMENT
+  // ----------------------------------------------
+
+  const saveLegalDocument = async (publish = false) => {
+    if (!editingLegalDocument || documentSaving) return;
+
+    if (
+      !legalDocumentTitle.trim() ||
+      !legalDocumentContent.trim()
+    ) {
+      setLegalDocumentError(
+        "Please enter the document title and complete document content."
+      );
+      return;
+    }
+
+    if (publish) {
+      const confirmed = window.confirm(
+        `Publish "${legalDocumentTitle.trim()}" for ${editingLegalDocument.partnerType}?`
+      );
+
+      if (!confirmed) return;
+    }
+
+    try {
+      setDocumentSaving(true);
+      setLegalDocumentError("");
+
+      const partnerType = encodeURIComponent(
+        editingLegalDocument.partnerType
+      );
+
+      const documentType = encodeURIComponent(
+        editingLegalDocument.documentType
+      );
+
+      const documentUrl =
+        `${LEGAL_API_URL}/admin/${partnerType}/${documentType}`;
+
+      // SAVE DOCUMENT AS DRAFT
+      const saveResponse = await fetch(documentUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title: legalDocumentTitle.trim(),
+          content: legalDocumentContent.trim(),
+        }),
+      });
+
+      const saveData = await saveResponse.json();
+
+      if (!saveResponse.ok || !saveData.success) {
+        throw new Error(
+          saveData.message || "Unable to save legal document."
+        );
+      }
+
+      // PUBLISH DOCUMENT
+      if (publish) {
+        const publishResponse = await fetch(
+          `${documentUrl}/publish`,
+          {
+            method: "POST",
+          }
+        );
+
+        const publishData = await publishResponse.json();
+
+        if (!publishResponse.ok || !publishData.success) {
+          throw new Error(
+            publishData.message || "Unable to publish legal document."
+          );
+        }
+      }
+
+      // RELOAD DOCUMENTS FROM DATABASE
+      const refreshed = await fetchLegalDocuments();
+
+      if (!refreshed) {
+        throw new Error(
+          "The document was saved, but the document list could not be refreshed. Please reload the page."
+        );
+      }
+
+      setEditingLegalDocument(null);
+      setLegalDocumentTitle("");
+      setLegalDocumentContent("");
+      setLegalDocumentError("");
+    } catch (error) {
+      console.error("Save/publish legal document error:", error);
+
+      setLegalDocumentError(
+        error instanceof Error
+          ? error.message
+          : "Failed to save legal document."
+      );
+    } finally {
+      setDocumentSaving(false);
+    }
+  };
+
+  // ==================================================
+  // JSX
+  // ==================================================
 
   return (
     <div className="compliance-admin-page">
@@ -395,274 +869,617 @@ export default function Compliance() {
           </p>
         </div>
 
-        <button
-          className="compliance-primary-button"
-          onClick={openAddModal}
-          type="button"
-        >
-          <Plus size={17} />
-          Add compliance record
-        </button>
-      </section>
+        <div className="compliance-header-actions">
 
-      {/* OPERATIONAL NOTICE */}
+          {activeView === "register" ? (
+            <>
+              <button
+                className="compliance-secondary-button"
+                type="button"
+                onClick={() => {
+                  setDocumentSearch("");
+                  setLegalDocumentError("");
+                  setActiveView("documents");
+                  void fetchLegalDocuments();
+                }}
+              >
+                <FileText size={17} />
+                Policies & Documents
+              </button>
 
-      <section className="compliance-notice">
-        <ShieldCheck size={21} />
-
-        <div>
-          <strong>Platform compliance notice</strong>
-          <span>
-            Need One Service facilitates service discovery,
-            marketplace listings and connections between users
-            and partners. Vendors, professionals and sellers
-            remain responsible for their own services, products,
-            warranties and applicable legal obligations.
-            This administrative register does not replace legal advice.
-          </span>
-        </div>
-      </section>
-
-      {/* STATISTICS */}
-
-      <section className="compliance-stats-grid">
-
-        <div className="compliance-stat-card">
-          <div className="compliance-stat-icon blue">
-            <FileText size={21} />
-          </div>
-          <span>Total records</span>
-          <strong>{totalRecords}</strong>
-          <small>All compliance entries</small>
-        </div>
-
-        <div className="compliance-stat-card">
-          <div className="compliance-stat-icon green">
-            <BadgeCheck size={21} />
-          </div>
-          <span>Reviewed</span>
-          <strong>{reviewedCount}</strong>
-          <small>Completed reviews</small>
-        </div>
-
-        <div className="compliance-stat-card">
-          <div className="compliance-stat-icon orange">
-            <Clock3 size={21} />
-          </div>
-          <span>Pending review</span>
-          <strong>{pendingCount}</strong>
-          <small>Awaiting admin action</small>
-        </div>
-
-        <div className="compliance-stat-card">
-          <div className="compliance-stat-icon red">
-            <AlertCircle size={21} />
-          </div>
-          <span>Rejected</span>
-          <strong>{rejectedCount}</strong>
-          <small>Requires attention</small>
-        </div>
-
-      </section>
-
-      {/* COMPLIANCE REGISTER */}
-
-      <section className="compliance-records-card">
-
-        <div className="compliance-table-toolbar">
-          <div>
-            <h2>Compliance review register</h2>
-            <p>
-              Review and manage records across all Need One Service
-              partner and customer accounts.
-            </p>
-          </div>
-        </div>
-
-        {/* FILTERS */}
-
-        <div className="compliance-controls">
-
-          <div className="compliance-search">
-            <Search size={17} />
-            <input
-              type="text"
-              placeholder="Search ID, name or record..."
-              value={search}
-              onChange={(event) => {
-                setSearch(event.target.value);
-                setVisibleRecords(5);
-              }}
-            />
-          </div>
-
-          <div className="compliance-filter">
-            <Filter size={15} />
-            <select
-              value={statusFilter}
-              onChange={(event) => {
-                setStatusFilter(event.target.value);
-                setVisibleRecords(5);
-              }}
+              <button
+                className="compliance-primary-button"
+                onClick={openAddModal}
+                type="button"
+              >
+                <Plus size={17} />
+                Add compliance record
+              </button>
+            </>
+          ) : (
+            <button
+              className="compliance-secondary-button"
+              type="button"
+              onClick={() => setActiveView("register")}
             >
-              <option>All statuses</option>
-              <option>Reviewed</option>
-              <option>Pending</option>
-              <option>Rejected</option>
-            </select>
-            <ChevronDown size={14} />
-          </div>
-
-          <div className="compliance-filter">
-            <Users size={15} />
-            <select
-              value={partnerFilter}
-              onChange={(event) => {
-                setPartnerFilter(event.target.value);
-                setVisibleRecords(5);
-              }}
-            >
-              <option>All partners</option>
-              {partnerTypes.map((type) => (
-                <option key={type}>{type}</option>
-              ))}
-            </select>
-            <ChevronDown size={14} />
-          </div>
+              <ArrowLeft size={17} />
+              Back to Compliance Register
+            </button>
+          )}
 
         </div>
+      </section>
 
-        {/* TABLE */}
+      {/* ==========================================
+          COMPLIANCE REGISTER VIEW
+      ========================================== */}
 
-        <div className="compliance-table-wrapper">
-          <table className="compliance-table">
+      {activeView === "register" && (
+        <>
 
-            <thead>
-              <tr>
-                <th>RECORD TYPE</th>
-                <th>PARTNER</th>
-                <th>PARTNER ID</th>
-                <th>DATE</th>
-                <th>STATUS</th>
-                <th>ACTIONS</th>
-              </tr>
-            </thead>
+          {/* OPERATIONAL NOTICE */}
 
-            <tbody>
+          <section className="compliance-notice">
+            <ShieldCheck size={21} />
 
-              {displayedRecords.map((record) => (
-                <tr key={record.id}>
+            <div>
+              <strong>Platform compliance notice</strong>
 
-                  <td>
-                    <div className="compliance-record-type">
-                      <strong>{record.recordType}</strong>
-                      <small>{record.id}</small>
-                    </div>
-                  </td>
+              <span>
+                Need One Service facilitates service discovery,
+                marketplace listings and connections between users
+                and partners. Vendors, professionals and sellers
+                remain responsible for their own services, products,
+                warranties and applicable legal obligations.
+                This administrative register does not replace legal advice.
+              </span>
+            </div>
+          </section>
 
-                  <td>
-                    <div className="compliance-partner">
-                      <strong>{record.partnerName}</strong>
-                      <small>{record.partnerType}</small>
-                    </div>
-                  </td>
+          {/* API ERROR */}
 
-                  <td>
-                    <span className="compliance-partner-id">
-                      {record.partnerId}
-                    </span>
-                  </td>
+          {apiError && (
+            <div className="compliance-form-error">
+              <AlertCircle size={16} />
+              <span>{apiError}</span>
 
-                  <td>
-                    <span className="compliance-timestamp">
-                      {record.timestamp}
-                    </span>
-                  </td>
+              <button
+                type="button"
+                onClick={() => void fetchRecords(true)}
+              >
+                Retry
+              </button>
+            </div>
+          )}
 
-                  <td>
-                    <span
-                      className={`compliance-status ${
-                        record.status.toLowerCase()
-                      }`}
-                    >
-                      {record.status}
-                    </span>
-                  </td>
+          {/* STATISTICS */}
 
-                  <td>
-                    <div className="compliance-actions">
+          <section className="compliance-stats-grid">
 
-                      <button
-                        type="button"
-                        title="View record"
-                        onClick={() => openViewModal(record)}
-                      >
-                        <Eye size={16} />
-                      </button>
+            <div className="compliance-stat-card">
+              <div className="compliance-stat-icon blue">
+                <FileText size={21} />
+              </div>
 
-                      <button
-                        type="button"
-                        title="Edit record"
-                        onClick={() => openEditModal(record)}
-                      >
-                        <Edit3 size={16} />
-                      </button>
+              <span>Total records</span>
+              <strong>{totalRecords}</strong>
+              <small>All compliance entries</small>
+            </div>
 
-                      <button
-                        type="button"
-                        title="Delete record"
-                        onClick={() => deleteRecord(record)}
-                      >
-                        <Trash2 size={16} />
-                      </button>
+            <div className="compliance-stat-card">
+              <div className="compliance-stat-icon green">
+                <BadgeCheck size={21} />
+              </div>
 
-                    </div>
-                  </td>
+              <span>Reviewed</span>
+              <strong>{reviewedCount}</strong>
+              <small>Completed reviews</small>
+            </div>
 
-                </tr>
-              ))}
+            <div className="compliance-stat-card">
+              <div className="compliance-stat-icon orange">
+                <Clock3 size={21} />
+              </div>
 
-              {displayedRecords.length === 0 && (
-                <tr>
-                  <td colSpan={6}>
-                    <div className="compliance-empty">
-                      <FileText size={30} />
-                      <strong>No compliance records found</strong>
-                      <span>
-                        Try changing your filters or add a new record.
-                      </span>
-                    </div>
-                  </td>
-                </tr>
+              <span>Pending review</span>
+              <strong>{pendingCount}</strong>
+              <small>Awaiting admin action</small>
+            </div>
+
+            <div className="compliance-stat-card">
+              <div className="compliance-stat-icon red">
+                <AlertCircle size={21} />
+              </div>
+
+              <span>Rejected</span>
+              <strong>{rejectedCount}</strong>
+              <small>Requires attention</small>
+            </div>
+
+          </section>
+
+          {/* COMPLIANCE REGISTER */}
+
+          <section className="compliance-records-card">
+
+            <div className="compliance-table-toolbar">
+              <div>
+                <h2>Compliance review register</h2>
+
+                <p>
+                  Review and manage records across all Need One Service
+                  partner and customer accounts.
+                </p>
+              </div>
+            </div>
+
+            {/* FILTERS */}
+
+            <div className="compliance-controls">
+
+              <div className="compliance-search">
+                <Search size={17} />
+
+                <input
+                  type="text"
+                  placeholder="Search ID, name or record..."
+                  value={search}
+                  onChange={(event) => {
+                    setSearch(event.target.value);
+                    setVisibleRecords(5);
+                  }}
+                />
+              </div>
+
+              <div className="compliance-filter">
+                <Filter size={15} />
+
+                <select
+                  value={statusFilter}
+                  onChange={(event) => {
+                    setStatusFilter(event.target.value);
+                    setVisibleRecords(5);
+                  }}
+                >
+                  <option>All statuses</option>
+                  <option>Reviewed</option>
+                  <option>Pending</option>
+                  <option>Rejected</option>
+                </select>
+
+                <ChevronDown size={14} />
+              </div>
+
+              <div className="compliance-filter">
+                <Users size={15} />
+
+                <select
+                  value={partnerFilter}
+                  onChange={(event) => {
+                    setPartnerFilter(event.target.value);
+                    setVisibleRecords(5);
+                  }}
+                >
+                  <option>All partners</option>
+
+                  {partnerTypes.map((type) => (
+                    <option key={type}>{type}</option>
+                  ))}
+                </select>
+
+                <ChevronDown size={14} />
+              </div>
+
+            </div>
+
+            {/* TABLE */}
+
+            <div className="compliance-table-wrapper">
+              <table className="compliance-table">
+
+                <thead>
+                  <tr>
+                    <th>RECORD TYPE</th>
+                    <th>PARTNER</th>
+                    <th>PARTNER ID</th>
+                    <th>DATE</th>
+                    <th>STATUS</th>
+                    <th>ACTIONS</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+
+                  {loading && (
+                    <tr>
+                      <td colSpan={6}>
+                        <div className="compliance-empty">
+                          Loading compliance records...
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+
+                  {!loading && displayedRecords.map((record) => (
+                    <tr key={record.id}>
+
+                      <td>
+                        <div className="compliance-record-type">
+                          <strong>{record.recordType}</strong>
+                          <small>{record.id}</small>
+                        </div>
+                      </td>
+
+                      <td>
+                        <div className="compliance-partner">
+                          <strong>{record.partnerName}</strong>
+                          <small>{record.partnerType}</small>
+                        </div>
+                      </td>
+
+                      <td>
+                        <span className="compliance-partner-id">
+                          {record.partnerId}
+                        </span>
+                      </td>
+
+                      <td>
+                        <span className="compliance-timestamp">
+                          {record.timestamp}
+                        </span>
+                      </td>
+
+                      <td>
+                        <span
+                          className={`compliance-status ${record.status.toLowerCase()}`}
+                        >
+                          {record.status}
+                        </span>
+                      </td>
+
+                      <td>
+                        <div className="compliance-actions">
+
+                          <button
+                            type="button"
+                            title="View record"
+                            onClick={() => openViewModal(record)}
+                          >
+                            <Eye size={16} />
+                          </button>
+
+                          <button
+                            type="button"
+                            title="Edit record"
+                            onClick={() => openEditModal(record)}
+                          >
+                            <Edit3 size={16} />
+                          </button>
+
+                          <button
+                            type="button"
+                            title="Delete record"
+                            onClick={() => void deleteRecord(record)}
+                          >
+                            <Trash2 size={16} />
+                          </button>
+
+                        </div>
+                      </td>
+
+                    </tr>
+                  ))}
+
+                  {!loading && displayedRecords.length === 0 && (
+                    <tr>
+                      <td colSpan={6}>
+                        <div className="compliance-empty">
+                          <FileText size={30} />
+
+                          <strong>
+                            No compliance records found
+                          </strong>
+
+                          <span>
+                            Try changing your filters or add a new record.
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+
+                </tbody>
+
+              </table>
+            </div>
+
+            {/* LOAD MORE */}
+
+            {!loading &&
+              visibleRecords < filteredRecords.length && (
+                <div className="compliance-load-more">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setVisibleRecords((current) => current + 5)
+                    }
+                  >
+                    Load more records
+                  </button>
+                </div>
               )}
 
-            </tbody>
+            <div className="compliance-register-footer">
+              Showing {displayedRecords.length} of {filteredRecords.length} records
+            </div>
 
-          </table>
-        </div>
+          </section>
 
-        {/* LOAD MORE */}
+        </>
+      )}
 
-        {visibleRecords < filteredRecords.length && (
-          <div className="compliance-load-more">
-            <button
-              type="button"
-              onClick={() =>
-                setVisibleRecords((current) => current + 5)
-              }
-            >
-              Load more records
-            </button>
-          </div>
-        )}
+      {/* ==========================================
+          POLICIES & DOCUMENTS VIEW
+      ========================================== */}
 
-        <div className="compliance-register-footer">
-          Showing {displayedRecords.length} of {filteredRecords.length} records
-        </div>
+      {activeView === "documents" && (
+        <>
 
-      </section>
+          {/* DOCUMENT NOTICE */}
 
-      {/* ADD / EDIT MODAL */}
+          <section className="compliance-notice">
+            <LockKeyhole size={21} />
+
+            <div>
+              <strong>Centralized legal document management</strong>
+
+              <span>
+                Manage the Terms & Conditions and Privacy Policies
+                presented to users and partners during registration.
+                Each registration category has its own document settings.
+              </span>
+            </div>
+          </section>
+
+          {/* DOCUMENT ERROR */}
+
+          {legalDocumentError && !editingLegalDocument && (
+            <div className="compliance-form-error">
+              <AlertCircle size={16} />
+              <span>{legalDocumentError}</span>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setLegalDocumentError("");
+                  void fetchLegalDocuments();
+                }}
+              >
+                Retry
+              </button>
+            </div>
+          )}
+
+          {/* DOCUMENT STATISTICS */}
+
+          <section className="compliance-stats-grid">
+
+            <div className="compliance-stat-card">
+              <div className="compliance-stat-icon blue">
+                <FileText size={21} />
+              </div>
+
+              <span>Total documents</span>
+              <strong>{legalDocuments.length}</strong>
+              <small>Across all registration categories</small>
+            </div>
+
+            <div className="compliance-stat-card">
+              <div className="compliance-stat-icon green">
+                <FileCheck size={21} />
+              </div>
+
+              <span>Published</span>
+              <strong>{publishedDocumentCount}</strong>
+              <small>Published documents</small>
+            </div>
+
+            <div className="compliance-stat-card">
+              <div className="compliance-stat-icon orange">
+                <Clock3 size={21} />
+              </div>
+
+              <span>Drafts</span>
+              <strong>{draftDocumentCount}</strong>
+              <small>Awaiting publication</small>
+            </div>
+
+            <div className="compliance-stat-card">
+              <div className="compliance-stat-icon red">
+                <AlertCircle size={21} />
+              </div>
+
+              <span>Not configured</span>
+              <strong>{unconfiguredDocumentCount}</strong>
+              <small>Documents not yet created</small>
+            </div>
+
+          </section>
+
+          {/* DOCUMENT TABLE */}
+
+          <section className="compliance-records-card legal-documents-section">
+
+            <div className="compliance-table-toolbar">
+              <div>
+                <h2>Policies & Documents</h2>
+
+                <p>
+                  Create, edit and publish legal documents for each
+                  registration category.
+                </p>
+              </div>
+            </div>
+
+            {/* DOCUMENT SEARCH */}
+
+            <div className="compliance-controls">
+
+              <div className="compliance-search">
+                <Search size={17} />
+
+                <input
+                  type="text"
+                  placeholder="Search category, document or status..."
+                  value={documentSearch}
+                  onChange={(event) =>
+                    setDocumentSearch(event.target.value)
+                  }
+                />
+              </div>
+
+            </div>
+
+            {/* DOCUMENT TABLE */}
+
+            <div className="compliance-table-wrapper">
+              <table className="compliance-table">
+
+                <thead>
+                  <tr>
+                    <th>REGISTRATION CATEGORY</th>
+                    <th>DOCUMENT</th>
+                    <th>VERSION</th>
+                    <th>LAST UPDATED</th>
+                    <th>STATUS</th>
+                    <th>ACTIONS</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+
+                  {documentsLoading && (
+                    <tr>
+                      <td colSpan={6}>
+                        <div className="compliance-empty">
+                          Loading legal documents...
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+
+                  {!documentsLoading &&
+                    filteredLegalDocuments.map((document) => (
+                      <tr key={document.id}>
+
+                        <td>
+                          <div className="compliance-partner">
+                            <strong>{document.partnerType}</strong>
+                            <small>Registration document</small>
+                          </div>
+                        </td>
+
+                        <td>
+                          <div className="compliance-record-type">
+                            <strong>{document.documentType}</strong>
+                            <small>{document.title}</small>
+                          </div>
+                        </td>
+
+                        <td>
+                          {document.version > 0
+                            ? `v${document.version}`
+                            : "—"}
+                        </td>
+
+                        <td>
+                          <span className="compliance-timestamp">
+                            {document.updatedAt
+                              ? formatTimestamp(document.updatedAt)
+                              : "Not updated"}
+                          </span>
+                        </td>
+
+                        <td>
+                          <span
+                            className={`compliance-status ${
+                              document.status === "Published"
+                                ? "reviewed"
+                                : document.status === "Draft"
+                                  ? "pending"
+                                  : "rejected"
+                            }`}
+                          >
+                            {document.status}
+                          </span>
+                        </td>
+
+                        <td>
+                          <div className="compliance-actions">
+
+                            <button
+                              type="button"
+                              title="View document"
+                              disabled={!document.content}
+                              onClick={() =>
+                                openLegalDocumentEditor(document)
+                              }
+                            >
+                              <Eye size={16} />
+                            </button>
+
+                            <button
+                              type="button"
+                              title="Edit document"
+                              onClick={() =>
+                                openLegalDocumentEditor(document)
+                              }
+                            >
+                              <Edit3 size={16} />
+                            </button>
+
+                          </div>
+                        </td>
+
+                      </tr>
+                    ))}
+
+                  {!documentsLoading &&
+                    filteredLegalDocuments.length === 0 && (
+                      <tr>
+                        <td colSpan={6}>
+                          <div className="compliance-empty">
+                            <FileText size={30} />
+
+                            <strong>
+                              No legal documents found
+                            </strong>
+
+                            <span>
+                              Try searching with another category or document name.
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+
+                </tbody>
+
+              </table>
+            </div>
+
+            <div className="compliance-register-footer">
+              Showing {filteredLegalDocuments.length} of {legalDocuments.length} documents
+            </div>
+
+          </section>
+
+        </>
+      )}
+
+      {/* ==========================================
+          ADD / EDIT COMPLIANCE MODAL
+      ========================================== */}
 
       {(modalMode === "add" || modalMode === "edit") && (
         <div
@@ -677,17 +1494,23 @@ export default function Compliance() {
             <div className="compliance-modal-header">
               <div>
                 <span>ADMIN MANAGEMENT</span>
+
                 <h2>
                   {modalMode === "add"
                     ? "Add compliance record"
                     : "Edit compliance record"}
                 </h2>
+
                 <p>
                   Enter the partner and compliance information below.
                 </p>
               </div>
 
-              <button type="button" onClick={closeModal}>
+              <button
+                type="button"
+                onClick={closeModal}
+                disabled={saving}
+              >
                 <X size={20} />
               </button>
             </div>
@@ -698,10 +1521,12 @@ export default function Compliance() {
 
                 <div className="compliance-form-field">
                   <label>Partner type *</label>
+
                   <select
                     value={formData.partnerType}
                     onChange={(event) => {
                       const type = event.target.value as PartnerType;
+
                       setFormData((current) => ({
                         ...current,
                         partnerType: type,
@@ -717,6 +1542,7 @@ export default function Compliance() {
 
                 <div className="compliance-form-field">
                   <label>Record type *</label>
+
                   <select
                     value={formData.recordType}
                     onChange={(event) =>
@@ -724,6 +1550,7 @@ export default function Compliance() {
                     }
                   >
                     <option value="">Select record type</option>
+
                     {recordTypes[formData.partnerType].map((type) => (
                       <option key={type}>{type}</option>
                     ))}
@@ -732,6 +1559,7 @@ export default function Compliance() {
 
                 <div className="compliance-form-field">
                   <label>Partner ID *</label>
+
                   <input
                     value={formData.partnerId}
                     onChange={(event) =>
@@ -743,6 +1571,7 @@ export default function Compliance() {
 
                 <div className="compliance-form-field">
                   <label>Partner name *</label>
+
                   <input
                     value={formData.partnerName}
                     onChange={(event) =>
@@ -754,10 +1583,14 @@ export default function Compliance() {
 
                 <div className="compliance-form-field">
                   <label>Review status</label>
+
                   <select
                     value={formData.status}
                     onChange={(event) =>
-                      updateField("status", event.target.value)
+                      updateField(
+                        "status",
+                        event.target.value as ReviewStatus
+                      )
                     }
                   >
                     <option>Pending</option>
@@ -768,6 +1601,7 @@ export default function Compliance() {
 
                 <div className="compliance-form-field">
                   <label>Document reference</label>
+
                   <input
                     value={formData.documentReference}
                     onChange={(event) =>
@@ -782,6 +1616,7 @@ export default function Compliance() {
 
                 <div className="compliance-form-field full">
                   <label>Operational detail *</label>
+
                   <textarea
                     rows={3}
                     value={formData.detail}
@@ -794,6 +1629,7 @@ export default function Compliance() {
 
                 <div className="compliance-form-field full">
                   <label>Admin review notes</label>
+
                   <textarea
                     rows={3}
                     value={formData.adminNotes}
@@ -816,10 +1652,12 @@ export default function Compliance() {
             </div>
 
             <div className="compliance-modal-footer">
+
               <button
                 type="button"
                 className="compliance-secondary-button"
                 onClick={closeModal}
+                disabled={saving}
               >
                 Cancel
               </button>
@@ -827,20 +1665,27 @@ export default function Compliance() {
               <button
                 type="button"
                 className="compliance-primary-button"
-                onClick={saveRecord}
+                onClick={() => void saveRecord()}
+                disabled={saving}
               >
                 <Save size={16} />
-                {modalMode === "add"
-                  ? "Save record"
-                  : "Save changes"}
+
+                {saving
+                  ? "Saving..."
+                  : modalMode === "add"
+                    ? "Save record"
+                    : "Save changes"}
               </button>
+
             </div>
 
           </div>
         </div>
       )}
 
-      {/* VIEW DETAILS MODAL */}
+      {/* ==========================================
+          VIEW COMPLIANCE DETAILS MODAL
+      ========================================== */}
 
       {modalMode === "view" && selectedRecord && (
         <div
@@ -855,11 +1700,16 @@ export default function Compliance() {
             <div className="compliance-modal-header">
               <div>
                 <span>COMPLIANCE RECORD DETAILS</span>
+
                 <h2>{selectedRecord.recordType}</h2>
+
                 <p>{selectedRecord.id}</p>
               </div>
 
-              <button type="button" onClick={closeModal}>
+              <button
+                type="button"
+                onClick={closeModal}
+              >
                 <X size={20} />
               </button>
             </div>
@@ -897,10 +1747,9 @@ export default function Compliance() {
 
                 <div>
                   <small>REVIEW STATUS</small>
+
                   <span
-                    className={`compliance-status ${
-                      selectedRecord.status.toLowerCase()
-                    }`}
+                    className={`compliance-status ${selectedRecord.status.toLowerCase()}`}
                   >
                     {selectedRecord.status}
                   </span>
@@ -915,6 +1764,7 @@ export default function Compliance() {
 
               <div className="compliance-detail-description">
                 <small>ADMIN REVIEW NOTES</small>
+
                 <p>
                   {selectedRecord.adminNotes || "No admin notes added."}
                 </p>
@@ -922,7 +1772,10 @@ export default function Compliance() {
 
               <div className="compliance-detail-description">
                 <small>REVIEWED BY</small>
-                <p>{selectedRecord.reviewedBy || "Awaiting review"}</p>
+
+                <p>
+                  {selectedRecord.reviewedBy || "Awaiting review"}
+                </p>
               </div>
 
             </div>
@@ -934,10 +1787,9 @@ export default function Compliance() {
                   <button
                     type="button"
                     className="compliance-reject-button"
-                    onClick={() => {
-                      updateStatus(selectedRecord, "Rejected");
-                      closeModal();
-                    }}
+                    onClick={() =>
+                      void updateStatus(selectedRecord, "Rejected")
+                    }
                   >
                     Reject
                   </button>
@@ -945,10 +1797,9 @@ export default function Compliance() {
                   <button
                     type="button"
                     className="compliance-primary-button"
-                    onClick={() => {
-                      updateStatus(selectedRecord, "Reviewed");
-                      closeModal();
-                    }}
+                    onClick={() =>
+                      void updateStatus(selectedRecord, "Reviewed")
+                    }
                   >
                     <Check size={16} />
                     Mark as reviewed
@@ -961,8 +1812,9 @@ export default function Compliance() {
                   type="button"
                   className="compliance-secondary-button"
                   onClick={() => {
-                    closeModal();
-                    openEditModal(selectedRecord);
+                    const record = selectedRecord;
+                    setModalMode(null);
+                    openEditModal(record);
                   }}
                 >
                   <Edit3 size={15} />
@@ -976,6 +1828,158 @@ export default function Compliance() {
                 onClick={closeModal}
               >
                 Close
+              </button>
+
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* ==========================================
+          LEGAL DOCUMENT EDITOR MODAL
+      ========================================== */}
+
+      {editingLegalDocument && (
+        <div
+          className="compliance-modal-overlay"
+          onClick={closeLegalDocumentEditor}
+        >
+          <div
+            className="compliance-modal legal-document-editor"
+            onClick={(event) => event.stopPropagation()}
+          >
+
+            <div className="compliance-modal-header">
+              <div>
+                <span>LEGAL DOCUMENT MANAGEMENT</span>
+
+                <h2>
+                  {editingLegalDocument.documentType}
+                </h2>
+
+                <p>
+                  {editingLegalDocument.partnerType} registration
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={closeLegalDocumentEditor}
+                disabled={documentSaving}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="compliance-modal-body">
+
+              <div className="compliance-form-grid">
+
+                <div className="compliance-form-field">
+                  <label>Registration category</label>
+
+                  <input
+                    value={editingLegalDocument.partnerType}
+                    disabled
+                  />
+                </div>
+
+                <div className="compliance-form-field">
+                  <label>Document type</label>
+
+                  <input
+                    value={editingLegalDocument.documentType}
+                    disabled
+                  />
+                </div>
+
+                <div className="compliance-form-field full">
+                  <label>Document title *</label>
+
+                  <input
+                    value={legalDocumentTitle}
+                    onChange={(event) =>
+                      setLegalDocumentTitle(event.target.value)
+                    }
+                    placeholder="Enter document title"
+                  />
+                </div>
+
+                <div className="compliance-form-field full">
+                  <label>Document content *</label>
+
+                  <textarea
+                    rows={14}
+                    value={legalDocumentContent}
+                    onChange={(event) =>
+                      setLegalDocumentContent(event.target.value)
+                    }
+                    placeholder="Write or paste the complete legal document here..."
+                  />
+
+                  <small>
+                    Enter the complete approved legal wording.
+                    Avoid publishing placeholder or incomplete content.
+                  </small>
+                </div>
+
+              </div>
+
+              <div className="compliance-detail-description">
+                <small>CURRENT DOCUMENT STATUS</small>
+
+                <p>
+                  {editingLegalDocument.status}
+                  {editingLegalDocument.version > 0 &&
+                    ` · Version ${editingLegalDocument.version}`}
+                </p>
+              </div>
+
+              {legalDocumentError && (
+                <div className="compliance-form-error">
+                  <AlertCircle size={16} />
+                  {legalDocumentError}
+                </div>
+              )}
+
+            </div>
+
+            <div className="compliance-modal-footer">
+
+              <button
+                type="button"
+                className="compliance-secondary-button"
+                onClick={closeLegalDocumentEditor}
+                disabled={documentSaving}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                className="compliance-secondary-button"
+                onClick={() => void saveLegalDocument(false)}
+                disabled={documentSaving}
+              >
+                <Save size={16} />
+
+                {documentSaving
+                  ? "Saving..."
+                  : "Save draft"}
+              </button>
+
+              <button
+                type="button"
+                className="compliance-primary-button"
+                onClick={() => void saveLegalDocument(true)}
+                disabled={documentSaving}
+              >
+                <Check size={16} />
+
+                {documentSaving
+                  ? "Publishing..."
+                  : "Publish document"}
               </button>
 
             </div>
